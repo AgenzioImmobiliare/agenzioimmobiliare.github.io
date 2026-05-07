@@ -3553,6 +3553,26 @@ body.force-mobile{ overflow:hidden; }
 }
 .mob-tag-blue{ background:#EFF6FF; color:#1D4ED8; }
 .mob-tag-gold{ background:#FFFBEB; color:#B45309; }
+/* ── Bottoni azione rapida sopra la card cliente ── */
+.mob-card-actions{
+  display:flex; gap:8px; margin-bottom:10px;
+}
+.mob-card-action-btn{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:8px 16px; border-radius:10px;
+  font-size:0.8rem; font-weight:600;
+  text-decoration:none; border:none; cursor:pointer;
+  flex:1; justify-content:center;
+  transition:opacity .15s;
+}
+.mob-card-action-btn:active{ opacity:0.75; }
+.mob-card-action-btn svg{ width:20px; height:20px; flex-shrink:0; }
+.mob-card-call{
+  background:#DCFCE7; color:#15803D;
+}
+.mob-card-wa{
+  background:#D1FAE5; color:#065F46;
+}
 .mob-tag-green{ background:#F0FDF4; color:#15803D; }
 .mob-tag-red{ background:#FEF2F2; color:#DC2626; }
 .mob-tag-gray{ background:#F1F5F9; color:#64748B; }
@@ -38151,7 +38171,16 @@ function mobRenderClienti(){
         immHtml += '</div>';
       }
 
+            var telClean1 = cl.tel ? String(cl.tel).replace(/[^0-9+]/g,'') : '';
+      var cardActions = '';
+      if(cl.tel){
+        cardActions = '<div class="mob-card-actions" onclick="event.stopPropagation()">'
+          + '<a class="mob-card-action-btn mob-card-call" href="tel:'+_mobEsc(cl.tel)+'" onclick="mobLogChiamata('+o.idx+')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z"/></svg>Chiama</a>'
+          + '<a class="mob-card-action-btn mob-card-wa" href="https://wa.me/'+telClean1+'" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.6 6.32A7.85 7.85 0 0012.05 4a7.94 7.94 0 00-6.88 11.9L4 20l4.2-1.1a7.93 7.93 0 003.84.98h.01a7.95 7.95 0 007.93-7.94 7.91 7.91 0 00-2.38-5.62zM12.05 18.5a6.6 6.6 0 01-3.36-.92l-.24-.14-2.5.65.67-2.43-.16-.25a6.6 6.6 0 0110.21-8.13 6.55 6.55 0 011.93 4.66 6.6 6.6 0 01-6.55 6.56zm3.62-4.94c-.2-.1-1.18-.58-1.36-.65-.18-.07-.31-.1-.45.1-.13.2-.51.65-.62.78-.12.13-.23.15-.42.05-.2-.1-.85-.3-1.62-.99-.6-.53-1-1.18-1.13-1.38-.12-.2 0-.31.09-.41.09-.09.2-.23.3-.34.1-.12.13-.2.2-.33.07-.13.03-.25-.02-.34-.05-.1-.45-1.08-.62-1.48-.16-.4-.32-.34-.45-.34h-.39c-.13 0-.34.05-.52.25-.18.2-.69.67-.69 1.64 0 .96.7 1.9.8 2.03.1.13 1.39 2.13 3.38 2.99.47.2.84.32 1.13.42.47.15.9.13 1.24.08.38-.06 1.18-.48 1.34-.94.16-.47.16-.87.12-.95-.05-.08-.18-.13-.38-.23z"/></svg>WhatsApp</a>'
+          + '</div>';
+      }
       html += '<div class="mob-card" onclick="mobOpenCliente('+o.idx+')">'
+        + cardActions
         + '<div class="mob-card-row">'
         +   '<div class="mob-avatar" style="background:'+bg+';">'+_mobEsc(_mobIni(cl.nome))+'</div>'
         +   '<div class="mob-card-body">'
