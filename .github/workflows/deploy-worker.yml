@@ -1,4 +1,4 @@
-ame: Deploy Cloudflare Worker
+Name: Deploy Cloudflare Worker
 
 on:
   push:
