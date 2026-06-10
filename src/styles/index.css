@@ -1,0 +1,20 @@
+/* styles/index.css — punto di ingresso unico per tutti gli stili.
+   L'ORDINE conta (cascata CSS): vendor → base → mobile → analytics.
+   Importato da main.js con: import './styles/index.css'; */
+
+/* 1. Terze parti (Leaflet) — più basso in specificità, va per primo */
+@import './_vendor-leaflet.css';
+
+/* 2. Stili globali dell'app: :root variables, layout, componenti, dark-mode (body.dark-mode) */
+@import './base.css';
+
+/* 3. UI mobile (#mobile-ui-css nel monolite) */
+@import './mobile.css';
+
+/* 4. Sezione Analytics (scope #sec-analytics) */
+@import './analytics.css';
+
+/* NOTA migrazione: le regole "body.dark-mode" sono attualmente dentro base.css,
+   esattamente come nel monolite (nessuna regressione).
+   In una fase successiva potrai spostarle in un theme-dark.css dedicato,
+   una regola alla volta, verificando il toggle a ogni step. */

@@ -1,0 +1,12 @@
+// modules/pratiche/pratiche.report.js — report Pratiche (57066-57067).
+const D = new Proxy({}, {
+  get(_, p) { return window.D ? window.D[p] : undefined; },
+  set(_, p, v) { if (window.D) window.D[p] = v; return true; },
+  has(_, p) { return window.D ? (p in window.D) : false; },
+});
+
+function reportPraticheRender(){var el=document.getElementById('rpt-prat-table');if(!el)return;var search=(document.getElementById('rpt-prat-search')||{value:''}).value.toLowerCase();var stato=(document.getElementById('rpt-prat-stato')||{value:''}).value.toLowerCase();var list=(typeof D!=='undefined'&&D.pratiche)?D.pratiche:[];var filt=list.filter(function(p){var t=JSON.stringify(p).toLowerCase();return(!search||t.indexOf(search)>=0)&&(!stato||(p.stato||'').toLowerCase().indexOf(stato)>=0);});var cnt=document.getElementById('rpt-prat-count');if(cnt)cnt.textContent=filt.length+' / '+list.length+' pratiche';var rows=filt.map(function(p){var prz=p.prezzo?'€ '+Number(p.prezzo).toLocaleString('it-IT'):'—';var prv=p.provvigione||p.prov?'€ '+Number(p.provvigione||p.prov).toLocaleString('it-IT'):'—';return[p.codice||p.ref||'—',p.immobile||p.indirizzo||'—',p.acquirente||p.cliente||'—',p.venditore||p.proprietario||'—',prz,prv,p.stato||'—',p.dataRogito||p.dataChiusura?new Date(p.dataRogito||p.dataChiusura).toLocaleDateString('it-IT'):'—',p.agente||'—'];});el.innerHTML=_rptTable(['Cod.','Immobile','Acquirente','Venditore','Prezzo','Provvigione','Stato','Data Rogito','Agente'],rows,'Nessuna pratica trovata');}
+function reportPraticheStampa(){var list=(typeof D!=='undefined'&&D.pratiche)?D.pratiche:[];var ths='<tr><th>Cod.</th><th>Immobile</th><th>Acquirente</th><th>Venditore</th><th>Prezzo</th><th>Provvigione</th><th>Stato</th><th>Data</th><th>Agente</th></tr>';var trs=list.map(function(p){var prz=p.prezzo?'€ '+Number(p.prezzo).toLocaleString('it-IT'):'';var prv=p.provvigione||p.prov?'€ '+Number(p.provvigione||p.prov).toLocaleString('it-IT'):'';return'<tr><td>'+(p.codice||p.ref||'')+'</td><td>'+(p.immobile||p.indirizzo||'')+'</td><td>'+(p.acquirente||p.cliente||'')+'</td><td>'+(p.venditore||p.proprietario||'')+'</td><td>'+prz+'</td><td>'+prv+'</td><td>'+(p.stato||'')+'</td><td>'+(p.dataRogito||p.dataChiusura?new Date(p.dataRogito||p.dataChiusura).toLocaleDateString('it-IT'):'')+'</td><td>'+(p.agente||'')+'</td></tr>';}).join('');_rptStampa('Report Pratiche','<table><thead>'+ths+'</thead><tbody>'+trs+'</tbody></table>');}
+
+Object.assign(window, { reportPraticheRender, reportPraticheStampa });
+export { reportPraticheRender, reportPraticheStampa };
