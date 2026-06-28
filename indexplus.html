@@ -19886,6 +19886,7 @@ async function vaiExportMP4(){
       ff.FS('writeFile', 'f'+String(idx).padStart(5,'0')+'.jpg', buf);
     };
     const _tStart=performance.now();
+    let _tSeek=0, _tDraw=0, _tWrite=0;
 
     // GENERAZIONE FRAME affidabile: "salta e aspetta" frame per frame.
     // È deterministico e non si blocca mai a metà (a differenza della cattura al volo).
@@ -19901,9 +19902,13 @@ async function vaiExportMP4(){
     });
     for(let i=0;i<totFrames;i++){
       const t=i/FPS;
+      let _m=performance.now();
       await seekConTimeout(t);
+      _tSeek+=performance.now()-_m; _m=performance.now();
       disegnaFrame(t,i);
+      _tDraw+=performance.now()-_m; _m=performance.now();
       await scriviFrame(i);
+      _tWrite+=performance.now()-_m;
       if(i%4===0){
         vaiExportOverlay(true, 'Preparo i fotogrammi…', Math.round((i/totFrames)*55));
         // stima tempo rimanente, così si vede che procede
@@ -19918,6 +19923,7 @@ async function vaiExportMP4(){
         await new Promise(r=>setTimeout(r,0)); // lascio respirare il browser
       }
     }
+    console.log('[VAI] TEMPI generazione frame — Salto video: '+(_tSeek/1000).toFixed(1)+'s · Disegno: '+(_tDraw/1000).toFixed(1)+'s · Scrittura: '+(_tWrite/1000).toFixed(1)+'s · Totale: '+((performance.now()-_tStart)/1000).toFixed(1)+'s ('+totFrames+' frame)');
 
     // 2) AUDIO: estraggo la traccia audio se l'utente vuole l'audio originale o c'è musica
     let hasAudio=false;
