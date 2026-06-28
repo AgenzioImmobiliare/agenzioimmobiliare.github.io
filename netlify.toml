@@ -1,0 +1,15 @@
+# ════════════════════════════════════════════════════════════════
+#  Configurazione Netlify per FRIMM Capital Casa Paestum
+#  Questo file serve SOLO a far funzionare l'export MP4 (FFmpeg).
+#  Va messo nella cartella principale del sito, accanto a indexplus.html
+# ════════════════════════════════════════════════════════════════
+
+# Questi header attivano "SharedArrayBuffer", che serve a FFmpeg per montare il video.
+# Senza questi header (come su GitHub Pages) l'export MP4 non puo' funzionare.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "require-corp"
+    # Permette di caricare risorse esterne (font, CDN, immagini) anche con COEP attivo
+    Cross-Origin-Resource-Policy = "cross-origin"
