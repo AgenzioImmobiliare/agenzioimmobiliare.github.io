@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Valutazione Immobile — FRIMM Capital Casa Paestum</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brand:#2563EB;--brand-l:#3B82F6;--brand-pale:#EFF6FF;--brand-dark:#1D4ED8;
+  --gold:#B45309;--gold-l:#D97706;--gold-pale:#FFFBEB;
+  --green:#15803D;--green-l:#16A34A;--green-pale:#F0FDF4;
+  --red:#DC2626;--red-l:#EF4444;--red-pale:#FEF2F2;
+  --orange:#C2410C;--orange-pale:#FFF7ED;
+  --purple:#7C3AED;--purple-pale:#F5F3FF;
+  --bg:#F8FAFC;--bg2:#FFFFFF;--bg3:#F1F5F9;
+  --border:#E2E8F0;--border2:#CBD5E1;
+  --text:#0F172A;--text2:#334155;--text3:#64748B;--text4:#94A3B8;
+  --radius:10px;--radius-sm:7px;--radius-lg:14px;
+}
+*{box-sizing:border-box;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.55;margin:0;}
+.btn{padding:8px 16px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:0.83rem;font-weight:600;transition:all 0.15s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+.btn-primary{background:#2563EB;color:white;box-shadow:0 2px 8px rgba(37,99,235,.25);}
+.btn-primary:hover{background:#1D4ED8;}
+.btn-outline{background:white;border:1.5px solid var(--border2);color:var(--text2);}
+.btn-outline:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-pale);}
+.btn-sm{padding:5px 11px;font-size:0.78rem;}
+.card{background:#ffffff;border:1px solid #E8ECF4;border-radius:12px;overflow:hidden;margin-bottom:18px;box-shadow:0 1px 3px rgba(0,0,0,.04),0 4px 12px rgba(0,0,0,.04);}
+.card-header{padding:13px 20px;border-bottom:1px solid #EEF1F8;display:flex;align-items:center;justify-content:space-between;background:#FAFBFE;}
+.card-title{font-size:0.95rem;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+.card-body{padding:20px;}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:0.71rem;font-weight:700;text-transform:uppercase;letter-spacing:0.4px;white-space:nowrap;}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.fcol{grid-column:1/-1;}
+.frow{display:flex;flex-direction:column;gap:5px;}
+.flabel{font-size:0.74rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;}
+.finput,.fselect,.ftextarea{background:white;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:0.88rem;outline:none;transition:all 0.15s;width:100%;}
+.finput:focus,.fselect:focus,.ftextarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(37,99,235,0.08);}
+.ftextarea{resize:vertical;min-height:78px;}
+@media (max-width: 900px){
+  .val-2col{grid-template-columns:1fr !important;}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Header pagina esterna (non c'è nel gestionale) ── -->
+<div style="background:#0F172A;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+  <div style="display:flex;align-items:center;gap:10px">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span style="color:white;font-weight:800;font-size:0.92rem">FRIMM Capital Casa Paestum — Valutazione Immobile</span>
+  </div>
+  <a href="index.html" style="color:#93C5FD;font-size:0.78rem;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:5px">
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+    Torna al gestionale
+  </a>
+</div>
+<div id="bridge-status" style="background:#FFFBEB;color:#92400E;font-size:0.76rem;padding:8px 24px;border-bottom:1px solid #FDE68A">Caricamento dati…</div>
+
+<div style="max-width:1400px;margin:0 auto;padding:20px">
+<datalist id="dl-comuni-sa">
+<option>Agropoli</option><option>Albanella</option><option>Alfano</option><option>Altavilla Silentina</option><option>Amalfi</option><option>Angri</option><option>Aquara</option><option>Ascea</option><option>Atena Lucana</option><option>Atrani</option><option>Auletta</option><option>Baronissi</option><option>Battipaglia</option><option>Bellosguardo</option><option>Bracigliano</option><option>Buccino</option><option>Buonabitacolo</option><option>Caggiano</option><option>Calvanico</option><option>Camerota</option><option>Campagna</option><option>Campora</option><option>Cannalonga</option><option>Capaccio Paestum</option><option>Casalbuono</option><option>Casale</option><option>Casaletto Spartano</option><option>Caselle in Pittari</option><option>Castel San Giorgio</option><option>Castel San Lorenzo</option><option>Castelcivita</option><option>Castellabate</option><option>Castelnuovo Cilento</option><option>Castelnuovo di Conza</option><option>Castiglione del Genovesi</option><option>Cava de' Tirreni</option><option>Celle di Bulgheria</option><option>Centola</option><option>Ceraso</option><option>Cetara</option><option>Cicerale</option><option>Corleto Monforte</option><option>Contursi Terme</option><option>Corbara</option><option>Controne</option><option>Cuccaro Vetere</option><option>Eboli</option><option>Felitto</option><option>Fisciano</option><option>Furore</option><option>Futani</option><option>Giffoni Sei Casali</option><option>Giffoni Valle Piana</option><option>Gioi</option><option>Giungano</option><option>Ispani</option><option>Laureana Cilento</option><option>Laurino</option><option>Laurito</option><option>Laviano</option><option>Lustra</option><option>Magliano Vetere</option><option>Maiori</option><option>Mercato San Severino</option><option>Minori</option><option>Moio della Civitella</option><option>Montano Antilia</option><option>Monte San Giacomo</option><option>Montecorice</option><option>Montecorvino Pugliano</option><option>Montecorvino Rovella</option><option>Monteforte Cilento</option><option>Morigerati</option><option>Nocera Inferiore</option><option>Nocera Superiore</option><option>Novi Velia</option><option>Ogliastro Cilento</option><option>Olevano sul Tusciano</option><option>Omignano</option><option>Orria</option><option>Ottati</option><option>Padula</option><option>Pagani</option><option>Palomonte</option><option>Perdifumo</option><option>Perito</option><option>Pertosa</option><option>Petina</option><option>Piaggine</option><option>Pisciotta</option><option>Polla</option><option>Pollica</option><option>Pontecagnano Faiano</option><option>Positano</option><option>Postiglione</option><option>Praiano</option><option>Prignano Cilento</option><option>Ravello</option><option>Ricigliano</option><option>Roccadaspide</option><option>Roccagloriosa</option><option>Roccapiemonte</option><option>Rofrano</option><option>Romagnano al Monte</option><option>Ronciglio</option><option>Rutino</option><option>Sacco</option><option>Sala Consilina</option><option>Salento</option><option>Salerno</option><option>San Cipriano Picentino</option><option>San Giovanni a Piro</option><option>San Gregorio Magno</option><option>San Mango Piemonte</option><option>San Marzano sul Sarno</option><option>San Mauro Cilento</option><option>San Mauro la Bruca</option><option>San Pietro al Tanagro</option><option>San Rufo</option><option>San Valentino Torio</option><option>Santa Marina</option><option>Sant'Angelo a Fasanella</option><option>Sant'Arsenio</option><option>Sapri</option><option>Sarno</option><option>Sassano</option><option>Scafati</option><option>Scala</option><option>Serramezzana</option><option>Serre</option><option>Sessa Cilento</option><option>Sicignano degli Alburni</option><option>Stella Cilento</option><option>Stio</option><option>Teggiano</option><option>Torchiara</option><option>Torraca</option><option>Torre Orsaia</option><option>Tortorella</option><option>Tramonti</option><option>Trentinara</option><option>Valle dell'Angelo</option><option>Vallo della Lucania</option><option>Vatolla</option><option>Vibonati</option><option>Vietri sul Mare</option>
+</datalist>
+  <div id="calc-valutazione-wrap">
+
+    <!-- ── HEADER VALUTAZIONE ─────────────────────────────────── -->
+    <div style="background:linear-gradient(135deg,#0F172A 0%,#1E3A5F 55%,#1D4ED8 100%);border-radius:18px;padding:22px 28px;margin-bottom:18px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:-40px;right:-40px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.03)"></div>
+      <div style="position:absolute;bottom:-30px;right:180px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.04)"></div>
+      <div style="position:relative">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:16px">
+          <div>
+            <div style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,.5);margin-bottom:4px">CMA — Comparative Market Analysis</div>
+            <div style="font-size:1.3rem;font-weight:800;color:white;letter-spacing:-.3px">Stima del Valore di Mercato</div>
+            <div style="font-size:0.8rem;color:rgba(255,255,255,.6);margin-top:4px">Metodo comparativo · Coefficienti OMI · Fattori correttivi immobile</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button onclick="valReset()" style="background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);color:rgba(255,255,255,.8);border-radius:9px;padding:8px 16px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right:4px;vertical-align:middle"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.51"/></svg>Reset
+            </button>
+            <button onclick="valSalva()" style="background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);color:white;border-radius:9px;padding:8px 16px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="margin-right:4px;vertical-align:middle"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Salva Valutazione
+            </button>
+            <button onclick="valGeneraReport()" style="background:linear-gradient(135deg,rgba(255,255,255,.22),rgba(255,255,255,.12));border:1.5px solid rgba(255,255,255,.3);color:white;border-radius:9px;padding:8px 16px;font-size:0.78rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" style="margin-right:4px;vertical-align:middle"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>Report PDF
+            </button>
+          </div>
+        </div>
+        <!-- Riga: cliente + titolo -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div>
+            <label style="font-size:0.68rem;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:5px">Cliente / Proprietario</label>
+            <select id="val-cliente" style="width:100%;padding:8px 12px;border-radius:9px;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.2);color:white;font-size:0.82rem;font-family:'Inter',sans-serif" onchange="calcValutazione()">
+              <option value="">— Seleziona cliente —</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:0.68rem;font-weight:700;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:.8px;display:block;margin-bottom:5px">Titolo / Oggetto valutazione</label>
+            <input id="val-titolo" placeholder="Es. Appartamento Via Roma 12 – stima ingresso incarico" style="width:100%;padding:8px 12px;border-radius:9px;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.2);color:white;font-size:0.82rem;font-family:'Inter',sans-serif;box-sizing:border-box" oninput="calcValutazione()">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── VALUTAZIONI ARCHIVIATE ─────────────────────────────── -->
+    <div id="val-archivio-wrap" class="card" style="margin-bottom:18px">
+      <div class="card-header" style="cursor:pointer" onclick="valToggleArchivio()">
+        <span class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+          Valutazioni Salvate
+        </span>
+        <span id="val-archivio-badge" style="background:var(--brand-pale);color:var(--brand);border-radius:12px;padding:2px 10px;font-size:0.72rem;font-weight:700">0</span>
+        <svg id="val-archivio-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left:auto;transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div id="val-archivio-list" style="display:none;padding:0 14px 14px"></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start">
+
+      <!-- ── LEFT: Input form ── -->
+      <div style="display:flex;flex-direction:column;gap:12px">
+
+        <!-- Card 1: Dati immobile -->
+        <div class="card">
+          <div class="card-header" style="padding:10px 14px">
+            <span class="card-title" style="font-size:0.82rem">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+              Dati Immobile
+            </span>
+          </div>
+          <div class="card-body" style="padding:12px 14px">
+            <div class="fgrid" style="gap:10px">
+              <div class="frow"><label class="flabel">Tipo Operazione</label>
+                <select class="fselect" id="val-op" onchange="calcValutazione()">
+                  <option value="vendita">Vendita</option>
+                  <option value="affitto">Locazione</option>
+                </select>
+              </div>
+              <div class="frow"><label class="flabel">Tipo Immobile</label>
+                <select class="fselect" id="val-tipo" onchange="calcValutazione()">
+                  <option value="appartamento">Appartamento</option>
+                  <option value="villa">Villa / Indipendente</option>
+                  <option value="attico">Attico / Mansarda</option>
+                  <option value="bilocale">Bilocale</option>
+                  <option value="monolocale">Monolocale / Studio</option>
+                  <option value="commerciale">Locale Commerciale</option>
+                  <option value="ufficio">Ufficio</option>
+                </select>
+              </div>
+              <div class="frow"><label class="flabel">Comune</label>
+                <input class="finput" id="val-comune" placeholder="Es. Agropoli" list="dl-comuni-sa" autocomplete="off" oninput="calcValutazione()">
+              </div>
+              <div class="frow"><label class="flabel">Via / Indirizzo <span style="text-transform:none;font-weight:500">(per la mappa nel report)</span></label>
+                <input class="finput" id="val-indirizzo" placeholder="Es. Via Roma 12" autocomplete="off">
+              </div>
+              <div class="frow"><label class="flabel">Zona di Mercato</label>
+                <select class="fselect" id="val-zona" onchange="calcValutazione()">
+                  <option value="centrale">Centrale / Pregio</option>
+                  <option value="semicentrale" selected>Semicentrale</option>
+                  <option value="periferica">Periferica / Collinare</option>
+                  <option value="mare">Fronte / Vista Mare</option>
+                </select>
+              </div>
+              <div class="frow"><label class="flabel">Superficie Commerciale (m²)</label>
+                <input class="finput" id="val-mq" type="number" placeholder="Es. 90" min="10" oninput="calcValutazione()">
+              </div>
+              <div class="frow"><label class="flabel">Superficie Calpestabile (m²)</label>
+                <input class="finput" id="val-mq-calc" type="number" placeholder="Es. 80 (lascia vuoto = auto)" oninput="calcValutazione()">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Caratteristiche -->
+        <div class="card">
+          <div class="card-header" style="padding:10px 14px">
+            <span class="card-title" style="font-size:0.82rem">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              Caratteristiche
+            </span>
+          </div>
+          <div class="card-body" style="padding:12px 14px">
+            <div class="fgrid" style="gap:10px">
+              <div class="frow"><label class="flabel">Stato Conservativo</label>
+                <select class="fselect" id="val-stato" onchange="calcValutazione()">
+                  <option value="nuovo">Nuovo / Da costruire</option>
+                  <option value="ottimo">Ottimo / Ristrutturato</option>
+                  <option value="buono" selected>Buono / Manutenuto</option>
+                  <option value="discreto">Discreto / Da aggiornare</option>
+                  <option value="daristrutturare">Da ristrutturare</option>
+                </select>
+              </div>
+              <div class="frow"><label class="flabel">Anno Costruzione</label>
+                <select class="fselect" id="val-anno" onchange="calcValutazione()">
+                  <option value="post2010">Post 2010 (recente)</option>
+                  <option value="2000-2010">2000–2010</option>
+                  <option value="1990-2000" selected>1990–2000</option>
+                  <option value="1970-1990">1970–1990</option>
+                  <option value="pre1970">Pre 1970 (storico)</option>
+                </select>
+              </div>
+              <div class="frow"><label class="flabel">Piano</label>
+                <select class="fselect" id="val-piano" onchange="calcValutazione()">
+                  <option value="terra">Piano Terra / Seminterrato</option>
+                  <option value="1">1° Piano</option>
+                  <option value="2-3" selected>2°–3° Piano</option>
+                  <option value="4-6">4°–6° Piano</option>
+                  <option value="alto">Piano Alto / Ultimo</option>
+                </select>
+              </div>
+              <div class="frow"><label class="flabel">Classe Energetica</label>
+                <select class="fselect" id="val-energia" onchange="calcValutazione()">
+                  <option value="A">A / A+ / A++ (eccellente)</option>
+                  <option value="B">B (ottima)</option>
+                  <option value="C" selected>C (buona)</option>
+                  <option value="D">D (discreta)</option>
+                  <option value="E">E</option>
+                  <option value="FG">F / G (scarsa)</option>
+                </select>
+              </div>
+              <div class="frow"><label class="flabel">Esposizione</label>
+                <select class="fselect" id="val-espos" onchange="calcValutazione()">
+                  <option value="sud">Sud / Sud-Ovest (ottima)</option>
+                  <option value="est-ovest" selected>Est–Ovest</option>
+                  <option value="nord">Nord / Nord-Est</option>
+                </select>
+              </div>
+              <div class="frow"><label class="flabel">Ascensore</label>
+                <select class="fselect" id="val-asc" onchange="calcValutazione()">
+                  <option value="si">Presente</option>
+                  <option value="no" selected>Assente</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3: Dotazioni -->
+        <div class="card">
+          <div class="card-header" style="padding:10px 14px">
+            <span class="card-title" style="font-size:0.82rem">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>
+              Dotazioni & Pertinenze
+            </span>
+          </div>
+          <div class="card-body" style="padding:12px 14px">
+            <div class="fgrid" style="gap:10px">
+              <div class="frow"><label class="flabel">Box / Garage</label>
+                <select class="fselect" id="val-garage" onchange="calcValutazione()">
+                  <option value="doppio">Doppio garage</option>
+                  <option value="singolo">Box singolo</option>
+                  <option value="posto">Posto auto scoperto</option>
+                  <option value="no" selected>Nessuno</option>
+                </select>
+              </div>
+              <div class="frow"><label class="flabel">Terrazza / Balcone</label>
+                <select class="fselect" id="val-terrazza" onchange="calcValutazione()">
+                  <option value="grande">Terrazza grande (&gt;20m²)</option>
+                  <option value="balcone" selected>Balcone(i)</option>
+                  <option value="no">Nessuno</option>
+                </select>
+              </div>
+              <div class="frow"><label class="flabel">Giardino / Corte</label>
+                <select class="fselect" id="val-giardino" onchange="calcValutazione()">
+                  <option value="privato">Giardino privato</option>
+                  <option value="condominiale">Condominiale</option>
+                  <option value="no" selected>Nessuno</option>
+                </select>
+              </div>
+              <div class="frow"><label class="flabel">Piscina</label>
+                <select class="fselect" id="val-piscina" onchange="calcValutazione()">
+                  <option value="si">Presente</option>
+                  <option value="no" selected>Assente</option>
+                </select>
+              </div>
+              <div class="frow"><label class="flabel">Vista Mare</label>
+                <select class="fselect" id="val-mare" onchange="calcValutazione()">
+                  <option value="fronte">Fronte mare</option>
+                  <option value="vista">Vista mare parziale</option>
+                  <option value="no" selected>Non presente</option>
+                </select>
+              </div>
+              <div class="frow"><label class="flabel">Arredato</label>
+                <select class="fselect" id="val-arredato" onchange="calcValutazione()">
+                  <option value="completo">Completamente arredato</option>
+                  <option value="parziale">Parzialmente arredato</option>
+                  <option value="no" selected>Non arredato</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /left -->
+
+      <!-- ── RIGHT: Results ── -->
+      <div id="val-results-panel">
+        <!-- Placeholder prima del calcolo -->
+        <div id="val-placeholder" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:420px;gap:16px;color:var(--text4)">
+          <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#CBD5E1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="16 12 12 8 8 12"/><line x1="12" y1="16" x2="12" y2="8"/></svg>
+          <div style="text-align:center">
+            <div style="font-size:0.9rem;font-weight:700;color:var(--text3);margin-bottom:4px">Inserisci i dati dell'immobile</div>
+            <div style="font-size:0.78rem;color:var(--text4)">La stima si aggiornerà automaticamente</div>
+          </div>
+        </div>
+        <!-- Results (hidden until calc) -->
+        <div id="val-results" style="display:none;display:flex;flex-direction:column;gap:14px"></div>
+      </div>
+
+    </div><!-- /grid -->
+
+    <!-- ── COMPARABILI DAI PORTALI ────────────────────────────── -->
+    <div class="card" style="margin-top:18px">
+      <div class="card-header">
+        <span class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Immobili Comparativi
+        </span>
+        <button onclick="valAggiungiComparabile()" class="btn btn-primary btn-sm">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Aggiungi comparabile
+        </button>
+      </div>
+      <div class="card-body">
+        <div style="background:var(--brand-pale);border:1px solid #BFDBFE;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:0.78rem;color:var(--brand)">
+          <strong>Come si usa:</strong> Cerca immobili simili su <strong>Immobiliare.it</strong>, <strong>Casa.it</strong>, <strong>Idealista.it</strong> — poi incolla qui le informazioni manualmente. Nessun dato inventato viene usato nella stima.
+        </div>
+        <div id="val-comparabili-list"></div>
+        <div id="val-comparabili-summary" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <!-- ── STATISTICHE REALI DAL TUO DATABASE ─────────────────── -->
+    <div class="card" style="margin-top:18px">
+      <div class="card-header">
+        <span class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Statistiche Reali — Dal Tuo Database
+        </span>
+      </div>
+      <div class="card-body">
+        <p style="font-size:0.78rem;color:var(--text3);margin:0 0 12px">Dati calcolati <strong>esclusivamente</strong> dagli immobili nel tuo gestionale. Nessun dato di fantasia.</p>
+        <div id="val-stats-reali"></div>
+      </div>
+    </div>
+
+  </div><!-- /calc-valutazione-wrap -->
+
+</div><!-- /max-width wrap -->
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   VALUTAZIONE IMMOBILE — pagina esterna e autonoma
+   Legge i dati (immobili, pratiche, clienti, annunci) dal gestionale
+   tramite lo stesso bridge già usato da indexplus.html (localStorage,
+   sola lettura). Le valutazioni salvate restano SOLO in questa pagina
+   (non tornano nel gestionale) — per scelta, per tenere il tutto più
+   semplice e leggero.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── "D" locale: stessa forma di quello del gestionale, ma sola lettura
+   per immobili/pratiche/clienti/osservatiFb/cacciAnnunci (arrivano dal
+   bridge), e locale per valutazioni (salvate solo qui). ── */
+var D = { immobili:[], pratiche:[], clienti:[], osservatiFb:[], cacciAnnunci:[], valutazioni:[] };
+
+var SHARED_KEY = 'lecase_shared_v1';
+var VAL_LOCAL_KEY = 'lecase_valutazioni_esterne_v1';
+
+function _caricaDatiCondivisi(){
+  try{
+    var raw = localStorage.getItem(SHARED_KEY);
+    if(!raw){
+      document.getElementById('bridge-status').innerHTML =
+        '⚠️ Nessun dato trovato. Apri prima il <a href="index.html" style="color:#1D4ED8;font-weight:700">gestionale</a> in questo stesso browser (anche solo per un istante) così i dati vengono condivisi con questa pagina.';
+      return;
+    }
+    var payload = JSON.parse(raw);
+    D.immobili     = Array.isArray(payload.immobili)     ? payload.immobili     : [];
+    D.pratiche     = Array.isArray(payload.pratiche)     ? payload.pratiche     : [];
+    D.clienti      = Array.isArray(payload.clienti)      ? payload.clienti      : [];
+    D.osservatiFb  = Array.isArray(payload.osservatiFb)  ? payload.osservatiFb  : [];
+    D.cacciAnnunci = Array.isArray(payload.cacciAnnunci) ? payload.cacciAnnunci : [];
+    var ts = payload.ts ? new Date(payload.ts) : null;
+    var tsStr = ts ? ts.toLocaleString('it-IT') : '—';
+    var bs = document.getElementById('bridge-status');
+    if(bs){
+      bs.innerHTML = '✓ Dati aggiornati al ' + tsStr + ' — '
+        + D.immobili.length + ' immobili, ' + D.pratiche.length + ' pratiche, '
+        + D.clienti.length + ' clienti, ' + D.osservatiFb.length + ' osservati FB, '
+        + D.cacciAnnunci.length + ' annunci captati.';
+      bs.style.color = '#15803D';
+    }
+  }catch(e){
+    console.warn('[Valutazione] lettura dati condivisi KO:', e);
+    var bs2 = document.getElementById('bridge-status');
+    if(bs2){ bs2.textContent = '⚠️ Errore nella lettura dei dati condivisi.'; bs2.style.color = '#DC2626'; }
+  }
+}
+
+function _caricaValutazioniLocali(){
+  try{
+    var raw = localStorage.getItem(VAL_LOCAL_KEY);
+    D.valutazioni = raw ? (JSON.parse(raw) || []) : [];
+  }catch(e){ D.valutazioni = []; }
+}
+
+/* Sostituisce saveD() del gestionale: qui salva SOLO D.valutazioni,
+   in locale a questa pagina (localStorage separato, non nel bridge). */
+function saveD(){
+  try{
+    localStorage.setItem(VAL_LOCAL_KEY, JSON.stringify(D.valutazioni||[]));
+  }catch(e){
+    console.warn('[Valutazione] salvataggio locale KO:', e);
+  }
+}
+
+/* ── Toast semplice (sostituisce showToast del gestionale) ── */
+function showToast(msg, sub, color){
+  var el = document.getElementById('val-toast');
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'val-toast';
+    el.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99999;padding:12px 20px;border-radius:10px;font-family:Inter,sans-serif;font-size:0.85rem;font-weight:700;color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.25);transition:opacity .3s;';
+    document.body.appendChild(el);
+  }
+  el.style.background = color || '#2563EB';
+  el.textContent = msg + (sub ? ' — ' + sub : '');
+  el.style.opacity = '1';
+  clearTimeout(window._valToastTimer);
+  window._valToastTimer = setTimeout(function(){ el.style.opacity='0'; }, 2800);
+}
+
+/* ── Config AI (stessa chiave localStorage del gestionale — STESSA
+   ORIGINE, quindi è già disponibile qui senza nessuna configurazione
+   aggiuntiva se l'hai già impostata nel gestionale). ── */
+function aiGetConfig(){
+  return {
+    url:    (localStorage.getItem('aiProxyUrl')    || '').trim(),
+    accesso:(localStorage.getItem('aiProxyAccesso')|| '').trim()
+  };
+}
+function callClaude(payload){
+  var cfg = aiGetConfig();
+  if(!cfg.url){
+    return Promise.reject(new Error('AI non configurata nel gestionale. Apri il gestionale → Impostazioni AI.'));
+  }
+  var headers = { 'Content-Type':'application/json' };
+  if(cfg.accesso) headers['x-accesso'] = cfg.accesso;
+  return fetch(cfg.url, { method:'POST', headers:headers, body:JSON.stringify(payload) })
+    .then(function(r){
+      return r.json().then(function(data){
+        if(!r.ok){
+          var msg = (data && (data.error && (data.error.message||data.error))) || ('Errore HTTP '+r.status);
+          throw new Error(typeof msg==='string'?msg:JSON.stringify(msg));
+        }
+        return data;
+      });
+    });
+}
+
+/* ── Inizializzazione ── */
+document.addEventListener('DOMContentLoaded', function(){
+  _caricaDatiCondivisi();
+  _caricaValutazioniLocali();
+  if(typeof valPopulaClienti === 'function') valPopulaClienti();
+  if(typeof valRenderArchivio === 'function') valRenderArchivio();
+  if(typeof valCalcolaStatsReali === 'function') valCalcolaStatsReali();
+  var badge = document.getElementById('val-archivio-badge');
+  if(badge) badge.textContent = D.valutazioni.length;
+});
+function valReset(){
+  ['val-op','val-tipo','val-zona','val-stato','val-anno','val-piano','val-energia','val-espos','val-asc','val-garage','val-terrazza','val-giardino','val-piscina','val-mare','val-arredato'].forEach(id=>{
+    const e=document.getElementById(id);if(e)e.selectedIndex=0;
+  });
+  ['val-comune','val-mq','val-mq-calc'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const r=document.getElementById('val-results');const p=document.getElementById('val-placeholder');
+  if(r){r.style.display='none';r.innerHTML='';}
+  if(p)p.style.display='flex';
+}
+
+function calcValutazione(){
+  const gv=id=>(document.getElementById(id)||{}).value||'';
+  const comune=gv('val-comune').trim();
+  const tipo=gv('val-tipo')||'appartamento';
+  const zona=gv('val-zona')||'semicentrale';
+  const mq=parseFloat(gv('val-mq'))||0;
+  const mqCalc=parseFloat(gv('val-mq-calc'))||mq*0.88;
+  const stato=gv('val-stato')||'buono';
+  const anno=gv('val-anno')||'1990-2000';
+  const piano=gv('val-piano')||'2-3';
+  const energia=gv('val-energia')||'C';
+  const espos=gv('val-espos')||'est-ovest';
+  const asc=gv('val-asc')||'no';
+  const garage=gv('val-garage')||'no';
+  const terrazza=gv('val-terrazza')||'balcone';
+  const giardino=gv('val-giardino')||'no';
+  const piscina=gv('val-piscina')||'no';
+  const mare=gv('val-mare')||'no';
+  const arredato=gv('val-arredato')||'no';
+  const op=gv('val-op')||'vendita';
+
+  if(!mq||mq<10){
+    const r=document.getElementById('val-results');const p=document.getElementById('val-placeholder');
+    if(r){r.style.display='none';r.innerHTML='';}if(p)p.style.display='flex';
+    return;
+  }
+
+  /* ── Prezzi base €/mq OMI ── */
+  const OMI={
+    default:       {centrale:{min:900,max:2200},semicentrale:{min:600,max:1500},periferica:{min:400,max:1000},mare:{min:1200,max:3500}},
+    'Capaccio Paestum':{centrale:{min:1200,max:2800},semicentrale:{min:800,max:2000},periferica:{min:500,max:1300},mare:{min:1800,max:4500}},
+    'Agropoli':    {centrale:{min:1300,max:3000},semicentrale:{min:900,max:2200},periferica:{min:600,max:1500},mare:{min:2000,max:5000}},
+    'Salerno':     {centrale:{min:1500,max:3800},semicentrale:{min:1000,max:2500},periferica:{min:700,max:1800},mare:{min:2200,max:5500}},
+    'Battipaglia': {centrale:{min:900,max:2000},semicentrale:{min:600,max:1500},periferica:{min:400,max:1000},mare:{min:700,max:1600}},
+    'Eboli':       {centrale:{min:800,max:1800},semicentrale:{min:550,max:1300},periferica:{min:380,max:900},mare:{min:600,max:1400}},
+    'Pontecagnano Faiano':{centrale:{min:950,max:2100},semicentrale:{min:650,max:1600},periferica:{min:450,max:1100},mare:{min:1200,max:3000}},
+    'Albanella':   {centrale:{min:600,max:1400},semicentrale:{min:450,max:1100},periferica:{min:320,max:800},mare:{min:500,max:1200}},
+    'Acciaroli':   {centrale:{min:1400,max:3200},semicentrale:{min:1000,max:2500},periferica:{min:700,max:1800},mare:{min:2500,max:6000}},
+    'Castellabate':{centrale:{min:1500,max:3500},semicentrale:{min:1100,max:2800},periferica:{min:800,max:2000},mare:{min:2800,max:7000}},
+  };
+
+  const prezziDB=OMI[comune]||OMI['default'];
+  const fascia=prezziDB[zona]||prezziDB['semicentrale'];
+  const prezzoMedBase=(fascia.min+fascia.max)/2;
+
+  /* ── Moltiplicatori tipo immobile ── */
+  const tipoM={appartamento:1.0,villa:1.35,attico:1.15,bilocale:0.95,monolocale:0.88,commerciale:0.82,ufficio:0.78};
+
+  /* ── Fattori correttivi (ogni entry: nome, delta%, categoria) ── */
+  const fattori=[];
+  const F=(nome,delta,cat,icona)=>fattori.push({nome,delta,cat,icona});
+
+  /* Stato conservativo */
+  const statoD={nuovo:+18,ottimo:+12,buono:0,discreto:-12,daristrutturare:-28};
+  const statoN={nuovo:'Nuovo/Da costruire',ottimo:'Ottimo / Ristrutturato',buono:'Buono / Manutenuto',discreto:'Discreto / Da aggiornare',daristrutturare:'Da ristrutturare'};
+  F('Stato: '+statoN[stato], statoD[stato]||0, 'conservazione', '🏗');
+
+  /* Anno */
+  const annoD={'post2010':+8,'2000-2010':+4,'1990-2000':0,'1970-1990':-5,'pre1970':-10};
+  const annoN={'post2010':'Post 2010 (recente)','2000-2010':'2000–2010','1990-2000':'1990–2000','1970-1990':'1970–1990','pre1970':'Pre 1970 (storico)'};
+  F('Epoca: '+annoN[anno], annoD[anno]||0, 'struttura', '📅');
+
+  /* Piano */
+  const pianoD={terra:-10,'1':-4,'2-3':0,'4-6':+4,alto:+7};
+  const pianoN={terra:'Piano terra / Seminterrato','1':'1° piano','2-3':'2°–3° piano','4-6':'4°–6° piano',alto:'Piano alto / Ultimo'};
+  F('Piano: '+pianoN[piano], pianoD[piano]||0, 'posizione', '🏢');
+
+  /* Ascensore */
+  if(piano!=='terra'&&piano!=='1'){F('Ascensore: '+(asc==='si'?'presente':'assente'), asc==='si'?+4:-3, 'dotazioni', '⬆️');}
+
+  /* Classe energetica */
+  const enD={A:+8,B:+5,C:0,D:-4,E:-7,FG:-12};
+  F('Classe energetica: '+energia, enD[energia]||0, 'efficienza', '⚡');
+
+  /* Esposizione */
+  const espD={sud:+4,'est-ovest':0,nord:-4};
+  const espN={sud:'Sud / Sud-Ovest','est-ovest':'Est–Ovest',nord:'Nord / Nord-Est'};
+  F('Esposizione: '+espN[espos], espD[espos]||0, 'luce', '☀️');
+
+  /* Garage */
+  if(garage==='doppio') F('Doppio garage', +9, 'pertinenze', '🚗');
+  else if(garage==='singolo') F('Box singolo', +6, 'pertinenze', '🚗');
+  else if(garage==='posto') F('Posto auto scoperto', +3, 'pertinenze', '🚗');
+  else F('Nessun parcheggio', -4, 'pertinenze', '🚗');
+
+  /* Terrazza */
+  if(terrazza==='grande') F('Terrazza ampia (>20m²)', +6, 'pertinenze', '🌿');
+  else if(terrazza==='balcone') F('Balcone(i)', +2, 'pertinenze', '🌿');
+  else F('Nessun balcone/terrazza', -3, 'pertinenze', '🌿');
+
+  /* Giardino */
+  if(giardino==='privato') F('Giardino privato', +8, 'pertinenze', '🌳');
+  else if(giardino==='condominiale') F('Giardino condominiale', +2, 'pertinenze', '🌳');
+
+  /* Piscina */
+  if(piscina==='si') F('Piscina presente', +12, 'extra', '🏊');
+
+  /* Vista mare */
+  if(mare==='fronte') F('Fronte mare', +22, 'location', '🌊');
+  else if(mare==='vista') F('Vista mare parziale', +10, 'location', '🌊');
+
+  /* Arredato */
+  if(arredato==='completo') F('Completamente arredato', +5, 'extra', '🛋');
+  else if(arredato==='parziale') F('Parzialmente arredato', +2, 'extra', '🛋');
+
+  /* Tipo immobile moltiplicatore */
+  const tipoMult=tipoM[tipo]||1.0;
+
+  /* ── Calcolo finale ── */
+  const totalDeltaPct=fattori.reduce((s,f)=>s+f.delta,0);
+  const correctionMult=1+(totalDeltaPct/100);
+  const prezzoMq=Math.round(prezzoMedBase*tipoMult*correctionMult);
+  const prezzoMqMin=Math.round(fascia.min*tipoMult*(1+(totalDeltaPct*0.7/100)));
+  const prezzoMqMax=Math.round(fascia.max*tipoMult*(1+(totalDeltaPct*1.3/100)));
+  const valMin=Math.round(prezzoMqMin*mqCalc/1000)*1000;
+  const valMed=Math.round(prezzoMq*mqCalc/1000)*1000;
+  const valMax=Math.round(prezzoMqMax*mqCalc/1000)*1000;
+  const valMedZona=Math.round(prezzoMedBase*mqCalc/1000)*1000;
+  const mqRefZona=Math.round(prezzoMedBase);
+  const mqRefComune=Math.round(prezzoMedBase*0.9);
+
+  /* Affitto: stima rendita lorda */
+  const affittoMese=op==='affitto'?Math.round(valMed*0.005/10)*10:0;
+
+  /* ── Vendibilità ── */
+  let vendScore=5;
+  if(stato==='ottimo'||stato==='nuovo') vendScore+=1.5;
+  else if(stato==='daristrutturare') vendScore-=1.5;
+  if(zona==='centrale') vendScore+=1;
+  if(zona==='periferica') vendScore-=0.5;
+  if(mare==='fronte') vendScore+=1.5;
+  if(garage!=='no') vendScore+=0.5;
+  if(energia==='A'||energia==='B') vendScore+=0.5;
+  if(energia==='FG') vendScore-=0.5;
+  vendScore=Math.max(1,Math.min(10,Math.round(vendScore*10)/10));
+  const mesiMercato=vendScore>=8?'1–2 mesi':vendScore>=6?'2–4 mesi':vendScore>=4?'4–7 mesi':'7–12 mesi';
+  const vendColor=vendScore>=7?'#15803D':vendScore>=5?'#B45309':'#DC2626';
+  const vendBg=vendScore>=7?'#F0FDF4':vendScore>=5?'#FFFBEB':'#FEF2F2';
+  const vendLabel=vendScore>=8?'Ottima':vendScore>=6?'Buona':vendScore>=4?'Nella media':'Difficile';
+
+  /* ── Rendita catastale stimata ── */
+  const coeffCat={appartamento:1.05,villa:1.05,attico:1.05,bilocale:1.05,monolocale:1.05,commerciale:1.1,ufficio:1.1};
+  const rendita=Math.round(valMed/((coeffCat[tipo]||1.05)*120));
+
+  /* ── Immobili simili portafoglio ── */
+  const simili=(D.immobili||[]).filter(im=>{
+    if(!im.mq) return false;
+    if(!['attivo','proposta'].includes((im.stato||'').toLowerCase())) return false;
+    if(comune&&im.comune&&im.comune.toLowerCase()!==comune.toLowerCase()) return false;
+    return Math.abs(parseFloat(im.mq)-mq)/mq<0.35;
+  }).slice(0,3);
+
+  /* ── BUILD RESULTS HTML ── */
+  const fmtV=v=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR',minimumFractionDigits:0,maximumFractionDigits:0}).format(v);
+  const pct=(v)=>(v>0?'<span style="color:#15803D;font-weight:700">+'+v+'%</span>':'<span style="color:#DC2626;font-weight:700">'+v+'%</span>');
+  const minPct=0; const maxPct=100;
+  const medPct=Math.round((valMed-valMin)/(valMax-valMin)*100)||50;
+
+  /* Gauge bar */
+  const gaugeHtml=`
+    <div class="card" style="overflow:hidden">
+      <div style="background:linear-gradient(135deg,#0F172A,#1E3A5F);padding:20px 22px">
+        <div style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.5);margin-bottom:6px">Stima di Mercato — ${comune||'Zona selezionata'}</div>
+        <div style="display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap;margin-bottom:18px">
+          <div>
+            <div style="font-size:2.3rem;font-weight:900;color:white;letter-spacing:-1px;line-height:1">${fmtV(valMed)}</div>
+            <div style="font-size:0.78rem;color:rgba(255,255,255,.55);margin-top:3px">Valore di mercato stimato · ${Math.round(prezzoMq).toLocaleString('it-IT')} €/m²</div>
+          </div>
+          <div style="display:flex;gap:14px">
+            <div style="text-align:center">
+              <div style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.45);margin-bottom:3px">Minimo</div>
+              <div style="font-size:1.1rem;font-weight:800;color:#FCA5A5">${fmtV(valMin)}</div>
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:rgba(255,255,255,.45);margin-bottom:3px">Massimo</div>
+              <div style="font-size:1.1rem;font-weight:800;color:#86EFAC">${fmtV(valMax)}</div>
+            </div>
+          </div>
+        </div>
+        <!-- Range bar -->
+        <div style="position:relative;height:12px;background:rgba(255,255,255,.12);border-radius:8px;margin-bottom:6px">
+          <div style="position:absolute;left:0;top:0;height:100%;width:100%;border-radius:8px;background:linear-gradient(90deg,#FCA5A5,#FCD34D,#86EFAC)"></div>
+          <div style="position:absolute;left:${medPct}%;top:50%;transform:translate(-50%,-50%);width:20px;height:20px;background:white;border-radius:50%;box-shadow:0 2px 8px rgba(0,0,0,.4);border:3px solid #1D4ED8"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.62rem;color:rgba(255,255,255,.4)">
+          <span>${fmtV(valMin)}</span><span style="color:rgba(255,255,255,.7);font-weight:700">Stima: ${fmtV(valMed)}</span><span>${fmtV(valMax)}</span>
+        </div>
+        ${op==='affitto'?`<div style="margin-top:14px;padding:10px 14px;background:rgba(255,255,255,.08);border-radius:9px;border:1px solid rgba(255,255,255,.15)">
+          <span style="font-size:0.7rem;color:rgba(255,255,255,.55);font-weight:700;text-transform:uppercase;letter-spacing:.8px">Canone locazione stimato</span>
+          <span style="font-size:1.2rem;font-weight:800;color:#FCD34D;margin-left:12px">${fmtV(affittoMese)}/mese</span>
+          <span style="font-size:0.68rem;color:rgba(255,255,255,.4);margin-left:8px">Rendita lorda: ~${Math.round(affittoMese*12/valMed*100*10)/10}%</span>
+        </div>`:''}
+      </div>
+    </div>`;
+
+  /* Price/mq comparison */
+  const benchHtml=`
+    <div class="card">
+      <div class="card-header" style="padding:10px 14px"><span class="card-title" style="font-size:0.82rem">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+        Benchmark €/m² di Zona
+      </span></div>
+      <div class="card-body" style="padding:12px 14px">
+        ${[
+          {lbl:'Questo immobile',val:Math.round(prezzoMq),highlight:true},
+          {lbl:'Media zona ('+zona+')',val:mqRefZona,highlight:false},
+          {lbl:'Media comune',val:mqRefComune,highlight:false},
+          {lbl:'Fascia minima zona',val:fascia.min,highlight:false},
+          {lbl:'Fascia massima zona',val:fascia.max,highlight:false},
+        ].map(b=>{
+          const barMax=fascia.max*1.2;
+          const barW=Math.round(b.val/barMax*100);
+          const barColor=b.highlight?'#2563EB':'#94A3B8';
+          return `<div style="margin-bottom:9px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px">
+              <span style="font-size:0.72rem;font-weight:${b.highlight?700:500};color:${b.highlight?'var(--text)':'var(--text3)'}">${b.lbl}</span>
+              <span style="font-size:0.78rem;font-weight:800;color:${b.highlight?'#1D4ED8':'var(--text2)'}">€${b.val.toLocaleString('it-IT')}/m²</span>
+            </div>
+            <div style="height:6px;background:var(--border);border-radius:4px;overflow:hidden">
+              <div style="height:100%;width:${barW}%;background:${barColor};border-radius:4px;transition:width .4s"></div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  /* Factors table */
+  const posF=fattori.filter(f=>f.delta>0);const negF=fattori.filter(f=>f.delta<0);const neuF=fattori.filter(f=>f.delta===0);
+  const factHtml=`
+    <div class="card">
+      <div class="card-header" style="padding:10px 14px"><span class="card-title" style="font-size:0.82rem">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+        Fattori Correttivi CMA
+      </span>
+      <span style="font-size:0.72rem;font-weight:700;color:${totalDeltaPct>=0?'#15803D':'#DC2626'}">${totalDeltaPct>=0?'+':''}${totalDeltaPct}% sul base</span>
+      </div>
+      <div class="card-body" style="padding:8px 14px">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          ${fattori.map(f=>`
+            <div style="display:flex;align-items:center;gap:8px;padding:5px 7px;border-radius:6px;background:${f.delta>0?'#F0FDF4':f.delta<0?'#FEF2F2':'#F8FAFC'}">
+              <span style="width:20px;text-align:center;font-size:0.85rem">${f.delta>0?'▲':f.delta<0?'▼':'—'}</span>
+              <span style="flex:1;font-size:0.76rem;color:var(--text2)">${f.nome}</span>
+              <span style="font-size:0.74rem;font-weight:800;color:${f.delta>0?'#15803D':f.delta<0?'#DC2626':'#94A3B8'};min-width:38px;text-align:right">${f.delta>0?'+':''}${f.delta}%</span>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+
+  /* Vendibility + extras */
+  const extrasHtml=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="card">
+        <div class="card-header" style="padding:10px 14px"><span class="card-title" style="font-size:0.82rem">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Vendibilità
+        </span></div>
+        <div class="card-body" style="padding:14px;text-align:center">
+          <div style="font-size:3rem;font-weight:900;color:${vendColor};line-height:1">${vendScore.toFixed(1)}</div>
+          <div style="font-size:0.7rem;color:var(--text3);margin:2px 0 10px">/ 10</div>
+          <div style="background:${vendBg};color:${vendColor};border-radius:8px;padding:4px 12px;font-size:0.75rem;font-weight:800;display:inline-block;margin-bottom:10px">${vendLabel}</div>
+          <div style="font-size:0.72rem;color:var(--text2);font-weight:600">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align:middle;margin-right:4px"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Tempo stimato: <strong>${mesiMercato}</strong>
+          </div>
+          <!-- Gauge bar -->
+          <div style="margin-top:12px;height:8px;background:var(--border);border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${vendScore*10}%;background:linear-gradient(90deg,#EF4444,#F59E0B,#22C55E);border-radius:4px;transition:width .5s"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header" style="padding:10px 14px"><span class="card-title" style="font-size:0.82rem">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Dati Fiscali Stimati
+        </span></div>
+        <div class="card-body" style="padding:12px 14px;font-size:0.78rem;color:var(--text2)">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            ${[
+              ['Rendita catastale',fmtV(rendita)+'/anno'],
+              ['IMU stimata (seconda casa)',fmtV(Math.round(rendita*1.05*10.6/1000)*100)+'/anno'],
+              ['Valore catastale IMU',fmtV(Math.round(rendita*1.05*160/1000)*1000)],
+              ['Imposta di registro (9%)',fmtV(Math.round(valMed*0.09/1000)*1000)],
+              ['Imposta di registro (2%)',fmtV(Math.round(valMed*0.02/1000)*1000)],
+            ].map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding-bottom:6px;border-bottom:1px solid var(--border)">
+              <span style="color:var(--text3)">${k}</span><span style="font-weight:700;color:var(--text)">${v}</span>
+            </div>`).join('')}
+          </div>
+          <div style="font-size:0.66rem;color:var(--text4);margin-top:8px">* Stime indicative. Verificare con il notaio.</div>
+        </div>
+      </div>
+    </div>`;
+
+  /* Simili portafoglio */
+  const similiHtml=simili.length?`
+    <div class="card">
+      <div class="card-header" style="padding:10px 14px"><span class="card-title" style="font-size:0.82rem">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+        Comparabili nel Portafoglio
+      </span></div>
+      <div class="card-body" style="padding:12px 14px">
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          ${simili.map(im=>{
+            const ri=(D.immobili||[]).indexOf(im);
+            const prezzo=im.prezzo?fmtV(parseFloat(im.prezzo)):'n.d.';
+            const pmq=im.prezzo&&im.mq?Math.round(parseFloat(im.prezzo)/parseFloat(im.mq)):0;
+            return`<div onclick="go('immobili')" style="flex:1;min-width:160px;background:#F8FAFC;border:1.5px solid var(--border);border-radius:10px;padding:10px 12px;cursor:pointer;transition:all .12s" onmouseover="this.style.borderColor='#2563EB'" onmouseout="this.style.borderColor='var(--border)'">
+              <div style="font-size:0.75rem;font-weight:700;color:var(--text);margin-bottom:3px">${im.tipo||'Immobile'}</div>
+              <div style="font-size:0.7rem;color:var(--text3);margin-bottom:5px">${im.comune||''} · ${im.mq||'?'}m²</div>
+              <div style="font-size:1rem;font-weight:900;color:#1D4ED8">${prezzo}</div>
+              ${pmq?`<div style="font-size:0.65rem;color:var(--text4);margin-top:2px">€${pmq.toLocaleString('it-IT')}/m²</div>`:''}
+              <div style="margin-top:6px;font-size:0.62rem;padding:2px 7px;background:#EFF6FF;color:#1D4ED8;border-radius:5px;display:inline-block;font-weight:700">${im.stato||''}</div>
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>`:
+    `<div class="card"><div class="card-body" style="text-align:center;color:var(--text4);font-size:0.8rem;padding:14px">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin-bottom:6px;display:block;margin:0 auto 6px"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      Nessun comparabile nel portafoglio per ${comune||'questa zona'}
+    </div></div>`;
+
+  /* ── BENCHMARK STORICO INTERNO ── */
+  const fmtV2=v=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR',minimumFractionDigits:0,maximumFractionDigits:0}).format(v);
+  const vendite3anni=(D.pratiche||[]).filter(p=>{
+    if(p.stato!=='vendita')return false;
+    if(p.immRef===undefined||p.immRef===null||p.immRef==='')return false;
+    const im=(D.immobili||[])[parseInt(p.immRef)];
+    if(!im||!im.mq)return false;
+    const mqSim=Math.abs(parseFloat(im.mq)-mq)/mq<0.4;
+    const cutoff=new Date(Date.now()-1095*24*60*60*1000).toISOString().slice(0,10);
+    const dataOk=!p.drogito||p.drogito>cutoff;
+    const comuneOk=!comune||!im.comune||im.comune.toLowerCase()===comune.toLowerCase();
+    return mqSim&&dataOk&&comuneOk;
+  }).map(p=>{
+    const im=(D.immobili||[])[parseInt(p.immRef)];
+    const pv=parseFloat(p.importo||p.importoProp||0);
+    const mqIm=parseFloat(im?im.mq:0);
+    return{tipo:im?(im.tipo||'Immobile'):'Immobile',comune:im?(im.comune||comune||'—'):comune||'—',
+           mq:mqIm,prezzoVendita:pv,pmq:mqIm>0?Math.round(pv/mqIm):0,
+           data:p.drogito||p.dataAcq||'',ref:im?(im.ref||p.immRef):p.immRef};
+  }).filter(v=>v.prezzoVendita>0&&v.pmq>0);
+
+  const mediaPmqStor=vendite3anni.length?Math.round(vendite3anni.reduce((s,v)=>s+v.pmq,0)/vendite3anni.length):0;
+  let benchmarkInternoHtml='';
+  if(vendite3anni.length>0){
+    const sc=mediaPmqStor>0?Math.round((prezzoMq-mediaPmqStor)/mediaPmqStor*100):0;
+    const scCol=sc>10?'#DC2626':sc>0?'#D97706':'#15803D';
+    const scLbl=sc>10?'Stima sopra la media storica':sc>0?'Leggermente sopra la media':sc>-10?'In linea con la media storica':'Sotto la media storica interna';
+    benchmarkInternoHtml=`<div class="card">
+      <div class="card-header" style="padding:10px 14px">
+        <span class="card-title" style="font-size:0.82rem">📊 Benchmark Storico Interno (${vendite3anni.length} vendite chiuse)</span>
+        <span style="font-size:0.7rem;font-weight:700;color:${scCol}">${sc>0?'+':''}${sc}% vs storico</span>
+      </div>
+      <div class="card-body" style="padding:12px 14px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:10px 12px;background:#F8FAFC;border-radius:8px">
+          <div style="text-align:center;flex:1">
+            <div style="font-size:0.62rem;color:var(--text4);text-transform:uppercase;letter-spacing:.5px">Media storica €/m²</div>
+            <div style="font-size:1.3rem;font-weight:900;color:var(--text)">${mediaPmqStor.toLocaleString('it-IT')}</div>
+          </div>
+          <div style="width:1px;height:40px;background:var(--border)"></div>
+          <div style="text-align:center;flex:1">
+            <div style="font-size:0.62rem;color:var(--text4);text-transform:uppercase;letter-spacing:.5px">Stima attuale</div>
+            <div style="font-size:1.3rem;font-weight:900;color:#1D4ED8">${Math.round(prezzoMq).toLocaleString('it-IT')}</div>
+          </div>
+          <div style="width:1px;height:40px;background:var(--border)"></div>
+          <div style="text-align:center;flex:1">
+            <div style="font-size:0.62rem;color:var(--text4);text-transform:uppercase;letter-spacing:.5px">Scostamento</div>
+            <div style="font-size:1.3rem;font-weight:900;color:${scCol}">${sc>0?'+':''}${sc}%</div>
+          </div>
+        </div>
+        <div style="font-size:0.72rem;color:${scCol};font-weight:600;margin-bottom:10px">${scLbl}</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${vendite3anni.slice(0,5).map(v=>`
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:white;border:1px solid var(--border);border-radius:7px;font-size:0.75rem">
+              <div><span style="font-weight:700;color:var(--text)">${v.tipo}</span>
+              <span style="color:var(--text3)"> · ${v.mq}m² · ${v.comune}</span></div>
+              <div style="text-align:right">
+                <div style="font-weight:800;color:#15803D">${fmtV2(v.prezzoVendita)}</div>
+                <div style="font-size:0.65rem;color:var(--text4)">€${v.pmq.toLocaleString('it-IT')}/m²${v.data?' · '+v.data:''}</div>
+              </div>
+            </div>`).join('')}
+        </div>
+        ${vendite3anni.length>5?`<div style="font-size:0.7rem;color:var(--text4);margin-top:6px;text-align:center">+ altre ${vendite3anni.length-5} vendite nel tuo archivio</div>`:''}
+      </div>
+    </div>`;
+  } else {
+    benchmarkInternoHtml=`<div class="card"><div class="card-body" style="text-align:center;color:var(--text4);font-size:0.8rem;padding:14px">
+      📋 Nessuna vendita chiusa simile nel portafoglio per ${comune||'questa zona'}<br>
+      <span style="font-size:0.7rem">Le vendite future appariranno qui come confronto storico.</span>
+    </div></div>`;
+  }
+
+  /* ── DATI DISTANZA DA IMMOBILE SIMILE (Overpass già calcolato) ── */
+  let fattoriDistHtml='';
+  const immConDist=(simili||[]).find(im=>im.distFarmacia||im.distSupermercato||im.distMare||im.distStazione);
+  if(immConDist){
+    const distRows=[
+      {k:'distMare',lbl:'Distanza mare',icn:'🌊'},
+      {k:'distStazione',lbl:'Stazione ferroviaria',icn:'🚂'},
+      {k:'distSupermercato',lbl:'Supermercato',icn:'🛒'},
+      {k:'distFarmacia',lbl:'Farmacia',icn:'💊'},
+      {k:'distScuole',lbl:'Scuole',icn:'🏫'},
+      {k:'distOspedale',lbl:'Ospedale',icn:'🏥'}
+    ].filter(r=>immConDist[r.k]).map(r=>{
+      const d=parseFloat(immConDist[r.k])||0;
+      const fmt=d<1000?Math.round(d)+'m':(Math.round(d/100)/10)+'km';
+      const col=d<500?'#15803D':d<2000?'#D97706':'#DC2626';
+      return`<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;font-size:0.75rem">
+        <span>${r.icn} ${r.lbl}</span><span style="font-weight:700;color:${col}">${fmt}</span></div>`;
+    }).join('');
+    if(distRows){
+      fattoriDistHtml=`<div class="card">
+        <div class="card-header" style="padding:8px 14px">
+          <span class="card-title" style="font-size:0.8rem">📍 Dati di Posizione (da Overpass)</span>
+          <span style="font-size:0.7rem;color:var(--text4)">Rif. ${immConDist.ref||'—'}</span>
+        </div>
+        <div class="card-body" style="padding:6px 14px 10px">${distRows}</div>
+      </div>`;
+    }
+  }
+  benchmarkInternoHtml=benchmarkInternoHtml+fattoriDistHtml;
+
+  /* ── CONFRONTO CON ANNUNCI DI MERCATO CAPTATI ──
+     Usa i dati che già raccogli con Osservati FB (con mq, quindi calcolabile
+     il €/mq) e Caccia Annunci (solo prezzo/zona, senza mq). Sono annunci di
+     TERZI ancora in vendita (prezzo di RICHIESTA, non di vendita reale come
+     il Benchmark Storico Interno) — un segnale complementare, non sostituisce
+     le vendite chiuse. */
+  const _normZona=s=>String(s||'').toLowerCase().trim();
+  const _zonaMatch=s=>{
+    const sz=_normZona(s);
+    if(!sz) return false;
+    if(!comune) return true;
+    const cz=_normZona(comune);
+    return sz.includes(cz)||cz.includes(sz);
+  };
+  const ossComparabili=(D.osservatiFb||[]).filter(o=>{
+    const p=parseFloat(o.prezzo)||0, mqO=parseFloat(o.mq)||0;
+    if(!p||!mqO) return false;
+    if(!_zonaMatch(o.zona)) return false;
+    return Math.abs(mqO-mq)/mq<0.4;
+  }).map(o=>({
+    fonte:'Osservato FB', titolo:(o.tipologia||'Immobile')+(o.venditore?' — '+o.venditore:''),
+    zona:o.zona||comune||'—', prezzo:parseFloat(o.prezzo)||0, mq:parseFloat(o.mq)||0,
+    pmq:Math.round((parseFloat(o.prezzo)||0)/(parseFloat(o.mq)||1)), data:o.creato?o.creato.slice(0,10):''
+  }));
+  const caComparabili=(D.cacciAnnunci||[]).filter(a=>{
+    const p=parseFloat(a.prezzo)||0;
+    if(!p) return false;
+    return _zonaMatch(a.zona);
+  }).map(a=>({
+    fonte:'Caccia Annunci', titolo:(a.titolo||'Annuncio').substring(0,60),
+    zona:a.zona||comune||'—', prezzo:parseFloat(a.prezzo)||0, mq:0, pmq:0, data:a.data||''
+  }));
+  const mercatoComparabili=[...ossComparabili,...caComparabili]
+    .sort((a,b)=>(b.data||'').localeCompare(a.data||''))
+    .slice(0,8);
+  const conMq=ossComparabili.filter(c=>c.pmq>0);
+  const mediaPmqMercato=conMq.length?Math.round(conMq.reduce((s,c)=>s+c.pmq,0)/conMq.length):0;
+
+  let annunciMercatoHtml='';
+  if(mercatoComparabili.length>0){
+    const scM=mediaPmqMercato>0?Math.round((prezzoMq-mediaPmqMercato)/mediaPmqMercato*100):null;
+    const scMCol=scM===null?'#64748B':scM>10?'#DC2626':scM>0?'#D97706':'#15803D';
+    annunciMercatoHtml=`<div class="card">
+      <div class="card-header" style="padding:10px 14px">
+        <span class="card-title" style="font-size:0.82rem">🔎 Confronto con Annunci di Mercato (${mercatoComparabili.length} captati in zona)</span>
+        ${scM!==null?`<span style="font-size:0.7rem;font-weight:700;color:${scMCol}">${scM>0?'+':''}${scM}% vs mercato</span>`:''}
+      </div>
+      <div class="card-body" style="padding:12px 14px">
+        <div style="font-size:0.68rem;color:var(--text4);margin-bottom:10px">Prezzi di <strong>richiesta</strong> di annunci di terzi ancora attivi (non vendite chiuse) — segnale complementare al benchmark storico.</div>
+        ${mediaPmqMercato>0?`<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:10px 12px;background:#F8FAFC;border-radius:8px">
+          <div style="text-align:center;flex:1">
+            <div style="font-size:0.62rem;color:var(--text4);text-transform:uppercase;letter-spacing:.5px">Media annunci €/m²</div>
+            <div style="font-size:1.3rem;font-weight:900;color:var(--text)">${mediaPmqMercato.toLocaleString('it-IT')}</div>
+          </div>
+          <div style="width:1px;height:40px;background:var(--border)"></div>
+          <div style="text-align:center;flex:1">
+            <div style="font-size:0.62rem;color:var(--text4);text-transform:uppercase;letter-spacing:.5px">Stima attuale</div>
+            <div style="font-size:1.3rem;font-weight:900;color:#1D4ED8">${Math.round(prezzoMq).toLocaleString('it-IT')}</div>
+          </div>
+        </div>`:''}
+        <div style="display:flex;flex-direction:column;gap:6px">
+          ${mercatoComparabili.map(c=>`
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:white;border:1px solid var(--border);border-radius:7px;font-size:0.75rem">
+              <div style="min-width:0">
+                <span style="font-size:0.62rem;font-weight:700;background:${c.fonte==='Osservato FB'?'#EFF6FF':'#FDF4FF'};color:${c.fonte==='Osservato FB'?'#1D4ED8':'#7C3AED'};padding:1px 6px;border-radius:5px;margin-right:5px">${c.fonte}</span>
+                <span style="font-weight:700;color:var(--text)">${c.titolo}</span>
+                <span style="color:var(--text3)"> · ${c.zona}${c.mq?' · '+c.mq+'m²':''}</span>
+              </div>
+              <div style="text-align:right;flex-shrink:0;margin-left:8px">
+                <div style="font-weight:800;color:#B45309">${fmtV2(c.prezzo)}</div>
+                ${c.pmq?`<div style="font-size:0.65rem;color:var(--text4)">€${c.pmq.toLocaleString('it-IT')}/m²</div>`:''}
+              </div>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+  } else {
+    annunciMercatoHtml=`<div class="card"><div class="card-body" style="text-align:center;color:var(--text4);font-size:0.8rem;padding:14px">
+      🔎 Nessun annuncio captato in zona per ${comune||'questa zona'}<br>
+      <span style="font-size:0.7rem">Gli annunci da Osservati FB e Caccia Annunci appariranno qui man mano che li raccogli.</span>
+    </div></div>`;
+  }
+
+  /* Show results */
+  const placeholder=document.getElementById('val-placeholder');
+  const results=document.getElementById('val-results');
+  if(placeholder)placeholder.style.display='none';
+  if(results){
+    results.style.display='flex';
+    results.innerHTML=gaugeHtml+benchHtml+factHtml+extrasHtml+benchmarkInternoHtml+annunciMercatoHtml+similiHtml;
+  }
+
+  /* Update dashboard quick widget too */
+  const omiMin=document.getElementById('omi-min');const omiMed=document.getElementById('omi-med');const omiMax=document.getElementById('omi-max');
+  if(omiMin)omiMin.textContent=fmtV(valMin);
+  if(omiMed)omiMed.textContent=fmtV(valMed);
+  if(omiMax)omiMax.textContent=fmtV(valMax);
+  const omiRes=document.getElementById('omi-result');const omiEmp=document.getElementById('omi-empty');
+  if(omiRes)omiRes.style.display='';if(omiEmp)omiEmp.style.display='none';
+}
+
+async function valGeneraReport(){
+  const gv=id=>(document.getElementById(id)||{}).value||'';
+  const comune=gv('val-comune')||'—';
+  const indirizzo=gv('val-indirizzo')||'';
+  const tipo=gv('val-tipo')||'appartamento';
+  const mq=gv('val-mq')||'—';
+  const zona=gv('val-zona')||'semicentrale';
+  const stato=gv('val-stato')||'buono';
+  const oggi=new Date().toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
+  const res=document.getElementById('val-results');
+  if(!res||res.style.display==='none'){showToast('Inserisci i dati per generare il report','','#D97706');return;}
+
+  /* Apro subito la finestra (con un messaggio di attesa) per evitare che il
+     browser blocchi il popup — la geolocalizzazione è asincrona e se
+     aprissimo la finestra DOPO l'attesa, alcuni browser la considerano
+     "non richiesta direttamente da un click" e la bloccano. */
+  const w=window.open('','_blank','width=900,height=1100');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Generazione report…</title></head><body style="font-family:Arial,sans-serif;padding:60px;color:#64748B;text-align:center">Generazione report in corso…</body></html>');
+  w.document.close();
+
+  /* ── Geolocalizzazione indirizzo (best-effort) ──
+     Uso Nominatim (OpenStreetMap, gratuito, nessuna chiave richiesta) per
+     trovare le coordinate, e una mappa statica leggera (solo un'immagine,
+     nessuna libreria da caricare) da inserire nel report stampabile.
+     Se il servizio non risponde, il report viene generato comunque senza
+     mappa — non deve mai bloccare la stampa. */
+  var mapHtml = '';
+  if(indirizzo || comune){
+    try{
+      var query = encodeURIComponent((indirizzo?indirizzo+', ':'')+comune+', Italia');
+      var geoResp = await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=1&q='+query);
+      var geoData = await geoResp.json();
+      if(geoData && geoData[0]){
+        var lat = geoData[0].lat, lon = geoData[0].lon;
+        var mapUrl = 'https://staticmap.openstreetmap.de/staticmap.php?center='+lat+','+lon+'&zoom=15&size=700x260&maptype=mapnik&markers='+lat+','+lon+',red-pushpin';
+        mapHtml = '<div class="section" style="padding-top:16px;padding-bottom:16px">'
+          + '<div class="sec-title">📍 Posizione</div>'
+          + '<img src="'+mapUrl+'" style="width:100%;border-radius:8px;border:1px solid #E8ECF4" alt="Mappa">'
+          + '<div style="font-size:11px;color:#94A3B8;margin-top:6px">'+(indirizzo?indirizzo+', ':'')+comune+'</div>'
+          + '</div>';
+      }
+    }catch(_geoErr){ /* nessuna mappa se il servizio non risponde: il report resta comunque valido */ }
+  }
+
+  w.document.open();
+  w.document.write(`<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>Valutazione Immobile — ${comune}</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Segoe UI',Arial,sans-serif;background:#fff;color:#111;font-size:13px;line-height:1.55;}
+    .page{max-width:820px;margin:0 auto;padding:0;}
+    .hero{background:linear-gradient(135deg,#0F172A,#1E3A5F,#1D4ED8);padding:38px 44px;color:white;}
+    .hero-agency{font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.55;margin-bottom:6px;}
+    .hero-title{font-size:26px;font-weight:900;letter-spacing:-0.5px;margin-bottom:4px;}
+    .hero-sub{font-size:13px;opacity:.65;}
+    .hero-row{display:flex;justify-content:space-between;align-items:flex-end;margin-top:18px}
+    .hero-badge{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;padding:8px 16px;text-align:center;}
+    .hero-badge-val{font-size:18px;font-weight:900;}
+    .hero-badge-lbl{font-size:9px;opacity:.55;text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+    .section{padding:22px 44px;border-bottom:1px solid #E8ECF4;}
+    .sec-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#64748B;margin-bottom:12px;}
+    table{width:100%;border-collapse:collapse;}
+    td,th{padding:7px 10px;font-size:12px;}
+    th{background:#F1F5F9;font-weight:700;text-align:left;font-size:11px;color:#475569;}
+    tr:nth-child(even) td{background:#F8FAFC;}
+    .badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:11px;font-weight:700;}
+    .footer{padding:18px 44px;font-size:10px;color:#94A3B8;display:flex;justify-content:space-between;border-top:1px solid #E8ECF4;}
+    @media print{.no-print{display:none!important}body{font-size:12px}}
+  </style></head><body><div class="page">
+    <div class="hero">
+      <div class="hero-agency">Le case dalla A allo Z.io — Agente: Vincenzo Carnicelli</div>
+      <div class="hero-title">Stima del Valore di Mercato</div>
+      <div class="hero-sub">Analisi comparativa di mercato (CMA) · ${oggi}</div>
+      <div class="hero-row">
+        <div>
+          <div style="font-size:10px;opacity:.5;letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Immobile</div>
+          <div style="font-size:14px;font-weight:700">${tipo.charAt(0).toUpperCase()+tipo.slice(1)} · ${indirizzo?indirizzo+' · ':''}${comune} · ${mq}m² · ${zona}</div>
+          <div style="font-size:12px;opacity:.6;margin-top:3px">Stato: ${stato} · Zona: ${zona}</div>
+        </div>
+        <div class="hero-badge">
+          <div class="hero-badge-val" style="color:#FCD34D">${document.querySelector('#val-results .card div[style*="2.3rem"]')?.textContent||'—'}</div>
+          <div class="hero-badge-lbl">Valore stimato</div>
+        </div>
+      </div>
+    </div>
+    ${mapHtml}
+    <div style="padding:22px 44px 0">${res.innerHTML}</div>
+    <div class="footer">
+      <span>Le case dalla A allo Z.io — Agenzia Immobiliare · Vincenzo Carnicelli</span>
+      <span>Documento generato il ${oggi} · Solo a scopo indicativo</span>
+    </div>
+  </div>
+  <script>window.onload=()=>setTimeout(()=>window.print(),400);<\/script>
+  </body></html>`);
+  w.document.close();
+}
+
+var _valComparabili = [];
+var _valEditIdx = null; // indice in D.valutazioni se stiamo modificando
+
+// ── Popola dropdown clienti ───────────────────────────────
+function valPopulaClienti() {
+  var sel = document.getElementById('val-cliente');
+  if (!sel) return;
+  var cur = sel.value;
+  sel.innerHTML = '<option value="">— Seleziona cliente —</option>';
+  (D.clienti || []).forEach(function(c) {
+    var opt = document.createElement('option');
+    opt.value = c.nome || '';
+    opt.textContent = (c.nome || '?') + (c.tipo ? ' (' + c.tipo + ')' : '');
+    sel.appendChild(opt);
+  });
+  if (cur) sel.value = cur;
+}
+
+// ── Toggle archivio ──────────────────────────────────────
+function valToggleArchivio() {
+  var list = document.getElementById('val-archivio-list');
+  var chev = document.getElementById('val-archivio-chevron');
+  if (!list) return;
+  var open = list.style.display === 'block';
+  list.style.display = open ? 'none' : 'block';
+  if (chev) chev.style.transform = open ? '' : 'rotate(180deg)';
+  if (!open) valRenderArchivio();
+}
+
+// ── Render lista valutazioni salvate ─────────────────────
+function valRenderArchivio() {
+  var badge = document.getElementById('val-archivio-badge');
+  var list  = document.getElementById('val-archivio-list');
+  if (!list) return;
+  var vals = D.valutazioni || [];
+  if (badge) badge.textContent = vals.length;
+  if (vals.length === 0) {
+    list.innerHTML = '<p style="color:var(--text3);font-size:0.82rem;padding:8px 0">Nessuna valutazione salvata.</p>';
+    return;
+  }
+  var html = '<div style="display:flex;flex-direction:column;gap:8px;padding-top:4px">';
+  vals.forEach(function(v, i) {
+    var archiviata = v.archiviata ? true : false;
+    var color = archiviata ? 'var(--text4)' : 'var(--text)';
+    html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:' +
+      (archiviata ? 'var(--bg3)' : 'var(--bg2)') +
+      ';border:1px solid var(--border);border-radius:10px;opacity:' + (archiviata ? '.7' : '1') + '">' +
+      '<div style="flex:1;min-width:0">' +
+        '<div style="font-size:0.82rem;font-weight:700;color:' + color + '">' +
+          (archiviata ? '📦 ' : '📋 ') +
+          (v.titolo || 'Valutazione senza titolo') +
+        '</div>' +
+        '<div style="font-size:0.72rem;color:var(--text3);margin-top:2px">' +
+          (v.cliente ? '👤 ' + v.cliente + ' &nbsp;·&nbsp; ' : '') +
+          '📅 ' + (v.data || '—') +
+          (v.comune ? ' &nbsp;·&nbsp; ' + v.comune : '') +
+          (v.stimaMin ? ' &nbsp;·&nbsp; €' + v.stimaMin.toLocaleString('it-IT') + '–€' + v.stimaMax.toLocaleString('it-IT') : '') +
+        '</div>' +
+      '</div>' +
+      '<div style="display:flex;gap:6px;flex-shrink:0">' +
+        '<button onclick="valCarica(' + i + ')" class="btn btn-outline btn-sm" title="Carica e modifica">✏️ Modifica</button>' +
+        (archiviata
+          ? '<button onclick="valRiattiva(' + i + ')" class="btn btn-sm" style="background:var(--green-pale);color:var(--green-l);border:1px solid var(--green-l)" title="Riattiva">♻️ Riattiva</button>'
+          : '<button onclick="valArchivia(' + i + ')" class="btn btn-sm" style="background:var(--gold-pale);color:var(--gold);border:1px solid #FDE68A" title="Archivia">📦 Archivia</button>') +
+        '<button onclick="valElimina(' + i + ')" class="btn btn-sm" style="background:var(--red-pale);color:var(--red-l);border:1px solid #FECACA" title="Elimina">🗑</button>' +
+      '</div>' +
+    '</div>';
+  });
+  html += '</div>';
+  list.innerHTML = html;
+}
+
+// ── Salva valutazione corrente ───────────────────────────
+function valSalva() {
+  var cliente = (document.getElementById('val-cliente') || {}).value || '';
+  var titolo  = (document.getElementById('val-titolo')  || {}).value || '';
+  var comune  = (document.getElementById('val-comune')  || {}).value || '';
+  var mq      = parseFloat((document.getElementById('val-mq') || {}).value) || 0;
+  var tipo    = (document.getElementById('val-tipo') || {}).value || '';
+  var op      = (document.getElementById('val-op')  || {}).value || 'vendita';
+
+  if (!cliente) { if (typeof showToast === 'function') showToast('Seleziona un cliente prima di salvare.','','#DC2626'); return; }
+  if (!titolo)  { if (typeof showToast === 'function') showToast('Inserisci un titolo per identificare la valutazione.','','#DC2626'); return; }
+  if (!mq)      { if (typeof showToast === 'function') showToast('Inserisci la superficie dell\'immobile.','','#DC2626'); return; }
+
+  // Raccoglie stima corrente dal DOM
+  var stimaMin = 0, stimaMax = 0;
+  var r1 = document.querySelector('#val-results [data-stima-min]');
+  if (r1) { stimaMin = parseInt(r1.dataset.stimaMin) || 0; stimaMax = parseInt(r1.dataset.stimaMax) || 0; }
+
+  // Raccoglie tutti i parametri form
+  var gv = function(id) { return ((document.getElementById(id) || {}).value || ''); };
+  var valutazione = {
+    id:        Date.now(),
+    data:      new Date().toLocaleDateString('it-IT'),
+    dataISO:   new Date().toISOString().slice(0,10),
+    cliente:   cliente,
+    titolo:    titolo,
+    comune:    comune,
+    mq:        mq,
+    tipo:      tipo,
+    op:        op,
+    zona:      gv('val-zona'),
+    stato:     gv('val-stato'),
+    anno:      gv('val-anno'),
+    piano:     gv('val-piano'),
+    energia:   gv('val-energia'),
+    espos:     gv('val-espos'),
+    asc:       gv('val-asc'),
+    garage:    gv('val-garage'),
+    terrazza:  gv('val-terrazza'),
+    giardino:  gv('val-giardino'),
+    piscina:   gv('val-piscina'),
+    mare:      gv('val-mare'),
+    arredato:  gv('val-arredato'),
+    stimaMin:  stimaMin,
+    stimaMax:  stimaMax,
+    comparabili: JSON.parse(JSON.stringify(_valComparabili)),
+    archiviata: false,
+    note: ''
+  };
+
+  if (!Array.isArray(D.valutazioni)) D.valutazioni = [];
+
+  if (_valEditIdx !== null && D.valutazioni[_valEditIdx]) {
+    D.valutazioni[_valEditIdx] = Object.assign(D.valutazioni[_valEditIdx], valutazione);
+    if (typeof showToast === 'function') showToast('✓ Valutazione aggiornata!', '', '#059669');
+  } else {
+    D.valutazioni.unshift(valutazione);
+    _valEditIdx = 0;
+    if (typeof showToast === 'function') showToast('✓ Valutazione salvata!', '', '#059669');
+  }
+  saveD();
+  var badge = document.getElementById('val-archivio-badge');
+  if (badge) badge.textContent = D.valutazioni.length;
+}
+
+// ── Carica valutazione salvata nel form ─────────────────
+function valCarica(idx) {
+  var v = (D.valutazioni || [])[idx];
+  if (!v) return;
+  _valEditIdx    = idx;
+  _valComparabili = JSON.parse(JSON.stringify(v.comparabili || []));
+
+  var sv = function(id, val) { var el = document.getElementById(id); if (el) el.value = val || ''; };
+  sv('val-cliente', v.cliente);
+  sv('val-titolo',  v.titolo);
+  sv('val-comune',  v.comune);
+  sv('val-mq',      v.mq);
+  sv('val-tipo',    v.tipo);
+  sv('val-op',      v.op);
+  sv('val-zona',    v.zona);
+  sv('val-stato',   v.stato);
+  sv('val-anno',    v.anno);
+  sv('val-piano',   v.piano);
+  sv('val-energia', v.energia);
+  sv('val-espos',   v.espos);
+  sv('val-asc',     v.asc);
+  sv('val-garage',  v.garage);
+  sv('val-terrazza',v.terrazza);
+  sv('val-giardino',v.giardino);
+  sv('val-piscina', v.piscina);
+  sv('val-mare',    v.mare);
+  sv('val-arredato',v.arredato);
+
+  valRenderComparabili();
+  calcValutazione();
+  valCalcolaStatsReali();
+  if (typeof showToast === 'function') showToast('Valutazione caricata — puoi modificarla e risalvarla.', '', '#2563EB');
+}
+
+// ── Archivia / Riattiva / Elimina ────────────────────────
+function valArchivia(idx) {
+  if (!D.valutazioni[idx]) return;
+  D.valutazioni[idx].archiviata = true;
+  saveD();
+  valRenderArchivio();
+  if (typeof showToast === 'function') showToast('Valutazione archiviata.', '', '#B45309');
+}
+function valRiattiva(idx) {
+  if (!D.valutazioni[idx]) return;
+  D.valutazioni[idx].archiviata = false;
+  saveD();
+  valRenderArchivio();
+  if (typeof showToast === 'function') showToast('Valutazione riattivata.', '', '#059669');
+}
+function valElimina(idx) {
+  if (!confirm('Eliminare questa valutazione? L\'operazione è irreversibile.')) return;
+  D.valutazioni.splice(idx, 1);
+  if (_valEditIdx === idx) _valEditIdx = null;
+  saveD();
+  valRenderArchivio();
+  if (typeof showToast === 'function') showToast('Valutazione eliminata.', '', '#DC2626');
+}
+
+// ── Reset form ───────────────────────────────────────────
+var _valResetOrig = null;
+(function(){
+  // wrappa il valReset originale
+  var _orig = window.valReset;
+  window.valReset = function() {
+    _valEditIdx = null;
+    _valComparabili = [];
+    var cl = document.getElementById('val-cliente'); if (cl) cl.value = '';
+    var ti = document.getElementById('val-titolo');  if (ti) ti.value = '';
+    valRenderComparabili();
+    if (typeof _orig === 'function') _orig();
+    valCalcolaStatsReali();
+  };
+})();
+
+// ── Aggiungi comparabile manuale ─────────────────────────
+function valAggiungiComparabile() {
+  // Mostra mini-form inline
+  var container = document.getElementById('val-comparabili-list');
+  if (!container) return;
+  var id = 'vcf-' + Date.now();
+  var formHtml =
+    '<div id="' + id + '" style="background:var(--brand-pale);border:1.5px solid #BFDBFE;border-radius:12px;padding:14px;margin-bottom:10px">' +
+      '<div style="font-size:0.75rem;font-weight:700;color:var(--brand);margin-bottom:10px">📋 Nuovo Comparabile (da portale esterno)</div>' +
+      '<div style="background:linear-gradient(135deg,#EEF2FF,#F5F3FF);border:1.5px solid #C7D2FE;border-radius:12px;padding:12px;margin-bottom:12px">' +
+        '<div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">' +
+          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6366F1" stroke-width="2.2"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4-6.3-4.6L5.7 21l2.3-7.4-6-4.6h7.6z"/></svg>' +
+          '<span style="font-weight:800;font-size:0.84rem;color:#4338CA">Cattura veloce con AI</span>' +
+        '</div>' +
+        '<div style="font-size:0.72rem;color:#6366F1;margin-bottom:8px;line-height:1.4">Fai uno screenshot dell\'annuncio (Immobiliare.it, Idealista, Casa.it…) e/o incolla il testo — l\'AI compila i campi qui sotto.</div>' +
+        '<textarea class="finput" id="' + id + '-ai-testo" rows="2" placeholder="Incolla qui il testo dell\'annuncio…" style="margin-bottom:8px;width:100%;box-sizing:border-box;font-size:0.78rem"></textarea>' +
+        '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+          '<label for="' + id + '-ai-foto" style="display:inline-flex;align-items:center;gap:6px;background:#fff;border:1.5px solid #C7D2FE;border-radius:8px;padding:7px 11px;cursor:pointer;font-size:0.76rem;font-weight:700;color:#4338CA">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>' +
+            'Allega screenshot' +
+          '</label>' +
+          '<input type="file" id="' + id + '-ai-foto" accept="image/*" style="display:none" onchange="valCatturaFotoSel(\'' + id + '\',this)">' +
+          '<button type="button" onclick="valAnalizzaComparabileAI(\'' + id + '\')" id="' + id + '-ai-btn" style="flex:1;min-width:140px;background:linear-gradient(135deg,#6366F1,#4F46E5);color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:800;cursor:pointer;font-size:0.8rem;display:inline-flex;align-items:center;justify-content:center;gap:6px">' +
+            '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 2l2.4 7.4H22l-6 4.6 2.3 7.4-6.3-4.6L5.7 21l2.3-7.4-6-4.6h7.6z"/></svg>' +
+            'Analizza con AI' +
+          '</button>' +
+        '</div>' +
+        '<div id="' + id + '-ai-status" style="display:none;font-size:0.72rem;margin-top:7px"></div>' +
+        '<div id="' + id + '-ai-preview" style="display:none;margin-top:7px"></div>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">' +
+        '<div><label style="font-size:0.68rem;color:var(--text3);display:block;margin-bottom:3px">Tipo</label>' +
+          '<select id="' + id + '-tipo" style="width:100%;padding:6px;border-radius:7px;border:1px solid var(--border);font-size:0.78rem">' +
+          '<option>Appartamento</option><option>Villa / Indipendente</option><option>Attico / Mansarda</option>' +
+          '<option>Locale Commerciale</option><option>Ufficio</option></select></div>' +
+        '<div><label style="font-size:0.68rem;color:var(--text3);display:block;margin-bottom:3px">Comune</label>' +
+          '<input id="' + id + '-comune" list="dl-comuni-sa" placeholder="Es. Agropoli" style="width:100%;padding:6px;border-radius:7px;border:1px solid var(--border);font-size:0.78rem;box-sizing:border-box"></div>' +
+        '<div><label style="font-size:0.68rem;color:var(--text3);display:block;margin-bottom:3px">Zona</label>' +
+          '<select id="' + id + '-zona" style="width:100%;padding:6px;border-radius:7px;border:1px solid var(--border);font-size:0.78rem">' +
+          '<option value="centrale">Centrale</option><option value="semicentrale" selected>Semicentrale</option>' +
+          '<option value="periferica">Periferica</option><option value="mare">Mare</option></select></div>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">' +
+        '<div><label style="font-size:0.68rem;color:var(--text3);display:block;margin-bottom:3px">Superficie (m²)</label>' +
+          '<input id="' + id + '-mq" type="number" placeholder="80" style="width:100%;padding:6px;border-radius:7px;border:1px solid var(--border);font-size:0.78rem;box-sizing:border-box"></div>' +
+        '<div><label style="font-size:0.68rem;color:var(--text3);display:block;margin-bottom:3px">Prezzo richiesto (€)</label>' +
+          '<input id="' + id + '-prezzo" type="number" placeholder="150000" style="width:100%;padding:6px;border-radius:7px;border:1px solid var(--border);font-size:0.78rem;box-sizing:border-box"></div>' +
+      '</div>' +
+      '<div style="margin-bottom:8px"><label style="font-size:0.68rem;color:var(--text3);display:block;margin-bottom:3px">URL annuncio (Immobiliare.it / Casa.it / Idealista.it…)</label>' +
+        '<input id="' + id + '-url" placeholder="https://www.immobiliare.it/annunci/..." style="width:100%;padding:6px;border-radius:7px;border:1px solid var(--border);font-size:0.78rem;box-sizing:border-box"></div>' +
+      '<div style="margin-bottom:10px"><label style="font-size:0.68rem;color:var(--text3);display:block;margin-bottom:3px">Note (stato, piano, caratteristiche rilevanti)</label>' +
+        '<input id="' + id + '-note" placeholder="Es. Piano 3°, ristrutturato, garage incluso" style="width:100%;padding:6px;border-radius:7px;border:1px solid var(--border);font-size:0.78rem;box-sizing:border-box"></div>' +
+      '<div style="display:flex;gap:8px">' +
+        '<button onclick="valConfermaComparabile(\'' + id + '\')" class="btn btn-primary btn-sm">✓ Conferma</button>' +
+        '<button onclick="document.getElementById(\'' + id + '\').remove();delete _valCatturaFoto[\'' + id + '\'];" class="btn btn-outline btn-sm">Annulla</button>' +
+      '</div>' +
+    '</div>';
+  container.insertAdjacentHTML('beforeend', formHtml);
+}
+
+/* ═══ CATTURA COMPARABILE CON AI ═══
+   Stessa logica di ossAnalizzaAI (Osservati FB), adattata ai campi del
+   comparabile. Foto tenuta per-form (keyed by id) perché il form è
+   inline e potenzialmente più istanze potrebbero coesistere. */
+var _valCatturaFoto = {};
+
+function valCatturaFotoSel(id, inp){
+  if(!inp || !inp.files || !inp.files[0]) return;
+  var file = inp.files[0];
+  if(file.size > 8*1024*1024){ _valCatturaStatus(id,'Immagine troppo grande (max 8 MB).','#DC2626'); return; }
+  var reader = new FileReader();
+  reader.onload = function(e){
+    _valCatturaFoto[id] = String(e.target.result);
+    var prev = document.getElementById(id+'-ai-preview');
+    if(prev){ prev.style.display='block';
+      prev.innerHTML='<img src="'+_valCatturaFoto[id]+'" style="max-width:110px;max-height:110px;border-radius:8px;border:1.5px solid #C7D2FE;object-fit:cover"> '
+        +'<span style="font-size:0.72rem;color:#4338CA;font-weight:700;vertical-align:top">Screenshot pronto per l\'analisi</span>'; }
+  };
+  reader.readAsDataURL(file);
+}
+
+function _valCatturaStatus(id, msg, color){
+  var s=document.getElementById(id+'-ai-status');
+  if(!s) return;
+  s.style.display='block'; s.style.color=color||'#6366F1'; s.textContent=msg;
+}
+
+function valAnalizzaComparabileAI(id){
+  var testoEl=document.getElementById(id+'-ai-testo');
+  var testo = testoEl ? testoEl.value.trim() : '';
+  var foto = _valCatturaFoto[id];
+  if(!testo && !foto){
+    _valCatturaStatus(id,'Incolla il testo dell\'annuncio o allega uno screenshot prima di analizzare.','#DC2626');
+    return;
+  }
+  var btn=document.getElementById(id+'-ai-btn');
+  if(btn){ btn.disabled=true; btn.style.opacity='.6'; }
+  _valCatturaStatus(id,'Analisi in corso con AI…','#6366F1');
+
+  var prompt='Sei un assistente immobiliare italiano. Analizza questo annuncio immobiliare comparabile '
+    +'(screenshot o testo da Immobiliare.it, Idealista.it, Casa.it o simili) ed ESTRAI i dati per un confronto di mercato. '
+    +'NON inventare: se un dato non c\'è, lascialo come stringa vuota. '
+    +'Prezzo e superficie devono essere solo numeri (senza € o punti). '
+    +'Rispondi SOLO con JSON valido, senza testo prima o dopo, in questo formato:\n'
+    +'{"tipo":"<Appartamento|Villa / Indipendente|Attico / Mansarda|Locale Commerciale|Ufficio>",'
+    +'"comune":"<comune o città>","zona":"<centrale|semicentrale|periferica|mare, la più plausibile>",'
+    +'"mq":"<superficie in mq, solo numero>","prezzo":"<solo numero>","url":"<URL annuncio se presente nel testo>",'
+    +'"note":"<piano, stato, dotazioni rilevanti — max 2 frasi>"}';
+
+  var content=[];
+  if(foto){
+    var parts=foto.split(',');
+    var meta=parts[0]||''; var b64=parts[1]||'';
+    var mt='image/jpeg';
+    var mm=meta.match(/data:([^;]+)/); if(mm) mt=mm[1];
+    content.push({type:'image',source:{type:'base64',media_type:mt,data:b64}});
+  }
+  content.push({type:'text',text: prompt + (testo? '\n\nTESTO ANNUNCIO:\n'+testo.substring(0,2000) : '\n\n(Nessun testo: estrai i dati dallo screenshot allegato.)')});
+
+  var payload={
+    model:(typeof aiGetConfig==='function'&&aiGetConfig().model)||'claude-sonnet-4-6',
+    max_tokens:700,
+    messages:[{role:'user',content:content}]
+  };
+
+  callClaude(payload).then(function(data){
+    var txt=''; try{ txt=(data.content||[]).map(function(b){return b.text||'';}).join('').trim(); }catch(_e){}
+    var j=null; try{ j=JSON.parse(txt.replace(/```json|```/g,'').trim()); }catch(_e){}
+    if(!j){ _valCatturaStatus(id,'Non sono riuscito a leggere l\'annuncio con certezza. Compila i campi a mano.','#DC2626'); if(btn){btn.disabled=false;btn.style.opacity='1';} return; }
+    var set=function(sfx,val){var el=document.getElementById(id+'-'+sfx);if(el&&val!==undefined&&val!=='')el.value=val;};
+    if(j.tipo) set('tipo', j.tipo);
+    set('comune', j.comune);
+    if(j.zona){
+      var zEl=document.getElementById(id+'-zona');
+      if(zEl && ['centrale','semicentrale','periferica','mare'].indexOf(j.zona)>-1) zEl.value=j.zona;
+    }
+    set('mq', j.mq);
+    set('prezzo', j.prezzo);
+    set('url', j.url);
+    set('note', j.note);
+    _valCatturaStatus(id,'✓ Dati estratti! Controlla i campi qui sotto e conferma.','#15803D');
+    if(btn){btn.disabled=false;btn.style.opacity='1';}
+  }).catch(function(err){
+    _valCatturaStatus(id,'Errore AI: '+(err&&err.message?err.message:'riprova')+'. Puoi compilare a mano.','#DC2626');
+    if(btn){btn.disabled=false;btn.style.opacity='1';}
+  });
+}
+
+function valConfermaComparabile(id) {
+  var g = function(sfx) { return ((document.getElementById(id + '-' + sfx) || {}).value || '').trim(); };
+  var mq     = parseFloat(g('mq'))     || 0;
+  var prezzo = parseFloat(g('prezzo')) || 0;
+  if (!mq || !prezzo) { alert('Inserisci almeno superficie e prezzo.'); return; }
+  var comp = {
+    tipo:    g('tipo')   || 'Appartamento',
+    comune:  g('comune') || '',
+    zona:    g('zona')   || 'semicentrale',
+    mq:      mq,
+    prezzo:  prezzo,
+    priceMq: Math.round(prezzo / mq),
+    url:     g('url')    || '',
+    note:    g('note')   || '',
+    data:    new Date().toLocaleDateString('it-IT')
+  };
+  _valComparabili.push(comp);
+  document.getElementById(id).remove();
+  delete _valCatturaFoto[id];
+  valRenderComparabili();
+  calcValutazione();
+}
+
+function valRimuoviComparabile(idx) {
+  _valComparabili.splice(idx, 1);
+  valRenderComparabili();
+  calcValutazione();
+}
+
+function valRenderComparabili() {
+  var container = document.getElementById('val-comparabili-list');
+  var summary   = document.getElementById('val-comparabili-summary');
+  if (!container) return;
+
+  if (_valComparabili.length === 0) {
+    container.innerHTML = '<p style="color:var(--text3);font-size:0.82rem;margin:0">Nessun comparabile inserito. Cerca su Immobiliare.it o Casa.it e aggiungi manualmente gli immobili simili.</p>';
+    if (summary) summary.innerHTML = '';
+    return;
+  }
+
+  var html = '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:0.78rem">' +
+    '<thead><tr style="background:var(--bg3)">' +
+    '<th style="padding:7px 10px;text-align:left;font-weight:700">Tipo</th>' +
+    '<th style="padding:7px 10px;text-align:left;font-weight:700">Comune/Zona</th>' +
+    '<th style="padding:7px 10px;text-align:right;font-weight:700">m²</th>' +
+    '<th style="padding:7px 10px;text-align:right;font-weight:700">Prezzo €</th>' +
+    '<th style="padding:7px 10px;text-align:right;font-weight:700">€/m²</th>' +
+    '<th style="padding:7px 10px;text-align:left;font-weight:700">Note / Fonte</th>' +
+    '<th style="padding:7px 10px;text-align:center;font-weight:700"></th>' +
+    '</tr></thead><tbody>';
+
+  _valComparabili.forEach(function(c, i) {
+    html += '<tr style="border-bottom:1px solid var(--border)">' +
+      '<td style="padding:7px 10px">' + c.tipo + '</td>' +
+      '<td style="padding:7px 10px">' + (c.comune || '—') + (c.zona ? ' <span style="font-size:0.68rem;color:var(--text3)">(' + c.zona + ')</span>' : '') + '</td>' +
+      '<td style="padding:7px 10px;text-align:right">' + c.mq + '</td>' +
+      '<td style="padding:7px 10px;text-align:right;font-weight:700">€' + c.prezzo.toLocaleString('it-IT') + '</td>' +
+      '<td style="padding:7px 10px;text-align:right;color:var(--brand);font-weight:700">€' + c.priceMq.toLocaleString('it-IT') + '</td>' +
+      '<td style="padding:7px 10px;max-width:200px">' +
+        (c.url ? '<a href="' + c.url + '" target="_blank" rel="noopener" style="color:var(--brand);font-size:0.72rem">🔗 Vedi annuncio</a>' : '') +
+        (c.note ? '<div style="color:var(--text3);font-size:0.7rem;margin-top:2px">' + c.note + '</div>' : '') +
+      '</td>' +
+      '<td style="padding:7px 10px;text-align:center">' +
+        '<button onclick="valRimuoviComparabile(' + i + ')" style="background:none;border:none;color:var(--red-l);cursor:pointer;font-size:1rem" title="Rimuovi">✕</button>' +
+      '</td>' +
+    '</tr>';
+  });
+  html += '</tbody></table></div>';
+  container.innerHTML = html;
+
+  // Sommario statistiche comparabili
+  if (summary && _valComparabili.length >= 2) {
+    var prices = _valComparabili.map(function(c) { return c.priceMq; });
+    var avg    = Math.round(prices.reduce(function(a,b){return a+b;},0) / prices.length);
+    var min    = Math.min.apply(null, prices);
+    var max    = Math.max.apply(null, prices);
+    summary.innerHTML =
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">' +
+      _statBox('Media €/m²', '€' + avg.toLocaleString('it-IT'), 'var(--brand)', 'var(--brand-pale)') +
+      _statBox('Min €/m²',   '€' + min.toLocaleString('it-IT'), 'var(--green-l)', 'var(--green-pale)') +
+      _statBox('Max €/m²',   '€' + max.toLocaleString('it-IT'), 'var(--gold-l)', 'var(--gold-pale)') +
+      _statBox('N. comparabili', _valComparabili.length, 'var(--text2)', 'var(--bg3)') +
+      '</div>';
+  } else if (summary) {
+    summary.innerHTML = '';
+  }
+}
+
+function _statBox(label, value, color, bg) {
+  return '<div style="background:' + bg + ';border-radius:10px;padding:10px 16px;min-width:100px;text-align:center">' +
+    '<div style="font-size:0.65rem;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:3px">' + label + '</div>' +
+    '<div style="font-size:1.1rem;font-weight:900;color:' + color + '">' + value + '</div>' +
+    '</div>';
+}
+
+// ── Statistiche reali dal database ───────────────────────
+function valCalcolaStatsReali() {
+  var container = document.getElementById('val-stats-reali');
+  if (!container) return;
+
+  var comune = ((document.getElementById('val-comune') || {}).value || '').trim().toLowerCase();
+  var tipo   = ((document.getElementById('val-tipo')   || {}).value || '').toLowerCase();
+  var op     = ((document.getElementById('val-op')     || {}).value || 'vendita').toLowerCase();
+
+  // Filtro immobili del database con prezzo e mq
+  var tutti = (D.immobili || []).filter(function(im) {
+    return parseFloat(im.prezzo) > 0 && parseFloat(im.mq) > 0;
+  });
+
+  if (tutti.length === 0) {
+    container.innerHTML = '<p style="color:var(--text3);font-size:0.82rem">Nessun immobile con prezzo e superficie nel tuo database. Aggiungi immobili nella sezione <strong>Immobili</strong> per vedere le statistiche reali.</p>';
+    return;
+  }
+
+  // Calcola €/mq per tutti
+  var allPriceMq = tutti.map(function(im) {
+    return { priceMq: Math.round(parseFloat(im.prezzo) / parseFloat(im.mq)), im: im };
+  });
+
+  // Filtra per comune (se specificato)
+  var filtrati = comune
+    ? allPriceMq.filter(function(x) { return (x.im.comune || '').toLowerCase().indexOf(comune) >= 0; })
+    : allPriceMq;
+
+  // Filtra per tipo simile
+  var filtratiTipo = tipo
+    ? filtrati.filter(function(x) { return (x.im.tipo || '').toLowerCase().indexOf(tipo.split(' ')[0]) >= 0; })
+    : filtrati;
+
+  var html = '';
+
+  // Blocco 1: database completo
+  html += '<div style="font-size:0.78rem;font-weight:700;color:var(--text2);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border)">' +
+    '📊 Tutto il database (' + allPriceMq.length + ' immobili con prezzo e superficie)</div>';
+  html += _valStatsBlock(allPriceMq);
+
+  // Blocco 2: per comune
+  if (comune && filtrati.length > 0) {
+    html += '<div style="font-size:0.78rem;font-weight:700;color:var(--text2);margin:14px 0 8px;padding-top:12px;border-top:1px solid var(--border)">' +
+      '📍 Solo comune "' + comune + '" (' + filtrati.length + ' immobili)</div>';
+    html += _valStatsBlock(filtrati);
+  } else if (comune && filtrati.length === 0) {
+    html += '<div style="font-size:0.78rem;color:var(--text3);margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">' +
+      '📍 Nessun immobile nel tuo database per il comune "' + comune + '". Aggiungi immobili locali per avere statistiche specifiche.</div>';
+  }
+
+  // Blocco 3: tipo simile nel comune
+  if (comune && tipo && filtratiTipo.length > 0 && filtratiTipo.length !== filtrati.length) {
+    html += '<div style="font-size:0.78rem;font-weight:700;color:var(--text2);margin:14px 0 8px;padding-top:12px;border-top:1px solid var(--border)">' +
+      '🏠 Tipo "' + tipo + '" nel comune "' + comune + '" (' + filtratiTipo.length + ' immobili)</div>';
+    html += _valStatsBlock(filtratiTipo);
+  }
+
+  // Distribuzione zone (se comune filtrato ha dati)
+  var base = filtrati.length > 0 ? filtrati : allPriceMq;
+  var zoneMap = {};
+  base.forEach(function(x) {
+    var z = (x.im.zona || 'Non specificata').toLowerCase();
+    if (!zoneMap[z]) zoneMap[z] = [];
+    zoneMap[z].push(x.priceMq);
+  });
+  var zoneKeys = Object.keys(zoneMap).filter(function(z) { return zoneMap[z].length > 0; });
+  if (zoneKeys.length > 1) {
+    html += '<div style="font-size:0.78rem;font-weight:700;color:var(--text2);margin:14px 0 8px;padding-top:12px;border-top:1px solid var(--border)">📊 Media €/m² per zona</div>';
+    html += '<div style="display:flex;flex-wrap:wrap;gap:8px">';
+    zoneKeys.forEach(function(z) {
+      var avg = Math.round(zoneMap[z].reduce(function(a,b){return a+b;},0) / zoneMap[z].length);
+      html += _statBox(z + ' (' + zoneMap[z].length + ')', '€' + avg.toLocaleString('it-IT'), 'var(--brand)', 'var(--brand-pale)');
+    });
+    html += '</div>';
+  }
+
+  container.innerHTML = html;
+}
+
+function _valStatsBlock(items) {
+  if (!items || items.length === 0) return '<p style="color:var(--text3);font-size:0.78rem">Nessun dato.</p>';
+  var prices = items.map(function(x) { return x.priceMq; });
+  prices.sort(function(a,b){return a-b;});
+  var avg    = Math.round(prices.reduce(function(a,b){return a+b;},0) / prices.length);
+  var min    = prices[0];
+  var max    = prices[prices.length - 1];
+  var median = prices[Math.floor(prices.length / 2)];
+  return '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px">' +
+    _statBox('Media €/m²',   '€' + avg.toLocaleString('it-IT'),    'var(--brand)',   'var(--brand-pale)') +
+    _statBox('Mediana €/m²', '€' + median.toLocaleString('it-IT'), 'var(--purple)',  'var(--purple-pale)') +
+    _statBox('Min €/m²',     '€' + min.toLocaleString('it-IT'),    'var(--green-l)', 'var(--green-pale)') +
+    _statBox('Max €/m²',     '€' + max.toLocaleString('it-IT'),    'var(--red-l)',   'var(--red-pale)') +
+    '</div>';
+}
+</script>
+</body>
+</html>
