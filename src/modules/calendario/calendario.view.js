@@ -1,0 +1,1169 @@
+// modules/calendario/calendario.view.js — modulo Calendario & Eventi.
+// Estratto: helper ICS/export (16576-16750: _calIcs*, _calBuildICS, _calDownloadICS,
+// _calGoogleQuickAddUrl, _calOutlookQuickAddUrl) + core (19544-20099: calGoToday,
+// calSetView, tooltip, renderCal, calGetEventi, le 4 viste giorno/settimana/mese/anno,
+// calClick, renderEvTbody, openEvento, openEventoPre, editEvento, saveEvento, delEvento).
+//
+// Stato vista calendario (calY/calM/calD/calView) vive DENTRO D → accessibile via Proxy.
+//
+// FUNZIONI-PONTE che restano nel monolite (cross-dominio): _evtFromEvento,
+// _deduplicaEventi, _calAutoSyncAll. (_calNormEvent è interno al modulo) Raggiunte via window.
+//
+// Dipendenze esterne (monolite via window): openSchedaImmobile, openVisita,
+//   renderPratiche, clearModal, openModal, closeModal, saveD, showToast,
+//   updateBadges, fmtD, today, dlgAlert, dlgConfirm, _evtFromEvento. (_calNormEvent è interno al modulo)
+import { state } from '../../core/state.js';
+const D = new Proxy({}, {
+  get(_, p) { return window.D ? window.D[p] : undefined; },
+  set(_, p, v) { if (window.D) window.D[p] = v; return true; },
+  has(_, p) { return window.D ? (p in window.D) : false; },
+});
+
+function _calIcsPad(n){ return String(n).padStart(2,'0'); }
+function _calIcsDateTime(date, allDay){
+  /* Ritorna stringa formato YYYYMMDD per all-day o YYYYMMDDTHHMMSS per timed.
+     Usa orario LOCALE (no TZID): semplifica massimo, importer riconoscono.    */
+  if(allDay){
+    return date.getFullYear()+_calIcsPad(date.getMonth()+1)+_calIcsPad(date.getDate());
+  }
+  return date.getFullYear()+_calIcsPad(date.getMonth()+1)+_calIcsPad(date.getDate())
+       + 'T'+_calIcsPad(date.getHours())+_calIcsPad(date.getMinutes())+_calIcsPad(date.getSeconds());
+}
+function _calIcsEscape(s){
+  /* Escape testo per ICS: backslash, virgole, punto e virgola, newline */
+  return (s==null?'':String(s)).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');
+}
+
+/* Costruisce un evento "normalizzato" da diversi tipi sorgente:
+   - { titolo, data, ora, durataMin?, note, cliente?, tel?, immobile?, indirizzo? }
+   La sorgente può essere D.eventi[i], una visita D.visite[i], o altro. */
+function _calNormEvent(src){
+  if(!src) return null;
+  var titolo = src.titolo || src._titolo || ('Appuntamento'+(src.cliente?' con '+src.cliente:''));
+  var dataStr = src.data;
+  if(!dataStr) return null;
+  var ora = (src.ora||'').trim();
+  var durataMin = parseInt(src.durataMin)||60;
+  var d = _safeDate(dataStr);
+  if(!d) return null;
+  var allDay = !ora || !/^\d{1,2}:\d{2}/.test(ora);
+  if(!allDay){
+    var parts = ora.split(':');
+    d.setHours(parseInt(parts[0])||0, parseInt(parts[1])||0, 0, 0);
+  }
+  var end = new Date(d.getTime() + (allDay ? 86400000 : durataMin*60000));
+  /* Descrizione completa con metadati */
+  var descrParts = [];
+  if(src.cliente) descrParts.push('Cliente: '+src.cliente);
+  if(src.tel)     descrParts.push('Tel: '+src.tel);
+  if(src.immobile)descrParts.push('Immobile: '+src.immobile);
+  if(src.agente)  descrParts.push('Agente: '+src.agente);
+  if(src.note)    descrParts.push('Note: '+src.note);
+  var descr = descrParts.join('\n');
+  return {
+    titolo: titolo,
+    inizio: d,
+    fine: end,
+    allDay: allDay,
+    descrizione: descr,
+    location: src.indirizzo || src.immobile || '',
+    uid: (src.uuid || src._uid || ('evt-'+d.getTime()+'-'+Math.random().toString(36).slice(2,8))) + '@lecaseAZ',
+    raw: src
+  };
+}
+
+/* Genera contenuto ICS standard. Include un VALARM 1h prima (sarà il
+   calendario di destinazione a farlo scattare, non il nostro app). */
+function _calBuildICS(src){
+  var ev = _calNormEvent(src);
+  if(!ev) return null;
+  var now = new Date();
+  var lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//LeCase AZ Gestionale//IT',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    'UID:'+ev.uid,
+    'DTSTAMP:'+_calIcsDateTime(now)+'Z',
+    (ev.allDay ? 'DTSTART;VALUE=DATE:' : 'DTSTART:') + _calIcsDateTime(ev.inizio, ev.allDay),
+    (ev.allDay ? 'DTEND;VALUE=DATE:'   : 'DTEND:')   + _calIcsDateTime(ev.fine,   ev.allDay),
+    'SUMMARY:'+_calIcsEscape(ev.titolo),
+    'DESCRIPTION:'+_calIcsEscape(ev.descrizione),
+    'LOCATION:'+_calIcsEscape(ev.location)
+  ];
+  /* Alarm 1h prima (solo per timed events) */
+  if(!ev.allDay){
+    lines.push('BEGIN:VALARM');
+    lines.push('ACTION:DISPLAY');
+    lines.push('DESCRIPTION:'+_calIcsEscape('Promemoria: '+ev.titolo));
+    lines.push('TRIGGER:-PT1H');
+    lines.push('END:VALARM');
+    /* Alarm 1 giorno prima */
+    lines.push('BEGIN:VALARM');
+    lines.push('ACTION:DISPLAY');
+    lines.push('DESCRIPTION:'+_calIcsEscape('Promemoria: '+ev.titolo+' (domani)'));
+    lines.push('TRIGGER:-P1D');
+    lines.push('END:VALARM');
+  }
+  lines.push('END:VEVENT');
+  lines.push('END:VCALENDAR');
+  return lines.join('\r\n');
+}
+try{ window._calBuildICS = _calBuildICS; }catch(e){}
+
+/* Scarica il file .ics — apribile da Apple Calendar, Outlook desktop,
+   importabile in Google Calendar via "Impostazioni → Importa".          */
+function _calDownloadICS(src){
+  var content = _calBuildICS(src);
+  if(!content){
+    if(typeof showToast==='function') showToast('Dati evento non validi per export','','#DC2626');
+    return false;
+  }
+  try{
+    var blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    var safeName = (src.titolo||'evento').replace(/[^a-zA-Z0-9\-_ ]/g,'').slice(0,40).trim() || 'evento';
+    a.download = safeName + '.ics';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+    return true;
+  }catch(e){
+    console.warn('[CalExport] ICS download KO:', e);
+    return false;
+  }
+}
+try{ window._calDownloadICS = _calDownloadICS; }catch(e){}
+
+/* Google Calendar quick-add: apre URL con dati precompilati. */
+function _calGoogleQuickAddUrl(src){
+  var ev = _calNormEvent(src);
+  if(!ev) return null;
+  /* Google vuole il formato YYYYMMDDTHHMMSSZ (UTC) o YYYYMMDD per all-day.
+     Per semplicità usiamo l'orario locale come se fosse UTC (il calendar
+     dell'utente lo interpreta nel suo timezone, di solito coincide).      */
+  function _g(d){
+    return d.getFullYear()
+      + _calIcsPad(d.getMonth()+1)
+      + _calIcsPad(d.getDate())
+      + 'T'
+      + _calIcsPad(d.getHours())
+      + _calIcsPad(d.getMinutes())
+      + '00';
+  }
+  function _gDate(d){
+    return d.getFullYear() + _calIcsPad(d.getMonth()+1) + _calIcsPad(d.getDate());
+  }
+  var dates = ev.allDay
+    ? (_gDate(ev.inizio) + '/' + _gDate(ev.fine))
+    : (_g(ev.inizio) + '/' + _g(ev.fine));
+  var params = [
+    'action=TEMPLATE',
+    'text=' + encodeURIComponent(ev.titolo),
+    'dates=' + dates,
+    'details=' + encodeURIComponent(ev.descrizione||''),
+    'location=' + encodeURIComponent(ev.location||'')
+  ];
+  return 'https://calendar.google.com/calendar/render?' + params.join('&');
+}
+try{ window._calGoogleQuickAddUrl = _calGoogleQuickAddUrl; }catch(e){}
+
+/* Outlook Web quick-add. Pattern URL ufficiale outlook.live.com.       */
+function _calOutlookQuickAddUrl(src){
+  var ev = _calNormEvent(src);
+  if(!ev) return null;
+  /* Outlook vuole ISO 8601: 2026-05-21T15:30:00 */
+  function _o(d){
+    return d.getFullYear()+'-'+_calIcsPad(d.getMonth()+1)+'-'+_calIcsPad(d.getDate())
+      + (ev.allDay ? '' : 'T'+_calIcsPad(d.getHours())+':'+_calIcsPad(d.getMinutes())+':00');
+  }
+  var params = [
+    'path=/calendar/action/compose',
+    'rru=addevent',
+    'subject=' + encodeURIComponent(ev.titolo),
+    'startdt=' + encodeURIComponent(_o(ev.inizio)),
+    'enddt='   + encodeURIComponent(_o(ev.fine)),
+    'body='    + encodeURIComponent(ev.descrizione||''),
+    'location='+ encodeURIComponent(ev.location||'')
+  ];
+  if(ev.allDay) params.push('allday=true');
+  return 'https://outlook.live.com/calendar/0/deeplink/compose?' + params.join('&');
+}
+try{ window._calOutlookQuickAddUrl = _calOutlookQuickAddUrl; }catch(e){}
+
+function calGoToday(){
+  const n=new Date();D.calY=n.getFullYear();D.calM=n.getMonth();D.calD=n.getDate();
+  renderCal();
+}
+function calSetView(v){
+  /* [30 ago 2026] CAMBIANDO VISTA SI TORNA A OGGI.
+     Il guasto: la vista Giorno e la vista Settimana si posizionano su
+     D.calD, il giorno del mese, che veniva scritto UNA VOLTA SOLA con
+     `if(!D.calD) D.calD = new Date().getDate()`. Preso il primo giorno, non
+     cambiava mai più: chi aveva aperto il calendario il 4 agosto continuava
+     a vedere il 4 anche settimane dopo. La vista Mese sembrava a posto solo
+     perché non usa quel campo — le bastano mese e anno, che si aggiornano
+     navigando.
+     E siccome D.calD sta nell'archivio sincronizzato, il giorno bloccato
+     seguiva l'utente da un dispositivo all'altro.
+     Il pulsante "Oggi" resta e continua a funzionare come prima. */
+  var _n = new Date();
+  D.calY = _n.getFullYear();
+  D.calM = _n.getMonth();
+  D.calD = _n.getDate();
+  D.calView=v;
+  ['giorno','settimana','mese','anno'].forEach(k=>{
+    const btn=document.getElementById('calv-'+k);
+    if(!btn) return;
+    const active=k===v;
+    btn.style.background=active?'rgba(255,255,255,.2)':'transparent';
+    btn.style.color=active?'white':'rgba(255,255,255,.6)';
+  });
+  renderCal();
+}
+// ── CALENDAR TOOLTIP ──
+let _ttTimeout=null;
+let _ttTimer=null;
+function calTooltipShow(e,ds){
+  if(_ttTimer){clearTimeout(_ttTimer);_ttTimer=null;}
+  const evs=[
+    ...D.eventi.filter(ev=>ev.data===ds && !isEvVendutoOrArchiviato(ev)),
+    ...D.pratiche.filter(p=>p.scad===ds).map(p=>({tipo:'scadenza',titolo:'⏰ '+(p.venditore||p.descr||'Pratica')})),
+    ...D.immobili.filter(im=>im.incFine===ds).map(im=>({tipo:'scadenza',titolo:' Scad. Incarico: '+(im.tipo||'')+(im.comune?' — '+im.comune:'')}))
+  ];
+  if(!evs.length)return;
+  const tt=document.getElementById('cal-tooltip');
+  if(!tt)return;
+  const ttTitle=document.getElementById('cal-tt-title');
+  const ttBody=document.getElementById('cal-tt-body');
+  ttTitle.textContent=fmtD(ds)+' — '+evs.length+' event'+(evs.length===1?'o':'i');
+  const colors={appuntamento:'#2563EB',visita:'#16A34A',scadenza:'#EF4444',altro:'#7C3AED',incarico:'#F97316'};
+  const icons={appuntamento:'',visita:'',scadenza:'⏰',altro:'',incarico:''};
+  ttBody.innerHTML=evs.slice(0,8).map(ev=>{
+    const col=colors[ev.tipo||'appuntamento']||'#2563EB';
+    const icon=icons[ev.tipo||'appuntamento']||'';
+    const subParts=[];
+    if(ev.ora) subParts.push('⏰ '+ev.ora);
+    if(ev.cliente) subParts.push(' '+ev.cliente);
+    if(ev.tel) subParts.push(' '+ev.tel);
+    return`<div class="cal-tooltip-ev">
+      <div class="cal-tooltip-dot" style="background:${col}"></div>
+      <div style="flex:1">
+        <div class="cal-tooltip-ev-title">${icon} ${ev.titolo||''}</div>
+        ${subParts.length?`<div class="cal-tooltip-ev-sub">${subParts.join(' &nbsp;·&nbsp; ')}</div>`:''}
+        ${ev.note?`<div class="cal-tooltip-ev-note"> ${ev.note}</div>`:''}
+      </div>
+    </div>`;
+  }).join('')+(evs.length>8?`<div style="font-size:0.75rem;color:#6B7280;margin-top:6px;text-align:center">+${evs.length-8} altri eventi...</div>`:'');
+  // Show first (display:block), then position, then fade in
+  tt.style.opacity='0';
+  tt.style.display='block';
+  tt.classList.remove('show');
+  // Position after display:block so getBoundingClientRect is accurate
+  requestAnimationFrame(()=>{
+    const vw=window.innerWidth, vh=window.innerHeight;
+    let x=e.clientX+16, y=e.clientY+16;
+    tt.style.left=x+'px'; tt.style.top=y+'px';
+    // Clamp to viewport
+    const r=tt.getBoundingClientRect();
+    if(r.right>vw-12) tt.style.left=(e.clientX-r.width-12)+'px';
+    if(r.bottom>vh-12) tt.style.top=(e.clientY-r.height-12)+'px';
+    // Fade in
+    requestAnimationFrame(()=>tt.classList.add('show'));
+  });
+}
+function calTooltipHide(){
+  _ttTimer=setTimeout(()=>{
+    const tt=document.getElementById('cal-tooltip');
+    if(tt){tt.classList.remove('show');tt.style.display='none';}
+    _ttTimer=null;
+  },80);
+}
+function renderCal(){
+  const mesi=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  const og=today();
+  const v=D.calView||'mese';
+  // Aggiorna pulsanti vista
+  ['giorno','settimana','mese','anno'].forEach(k=>{
+    const btn=document.getElementById('calv-'+k);
+    if(!btn) return;
+    const active=k===v;
+    btn.style.background=active?'rgba(255,255,255,.2)':'transparent';
+    btn.style.color=active?'white':'rgba(255,255,255,.6)';
+  });
+  if(v==='giorno') calRenderGiorno(og,mesi);
+  else if(v==='settimana') calRenderSettimana(og,mesi);
+  else if(v==='mese') calRenderMese(og,mesi);
+  else if(v==='anno') calRenderAnno(og,mesi);
+  renderEvTbody();
+}
+
+// ── Colori eventi ─────────────────────────────────────────────────────────────
+function calEvColor(tipo){
+  return{visita:'#10B981',scadenza:'#EF4444',altro:'#7C3AED',incarico:'#F97316',compleanno:'#F59E0B'}[tipo]||'#3B82F6';
+}
+function calGetEventi(ds){
+  return [
+    ...D.eventi.filter(e=>e.data===ds&&!isEvVendutoOrArchiviato(e)).map(e=>{
+      /* Garantisce un id stabile: editEvento cerca per id, quindi un evento
+         senza id (creato da versioni vecchie) non sarebbe apribile. */
+      if(!e.id){ try{ e.id = (typeof genUUID==='function')?genUUID():('ev_'+Date.now().toString(36)+Math.random().toString(36).slice(2,7)); }catch(_){ e.id='ev_'+Date.now(); } }
+      return { ...e, _type:'evento', _evIdx:D.eventi.indexOf(e), _evId:e.id };
+    }),
+    ...D.visite.filter(v=>v.data===ds).map((v,i)=>{
+      const im = D.immobili[parseInt(v.immRef)];
+      const cl = D.clienti[parseInt(v.cliRef)];
+      const cliNome = cl ? cl.nome : (v.cliente || 'cliente');
+      const immDesc = im ? ((im.tipo||'') + (im.comune?' — '+im.comune:'')) : (v.immobile||'');
+      return {
+        tipo:'visita',
+        titolo:'Visita · ' + cliNome + (immDesc?' — '+immDesc:''),
+        ora:v.ora||'',
+        cliente:cliNome,
+        _type:'visita',
+        _visIdx:D.visite.indexOf(v),
+        _readOnly:true
+      };
+    }),
+    ...D.pratiche.filter(p=>p.scad===ds&&p.stato!=='revoca'&&p.stato!=='vendita').map(p=>({tipo:'scadenza',titolo:(p.venditore||p.descr||'Pratica'),ora:'',cliente:'',_type:'scadenza',_pratIdx:D.pratiche.indexOf(p)})),
+    ...D.immobili.filter(im=>im.incFine===ds).map(im=>({tipo:'incarico',titolo:'Scad. '+(im.tipo||'')+(im.comune?' — '+im.comune:''),ora:'',cliente:im.contatto||'',_type:'incarico',_immIdx:D.immobili.indexOf(im)}))
+  ].sort((a,b)=>{
+    /* Ordine per orario crescente; senza ora ("tutto il giorno") in cima.
+       Normalizzo a minuti così "9:00" non finisce dopo "18:30". */
+    const na=(a.ora||'').trim(), nb=(b.ora||'').trim();
+    if(!na && !nb) return 0;
+    if(!na) return -1;
+    if(!nb) return 1;
+    const pa=na.split(':'), pb=nb.split(':');
+    return ((parseInt(pa[0])||0)*60+(parseInt(pa[1])||0)) - ((parseInt(pb[0])||0)*60+(parseInt(pb[1])||0));
+  });
+}
+
+/* Apre in modifica l'elemento giusto del calendario in base al tipo.
+   Gli EVENTI si aprono per id stabile (editEvento cerca per id); visite,
+   incarichi e pratiche per indice. Per gli eventi passiamo l'id direttamente. */
+function calApriEvento(tipo, idOrIdx){
+  try{
+    if(tipo==='evento' && typeof editEvento==='function'){
+      /* idOrIdx qui è l'id stabile dell'evento; se per un vecchio evento
+         mancasse, ricade sull'indice tramite _evIdxByIndexFallback. */
+      editEvento(idOrIdx);
+      return;
+    }
+    if(tipo==='visita'   && typeof openVisita==='function'){ openVisita(idOrIdx); return; }
+    if(tipo==='incarico' && typeof openImmobileModal==='function'){ openImmobileModal(idOrIdx); return; }
+    if(tipo==='scadenza' && typeof openPratica==='function'){ openPratica(idOrIdx); return; }
+  }catch(err){ console.error('[calApriEvento]', err); }
+}
+
+/* Modale "giorno completo": elenca TUTTI gli eventi di un giorno, con doppio
+   click su ciascuno per aprirlo in modifica. Aperto dal "+N altri". */
+function calMostraGiorno(ds){
+  const evs=calGetEventi(ds);
+  const parts=ds.split('-');
+  const nomeGiorni=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+  const mesiN=['gennaio','febbraio','marzo','aprile','maggio','giugno','luglio','agosto','settembre','ottobre','novembre','dicembre'];
+  const dObj=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));
+  const titolo=`${nomeGiorni[dObj.getDay()]} ${parseInt(parts[2])} ${mesiN[parseInt(parts[1])-1]} ${parts[0]}`;
+  let ov=document.getElementById('cal-giorno-modal');
+  if(!ov){
+    ov=document.createElement('div');
+    ov.id='cal-giorno-modal';
+    ov.className='overlay';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:4000;display:flex;align-items:center;justify-content:center;padding:20px';
+    ov.onclick=(e)=>{ if(e.target===ov) ov.style.display='none'; };
+    document.body.appendChild(ov);
+  }
+  const rows=evs.map(e=>{
+    const col=calEvColor(e.tipo);
+    const ref=(e._type==='evento')?("'"+String(e._evId).replace(/'/g,"\\'")+"'"):((e._type==='visita')?e._visIdx:(e._type==='incarico')?e._immIdx:(e._type==='scadenza')?e._pratIdx:-1);
+    const canEdit=e._type&&ref!==-1&&ref!=="''";
+    return `<div ${canEdit?`ondblclick="calApriEvento('${e._type}',${ref});document.getElementById('cal-giorno-modal').style.display='none'" style="cursor:pointer"`:''}
+        title="${canEdit?'Doppio click per modificare':''}"
+        style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;background:${col}12;border-left:3px solid ${col};margin-bottom:6px">
+      <span style="font-size:0.78rem;font-weight:800;color:${col};min-width:44px">${e.ora?e.ora.slice(0,5):'—'}</span>
+      <span style="flex:1;font-size:0.85rem;color:#1E293B;font-weight:600">${e.titolo||''}</span>
+      ${canEdit?`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${col}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;opacity:.6"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`:''}
+    </div>`;
+  }).join('');
+  ov.innerHTML=`<div style="background:#fff;border-radius:16px;max-width:460px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="padding:16px 20px;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;justify-content:space-between">
+      <div>
+        <div style="font-size:1.05rem;font-weight:800;color:#0F172A">${titolo}</div>
+        <div style="font-size:0.78rem;color:#64748B;margin-top:1px">${evs.length} impegn${evs.length===1?'o':'i'} · doppio click per modificare</div>
+      </div>
+      <button onclick="document.getElementById('cal-giorno-modal').style.display='none'" style="width:32px;height:32px;border-radius:8px;border:none;background:#F1F5F9;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#64748B"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    </div>
+    <div style="padding:14px 16px;overflow-y:auto">
+      ${rows||'<div style="text-align:center;color:#94A3B8;padding:20px">Nessun evento</div>'}
+      <button onclick="openEventoPre('${ds}');document.getElementById('cal-giorno-modal').style.display='none'" style="width:100%;margin-top:8px;padding:10px;border-radius:9px;border:1.5px dashed #CBD5E1;background:#F8FAFC;color:#2563EB;font-weight:700;cursor:pointer;font-size:0.85rem;font-family:inherit">+ Nuovo evento questo giorno</button>
+    </div>
+  </div>`;
+  ov.style.display='flex';
+}
+
+// ── VISTA GIORNO ─────────────────────────────────────────────────────────────
+function calRenderGiorno(og,mesi){
+  /* Rete di sicurezza: se il campo manca (archivio vecchio o appena
+     ripulito) si parte da oggi invece che da una data inventata. */
+  if(!D.calD) D.calD=new Date().getDate();
+  /* Giorno non valido per il mese corrente (es. 31 in un mese da 30):
+     si riporta all'ultimo giorno utile invece di mostrare una data che
+     non esiste. */
+  var _ultimo = new Date(D.calY, D.calM+1, 0).getDate();
+  if(D.calD > _ultimo) D.calD = _ultimo;
+  const ds=`${D.calY}-${String(D.calM+1).padStart(2,'0')}-${String(D.calD).padStart(2,'0')}`;
+  const nomeGiorni=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+  const dow=new Date(D.calY,D.calM,D.calD).getDay();
+  document.getElementById('cal-title').textContent=`${nomeGiorni[dow]} ${D.calD} ${mesi[D.calM]} ${D.calY}`;
+  const sub=document.getElementById('cal-title-sub');
+  const evs=calGetEventi(ds);
+  if(sub) sub.textContent=ds===og?'Oggi':(evs.length?evs.length+' event'+(evs.length===1?'o':'i'):'Nessun evento');
+  // Genera slots orari 07:00-22:00
+  const slots=[];for(let h=7;h<=22;h++) slots.push(String(h).padStart(2,'0')+':00');
+  const area=document.getElementById('cal-view-area');
+  if(!area) return;
+  area.innerHTML=`<div style="display:flex;gap:0;background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);border:1px solid var(--border)">
+    <div style="width:60px;flex-shrink:0;background:#F8FAFC;border-right:1px solid var(--border)">
+      <div style="height:40px;border-bottom:1px solid var(--border)"></div>
+      ${slots.map(h=>`<div style="height:60px;border-bottom:1px solid #F1F5F9;display:flex;align-items:flex-start;justify-content:center;padding-top:4px;font-size:0.68rem;color:#94A3B8;font-weight:600">${h}</div>`).join('')}
+    </div>
+    <div style="flex:1;position:relative">
+      <div style="height:40px;background:${ds===og?'linear-gradient(135deg,#EFF6FF,#DBEAFE)':'#F8FAFC'};border-bottom:2px solid ${ds===og?'#BFDBFE':'var(--border)'};display:flex;align-items:center;justify-content:space-between;padding:0 16px">
+        <span style="font-weight:700;font-size:0.85rem;color:${ds===og?'#1D4ED8':'var(--text)'}">${ds===og?'Oggi — ':''}${D.calD} ${mesi[D.calM]}</span>
+        <button onclick="openEventoPre('${ds}')" style="padding:4px 12px;background:#2563EB;color:white;border:none;border-radius:7px;cursor:pointer;font-size:0.75rem;font-weight:700">+ Evento</button>
+      </div>
+      ${slots.map((h,hi)=>{
+        const hEvs=evs.filter(e=>(e.ora||'').startsWith(String(7+hi).padStart(2,'0')));
+        return`<div style="height:60px;border-bottom:1px solid #F1F5F9;position:relative;padding:2px 8px" ondblclick="openEventoPre('${ds}')">
+          ${hEvs.map(e=>{
+          const svgT = e.tipo==='visita'
+            ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;vertical-align:middle"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`
+            : e.tipo==='scadenza'
+            ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;vertical-align:middle"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>`
+            : e.tipo==='incarico'
+            ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;vertical-align:middle"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>`
+            : `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0;vertical-align:middle"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>`;
+          return `<div style="display:flex;align-items:center;gap:4px;background:${calEvColor(e.tipo)}15;border-left:3px solid ${calEvColor(e.tipo)};border-radius:5px;padding:3px 8px;margin-bottom:2px;cursor:pointer;font-size:0.75rem;font-weight:600;color:${calEvColor(e.tipo)};overflow:hidden;max-width:100%;box-sizing:border-box" onclick="calClick('${ds}',true)" title="${e.titolo}">${svgT}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">${e.ora?e.ora+' ':''}${e.titolo||''}</span></div>`;
+        }).join('')}
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+  if(!window.calSel||window.calSel!==ds) calClick(ds);
+}
+
+// ── Helper: HTML singolo evento nella vista settimana ──────────────────────────
+function _calWeekEvHTML(e, ds){
+  var color = calEvColor(e.tipo);
+  var svgTipo = '';
+  if(e.tipo === 'visita'){
+    svgTipo = '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  } else if(e.tipo === 'scadenza'){
+    svgTipo = '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>';
+  } else if(e.tipo === 'incarico'){
+    svgTipo = '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>';
+  } else {
+    svgTipo = '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="flex-shrink:0"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>';
+  }
+  var label = (e.ora ? e.ora + ' ' : '') + (e.titolo || '');
+  var safeTitle = (e.titolo || '').replace(/"/g, '&quot;');
+  var divStyle = 'display:flex;align-items:center;gap:2px;background:' + color + '18;border-left:2px solid ' + color + ';border-radius:3px;padding:1px 3px;font-size:0.63rem;font-weight:600;color:' + color + ';overflow:hidden;max-width:100%;box-sizing:border-box;cursor:pointer;margin-bottom:1px';
+  return '<div style="' + divStyle + '" onclick="calClick(\'' + ds + '\',true)" title="' + safeTitle + '">' + svgTipo + '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0">' + label + '</span></div>';
+}
+
+// ── VISTA SETTIMANA ───────────────────────────────────────────────────────────
+function calRenderSettimana(og,mesi){
+  if(!D.calD) D.calD=new Date().getDate();
+  var _ultimoS = new Date(D.calY, D.calM+1, 0).getDate();
+  if(D.calD > _ultimoS) D.calD = _ultimoS;
+  const base=new Date(D.calY,D.calM,D.calD);
+  let dow=base.getDay();if(dow===0)dow=7;
+  const lunedi=new Date(base);lunedi.setDate(base.getDate()-(dow-1));
+  const giorni=[];
+  for(let i=0;i<7;i++){const d=new Date(lunedi);d.setDate(lunedi.getDate()+i);giorni.push(d);}
+  const gNames=['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+  // Helper: local YYYY-MM-DD (no UTC shift)
+  const toDs=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  const firstM=giorni[0],lastM=giorni[6];
+  const titleStr=firstM.getMonth()===lastM.getMonth()?
+    `${firstM.getDate()} — ${lastM.getDate()} ${mesi[firstM.getMonth()]} ${firstM.getFullYear()}`:
+    `${firstM.getDate()} ${mesi[firstM.getMonth()]} — ${lastM.getDate()} ${mesi[lastM.getMonth()]} ${firstM.getFullYear()}`;
+  document.getElementById('cal-title').textContent=titleStr;
+  const sub=document.getElementById('cal-title-sub');
+  const totEvSett=giorni.reduce((s,d)=>{const ds=toDs(d);return s+calGetEventi(ds).length;},0);
+  if(sub) sub.textContent=totEvSett?totEvSett+' event'+(totEvSett===1?'o':'i')+' questa settimana':'Settimana libera';
+  const slots=[];for(let h=7;h<=22;h++) slots.push(String(h).padStart(2,'0')+':00');
+  const area=document.getElementById('cal-view-area');
+  if(!area) return;
+  area.innerHTML=`<div style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);border:1px solid var(--border)">
+    <div style="display:flex">
+      <div style="width:52px;flex-shrink:0;background:#F8FAFC;border-right:1px solid var(--border);border-bottom:1px solid var(--border);height:44px"></div>
+      ${giorni.map((d,i)=>{const ds=toDs(d);const isOg=ds===og;const isDom=i===6;return`<div style="flex:1;text-align:center;padding:10px 4px;background:${isOg?'linear-gradient(135deg,#EFF6FF,#DBEAFE)':'#F8FAFC'};border-bottom:2px solid ${isOg?'#BFDBFE':'var(--border)'};border-left:1px solid var(--border);cursor:pointer" onclick="calSetView('giorno');D.calY=${d.getFullYear()};D.calM=${d.getMonth()};D.calD=${d.getDate()};renderCal()">
+          <div style="font-size:0.7rem;font-weight:700;color:${isOg?'#1D4ED8':isDom?'#EF4444':'#94A3B8'};text-transform:uppercase;letter-spacing:.5px">${gNames[i]}</div>
+          <div style="font-size:1rem;font-weight:${isOg?'900':'700'};color:${isOg?'#1D4ED8':isDom?'#EF4444':'var(--text)'};margin-top:1px">${d.getDate()}</div>
+        </div>`;}).join('')}
+    </div>
+    <div style="display:flex;overflow-y:auto;max-height:520px">
+      <div style="width:52px;flex-shrink:0;background:#F8FAFC;border-right:1px solid var(--border)">
+        ${slots.map(h=>`<div style="height:56px;border-bottom:1px solid #F1F5F9;display:flex;align-items:flex-start;justify-content:center;padding-top:3px;font-size:0.65rem;color:#94A3B8;font-weight:600">${h}</div>`).join('')}
+      </div>
+      ${giorni.map((d,gi)=>{const ds=toDs(d);const evs=calGetEventi(ds);const isDom=gi===6;return`<div style="flex:1;min-width:0;overflow:hidden;border-left:1px solid ${gi===0?'transparent':'var(--border)'};background:${isDom?'#FAFAFA':'white'}">
+          ${slots.map((h,hi)=>{const hEvs=evs.filter(e=>(e.ora||'').startsWith(String(7+hi).padStart(2,'0')));return`<div style="height:56px;border-bottom:1px solid #F1F5F9;padding:2px 2px;overflow:hidden;box-sizing:border-box" ondblclick="openEventoPre('${ds}')">
+            ${hEvs.map(e=>_calWeekEvHTML(e,ds)).join('')}
+          </div>`;}).join('')}
+        </div>`;}).join('')}
+    </div>
+  </div>`;
+  calClick(og);
+}
+
+// ── VISTA MESE ────────────────────────────────────────────────────────────────
+function calRenderMese(og,mesi){
+  document.getElementById('cal-title').textContent=mesi[D.calM]+' '+D.calY;
+  const totEvMese=D.eventi.filter(e=>e.data&&e.data.startsWith(D.calY+'-'+String(D.calM+1).padStart(2,'0'))).length;
+  const sub=document.getElementById('cal-title-sub');
+  if(sub) sub.textContent=totEvMese?totEvMese+' appuntament'+(totEvMese===1?'o':'i')+' questo mese':'Nessun appuntamento';
+  const first=new Date(D.calY,D.calM,1),last=new Date(D.calY,D.calM+1,0);
+  let dow=first.getDay();if(dow===0)dow=7;
+  // Stile base cella — overflow:hidden impedisce sconfinamento visivo nelle celle adiacenti
+  const cellBase='min-height:96px;padding:0;border-right:1px solid #D1D5DB;border-bottom:1px solid #D1D5DB;cursor:pointer;overflow:hidden;position:relative;transition:background .1s;';
+  let html=`<div style="background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.08);border:1px solid #D1D5DB">
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);background:#F8FAFC;border-bottom:2px solid #E5E7EB">
+      ${['Lun','Mar','Mer','Gio','Ven','Sab','Dom'].map((d,i)=>`<div style="text-align:center;padding:10px 4px;font-size:0.72rem;font-weight:700;color:${i===6?'#EF4444':'#64748B'};text-transform:uppercase;letter-spacing:.5px">${d}</div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr)">`;
+  // Celle padding (mese precedente)
+  for(let i=1;i<dow;i++){
+    const d=new Date(D.calY,D.calM,i-dow+1);
+    html+=`<div style="${cellBase}background:#F9FAFB;cursor:default">
+      <div style="height:3px;background:transparent"></div>
+      <div style="padding:5px 7px">
+        <div style="font-size:0.78rem;color:#CBD5E1;font-weight:500">${d.getDate()}</div>
+      </div>
+    </div>`;
+  }
+  // Celle mese corrente
+  for(let day=1;day<=last.getDate();day++){
+    const ds=`${D.calY}-${String(D.calM+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const evs=calGetEventi(ds);
+    const shown=evs.slice(0,3);const more=evs.length-3;
+    const dow2=new Date(D.calY,D.calM,day).getDay();
+    const isDom=dow2===0;
+    const isOg=ds===og;
+    const isSel=window.calSel===ds;
+    const accentColor=evs.length>0?calEvColor(evs[0].tipo):null;
+    const bg=isOg?'#EFF6FF':isDom?'#FAFAFA':'white';
+    const selOutline=isSel?';outline:2px solid #2563EB;outline-offset:-2px':'';
+    html+=`<div style="${cellBase}background:${bg}${selOutline}" onclick="calClick('${ds}',true)" ondblclick="openEventoPre('${ds}')" onmouseenter="calTooltipShow(event,'${ds}')" onmouseleave="calTooltipHide()">
+      <!-- Striscia colorata in cima: appartiene VISIVAMENTE a questo giorno -->
+      <div style="height:3px;background:${accentColor||'transparent'};width:100%"></div>
+      <!-- Numero giorno + indicatore contatore eventi -->
+      <div style="display:flex;align-items:center;gap:4px;padding:4px 6px 3px">
+        <div style="width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:${isOg?'900':'600'};background:${isOg?'#2563EB':'transparent'};color:${isOg?'white':isDom?'#EF4444':'var(--text)'}">${day}</div>
+        ${evs.length>0?`<span style="font-size:0.58rem;font-weight:800;color:${accentColor}">${evs.length>1?evs.length+'\u25CF':'\u25CF'}</span>`:''}
+      </div>
+      <!-- Pillole eventi SOTTO il numero: nessun dubbio sul giorno di appartenenza -->
+      <div style="padding:0 5px 4px">
+        ${shown.map(e=>{
+          const ref=(e._type==='evento')?("'"+String(e._evId).replace(/'/g,"\\'")+"'"):((e._type==='visita')?e._visIdx:(e._type==='incarico')?e._immIdx:(e._type==='scadenza')?e._pratIdx:-1);
+          const canEdit=e._type&&ref!==-1&&ref!=="''";
+          return `<div ${canEdit?`ondblclick="event.stopPropagation();calApriEvento('${e._type}',${ref})" onclick="event.stopPropagation()" title="Doppio click per modificare"`:''} style="background:${calEvColor(e.tipo)}18;border-left:2.5px solid ${calEvColor(e.tipo)};border-radius:4px;padding:2px 5px;font-size:0.64rem;font-weight:600;color:${calEvColor(e.tipo)};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;cursor:${canEdit?'pointer':'default'}">${e.ora?e.ora.slice(0,5)+' ':''} ${e.titolo||''}</div>`;
+        }).join('')}
+        ${more>0?`<div onclick="event.stopPropagation();calMostraGiorno('${ds}')" title="Vedi tutti gli eventi del giorno" style="font-size:0.61rem;color:#2563EB;font-weight:800;padding:2px 4px;cursor:pointer;border-radius:4px;background:#EFF6FF;text-align:center;margin-top:1px">+${more} altri</div>`:''}
+      </div>
+    </div>`;
+  }
+  // Celle padding finali (mese successivo)
+  const cells=dow-1+last.getDate();const tot=Math.ceil(cells/7)*7;
+  for(let i=1;i<=tot-cells;i++){
+    html+=`<div style="${cellBase}background:#F9FAFB;cursor:default">
+      <div style="height:3px;background:transparent"></div>
+      <div style="padding:5px 7px">
+        <div style="font-size:0.78rem;color:#CBD5E1;font-weight:500">${i}</div>
+      </div>
+    </div>`;
+  }
+  html+=`</div></div>`;
+  const area=document.getElementById('cal-view-area');
+  if(area) area.innerHTML=html;
+  if(!window.calSel) calClick(og);
+  const selDs=window.calSel||og;
+  document.querySelectorAll('#cal-view-area [onclick^="calClick"]').forEach(el=>{
+    const m=el.getAttribute('onclick').match(/calClick\('(\d{4}-\d{2}-\d{2})'/);
+    if(m&&m[1]===selDs) el.style.outline='2px solid #2563EB';
+    else el.style.outline='none';
+  });
+}
+// ── VISTA ANNO ────────────────────────────────────────────────────────────────
+function calRenderAnno(og,mesi){
+  document.getElementById('cal-title').textContent=String(D.calY);
+  const totEvAnno=D.eventi.filter(e=>e.data&&e.data.startsWith(String(D.calY))).length;
+  const sub=document.getElementById('cal-title-sub');
+  if(sub) sub.textContent=totEvAnno?totEvAnno+' event'+(totEvAnno===1?'o':'i')+' in questo anno':'Anno senza eventi';
+  let html=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px">`;
+  for(let m=0;m<12;m++){
+    const first=new Date(D.calY,m,1),last=new Date(D.calY,m+1,0);
+    let dow=first.getDay();if(dow===0)dow=7;
+    const meseMm=String(m+1).padStart(2,'0');
+    const totMese=D.eventi.filter(e=>e.data&&e.data.startsWith(D.calY+'-'+meseMm)).length;
+    let miniGrid='';
+    for(let i=1;i<dow;i++) miniGrid+=`<div></div>`;
+    for(let day=1;day<=last.getDate();day++){
+      const ds=`${D.calY}-${meseMm}-${String(day).padStart(2,'0')}`;
+      const evs=calGetEventi(ds);const isOg=ds===og;
+      const dow2=new Date(D.calY,m,day).getDay();const isDom=dow2===0;
+      miniGrid+=`<div onclick="calSetView('giorno');D.calM=${m};D.calD=${day};renderCal()" style="width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:${isOg?'900':evs.length?'700':'500'};background:${isOg?'#2563EB':evs.length>0?calEvColor(evs[0].tipo)+'20':'transparent'};color:${isOg?'white':evs.length?calEvColor(evs[0].tipo):isDom?'#F87171':'var(--text)'};cursor:pointer;position:relative;transition:background .1s" onmouseover="this.style.background=this.style.background||'#F1F5F9'" title="${evs.length?evs.length+' eventi':''}">${day}${evs.length>0&&!isOg?`<span style="position:absolute;bottom:2px;right:3px;width:4px;height:4px;border-radius:50%;background:${calEvColor(evs[0].tipo)}"></span>`:''}</div>`;
+    }
+    html+=`<div style="background:white;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.07);border:1px solid var(--border);cursor:pointer" onclick="calSetView('mese');D.calM=${m};renderCal()">
+      <div style="background:${D.calM===m?'linear-gradient(135deg,#2563EB,#7C3AED)':'linear-gradient(135deg,#F8FAFC,#EFF6FF)'};padding:10px 14px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-weight:800;font-size:0.88rem;color:${D.calM===m?'white':'var(--text)'}">${mesi[m]}</span>
+        ${totMese?`<span style="font-size:0.7rem;font-weight:700;padding:2px 8px;border-radius:10px;background:${D.calM===m?'rgba(255,255,255,.2)':'#DBEAFE'};color:${D.calM===m?'white':'#2563EB'}">${totMese}</span>`:''}
+      </div>
+      <div style="padding:8px 10px">
+        <div style="display:grid;grid-template-columns:repeat(7,28px);gap:1px;justify-content:center">
+          ${['L','M','M','G','V','S','D'].map((d,i)=>`<div style="text-align:center;font-size:0.6rem;font-weight:700;color:${i===6?'#F87171':'#94A3B8'};height:20px;display:flex;align-items:center;justify-content:center">${d}</div>`).join('')}
+          ${miniGrid}
+        </div>
+      </div>
+    </div>`;
+  }
+  html+=`</div>`;
+  const area=document.getElementById('cal-view-area');
+  if(area) area.innerHTML=html;
+}
+function calClick(ds, userClick){
+  window.calSel=ds;
+  // Update day title if element still present (legacy)
+  const dayTitle=document.getElementById('cal-day-title');
+  if(dayTitle) dayTitle.textContent='Appuntamenti — '+fmtD(ds);
+  const evs=D.eventi.filter(e=>e.data===ds && !isEvVendutoOrArchiviato(e));
+  // Add incarico scadenze for this day (read-only)
+  const incEvs=[];  // Incarichi managed in dedicated section
+  const allEvs=[...evs];
+  const el=document.getElementById('cal-day-list');
+  if(!el){renderEvTbody();return;}
+  el.innerHTML=allEvs.length?allEvs.map(ev=>{
+    const ri=D.eventi.indexOf(ev);
+    if(typeof _evEnsureId==='function') _evEnsureId(ev);
+    const evId=(ev.id||'').replace(/'/g,"\\'");
+    const isInc=ev._readOnly===true && ev._type==='incarico';
+    const isPratEv=ev._readOnly===true && ev._type==='pratica';
+    const dot=isInc?'var(--red-l)':isPratEv?'var(--purple)':'var(--brand-l)';
+    const actions=isInc
+      ?`<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+          <button class="icon-btn" onclick="openSchedaImmobile(${ev._immIdx})" title="Vai alla scheda immobile"> Scheda</button>
+          <span style="font-size:0.65rem;color:var(--text4)">Modifica dalla scheda cliente</span>
+        </div>`
+      :isPratEv
+      ?`<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">
+          <span style="font-size:0.68rem;color:var(--purple);font-weight:700"> Pratica</span>
+          <span style="font-size:0.63rem;color:var(--text4)">Modifica dalla scheda immobile</span>
+        </div>`
+      :`<div class="actions-col"><button class="icon-btn" onclick="editEvento('${evId}')" title="Modifica"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button><button class="icon-btn" onclick="delEvento('${evId}')" style="color:var(--red-l)" title="Elimina"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button></div>`;
+    const evType=isInc?'incarico':isPratEv?'altro':ev.tipo||'appuntamento';
+    const evIcons={appuntamento:'',visita:'',scadenza:'⏰',altro:'',incarico:''};
+    const evBg={appuntamento:'#2563EB',visita:'#16A34A',scadenza:'#EF4444',altro:'#7C3AED',incarico:'#F97316'};
+    return`<div class="cal-ev-row type-${evType}">
+      <div class="cal-ev-icon" style="background:${evBg[evType]}22">${evIcons[evType]||''}</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:0.9rem;color:#111827">${escH(ev.titolo)}</div>
+        <div style="font-size:0.76rem;color:#6B7280;margin-top:2px;display:flex;gap:6px;flex-wrap:wrap">
+          ${ev.ora?`<span style="display:flex;align-items:center;gap:3px">⏰ ${escH(ev.ora)}</span>`:''}
+          <span style="background:${evBg[evType]+'22'};color:${evBg[evType]};padding:1px 6px;border-radius:4px;font-weight:600;font-size:0.68rem">${evType}</span>
+          ${ev.cliente?`<span> ${escH(ev.cliente)}</span>`:''}
+        </div>
+        ${ev.note?`<div style="font-size:0.75rem;color:#6B7280;margin-top:4px;font-style:italic"> ${escH(ev.note)}</div>`:''}
+        ${isInc?`<div style="font-size:0.72rem;color:#9CA3AF;margin-top:4px">${escH(ev.note||'')}</div>`:''}
+      </div>
+      ${actions}
+    </div>`;
+  }).join(''):`<div class="empty-state" style="padding:18px"><div class="empty-icon" style="font-size:1.8rem"></div><p style="font-size:0.83rem">Nessun appuntamento — <span style="color:var(--text3);font-size:0.8rem">doppio click sul giorno per aggiungere</span></p></div>`;
+  // Apri modale SOLO se giorno vuoto (nessun evento reale)
+  // Nuovo appuntamento solo con doppio click (vedi ondblclick sulla cella)
+}
+function isEvVendutoOrArchiviato(ev){
+  // Filter out events linked to sold/archived/revoked properties
+  if(ev._immIdx!==undefined){
+    const im=D.immobili[ev._immIdx];
+    if(!im)return true;
+    const st=(im.stato||'').toLowerCase();
+    const pratIm=D.pratiche.find(p=>parseInt(p.immRef)===ev._immIdx);
+    if(st==='venduto'||st==='affittato'||st==='archiviato'||pratIm?.stato==='revoca')return true;
+  }
+  if(ev._pratIdx!==undefined){
+    const pr=D.pratiche[ev._pratIdx];
+    if(pr){
+      // Il rogito deve sempre restare visibile nello scadenzario anche se l'immobile è venduto
+      if(ev.titolo&&ev.titolo.startsWith(' Rogito'))return false;
+      const im=D.immobili[parseInt(pr.immRef)];
+      const st=(im?.stato||'').toLowerCase();
+      if(st==='venduto'||st==='affittato'||st==='archiviato'||pr.stato==='revoca')return true;
+    }
+  }
+  return false;
+}
+function renderEvTbody(){
+  const og=today();
+  const _q   = (document.getElementById('ev-f-q')?.value||'').trim();
+  const _dal = document.getElementById('ev-f-dal')?.value||'';
+  const _al  = document.getElementById('ev-f-al')?.value||'';
+  /* Se sto cercando per nome o ho impostato un intervallo di date, includo
+     automaticamente anche i passati — altrimenti cercare un evento vecchio
+     senza aver spuntato "Mostra anche passati" darebbe risultati vuoti e
+     sembrerebbe che la ricerca non funzioni. */
+  const mostraTutti=document.getElementById('ev-mostra-tutti')?.checked||!!_q||!!_dal||!!_al;
+  const _chkTutti=document.getElementById('ev-mostra-tutti');
+  if(_chkTutti && (_q||_dal||_al)) _chkTutti.checked=true;
+  const statiArchiviatiImm=['venduto','affittato','archiviato'];
+  // Eventi normali — escludi passati se checkbox non spuntato (anche eventi esterni)
+  const eventiList = [...D.eventi]
+    .filter(ev=>!isEvVendutoOrArchiviato(ev)&&(mostraTutti||(ev.data&&ev.data>=og)));
+  // Visite trasformate in oggetti compatibili con la tabella
+  const visiteList = (D.visite||[])
+    .filter(v=>v.data && (mostraTutti || v.data>=og))
+    .map(v=>{
+      const im = D.immobili[parseInt(v.immRef)];
+      const cl = D.clienti[parseInt(v.cliRef)];
+      const cliNome = cl ? cl.nome : (v.cliente || '');
+      const immDesc = im ? ((im.tipo||'') + (im.comune?' — '+im.comune:'')) : (v.immobile||'');
+      return {
+        titolo: 'Visita' + (immDesc ? ' · '+immDesc : ''),
+        tipo: 'visita',
+        data: v.data,
+        ora: v.ora || '',
+        cliente: cliNome,
+        note: v.note || v.feedback || '',
+        _type: 'visita',
+        _readOnly: true,
+        _visIdx: D.visite.indexOf(v)
+      };
+    });
+  const sorted = [...eventiList, ...visiteList]
+    .filter(ev=>{
+      if(_q){
+        const testo = [ev.titolo, ev.cliente, ev.note].filter(Boolean).join(' ').toLowerCase();
+        if(!testo.includes(_q.toLowerCase())) return false;
+      }
+      if(_dal && (!ev.data || ev.data < _dal)) return false;
+      if(_al  && (!ev.data || ev.data > _al))  return false;
+      return true;
+    })
+    .sort((a,b)=>{
+      const dc=(a.data||'').localeCompare(b.data||'');
+      if(dc!==0) return dc;
+      /* Normalizza l'orario a HH:MM con zero iniziale, altrimenti "9:00"
+         verrebbe ordinato dopo "18:30" (confronto stringa grezzo). Gli eventi
+         senza ora ("tutto il giorno") vanno in cima al giorno. */
+      const na=(a.ora||'').trim(), nb=(b.ora||'').trim();
+      if(!na && !nb) return 0;
+      if(!na) return -1;
+      if(!nb) return 1;
+      const pa=na.split(':'), pb=nb.split(':');
+      const ma=(parseInt(pa[0])||0)*60+(parseInt(pa[1])||0);
+      const mb=(parseInt(pb[0])||0)*60+(parseInt(pb[1])||0);
+      return ma-mb;
+    });
+  // FIX RICHIESTA: raggruppa visivamente per giorno. Conta quanti eventi cadono
+  // nello stesso giorno per mostrare un'intestazione di gruppo con il totale.
+  const _countPerData={};
+  sorted.forEach(ev=>{ const d=ev.data||''; _countPerData[d]=(_countPerData[d]||0)+1; });
+  let _lastData=null;
+  document.getElementById('ev-tbody').innerHTML=sorted.length?sorted.map(ev=>{
+    const ri=D.eventi.indexOf(ev);
+    if(typeof _evEnsureId==='function') _evEnsureId(ev);
+    const evId=(ev.id||'').replace(/'/g,"\\'");
+    const isInc=ev._readOnly===true && ev._type==='incarico';
+    const isPratEv=ev._readOnly===true && ev._type==='pratica';
+    const isVisita=ev._readOnly===true && ev._type==='visita';
+    const isExtCal=!!ev._extCalId;
+    const past=ev.data&&ev.data<og;
+    const isScadPast=ev.data&&ev.data<og;
+    // ── Intestazione di gruppo quando cambia la data ──
+    let _groupHeader='';
+    if(ev.data!==_lastData){
+      _lastData=ev.data;
+      const _n=_countPerData[ev.data]||1;
+      const _isOggi=ev.data===og;
+      const _badge=_n>1
+        ? `<span style="font-size:0.66rem;font-weight:700;padding:1px 8px;border-radius:10px;background:#DBEAFE;color:#1D4ED8;margin-left:8px">${_n} appuntamenti</span>`
+        : '';
+      const _oggiBadge=_isOggi
+        ? `<span style="font-size:0.66rem;font-weight:700;padding:1px 8px;border-radius:10px;background:#DCFCE7;color:#15803D;margin-left:8px">oggi</span>`
+        : '';
+      _groupHeader=`<tr><td colspan="7" style="background:linear-gradient(90deg,#F1F5F9,#F8FAFC);border-top:2px solid #CBD5E1;border-bottom:1px solid #E2E8F0;padding:6px 12px;font-weight:800;font-size:0.78rem;color:#334155">${fmtD(ev.data)}${_oggiBadge}${_badge}</td></tr>`;
+    }
+    // bordo sinistro per eventi appartenenti a un giorno con più appuntamenti
+    const _multiDay=(_countPerData[ev.data]||1)>1;
+    const rowStyle=isInc?`background:${isScadPast?'#FEF2F2':'#FFF7ED'};`:isPratEv?`background:${isScadPast?'#F5F3FF':'#FAF5FF'};`:isVisita?`background:${isScadPast?'#F0FDF4':'#ECFDF5'};`:isExtCal?`background:#EFF6FF;border-left:3px solid ${ev._extColor||'#3B82F6'};`:(past?'opacity:0.55;':'');
+    const colors={appuntamento:'badge-blue',visita:'badge-green',scadenza:'badge-red',altro:'badge-purple'};
+    const dateStyle=isInc&&isScadPast?'color:var(--red-l);font-weight:700;':'';
+    // SVG condivisi per le azioni
+    const svgModifica = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+    const svgElimina = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>`;
+    const svgScheda  = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-4h6v4"/><path d="M8 6h.01M16 6h.01M12 6h.01M12 10h.01M8 10h.01M16 10h.01M12 14h.01M8 14h.01M16 14h.01"/></svg>`;
+    const svgVisita  = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>`;
+    const svgPratica = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>`;
+    const btnStyle   = `display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;border:1.5px solid;cursor:pointer;transition:all .15s;background:transparent;`;
+    const actions=isInc
+      ?`<div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">
+          <button title="Vai alla scheda immobile" onclick="openSchedaImmobile(${ev._immIdx})"
+            style="${btnStyle}color:#1D4ED8;border-color:#BFDBFE;background:#EFF6FF"
+            onmouseover="this.style.background='#DBEAFE'" onmouseout="this.style.background='#EFF6FF'">
+            ${svgScheda}
+          </button>
+          <div style="font-size:0.62rem;color:var(--text4);line-height:1.3;text-align:left">Modifica dalla<br>scheda cliente</div>
+        </div>`
+      :isPratEv
+      ?`<div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">
+          <button title="Vai alla pratica" style="${btnStyle}color:#7C3AED;border-color:#DDD6FE;background:#F5F3FF"
+            onmouseover="this.style.background='#EDE9FE'" onmouseout="this.style.background='#F5F3FF'">
+            ${svgPratica}
+          </button>
+          <div style="font-size:0.62rem;color:var(--text4);line-height:1.3;text-align:left">Modifica dalla<br>scheda immobile</div>
+        </div>`
+      :isVisita
+      ?`<div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">
+          <button onclick="openVisita(${ev._visIdx})" title="Modifica visita"
+            style="${btnStyle}color:#15803D;border-color:#86EFAC;background:#F0FDF4"
+            onmouseover="this.style.background='#DCFCE7'" onmouseout="this.style.background='#F0FDF4'">
+            ${svgVisita}
+          </button>
+          <button onclick="calDelVisita(${ev._visIdx})" title="Elimina visita"
+            style="${btnStyle}color:#DC2626;border-color:#FECACA;background:#FEF2F2"
+            onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='#FEF2F2'">
+            ${svgElimina}
+          </button>
+        </div>`
+      :`<div style="display:flex;align-items:center;gap:6px;justify-content:flex-end">
+          <button onclick="editEvento('${evId}')" title="Modifica appuntamento"
+            style="${btnStyle}color:#1D4ED8;border-color:#BFDBFE;background:#EFF6FF"
+            onmouseover="this.style.background='#DBEAFE'" onmouseout="this.style.background='#EFF6FF'">
+            ${svgModifica}
+          </button>
+          <button onclick="delEvento('${evId}')" title="Elimina appuntamento"
+            style="${btnStyle}color:#DC2626;border-color:#FECACA;background:#FEF2F2"
+            onmouseover="this.style.background='#FEE2E2'" onmouseout="this.style.background='#FEF2F2'">
+            ${svgElimina}
+          </button>
+        </div>`;
+    // SVG piccolo per indicatore scadenza passata
+    const svgScaduta = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-left:4px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+    return`${_groupHeader}<tr style="${rowStyle}${_multiDay&&!isExtCal&&!isInc&&!isPratEv&&!isVisita?'border-left:3px solid #93C5FD;':''}">
+      <td style="${dateStyle}">${fmtD(ev.data)}${isInc&&isScadPast?svgScaduta:''}</td>
+      <td>${ev.ora||'—'}</td>
+      <td><span class="badge ${isInc?'badge-red':isPratEv?'badge-purple':isVisita?'badge-green':colors[ev.tipo]||'badge-gray'}">${isInc?'incarico':isPratEv?'pratica':isVisita?'visita':ev.tipo||'—'}</span></td>
+      <td style="font-weight:600;${isInc?'color:var(--red-l)':isPratEv?'color:var(--purple)':isVisita?'color:#15803D':isExtCal?'color:'+(ev._extColor||'#1D4ED8'):''}"}>${escH(ev.titolo)}${isExtCal?' <span style="font-size:0.65rem;font-weight:700;padding:1px 7px;border-radius:10px;background:'+(ev._extColor||'#3B82F6')+'22;color:'+(ev._extColor||'#2563EB')+'">'+escH(ev._extCal||'Calendario')+'</span>':''}</td>
+      <td>${escH(ev.cliente||'—')}</td>
+      <td class="note-cell">${escH(ev.note||'—')}</td>
+      <td><div class="actions-col">${actions}</div></td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="7"><div class="empty-state"><p>Nessun appuntamento registrato</p></div></td></tr>`;
+}
+function _evTappaThumbHtml(im){
+  return im && im.foto
+    ? '<img class="imm-picker-thumb" src="'+escH(im.foto)+'" alt="">'
+    : '<div class="imm-picker-thumb-empty"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>';
+}
+function _evTappaInfoHtml(im){
+  if(!im) return '<div class="imm-picker-info"><div class="imm-picker-name">— Seleziona immobile —</div><div class="imm-picker-sub">Tocca per scegliere</div></div>';
+  var nome = (im.tipo||'Immobile')+(im.ref?' · '+im.ref:'')+(im.comune?' — '+im.comune:'');
+  var sub  = (im.incarico?im.incarico+' · ':'')+(im.prezzo?'€ '+Number(im.prezzo).toLocaleString('it-IT'):'');
+  return '<div class="imm-picker-info"><div class="imm-picker-name">'+escH(nome)+'</div><div class="imm-picker-sub">'+escH(sub)+'</div></div>';
+}
+function _evTappaBuildDropdownHtml(selectedIdx){
+  var attivi = (D.immobili||[]).map(function(im,i){ return {im:im, i:i}; })
+    .filter(function(o){
+      var s=(o.im.stato||'').toLowerCase();
+      return s!=='venduto' && s!=='archiviato' && s!=='non attivo';
+    })
+    .sort(function(a,b){ return (a.im.ref||'').localeCompare(b.im.ref||'','it'); });
+  if(!attivi.length) return '<div class="imm-picker-item-none">Nessun immobile attivo disponibile</div>';
+  var html = '<div class="imm-picker-item-none" onclick="_evTappaPickerSelect(this,\'\')">— Nessun immobile —</div>';
+  attivi.forEach(function(o){
+    var sel = String(selectedIdx)===String(o.i);
+    html += '<div class="imm-picker-item'+(sel?' selected':'')+'" onclick="_evTappaPickerSelect(this,'+o.i+')">'
+      + _evTappaThumbHtml(o.im) + _evTappaInfoHtml(o.im)
+      + '</div>';
+  });
+  return html;
+}
+function _evTappaAdd(presetIdx, presetOra){
+  var wrap = document.getElementById('ev-tappe-rows');
+  if(!wrap) return;
+  var im = (presetIdx!==undefined && presetIdx!=='' && presetIdx!==null) ? D.immobili[parseInt(presetIdx)] : null;
+  var row = document.createElement('div');
+  row.className = 'ev-tappa-row2';
+  row.style.cssText = 'display:flex;gap:8px;align-items:flex-start;margin-bottom:10px;';
+  row.innerHTML = ''
+    + '<div class="imm-picker-wrap ev-tappa-picker-wrap" style="flex:1;">'
+    +   '<input type="hidden" class="ev-tappa-imm-ref" value="'+(im?parseInt(presetIdx):'')+'">'
+    +   '<div class="imm-picker-selected" onclick="_evTappaPickerToggle(this)">'+_evTappaThumbHtml(im)+_evTappaInfoHtml(im)+'<span class="imm-picker-chevron">▼</span></div>'
+    +   '<div class="imm-picker-dropdown"></div>'
+    + '</div>'
+    + '<input type="time" class="finput ev-tappa-ora" value="'+(presetOra||'')+'" style="flex:0 0 110px;">'
+    + '<button type="button" onclick="_evTappaDel(this)" style="flex:0 0 32px;height:32px;border:1px solid #FCA5A5;background:#FEF2F2;color:#DC2626;border-radius:7px;font-weight:700;cursor:pointer;">✕</button>';
+  wrap.appendChild(row);
+  _evTappeOraSync();
+}
+/* ── [2 set 2026] DOPPIO ORARIO NELL'APPUNTAMENTO ────────────────────────
+   Una visita può avere PIÙ tappe, e ogni tappa ha il suo orario di arrivo;
+   il campo "Ora" in fondo al modale è invece l'orario dell'appuntamento nel
+   suo insieme (quello che va nel calendario e nell'esportazione). Con un
+   immobile solo i due coincidono e sembravano un doppione.
+   Qui, quando la riga è UNA SOLA, l'orario della riga viene nascosto: comanda
+   il campo "Ora". Dal secondo immobile in poi ricompare su tutte le righe,
+   perché lì serve davvero.
+   IMPORTANTE: il campo viene nascosto, non svuotato. Il suo valore continua a
+   essere letto da saveEvento e dall'esportazione, quindi resta allineato al
+   campo generale — altrimenti la visita generata nascerebbe senza ora.
+   Se il campo generale è vuoto e la riga ha un orario, la direzione si
+   inverte e l'orario sale nel campo generale: così non si perde un dato
+   scritto prima. Se sono entrambi valorizzati e diversi vince quello a video,
+   perché è l'unico che l'utente sta vedendo. */
+function _evTappeOraSync(){
+  var wrap = document.getElementById('ev-tappe-rows');
+  if(!wrap) return;
+  var rows = wrap.querySelectorAll('.ev-tappa-row2');
+  var gen  = document.getElementById('ev-ora');
+  var unaSola = (rows.length === 1);
+  for(var i=0; i<rows.length; i++){
+    var inp = rows[i].querySelector('.ev-tappa-ora');
+    if(inp) inp.style.display = unaSola ? 'none' : '';
+  }
+  if(unaSola && gen){
+    var inp0 = rows[0].querySelector('.ev-tappa-ora');
+    if(inp0){
+      if(!gen.value && inp0.value) gen.value = inp0.value;
+      else inp0.value = gen.value || '';
+    }
+  }
+  /* Aggancio una volta sola: mentre scrivi nel campo "Ora", la riga nascosta
+     lo segue. Senza questo salveresti l'orario vecchio senza vederlo. */
+  if(gen && !gen._evOraHook){
+    gen._evOraHook = true;
+    gen.addEventListener('input', function(){
+      var w = document.getElementById('ev-tappe-rows');
+      if(!w) return;
+      var r = w.querySelectorAll('.ev-tappa-row2');
+      if(r.length === 1){
+        var i0 = r[0].querySelector('.ev-tappa-ora');
+        if(i0) i0.value = this.value || '';
+      }
+    });
+  }
+}
+function _evTappaDel(btn){
+  var row = btn.closest('.ev-tappa-row2');
+  if(row) row.remove();
+  _evTappeOraSync();
+}
+function _evTappaPickerToggle(el){
+  var wrap = el.closest('.ev-tappa-picker-wrap');
+  if(!wrap) return;
+  var dd = wrap.querySelector('.imm-picker-dropdown');
+  var isOpen = dd.classList.contains('open');
+  document.querySelectorAll('.ev-tappa-picker-wrap .imm-picker-dropdown.open').forEach(function(o){ if(o!==dd) o.classList.remove('open'); });
+  document.querySelectorAll('.ev-tappa-picker-wrap .imm-picker-selected.open').forEach(function(o){ if(o!==el) o.classList.remove('open'); });
+  if(!isOpen){ dd.innerHTML = _evTappaBuildDropdownHtml(wrap.querySelector('.ev-tappa-imm-ref').value); }
+  el.classList.toggle('open', !isOpen);
+  dd.classList.toggle('open', !isOpen);
+}
+function _evTappaPickerSelect(itemEl, idx){
+  var wrap = itemEl.closest('.ev-tappa-picker-wrap');
+  if(!wrap) return;
+  var selDiv = wrap.querySelector('.imm-picker-selected');
+  var dd = wrap.querySelector('.imm-picker-dropdown');
+  var hidden = wrap.querySelector('.ev-tappa-imm-ref');
+  selDiv.classList.remove('open'); dd.classList.remove('open');
+  if(idx===''||idx===null||idx===undefined){
+    hidden.value='';
+    selDiv.innerHTML = _evTappaThumbHtml(null)+_evTappaInfoHtml(null)+'<span class="imm-picker-chevron">▼</span>';
+    return;
+  }
+  var im = D.immobili[parseInt(idx)];
+  if(!im) return;
+  hidden.value = idx;
+  selDiv.innerHTML = _evTappaThumbHtml(im)+_evTappaInfoHtml(im)+'<span class="imm-picker-chevron">▼</span>';
+}
+document.addEventListener('click', function(e){
+  if(!e.target.closest('.ev-tappa-picker-wrap')){
+    document.querySelectorAll('.ev-tappa-picker-wrap .imm-picker-selected.open').forEach(function(el){ el.classList.remove('open'); });
+    document.querySelectorAll('.ev-tappa-picker-wrap .imm-picker-dropdown.open').forEach(function(el){ el.classList.remove('open'); });
+  }
+});
+function _evTipoChange(){
+  var tipoEl = document.getElementById('ev-tipo');
+  var tappeWrap = document.getElementById('ev-tappe-wrap');
+  if(!tipoEl || !tappeWrap) return;
+  if(tipoEl.value === 'visita'){
+    tappeWrap.style.display = '';
+    var rowsWrap = document.getElementById('ev-tappe-rows');
+    if(rowsWrap && !rowsWrap.children.length) _evTappaAdd();
+    _evTappeOraSync();
+  } else {
+    tappeWrap.style.display = 'none';
+  }
+}
+try{ window._evTappaAdd = _evTappaAdd; window._evTappaPickerToggle = _evTappaPickerToggle; window._evTappaPickerSelect = _evTappaPickerSelect; window._evTipoChange = _evTipoChange; window._evTappaDel = _evTappaDel; window._evTappeOraSync = _evTappeOraSync; }catch(e){}
+function openEvento(){clearModal('modal-evento');D.editIdx=null;D.editType=null;D.editEventoId=null;document.getElementById('mt-ev').textContent='Nuovo Appuntamento';document.getElementById('ev-data').value=today();var _rw=document.getElementById('ev-tappe-rows');if(_rw)_rw.innerHTML='';var _tw=document.getElementById('ev-tappe-wrap');if(_tw)_tw.style.display='none';var _edb=document.getElementById('ev-del-btn');if(_edb)_edb.style.display='none';openModal('modal-evento');}
+function openEventoPre(d){clearModal('modal-evento');D.editIdx=null;D.editType=null;D.editEventoId=null;document.getElementById('ev-data').value=d;var _rw=document.getElementById('ev-tappe-rows');if(_rw)_rw.innerHTML='';var _tw=document.getElementById('ev-tappe-wrap');if(_tw)_tw.style.display='none';var _edb=document.getElementById('ev-del-btn');if(_edb)_edb.style.display='none';openModal('modal-evento');}
+/* Ritrova l'indice ATTUALE di un evento a partire dal suo id stabile.
+   Evita di dipendere dalla posizione nell'array, che può cambiare se
+   nel frattempo arriva una sincronizzazione cloud in background. */
+function _evEnsureId(e){
+  if(!e) return;
+  if(!e.id){ e.id = (typeof genUUID==='function') ? genUUID() : ('ev_'+Date.now().toString(36)+Math.random().toString(36).slice(2,8)); }
+}
+function _evIdxById(id){
+  if(!id) return -1;
+  return D.eventi.findIndex(function(x){ return x && x.id===id; });
+}
+
+function editEvento(id){
+  const i=_evIdxById(id);
+  if(i<0){
+    if(typeof showToast==='function') showToast('Appuntamento non trovato (forse aggiornato altrove). Aggiorno la lista...','','#DC2626');
+    try{ renderCal(); }catch(e){}
+    return;
+  }
+  clearModal('modal-evento');D.editIdx=i;D.editType='evento';D.editEventoId=id;const ev=D.eventi[i];['titolo','tipo','data','ora','cliente','tel','note'].forEach(k=>{const el=document.getElementById('ev-'+k);if(el)el.value=ev[k]||'';});
+  var _rw=document.getElementById('ev-tappe-rows'); if(_rw) _rw.innerHTML='';
+  var _tw=document.getElementById('ev-tappe-wrap');
+  if(ev.tipo==='visita'){
+    if(_tw) _tw.style.display='';
+    var _tappeEd = Array.isArray(ev.tappe) && ev.tappe.length ? ev.tappe : ((ev.immRef!==undefined && ev.immRef!=='') ? [{immRef:ev.immRef, ora:ev.ora||''}] : []);
+    if(_tappeEd.length) _tappeEd.forEach(function(t){ _evTappaAdd(t.immRef, t.ora); });
+    else _evTappaAdd();
+  } else if(_tw) _tw.style.display='none';
+  var _edb=document.getElementById('ev-del-btn'); if(_edb) _edb.style.display='';
+  openModal('modal-evento');
+}
+function saveEvento(){
+  /* Anti-drift: ri-risolvi l'indice reale dell'evento in modifica appena
+     prima di leggere/scrivere D.eventi, così non rischi di toccare un
+     record diverso da quello che stai modificando. */
+  if(D.editType==='evento' && D.editEventoId){
+    const _freshIdx=_evIdxById(D.editEventoId);
+    if(_freshIdx<0){
+      alert('Questo appuntamento non esiste più (probabilmente cancellato o aggiornato da un altro dispositivo). La lista viene aggiornata.');
+      try{ closeModal('modal-evento'); }catch(_e){}
+      D.editIdx=null; D.editType=null; D.editEventoId=null;
+      renderCal();
+      return;
+    }
+    D.editIdx=_freshIdx;
+  }
+  const g=id=>document.getElementById(id).value;const ev={titolo:g('ev-titolo'),tipo:g('ev-tipo'),data:g('ev-data'),ora:g('ev-ora'),cliente:g('ev-cliente'),tel:g('ev-tel'),note:g('ev-note')};if(!ev.titolo||!ev.data){dlgAlert('Inserisci titolo e data obbligatori.','','Campi mancanti');return;}
+  if(ev.tipo==='visita'){
+    var _tappeS=[];
+    document.querySelectorAll('#ev-tappe-rows .ev-tappa-row2').forEach(function(row){
+      var hidden=row.querySelector('.ev-tappa-imm-ref'); var ora=row.querySelector('.ev-tappa-ora');
+      var v = hidden ? hidden.value : '';
+      if(v!=='' && D.immobili[parseInt(v)]) _tappeS.push({ immRef: parseInt(v), ora: ora?ora.value:'' });
+    });
+    if(!_tappeS.length){ dlgAlert('Seleziona almeno un immobile da visitare.','','Campo mancante'); return; }
+    ev.tappe = _tappeS;
+    ev.immRefs = _tappeS.map(function(t){ return t.immRef; });
+    ev.immRef = _tappeS[0].immRef;
+    if(!ev.ora && _tappeS[0].ora) ev.ora = _tappeS[0].ora;
+  }
+  /* [6 ago] Id stabile anche per gli appuntamenti nati dal PC. Prima solo la
+     modifica lo conservava (ev.id=old.id) e i nuovi restavano senza: senza id
+     non c'è modo di ritrovare l'appuntamento né di legarci la visita generata.
+     In modifica viene comunque sovrascritto dall'id originale, poche righe più giù. */
+  if(!ev.id) ev.id = (typeof window.genUUID==='function')
+    ? window.genUUID()
+    : ('ev_'+Date.now().toString(36)+Math.random().toString(36).slice(2,8));
+  if(D.editIdx!==null&&D.editType==='evento'){
+  // ── Sync inverso verso la pratica: se sto modificando un evento Rogito proveniente da una pratica,
+  //    riporto data e ora aggiornate nella pratica corrispondente.
+  const old=D.eventi[D.editIdx];
+  if(old && old.id) ev.id=old.id; /* preserva l'id stabile del record */
+  if(old && old._type==='pratica' && typeof old._pratIdx==='number' && old.titolo && old.titolo.includes('Rogito')){
+    const prat=D.pratiche[old._pratIdx];
+    if(prat){
+      // Preserva i metadati di collegamento (non modificabili dall'utente nello scadenzario)
+      ev._type='pratica'; ev._pratIdx=old._pratIdx; ev._readOnly=old._readOnly;
+      // Aggiorna data e ora del rogito nella pratica
+      const cambioData=prat.drogito!==ev.data;
+      const cambioOra=(prat.oraRogito||'')!==(ev.ora||'');
+      prat.drogito=ev.data;
+      prat.oraRogito=ev.ora||'';
+      if((cambioData||cambioOra) && typeof showToast==='function'){
+        showToast(' Pratica aggiornata: data/ora rogito sincronizzata','','#15803D');
+      }
+    }
+  }
+  D.eventi[D.editIdx]=ev;
+} else D.eventi.push(ev);
+  /* ── [6 ago 2026] AGENDA → REGISTRO VISITE (lato PC) ──────────────────────
+     Stessa logica già attiva sul telefono: un appuntamento di tipo
+     "Visita Immobile" genera (o aggiorna) la riga corrispondente nel Registro
+     Visite, una per ogni immobile fra le tappe. Prima saveEvento scriveva solo
+     in D.eventi e la visita non nasceva mai.
+     La funzione vive nel monolite ed è raggiunta via window, come le altre
+     dipendenze cross-dominio di questo modulo. */
+  var _sv = { creati:0, aggiornati:0 };
+  if(String(ev.tipo||'')==='visita' && typeof window._creaVisiteDaEvento==='function'){
+    try{ _sv = window._creaVisiteDaEvento(ev); }
+    catch(_e){ console.warn('[VisiteDaAgenda] KO:', _e); }
+  }
+  saveD();closeModal('modal-evento');D.editIdx=null;D.editType=null;D.editEventoId=null;renderCal();updateBadges();
+  if(typeof window.renderVisite==='function'){ try{ window.renderVisite(); }catch(_rv){} }
+  if(_sv.creati && typeof showToast==='function'){
+    showToast(_sv.creati===1 ? '1 visita aggiunta al Registro' : _sv.creati+' visite aggiunte al Registro','','#15803D');
+  }
+  if(typeof renderPratiche==='function')renderPratiche();}
+function delEvento(id){
+  const i=_evIdxById(id);
+  if(i<0){
+    if(typeof showToast==='function') showToast('Appuntamento non trovato (forse già cancellato altrove). Aggiorno la lista...','','#DC2626');
+    try{ renderCal(); }catch(e){}
+    return;
+  }
+  dlgConfirm('Eliminare questo appuntamento?','','Elimina Appuntamento').then(ok=>{
+    if(!ok) return;
+    const iNow=_evIdxById(id);
+    if(iNow<0) return; /* già sparito nel frattempo */
+    D.eventi.splice(iNow,1);
+    saveD(); renderCal(); updateBadges();
+    showToast('Appuntamento eliminato','','#DC2626');
+  });
+}
+function calDelVisita(visIdx){
+  if(!D.visite || !D.visite[visIdx]){
+    if(typeof showToast==='function') showToast('Visita non trovata (forse già cancellata). Aggiorno la lista...','','#DC2626');
+    try{ renderCal(); }catch(e){}
+    return;
+  }
+  const v=D.visite[visIdx];
+  const cl=D.clienti[parseInt(v.cliRef)];
+  const nome=(cl?cl.nome:(v.cliente||'')) || 'questa visita';
+  dlgConfirm('Eliminare la visita di "'+nome+'" del '+(v.data?fmtD(v.data):'')+'?\nVerrà rimossa dal Registro Visite.','','Elimina Visita').then(ok=>{
+    if(!ok) return;
+    /* Rileggo l'indice al momento della conferma per sicurezza */
+    const i2=D.visite.indexOf(v);
+    if(i2<0){ renderCal(); return; }
+    D.visite.splice(i2,1);
+    saveD(); renderCal(); updateBadges();
+    if(typeof renderVisite==='function') renderVisite();
+    showToast('Visita eliminata','','#DC2626');
+  });
+}
+
+
+// --- BRIDGE window ---
+Object.assign(window, {
+  _calIcsPad, _calIcsDateTime, _calIcsEscape, _calBuildICS, _calDownloadICS,
+  _calGoogleQuickAddUrl, _calOutlookQuickAddUrl,
+  calGoToday, calSetView, calTooltipShow, calTooltipHide, renderCal, calEvColor,
+  calGetEventi, calRenderGiorno, _calWeekEvHTML, calRenderSettimana, calRenderMese,
+  calRenderAnno, calClick, isEvVendutoOrArchiviato, renderEvTbody, openEvento,
+  openEventoPre, editEvento, saveEvento, delEvento, calDelVisita, calApriEvento, calMostraGiorno,
+});
+export { renderCal, openEvento, saveEvento, delEvento, calSetView, calGetEventi };
