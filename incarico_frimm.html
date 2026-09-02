@@ -1,0 +1,2095 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestione Incarichi di Mediazione · FRIMM</title>
+<style>
+:root{
+  --blu:#1b3a6b;
+  --blu-scuro:#16315a;
+  --blu-chiaro:#7d93b3;
+  --grigio:#7a7a7a;
+  --bordo:#2a2a2a;
+  --bg:#eef1f5;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:"Helvetica Neue",Arial,sans-serif;
+  background:var(--bg);
+  color:#111;
+  -webkit-print-color-adjust:exact;
+  print-color-adjust:exact;
+}
+
+/* ====== BARRA STRUMENTI ====== */
+.toolbar{
+  position:sticky;top:0;z-index:1000;
+  background:var(--blu);
+  color:#fff;
+  display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 10px;
+  padding:8px 16px;
+  box-shadow:0 2px 8px rgba(0,0,0,.25);
+}
+.toolbar .brand{font-weight:bold;font-size:16px;letter-spacing:.5px;display:flex;align-items:center;gap:8px;margin-right:6px;align-self:center;}
+.toolbar .brand .logo{background:#fff;color:var(--blu);border-radius:5px;padding:2px 8px;font-style:italic;}
+.toolbar .brand-txt{font-size:14px;font-weight:600;opacity:.92;}
+.toolbar button{
+  font-family:inherit;font-size:12.5px;font-weight:600;
+  border:none;border-radius:6px;padding:7px 11px;cursor:pointer;
+  transition:.15s;
+}
+/* gruppi di pulsanti */
+.tb-group{
+  display:flex;align-items:center;gap:5px;
+  background:rgba(255,255,255,.10);
+  border-radius:9px;padding:5px 8px 6px;
+  position:relative;
+}
+.tb-label{
+  position:absolute;top:-7px;left:9px;
+  font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+  background:var(--blu);padding:0 5px;border-radius:3px;opacity:.75;
+}
+.tb-spacer{flex:1 1 auto;min-width:8px;}
+.tb-val{font-size:12px;min-width:40px;text-align:center;display:inline-block;font-weight:600;}
+.btn-print{background:#fff;color:var(--blu);}
+.btn-print:hover{background:#dce4f0;}
+.btn-a3{background:#274d80;color:#fff;border:1px solid #4a6fa5 !important;}
+.btn-a3:hover{background:#33608f;}
+.btn-save{background:#3a7d44;color:#fff;}
+.btn-save:hover{background:#2f6638;}
+.btn-load{background:#b06a1a;color:#fff;}
+.btn-load:hover{background:#925716;}
+.btn-clear{background:#9a2b2b;color:#fff;}
+.btn-clear:hover{background:#7d2222;}
+.toolbar .info{font-size:11px;opacity:.8;width:100%;margin-top:2px;}
+.zoom-wide{width:auto !important;padding:0 8px !important;font-size:11px !important;}
+
+/* ====== AREA DOCUMENTO ====== */
+.workspace{padding:24px;display:flex;flex-direction:column;align-items:center;gap:24px;}
+
+.sheet{
+  background:#fff;
+  box-shadow:0 4px 18px rgba(0,0,0,.18);
+  position:relative;
+}
+
+/* Formato A4 verticale per le pagine logiche */
+.page{
+  width:210mm;
+  min-height:297mm;
+  padding:11mm 11mm 9mm 11mm;
+  position:relative;
+  font-size:7.4pt;
+  line-height:1.28;
+}
+/* pagine interne del contratto: ottimizzate per riempire un A4 senza spazio bianco */
+.page.contract{
+  padding:8mm 9mm 6mm 9mm;
+  font-size:calc(7.05pt * var(--font-mult, 1));
+  line-height:1.42;
+  display:flex;flex-direction:column;
+}
+.page.contract .lineflex{margin:2.2px 0;}
+.page.contract p.cl{margin:2.2px 0;}
+.page.contract .sect-title{margin:4.5px 0 2px;font-size:7.7pt;}
+.page.contract .footer-note{margin-top:auto;}
+.page.contract .doc-header{font-size:11pt;}
+.sex-pick{font-size:6pt;color:#555;white-space:nowrap;background:rgba(220,235,255,.5);border-radius:3px;padding:0 3px;}
+.sex-pick label{cursor:pointer;}
+.sex-pick input{width:9px;height:9px;vertical-align:-1px;margin:0 1px;}
+.natlbl{font-weight:600;}
+.btn-cf{font-size:6pt;border:1px solid var(--blu);background:#eaf0fa;color:var(--blu);border-radius:3px;padding:0 3px;margin:0 2px;cursor:pointer;font-family:inherit;line-height:1.4;white-space:nowrap;}
+.btn-cf:hover{background:var(--blu);color:#fff;}
+.btn-cat{font-size:6pt;border:1px solid #1f7a6e;background:#e6f4f1;color:#1f7a6e;border-radius:3px;padding:0 4px;margin:0 2px;cursor:pointer;font-family:inherit;line-height:1.4;white-space:nowrap;font-weight:700;}
+.btn-cat:hover{background:#1f7a6e;color:#fff;}
+.cat-display{
+  flex:1;min-width:200px;border-bottom:1px dotted #555;background:rgba(255,250,210,.45);
+  padding:1px 3px;font-size:inherit;line-height:1.4;min-height:1.2em;
+}
+@media print{ .cat-display{background:transparent !important;} }
+@media print{ .sex-pick, .btn-cf, .btn-cat{display:none !important;} }
+
+/* Copertina */
+.cover{display:flex;flex-direction:column;}
+.cover .cover-top{font-style:italic;text-align:center;font-size:8pt;color:#222;border-bottom:0;}
+/* layout verticale centrato: logo sopra il titolo, poi riquadro agenzia, poi legge/footer */
+.cover .cover-mid{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;}
+.cover .frimm-logo{
+  background:var(--blu);color:#fff;border-radius:14px;
+  padding:22px 36px;text-align:center;
+  box-shadow:0 6px 16px rgba(0,0,0,.2);
+  margin-bottom:10mm;
+}
+.cover .frimm-logo .big{font-size:34pt;font-weight:bold;font-style:italic;letter-spacing:2px;}
+.cover .frimm-logo .small{font-size:8pt;letter-spacing:3px;margin-top:2px;}
+.logo-slot{max-width:80mm;max-height:36mm;}
+.logo-slot .logo-img{max-width:100%;max-height:100%;object-fit:contain;}
+/* quando c'è un logo immagine, il riquadro blu diventa trasparente */
+.frimm-logo.has-img{background:transparent !important;box-shadow:none !important;padding:0 !important;}
+.frimm-logo.has-img .logo-text{display:none !important;}
+.logo-slot{overflow:hidden;}
+/* wrapper per auto-fit di stampa */
+.fit-inner{display:block;}
+.page.contract:has(> .fit-inner){display:block;}
+.fit-inner > .footer-note{margin-top:8px;}
+.cover .title-block{text-align:center;}
+.cover .title-block .t1{font-size:46pt;color:var(--blu);letter-spacing:4px;line-height:1;}
+.cover .title-block .t2{font-size:22pt;color:var(--blu-chiaro);letter-spacing:2px;}
+.cover .title-block .t3{font-size:46pt;color:var(--blu);letter-spacing:6px;line-height:1.05;}
+.cover .title-block .t4{font-size:18pt;color:var(--blu-chiaro);letter-spacing:3px;}
+.cover .agency-box{
+  width:100%;max-width:140mm;box-sizing:border-box;
+  border:1px solid var(--blu);border-radius:6px;
+  min-height:40mm;margin:10mm 4mm 0 4mm;padding:5mm 6mm;
+}
+.cover .cover-summary{
+  width:100%;font-family:inherit;font-size:9pt;line-height:1.5;color:#1a1a1a;
+}
+.cover .cover-summary .cs-block{margin-bottom:3.5mm;}
+.cover .cover-summary .cs-titolo{
+  font-size:7pt;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+  color:var(--blu);border-bottom:1px solid #cdd6e6;padding-bottom:1px;margin-bottom:1.5px;
+}
+.cover .cover-summary .cs-riga{font-size:9pt;}
+.cover .cover-summary .cs-vuoto{color:#9aa3b2;font-style:italic;font-size:8.5pt;text-align:center;padding-top:8mm;}
+.cover .law{width:100%;max-width:140mm;font-size:7.5pt;color:#333;margin-top:8mm;padding:0 2mm;text-align:justify;}
+.cover .cover-footer{width:100%;text-align:center;margin-top:8mm;}
+.cover .cover-footer .logo2{color:var(--blu);font-weight:bold;font-style:italic;font-size:13pt;}
+.cover .cover-footer .tag{font-style:italic;font-size:7.5pt;color:#333;margin-top:3px;}
+
+/* ===== personalizzazione copertina (variabili regolabili dall'editor) ===== */
+.cover{
+  --logo-scale:1; --logo-x:0px; --logo-y:0px;
+  --title-scale:1; --title-x:0px; --title-y:0px;
+  --box-scale:1; --box-y:0px;
+}
+.cover .frimm-logo{ transform: translate(var(--logo-x),var(--logo-y)) scale(var(--logo-scale)); }
+.cover .title-block{ transform: translate(var(--title-x),var(--title-y)) scale(var(--title-scale)); }
+.cover .agency-box{ transform: translate(0,var(--box-y)) scale(var(--box-scale)); transform-origin:center top; }
+
+/* Copertina A3: layout a due colonne (logo a sinistra, titolo+riquadro a destra),
+   indipendente dal layout verticale di .cover-mid usato in A4 */
+.cover-a3{padding:16mm 22mm 16mm 22mm;}
+.cover-a3 .cover-mid-a3{flex:1.4;display:flex;flex-direction:row;align-items:center;justify-content:flex-start;width:100%;}
+.cover-a3 .cover-left{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.cover-a3 .cover-right{flex:1.2;display:flex;flex-direction:column;justify-content:center;}
+.cover-a3 .cover-right .title-block,
+.cover-a3 .cover-right .agency-box,
+.cover-a3 .cover-right .cover-footer{width:100%;max-width:none;}
+.cover-a3 .cover-right .law{width:100%;}
+.cover-a3 .cover-top{font-size:11pt;width:54.5%;margin-left:auto;text-align:center;}
+.cover-a3 .frimm-logo{padding:48px 70px;border-radius:24px;margin-bottom:0;}
+.cover-a3 .frimm-logo .big{font-size:62pt;}
+.cover-a3 .frimm-logo .small{font-size:14pt;letter-spacing:4px;margin-top:8px;}
+.cover-a3 .logo-slot{max-width:none;max-height:none;}
+.cover-a3 .title-block .t1{font-size:64pt;letter-spacing:7px;}
+.cover-a3 .title-block .t2{font-size:30pt;letter-spacing:3px;}
+.cover-a3 .title-block .t3{font-size:64pt;letter-spacing:9px;}
+.cover-a3 .title-block .t4{font-size:26pt;letter-spacing:5px;}
+.cover-a3 .agency-box{min-height:64mm;margin:18mm 8mm 0 8mm;padding:9mm;}
+.cover-a3 .cover-summary{font-size:13pt;}
+.cover-a3 .cover-summary .cs-titolo{font-size:10pt;}
+.cover-a3 .cover-summary .cs-riga{font-size:13pt;}
+.cover-a3 .law{max-width:120mm;margin-left:auto;margin-right:auto;font-size:11pt;padding:14mm 2mm 0 2mm;margin-top:auto;}
+.cover-a3 .cover-footer{margin-top:14mm;}
+.cover-a3 .cover-footer .logo2{font-size:20pt;}
+.cover-a3 .cover-footer .tag{font-size:11pt;}
+
+/* Header sezione interna */
+.doc-header{
+  background:var(--blu);color:#fff;text-align:center;
+  font-weight:bold;font-size:11pt;letter-spacing:.5px;
+  padding:5px;margin:0 0 4px 0;
+}
+.doc-subtitle{text-align:center;font-style:italic;font-size:7pt;margin-bottom:6px;}
+
+.sect-title{font-weight:bold;font-size:7.6pt;margin:5px 0 1px;}
+p.cl{margin:1.5px 0;text-align:justify;}
+.two-col{column-count:2;column-gap:7mm;column-rule:0;}
+.footer-note{
+  font-style:italic;font-size:6.3pt;text-align:center;color:#222;
+  border-top:1px solid var(--blu);margin-top:6px;padding-top:3px;
+}
+
+/* Campi compilabili */
+.fld{
+  border:none;border-bottom:1px dotted #555;
+  font-family:inherit;font-size:7.2pt;
+  padding:0 2px;background:rgba(255,250,210,.45);
+  outline:none;line-height:1.1;
+}
+.fld:focus{background:#fff6c2;border-bottom:1px solid var(--blu);}
+.fld.w-xs{width:38px;}
+.fld.w-sm{width:70px;}
+.fld.w-md{width:130px;}
+.fld.w-lg{width:210px;}
+.fld.w-xl{width:330px;}
+.fld.w-full{width:100%;}
+.fld.grow{flex:1;}
+
+.chk{
+  width:11px;height:11px;vertical-align:-1px;
+  appearance:none;-webkit-appearance:none;
+  border:1px solid #333;display:inline-block;
+  position:relative;cursor:pointer;margin:0 2px;background:#fff;
+}
+.chk:checked{background:var(--blu);}
+.chk:checked::after{
+  content:"✓";color:#fff;font-size:9px;position:absolute;
+  top:-2px;left:1px;font-weight:bold;
+}
+
+label.opt{white-space:nowrap;margin-right:5px;}
+
+.lineflex{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 4px;margin:2px 0;}
+.lineflex .lbl{white-space:nowrap;}
+
+/* ===== FLUSSO LIBERO: il contenuto scorre come testo continuo =====
+   etichette e campi si dispongono di seguito riempiendo le righe,
+   senza struttura rigida; i campi crescono per occupare lo spazio. */
+.flow{display:block; line-height:2.1; text-align:justify;}
+.flow > span, .flow > label, .flow > .natlbl, .flow > .sex-pick{ white-space:nowrap; }
+.flow .illa, .flow .sigsig{ font-weight:inherit; }
+.ffld{
+  display:inline-block; vertical-align:baseline;
+  border:none; border-bottom:1px dotted #555;
+  font-family:inherit; font-size:inherit;
+  background:rgba(255,250,210,.45); padding:0 3px; margin:0 2px;
+  min-width:40px; outline:none;
+}
+.ffld:focus{ background:#fff6c2; border-bottom:1px solid var(--blu); }
+.ffld.flex-grow{ min-width:90px; }
+.ffld.flex-grow2{ min-width:200px; }
+@media print{ .ffld{ background:transparent !important; } }
+
+.sign-row{display:flex;justify-content:space-between;gap:20px;margin-top:8px;}
+.sign-box{flex:1;}
+.sign-box .ld{font-size:7pt;}
+.sign-box .role{text-align:right;font-weight:bold;font-size:7.4pt;border-top:1px solid #333;margin-top:14px;padding-top:2px;}
+
+textarea.note{
+  width:100%;min-height:30px;border:none;border-bottom:1px dotted #555;
+  background:rgba(255,250,210,.45);font-family:inherit;font-size:7.2pt;
+  resize:vertical;outline:none;padding:2px;
+}
+
+.page-tag{
+  position:absolute;top:4mm;right:5mm;font-size:6pt;color:#bbb;
+}
+
+/* ====== STAMPA ====== */
+@page{margin:0;}
+.workspace.mode-a4 .sheet{width:210mm;}
+.workspace.mode-a3 .sheet{}
+
+/* In modalità A3: copertina+pag2 affiancate (foglio esterno), pag1+retro affiancate */
+.a3-sheet{display:none;}
+
+@media print{
+  .toolbar{display:none !important;}
+  .scale-wrap{display:block !important;overflow:visible !important;width:auto !important;}
+  .workspace{padding:0;gap:0;background:#fff;display:block !important;align-items:flex-start !important;}
+  body{background:#fff;}
+  .sheet{box-shadow:none !important;margin:0;}
+  .fld{background:transparent !important;border-bottom:1px dotted #555 !important;}
+  .cover .agency-box textarea, textarea.note{background:transparent !important;}
+
+  /* MODALITÀ A4 */
+  body.print-a4 .a3-sheet{display:none !important;}
+  body.print-a4 .page{page-break-after:always;width:210mm;min-height:297mm;}
+  body.print-a4 .page:last-child{page-break-after:auto;}
+
+  /* MODALITÀ A3 */
+  body.print-a3 .a4-sheet{display:none !important;}
+  body.print-a3 .a3-sheet{
+    width:420mm;height:297mm;overflow:hidden;
+    display:flex !important;flex-direction:row;justify-content:flex-start;align-items:flex-start;
+    page-break-after:always;transform:none !important;
+    box-shadow:none !important;margin:0 !important;padding:0 !important;
+  }
+  body.print-a3 .a3-sheet:last-child{page-break-after:auto;}
+  body.print-a3 .a3-sheet .page{
+    flex:0 0 50%;width:50%;max-width:50%;height:297mm;min-height:297mm;
+    page-break-after:auto;overflow:hidden;
+  }
+  /* la copertina A3 riempie l'intero foglio orizzontale */
+  body.print-a3 #a3outer{display:block !important;}
+  body.print-a3 #a3outer .cover-a3{
+    flex:none;width:420mm !important;max-width:420mm !important;height:297mm;
+  }
+  body.print-a3 .a3-sheet .page.contract{padding:8mm 9mm 6mm 9mm;}
+  body.print-a3 .a3-divider{display:none;}
+}
+
+/* Anteprima A3 a schermo */
+.a3-sheet.preview{
+  display:flex;width:420mm;background:#fff;
+  box-shadow:0 4px 18px rgba(0,0,0,.18);
+  transform-origin:top center;
+}
+.a3-sheet.preview .page{box-shadow:none;}
+.a3-sheet.preview .cover-a3{width:420mm !important;flex:none;}
+.a3-divider{width:0;border-left:1px dashed #ccc;}
+
+.scale-wrap{display:flex;justify-content:center;width:100%;overflow:auto;}
+.btn-ag{background:#5a3a8a;color:#fff;}
+.btn-ag:hover{background:#4a2f73;}
+.btn-rub{background:#1f7a6e;color:#fff;}
+.btn-rub:hover{background:#185f56;}
+.btn-cov{background:#b0541a;color:#fff;}
+.btn-cov:hover{background:#924516;}
+.cov-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 20px;padding:16px 20px;}
+.cov-grid label{display:flex;flex-direction:column;font-size:12px;font-weight:600;color:#333;gap:5px;}
+.cov-grid input[type=range]{width:100%;}
+.cov-val{font-size:11px;color:#666;font-weight:500;}
+.zoom-ctl{display:inline-flex;align-items:center;gap:6px;margin-left:8px;background:rgba(255,255,255,.12);padding:4px 8px;border-radius:8px;}
+.zoom-btn{width:26px;height:26px;border:none;border-radius:6px;background:#fff;color:var(--blu);font-size:16px;font-weight:700;cursor:pointer;line-height:1;display:inline-flex;align-items:center;justify-content:center;}
+.zoom-btn:hover{background:#dce4f0;}
+
+/* rubrica */
+.rub-toolbar{display:flex;gap:10px;padding:6px 20px 8px;}
+.rub-toolbar input{flex:1;font-family:inherit;font-size:13px;padding:9px 11px;border:1px solid #ccd2dc;border-radius:7px;background:#fafbfc;outline:none;}
+.rub-toolbar input:focus{border-color:var(--blu);background:#fff;}
+.btn-rub-save{background:#3a7d44;color:#fff;border:none;border-radius:7px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.btn-rub-save:hover{background:#2f6638;}
+.rub-list{max-height:340px;overflow:auto;padding:4px 20px;display:flex;flex-direction:column;gap:8px;}
+/* dati catastali */
+.cat-list{max-height:420px;overflow:auto;padding:6px 20px;display:flex;flex-direction:column;gap:12px;}
+.cat-unita{border:1px solid #d7dde6;border-radius:10px;padding:12px 14px;background:#fafbfd;}
+.cat-unita-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.cat-unita-head select{font-family:inherit;font-size:13px;font-weight:600;padding:6px 9px;border:1px solid #ccd2dc;border-radius:7px;background:#fff;color:var(--blu);}
+.cat-unita-head .cat-titolo{font-size:11px;color:#8a93a3;font-weight:600;}
+.cat-rm{margin-left:auto;background:#9a2b2b;color:#fff;border:none;border-radius:6px;padding:5px 10px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit;}
+.cat-rm:hover{background:#7d2222;}
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:8px 10px;}
+.cat-grid label{display:flex;flex-direction:column;font-size:11px;font-weight:600;color:#444;gap:3px;min-width:0;}
+.cat-grid input{font-family:inherit;font-size:12.5px;padding:6px 8px;border:1px solid #ccd2dc;border-radius:6px;background:#fff;outline:none;width:100%;box-sizing:border-box;}
+.cat-grid input:focus{border-color:var(--blu);}
+.cat-grid label.wide{grid-column:span 2;}
+.cat-desc{font-size:9.5px;color:#1f7a6e;font-weight:500;min-height:11px;line-height:1.2;margin-top:1px;}
+.rub-empty{color:#8a93a3;font-size:13px;text-align:center;padding:24px 0;}
+.rub-item{display:flex;align-items:center;gap:10px;border:1px solid #e3e7ee;border-radius:9px;padding:10px 12px;background:#fafbfd;}
+.rub-item:hover{border-color:#c3ccda;background:#f3f6fb;}
+.rub-item .rub-info{flex:1;min-width:0;}
+.rub-item .rub-name{font-weight:600;font-size:13.5px;color:#1f2a3a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rub-item .rub-meta{font-size:11px;color:#8a93a3;margin-top:2px;}
+.rub-item button{border:none;border-radius:6px;padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;}
+.rub-open{background:var(--blu);color:#fff;}
+.rub-open:hover{background:var(--blu-scuro);}
+.rub-exp{background:#2a6b8a;color:#fff;}
+.rub-exp:hover{background:#225770;}
+.rub-del{background:#9a2b2b;color:#fff;}
+.rub-del:hover{background:#7d2222;}
+
+/* ===== MODALE DATI AGENZIA ===== */
+.modal-overlay{
+  display:none;position:fixed;inset:0;z-index:3000;
+  background:rgba(15,25,45,.55);backdrop-filter:blur(2px);
+  align-items:flex-start;justify-content:center;padding:40px 16px;overflow:auto;
+}
+.modal-overlay.open{display:flex;}
+.modal{
+  background:#fff;border-radius:14px;max-width:760px;width:100%;
+  box-shadow:0 18px 50px rgba(0,0,0,.4);overflow:hidden;
+  font-family:"Helvetica Neue",Arial,sans-serif;
+}
+.modal-head{
+  background:var(--blu);color:#fff;display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;
+}
+.modal-head h2{margin:0;font-size:17px;font-weight:600;}
+.modal-x{background:transparent;border:none;color:#fff;font-size:18px;cursor:pointer;padding:4px 8px;border-radius:6px;}
+.modal-x:hover{background:rgba(255,255,255,.2);}
+.modal-intro{padding:14px 20px 0;margin:0;font-size:13px;color:#444;line-height:1.5;}
+.modal-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px 16px;padding:16px 20px;
+}
+.modal-grid label{display:flex;flex-direction:column;font-size:12px;font-weight:600;color:#333;gap:4px;}
+.modal-grid label.full{grid-column:1 / -1;}
+.modal-grid label.chkrow{grid-column:1 / -1;flex-direction:row;align-items:center;font-weight:600;}
+.modal-grid label.inl{flex-direction:row;align-items:center;gap:4px;font-weight:500;}
+.modal-grid input[type=text],.modal-grid textarea{
+  font-family:inherit;font-size:13px;padding:8px 10px;border:1px solid #ccd2dc;border-radius:7px;
+  background:#fafbfc;outline:none;font-weight:400;
+}
+.modal-grid input[type=text]:focus,.modal-grid textarea:focus{border-color:var(--blu);background:#fff;}
+.modal-grid input[type=checkbox]{width:16px;height:16px;}
+.modal-actions{display:flex;gap:10px;flex-wrap:wrap;padding:6px 20px 16px;}
+.modal-actions button{font-family:inherit;font-size:13px;font-weight:600;border:none;border-radius:8px;padding:10px 16px;cursor:pointer;}
+.btn-salva-ag{background:#3a7d44;color:#fff;}
+.btn-salva-ag:hover{background:#2f6638;}
+.btn-applica-ag{background:var(--blu);color:#fff;}
+.btn-applica-ag:hover{background:var(--blu-scuro);}
+.btn-annulla-ag{background:#e4e7ec;color:#333;}
+.btn-annulla-ag:hover{background:#d4d8df;}
+.modal-foot{padding:0 20px 18px;margin:0;font-size:11.5px;color:#777;}
+.logo-uploader{display:flex;gap:14px;align-items:flex-start;margin-top:4px;}
+.logo-preview{
+  width:140px;height:90px;border:1px dashed #b9c0cc;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;background:#f6f8fb;flex:none;overflow:hidden;
+}
+.logo-preview img{max-width:100%;max-height:100%;object-fit:contain;}
+.logo-ph{font-size:11px;color:#9aa3b2;font-weight:400;text-align:center;padding:0 8px;}
+.logo-btns{display:flex;flex-direction:column;gap:8px;}
+.btn-logo-up{background:var(--blu);color:#fff;border:none;border-radius:7px;padding:9px 14px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;}
+.btn-logo-up:hover{background:var(--blu-scuro);}
+.btn-logo-rm{background:#e4e7ec;color:#444;border:none;border-radius:7px;padding:7px 14px;font-size:12px;cursor:pointer;font-family:inherit;}
+.btn-logo-rm:hover{background:#d4d8df;}
+.logo-hint{margin:2px 0 0;font-size:11px;color:#888;max-width:280px;line-height:1.4;}
+@media print{.modal-overlay{display:none !important;}}
+
+/* ===== EDITOR COPERTINA: pannello laterale, non un modale che copre tutto =====
+   Resta ancorato a sinistra dello schermo e lascia visibile l'anteprima della
+   copertina sulla destra, così le modifiche dei cursori si vedono in tempo reale. */
+.cov-overlay{
+  background:transparent !important;backdrop-filter:none !important;
+  justify-content:flex-start !important;align-items:flex-start !important;
+  padding:0 !important;pointer-events:none;
+}
+.cov-overlay .modal{
+  pointer-events:auto;
+  max-width:380px;width:340px;max-height:100vh;overflow-y:auto;
+  border-radius:0 14px 14px 0;box-shadow:6px 0 30px rgba(0,0,0,.3);
+  margin:0;
+}
+.cov-overlay .cov-grid{grid-template-columns:1fr;}
+@media (max-width:900px){
+  .cov-overlay .modal{width:88vw;max-width:340px;}
+}
+</style>
+</head>
+<body class="print-a4">
+
+<!-- ====== BARRA STRUMENTI ====== -->
+<div class="toolbar">
+  <div class="brand"><span class="logo">FRIMM</span> <span class="brand-txt">Gestione Incarichi</span></div>
+
+  <div class="tb-group" title="Stampa">
+    <span class="tb-label">Stampa</span>
+    <button class="btn-print" onclick="stampaA4()">🖨️ A4</button>
+    <button class="btn-a3" onclick="stampaA3()">🖨️ A3</button>
+  </div>
+
+  <div class="tb-group" title="Archivio incarichi">
+    <span class="tb-label">Incarico</span>
+    <button class="btn-clear" onclick="nuovoIncarico()">🗑️ Nuovo</button>
+    <button class="btn-rub" onclick="apriRubrica()">📒 Archivio</button>
+    <button class="btn-load" onclick="document.getElementById('fileload').click()" title="Carica da file">📂</button>
+    <button class="btn-save" style="background:#2a6b8a" onclick="esportaJSON()" title="Esporta su file">⬇️</button>
+  </div>
+
+  <div class="tb-group" title="Impostazioni">
+    <span class="tb-label">Imposta</span>
+    <button class="btn-ag" onclick="apriPannelloAgenzia()">🏢 Agenzia</button>
+    <button class="btn-cov" onclick="apriEditorCopertina()">🎨 Copertina</button>
+  </div>
+
+  <div class="tb-spacer"></div>
+
+  <div class="tb-group" title="Vista anteprima">
+    <span class="tb-label">Vista</span>
+    <button class="btn-print" id="vbA4" onclick="mostraVista('a4');setVistaBtn('a4')">📄 A4</button>
+    <button class="btn-a3" id="vbA3" onclick="mostraVista('a3');setVistaBtn('a3')">📐 A3</button>
+  </div>
+
+  <div class="tb-group" title="Zoom schermo">
+    <span class="tb-label">Zoom</span>
+    <button class="zoom-btn" onclick="cambiaZoom(-0.1)" title="Riduci">−</button>
+    <span id="zoomVal" class="tb-val">100%</span>
+    <button class="zoom-btn" onclick="cambiaZoom(0.1)" title="Ingrandisci">+</button>
+    <button class="zoom-btn zoom-wide" onclick="resetZoom()" title="Adatta alla finestra">Adatta</button>
+  </div>
+
+  <div class="tb-group" title="Dimensione testo del documento">
+    <span class="tb-label">Caratteri</span>
+    <button class="zoom-btn" onclick="cambiaCarattere(-0.05)" title="Più piccoli">A−</button>
+    <span id="fontVal" class="tb-val">100%</span>
+    <button class="zoom-btn" onclick="cambiaCarattere(0.05)" title="Più grandi">A+</button>
+  </div>
+
+  <input type="file" id="fileload" accept=".json" style="display:none" onchange="caricaFile(event)">
+</div>
+
+<!-- ====== PANNELLO DATI AGENZIA ====== -->
+<div class="modal-overlay" id="agOverlay" onclick="if(event.target===this)chiudiPannelloAgenzia()">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>🏢 Dati della tua Agenzia</h2>
+      <button class="modal-x" onclick="chiudiPannelloAgenzia()">✕</button>
+    </div>
+    <p class="modal-intro">Inserisci una volta i dati della tua agenzia. Verranno compilati automaticamente nel modulo (sezione "CONFERISCONO all'agenzia immobiliare" e blocco di accettazione finale). I dati restano salvati nel browser per i prossimi incarichi.</p>
+    <div class="modal-grid">
+      <label>Nome agenzia immobiliare<input type="text" id="ag_nome" placeholder="Es. FRIMM Roma Centro S.r.l."></label>
+      <label>Comune sede<input type="text" id="ag_sede" placeholder="Es. Roma"></label>
+      <label>Provincia (sigla)<input type="text" id="ag_prov" placeholder="RM" maxlength="4"></label>
+      <label>Via / Piazza<input type="text" id="ag_via" placeholder="Es. Via Roma"></label>
+      <label>N. civico<input type="text" id="ag_civ" placeholder="12"></label>
+      <label>Codice Fiscale / P.IVA<input type="text" id="ag_cf" placeholder="01234567890"></label>
+      <label>N. iscrizione<input type="text" id="ag_num" placeholder="123456"></label>
+      <label>CCIAA di<input type="text" id="ag_cciaa" placeholder="Es. Roma"></label>
+      <label class="chkrow">Iscritta al <span style="display:inline-flex;gap:14px;margin-left:6px;">
+        <label class="inl"><input type="checkbox" id="ag_reg"> Registro Imprese</label>
+        <label class="inl"><input type="checkbox" id="ag_rea"> REA</label>
+      </span></label>
+      <label>Luogo (per "Luogo e data")<input type="text" id="ag_luogo" placeholder="Es. Roma"></label>
+      <label class="full">Logo agenzia (mostrato in copertina al posto della scritta FRIMM)
+        <div class="logo-uploader">
+          <div class="logo-preview" id="ag_logo_preview"><span class="logo-ph">Nessun logo caricato</span></div>
+          <div class="logo-btns">
+            <button type="button" class="btn-logo-up" onclick="document.getElementById('ag_logo_file').click()">📁 Carica immagine logo</button>
+            <button type="button" class="btn-logo-rm" onclick="rimuoviLogo()">Rimuovi logo</button>
+            <input type="file" id="ag_logo_file" accept="image/png,image/jpeg,image/svg+xml,image/webp" style="display:none" onchange="caricaLogo(event)">
+            <p class="logo-hint">PNG, JPG o SVG. Consigliato sfondo trasparente. Il logo resta salvato per i prossimi incarichi.</p>
+          </div>
+        </div>
+      </label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-salva-ag" onclick="salvaDatiAgenzia()">💾 Salva dati agenzia</button>
+      <button class="btn-applica-ag" onclick="applicaDatiAgenzia()">✓ Applica al modulo corrente</button>
+      <button class="btn-annulla-ag" onclick="chiudiPannelloAgenzia()">Chiudi</button>
+    </div>
+    <p class="modal-foot" id="agAutoNote">Suggerimento: dopo aver salvato, i dati verranno inseriti automaticamente anche in ogni nuovo incarico.</p>
+  </div>
+</div>
+
+<!-- ====== PANNELLO RUBRICA INCARICHI ====== -->
+<div class="modal-overlay" id="rubOverlay" onclick="if(event.target===this)chiudiRubrica()">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>📒 Incarichi salvati</h2>
+      <button class="modal-x" onclick="chiudiRubrica()">✕</button>
+    </div>
+    <p class="modal-intro">Qui trovi tutti gli incarichi che hai archiviato. Clicca "Apri" per caricarlo nel modulo, oppure salva quello corrente con il pulsante qui sotto.</p>
+    <div class="rub-toolbar">
+      <input type="text" id="rub_nome_nuovo" placeholder="Nome per l'incarico corrente (es. Rossi - Via Verdi 10)">
+      <button class="btn-rub-save" onclick="salvaInRubrica()">💾 Salva incarico corrente</button>
+    </div>
+    <div class="rub-list" id="rubList"></div>
+    <div class="modal-actions">
+      <button class="btn-annulla-ag" onclick="chiudiRubrica()">Chiudi</button>
+    </div>
+    <p class="modal-foot">Gli incarichi sono salvati nel browser di questo computer. Per spostarli su un altro PC usa "Esporta file".</p>
+  </div>
+</div>
+
+<!-- ====== EDITOR COPERTINA ====== -->
+<div class="modal-overlay cov-overlay" id="covOverlay" onclick="if(event.target===this)chiudiEditorCopertina()">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>🎨 Personalizza copertina</h2>
+      <button class="modal-x" onclick="chiudiEditorCopertina()">✕</button>
+    </div>
+    <p class="modal-intro">Regola dimensione e posizione del logo e del titolo. Le modifiche si vedono subito nell'anteprima e valgono per A4 e A3. Premi "Ripristina" per tornare all'impostazione originale.</p>
+    <div class="cov-grid">
+      <label>Dimensione logo<input type="range" id="cov_logo_scale" min="50" max="180" value="100" oninput="onCovInput()"><span class="cov-val" id="cov_logo_scale_v">100%</span></label>
+      <label>Logo orizzontale<input type="range" id="cov_logo_x" min="-120" max="120" value="0" oninput="onCovInput()"><span class="cov-val" id="cov_logo_x_v">0</span></label>
+      <label>Logo verticale<input type="range" id="cov_logo_y" min="-120" max="120" value="0" oninput="onCovInput()"><span class="cov-val" id="cov_logo_y_v">0</span></label>
+      <label>Dimensione titolo<input type="range" id="cov_title_scale" min="60" max="150" value="100" oninput="onCovInput()"><span class="cov-val" id="cov_title_scale_v">100%</span></label>
+      <label>Titolo orizzontale<input type="range" id="cov_title_x" min="-120" max="120" value="0" oninput="onCovInput()"><span class="cov-val" id="cov_title_x_v">0</span></label>
+      <label>Titolo verticale<input type="range" id="cov_title_y" min="-120" max="120" value="0" oninput="onCovInput()"><span class="cov-val" id="cov_title_y_v">0</span></label>
+      <label>Riquadro dati: dimensione<input type="range" id="cov_box_scale" min="60" max="140" value="100" oninput="onCovInput()"><span class="cov-val" id="cov_box_scale_v">100%</span></label>
+      <label>Riquadro dati: verticale<input type="range" id="cov_box_y" min="-120" max="120" value="0" oninput="onCovInput()"><span class="cov-val" id="cov_box_y_v">0</span></label>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-salva-ag" onclick="salvaStileCopertina()">💾 Salva personalizzazione</button>
+      <button class="btn-annulla-ag" onclick="ripristinaCopertina()">↺ Ripristina originale</button>
+      <button class="btn-annulla-ag" onclick="chiudiEditorCopertina()">Chiudi</button>
+    </div>
+    <p class="modal-foot">La personalizzazione resta salvata per i prossimi incarichi.</p>
+  </div>
+</div>
+
+<!-- ====== PANNELLO DATI CATASTALI ====== -->
+<div class="modal-overlay" id="catOverlay" onclick="if(event.target===this)chiudiCatasto()">
+  <div class="modal" style="max-width:900px;">
+    <div class="modal-head">
+      <h2>🗂️ Dati catastali</h2>
+      <button class="modal-x" onclick="chiudiCatasto()">✕</button>
+    </div>
+    <p class="modal-intro">Inserisci i dati catastali dell'immobile e delle eventuali pertinenze (garage, terreno, cantina…). Usa "Aggiungi unità" per inserire più voci. Il riepilogo verrà scritto automaticamente nel modulo.</p>
+    <div class="cat-list" id="catList"></div>
+    <datalist id="catCategorie"></datalist>
+    <div class="modal-actions">
+      <button class="btn-applica-ag" onclick="aggiungiUnitaCatasto()">＋ Aggiungi unità</button>
+      <button class="btn-salva-ag" onclick="salvaCatasto()">✓ Inserisci nel modulo</button>
+      <button class="btn-annulla-ag" onclick="chiudiCatasto()">Chiudi</button>
+    </div>
+    <p class="modal-foot">Esempio: Immobile → Foglio 12, Part. 345, Sub 4, Cat. A/2, Cons. 5,5 vani, Rendita € 650,00.</p>
+  </div>
+</div>
+<div class="scale-wrap">
+<div class="workspace" id="workspace">
+  <!-- Versione A4: 4 pagine impilate -->
+  <div class="sheet a4-sheet" id="a4container"></div>
+
+  <!-- Versione A3: 2 fogli orizzontali (foglio esterno + foglio interno) -->
+  <div class="a3-sheet preview" id="a3outer"></div>
+  <div class="a3-sheet preview" id="a3inner"></div>
+</div>
+</div>
+
+<script>
+/* ============================================================
+   TEMPLATE DELLE QUATTRO FACCIATE
+   Ogni campo ha un id univoco -> permette salvataggio/caricamento
+   ============================================================ */
+
+function f(id, cls){ return `<input class="fld ${cls||''}" data-f id="${id}" type="text">`; }
+function chk(id){ return `<input class="chk" data-f id="${id}" type="checkbox">`; }
+function ta(id, cls){ return `<textarea class="${cls||'note'}" data-f id="${id}"></textarea>`; }
+/* campo a flusso libero (larghezza variabile, cresce nel testo) */
+function ff(id, grow){ const g = grow===2?'flex-grow2':(grow?'flex-grow':''); return `<input class="ffld ${g}" data-f id="${id}" type="text">`; }
+
+/* ---- COPERTINA ---- */
+function tplCover(tag){
+  return `
+  <div class="page cover">
+    <span class="page-tag">${tag}</span>
+    <div class="cover-top">Modulo predisposto da Frimm S.p.A. a uso esclusivo dell'Affiliato</div>
+    <div class="cover-mid">
+      <div class="frimm-logo logo-slot">
+        <img class="logo-img" alt="logo" style="display:none">
+        <div class="logo-text">
+          <div class="big">FRIMM</div>
+          <div class="small">franchisee IMMOBILIARE</div>
+        </div>
+      </div>
+      <div class="title-block">
+        <div class="t1">INCARICO</div>
+        <div class="t2">DI MEDIAZIONE PER LA</div>
+        <div class="t3">VENDITA</div>
+        <div class="t4">IMMOBILIARE</div>
+      </div>
+      <div class="agency-box">
+        <div class="cover-summary" id="coverSummary1"></div>
+      </div>
+      <div class="law">Il presente documento è stato redatto in conformità al disposto della Legge 6 febbraio 1996, n. 52 ed è stato depositato ai sensi della Legge 3 febbraio 1989, n. 39 presso la C.C.I.A.A. di ${f('cover_cciaa','w-lg')}</div>
+      <div class="cover-footer">
+        <div class="logo2">FRIMM</div>
+        <div class="tag">Ogni agenzia Affiliata è un'impresa autonoma e indipendente</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---- PAGINA 1 : intestazione + colonna sinistra dell'originale (art. 1-4) ---- */
+function tplPag1(tag){
+  return `
+  <div class="page contract">
+    <span class="page-tag">${tag}</span>
+    <div class="doc-header">INCARICO DI MEDIAZIONE PER LA VENDITA IMMOBILIARE</div>
+    <div class="doc-subtitle">(Immobile di proprietà di persona fisica non esercente attività imprenditoriale o professionale)</div>
+
+    <div class="flow">
+      <span class="lbl">Con la presente scrittura privata <span class="illa" id="illa1">il</span> <span class="sigsig" id="sigsig1">Sig.</span></span> ${ff('p1_sig1',1)}
+      <span class="sex-pick" data-sexfor="1">sesso: <label><input type="radio" name="sex1" value="M" data-sex="1" checked>M</label> <label><input type="radio" name="sex1" value="F" data-sex="1">F</label></span>
+      <span class="natlbl" id="natlbl1">nato</span> <span>a</span> ${ff('p1_nat1',1)} <span>(</span>${ff('p1_nata1')}<span>)</span> <span>il</span> ${ff('p1_natail1')},
+      <span>residente a</span> ${ff('p1_res1')} <span>(</span>${ff('p1_resprov1')}<span>) Via/Piazza</span> ${ff('p1_via1',1)} <span>n.</span> ${ff('p1_civ1')}
+      <span>C.F.</span> ${ff('p1_cf1')}<button type="button" class="btn-cf" onclick="calcolaCF(1)" title="Calcola codice fiscale">↻ CF</button>
+      <span>tel.</span> ${ff('p1_tel1')} <span>e-mail</span> ${ff('p1_email1')}
+      <span>doc. identità</span> ${ff('p1_doc1')} <span>n.</span> ${ff('p1_docn1')} <span>rilasciato da</span> ${ff('p1_ril1',1)}
+      <span>in data</span> ${ff('p1_dataril1')} <span>, con scadenza il</span> ${ff('p1_scad1')}
+      <span>e <span class="illa" id="illa2">il</span> <span class="sigsig" id="sigsig2">Sig.</span></span> ${ff('p1_sig2',1)}
+      <span class="sex-pick" data-sexfor="2">sesso: <label><input type="radio" name="sex2" value="M" data-sex="2" checked>M</label> <label><input type="radio" name="sex2" value="F" data-sex="2">F</label></span>
+      <span class="natlbl" id="natlbl2">nato</span> <span>a</span> ${ff('p1_nat2',1)} <span>(</span>${ff('p1_nata2')}<span>)</span> <span>il</span> ${ff('p1_natail2')},
+      <span>residente a</span> ${ff('p1_res2')} <span>(</span>${ff('p1_resprov2')}<span>) Via/Piazza</span> ${ff('p1_via2',1)} <span>n.</span> ${ff('p1_civ2')}
+      <span>C.F.</span> ${ff('p1_cf2')}<button type="button" class="btn-cf" onclick="calcolaCF(2)" title="Calcola codice fiscale">↻ CF</button>
+      <span>tel.</span> ${ff('p1_tel2')} <span>e-mail</span> ${ff('p1_email2')}
+      <span>doc. identità</span> ${ff('p1_doc2')} <span>n.</span> ${ff('p1_docn2')} <span>, rilasciato da</span> ${ff('p1_ril2',1)}
+      <span>in data</span> ${ff('p1_dataril2')} <span>, con scadenza il</span> ${ff('p1_scad2')}
+      <span>e .........l..........</span> ${ff('p1_altri',2)}
+    </div>
+    <p class="cl">di seguito denominato/i "INCARICANTE", elettivamente domiciliati ai fini delle comunicazioni derivanti dal presente atto in ${ff('p1_domicilio',1)} dichiarando di avere e/o di rappresentare la piena proprietà dell'immobile o, comunque, di poter garantire l'adempimento degli eventuali intestatari,</p>
+
+    <div style="text-align:center;font-weight:bold;margin:3px 0;">CONFERISCONO</div>
+
+    <div class="lineflex"><span class="lbl">all'agenzia immobiliare</span>${ff('p1_agenzia',1)}<span>con sede in</span>${ff('p1_agsede',1)}<span>(</span>${ff('p1_agprov')}<span>) Via/Piazza</span>${ff('p1_agvia',1)}<span>n.</span>${ff('p1_agciv')}</div>
+    <div class="lineflex"><span class="lbl">C.F.</span>${ff('p1_agcf',1)}<span>, iscritta al n.</span>${ff('p1_agnum')}<span>del</span>${chk('p1_agreg')}<span class="opt">Registro delle Imprese del</span>${chk('p1_agrea')}<span class="opt">REA della CCIAA di</span>${ff('p1_agcciaa',1)}</div>
+    <p class="cl">seguito denominata "AGENTE IMMOBILIARE" / "AGENTE"</p>
+    <div class="lineflex"><span class="lbl">INCARICO DI MEDIAZIONE per la ricerca di acquirenti per l</span>${ff('p1_perlimm')}<span>immobile</span>${ff('p1_immsotto')}<span>sotto descritto:</span></div>
+    <div class="lineflex"><span class="lbl">Comune</span>${ff('p1_comune',1)}<span>indirizzo</span>${ff('p1_indirizzo',1)}<span>n.</span>${ff('p1_nciv')}<span>piano</span>${ff('p1_piano')}<span>Interno</span>${ff('p1_interno')}</div>
+    <div class="lineflex"><span class="lbl">proprietà intestata a</span>${ff('p1_intestata',1)}<span>, destinazione d'uso</span>${ff('p1_destuso',1)}<button type="button" class="btn-cat" onclick="apriCatasto()" title="Inserisci dati catastali strutturati">＋ dati catastali</button></div>
+    <div class="lineflex" style="align-items:flex-start;"><span class="lbl">dati catastali:</span><div class="cat-display" id="catDisplay">${''}</div></div>
+    <div class="lineflex"><span class="lbl">composizione</span>${f('p1_composizione','w-full')}</div>
+    <p class="cl" style="margin-top:2px;">attualmente:</p>
+    <div class="lineflex">
+      <label class="opt">${chk('p1_libero')}LIBERO</label>
+      <label class="opt">${chk('p1_occ')}OCCUPATO DAL PROPRIETARIO</label>
+      <label class="opt">${chk('p1_costr')}IN COSTRUZIONE</label>
+      <label class="opt">${chk('p1_nuda')}NUDA PROPRIETA'</label>
+      <label class="opt">${chk('p1_superf')}PROPRIETA' SUPERFICIARIA</label>
+      <label class="opt">${chk('p1_locato')}LOCATO A</label>${ff('p1_locatoa',1)}
+    </div>
+    <div class="lineflex"><span class="lbl">AL CANONE ANNUO di €</span>${ff('p1_canone')}<span>come da contratto registrato con n°</span>${ff('p1_contrn')}<span>in corso scadente il</span>${ff('p1_contrscad')}<span>, alle condizioni di seguito indicate:</span></div>
+
+    <div class="sect-title">1) PREZZO DI VENDITA RICHIESTO</div>
+    <div class="lineflex"><span class="lbl">€</span>${ff('p1_prezzo')}<span>(diconsi euro</span>${ff('p1_prezzolettere',1)}<span>)</span></div>
+    <div class="lineflex"><span class="lbl">comprendente il residuo capitale mutuo attuale di €</span>${ff('p1_mutuo')}<span>(diconsi euro</span>${ff('p1_mutuolettere',1)}<span>) circa.</span></div>
+
+    <div class="sect-title">2) STATO DELL'IMMOBILE</div>
+    <p class="cl">L'INCARICANTE si impegna a fornire tutta la documentazione relativa all'immobile e garantisce le seguenti circostanze:</p>
+    <div class="lineflex"><span class="lbl">2a) titolo di provenienza:</span>${ff('p1_2a',1)}</div>
+    <div class="lineflex"><span class="lbl">2b) destinazione d'uso:</span>${ff('p1_2b',1)}</div>
+    <div class="lineflex"><span class="lbl">2c) circa la normativa edilizia-urbanistica, dichiara che l'immobile è</span>${ff('p1_2c',1)}</div>
+    <div class="lineflex"><span class="lbl">2d) circa la conformità degli impianti alle normative vigenti, dichiara che l'immobile è</span>${ff('p1_2d',1)}</div>
+    <div class="lineflex"><span class="lbl">2e) circa il certificato di agibilità, dichiara che l'immobile</span>${ff('p1_2e',1)}</div>
+    <div class="lineflex">
+      <span class="lbl">2f)</span>${chk('p1_2f_si')}<span>è dotato di ACE/APE - classe energetica</span>${ff('p1_2f_classe')}<span>; indice di prestazione energetica</span>${ff('p1_2f_indice')}<span>;</span>${chk('p1_2f_no')}<span>non è dotato di ACE/APE e si impegna ad ottenere al più presto, con</span>
+    </div>
+    <p class="cl">l'intesa che fino alla consegna l'agenzia non potrà effettuare pubblicità e neppure instaurare trattative; ${chk('p1_2f_esente')} non è dotato di ACE/APE in quanto immobile esente per dichiarazione</p>
+    <div class="lineflex"><span class="lbl">del venditore, poiché</span>${ff('p1_2f_perche',1)}</div>
+    <div class="lineflex"><span class="lbl">2g) circa l'esistenza di trascrizioni ed iscrizioni pregiudizievoli, dichiara che l'immobile</span>${ff('p1_2g',1)}</div>
+    <div class="lineflex"><span class="lbl">2h) circa le spese condominiali ORDINARIE, dichiara che esse sono pari a circa €</span>${ff('p1_2h',1)}<span>annue.</span></div>
+    <div class="lineflex"><span class="lbl">2i) circa le spese condominiali per eventuali opere STRAORDINARIE, dichiara che allo stato</span>${ff('p1_2i',1)}</div>
+
+    <div class="sect-title">3) PROPOSTA DI ACQUISTO</div>
+    <p class="cl">3a) Resta inteso che l'AGENTE è autorizzato a instaurare le trattative con tutti gli interessati ed a ritirare le proposte che vengano formulate, a qualsiasi prezzo e condizioni, restando la relativa accettazione a discrezione dell'INCARICANTE che si impegna, però, ad accettare, ed a far accettare ad eventuali intestatari, quelle proposte che siano conformi per prezzo e condizioni a quanto sopra richiesto.</p>
+    <p class="cl">3b) L'AGENTE è autorizzato, altresì, a ricevere a corredo delle proposte eventuali titoli di credito non trasferibili intestati all'INCARICANTE, o bonifico bancario su conto corrente dedicato dell'AGENTE, il quale all'atto dell'accettazione si impegna ad affidarli in deposito fiduciario infruttifero all'agenzia fino al buon esito dell'aggiornamento delle verifiche ipocatastali.</p>
+    <p class="cl">3c) L'agenzia immobiliare è, altresì, autorizzata ad avvalersi, nello svolgimento del presente incarico, dell'operato di agenzie immobiliari, appartenenti alla rete Frimm ovvero aderenti alla MLS per cui le obbligazioni del presente incarico persisteranno anche nell'ipotesi che la proposta venga ritirata da un'agenzia appartenente alla medesima rete.</p>
+
+    <div class="sect-title">4) CONDIZIONI DI PAGAMENTO</div>
+    <div class="lineflex"><span class="lbl">4a) La proposta d'acquisto dovrà prevedere una caparra, di importo pari almeno al</span>${ff('p1_4a_perc')}<span>% (diconsi</span>${ff('p1_4a_lettere',1)}<span>per cento) sul prezzo di vendita, che</span></div>
+    <div class="lineflex"><span class="lbl">dovrà essere versata entro</span>${ff('p1_4a_gg')}<span>(diconsi</span>${ff('p1_4a_gglettere',1)}<span>) giorni dalla conoscenza dell'accettazione della proposta stessa. In tale</span></div>
+    <p class="cl">occasione sarà in facoltà delle parti prevedere la stipula di una scrittura integrativa, riproducente il contenuto della proposta d'acquisto e diretta ad aggiungere aspetti non disciplinati nella stessa. Il saldo del prezzo dovrà essere effettuato a mezzo di assegni circolari entro l'atto notarile di compravendita.</p>
+    <p class="cl">4b) Nel caso l'acquirente non intenda accollarsi il predetto mutuo residuo, l'INCARICANTE garantisce che tale debito verrà estinto e verrà espletata ogni formalità necessaria alla cancellazione della relativa ipoteca entro la data della stipula dell'atto pubblico di compravendita, lasciando esente l'acquirente da ogni incombenza e spesa relativa.</p>
+    <p class="cl">4c) L'acquirente potrà avvalersi, a propria cura e spesa, di mutui o finanziamenti, nel qual caso il relativo importo sarà messo a disposizione dal notaio rogante, esperite le formalità necessarie, ivi comprese quelle sul deposito prezzo previste dalla L. 147/2013, come integrata ed attuata dalla L. 124/2017, su richiesta al notaio rogante di una delle parti.</p>
+    <p class="cl">4d) In tal caso l'INCARICANTE garantisce che provvederà alla cancellazione dell'eventuale ipoteca derivante da mutuo e delle altre eventuali iscrizioni e trascrizioni pregiudizievoli prima della stipula dell'atto pubblico.</p>
+
+    <div class="footer-note">L'Impresa Affiliante e l'Affiliato sono imprenditori indipendenti ed autonomi, ciascuno con propria separata responsabilità imprenditoriale, professionale, finanziaria e legale</div>
+  </div>`;
+}
+
+/* ---- PAGINA 2 / RETRO : colonna destra dell'originale (art. 5-13) + firme ---- */
+function tplPag2(tag){
+  return `
+  <div class="page contract">
+    <span class="page-tag">${tag}</span>
+
+    <div class="sect-title">5) ATTO NOTARILE E CONSEGNA DELL'IMMOBILE</div>
+    <div class="lineflex"><span class="lbl">5a) L'atto notarile dovrà essere stipulato non prima di mesi</span>${ff('p2_5a_min')}<span>(</span>${ff('p2_5a_minlettere',1)}<span>) e non dopo mesi</span>${ff('p2_5a_max')}<span>(</span>${ff('p2_5a_maxlettere',1)}<span>) dall'accettazione della proposta d'acquisto.</span></div>
+    <p class="cl">5b) Imposte, tasse e spese notarili saranno a carico dell'acquirente, mentre saranno a carico del venditore le imposte da lui dovute per legge.</p>
+    <p class="cl">5c) L'immobile in oggetto, al momento del rogito notarile, dovrà essere trasferito nello stato di fatto e di diritto in cui attualmente si trova, con ogni pertinenza, servitù attiva e passiva, quota delle parti comuni, in regola con il pagamento delle spese condominiali, libero da oneri, vincoli, vizi, evizioni, trascrizioni pregiudizievoli, pignoramenti, iscrizioni ipotecarie ed in regola con la normativa edilizia ed urbanistica, ad eccezione di ${ff('p2_5c',1)}</p>
+    <div class="lineflex"><span class="lbl">5d) L'immobile verrà consegnato alla data del</span>${ff('p2_5d')}<span>libero da cose e persone (salvo il caso in cui sia occupato dal conduttore, per cui sarà trasferito</span></div>
+    <p class="cl">all'acquirente il contratto di locazione in corso).</p>
+
+    <div class="sect-title">6) DURATA DELL'INCARICO DI MEDIAZIONE E TACITO RINNOVO</div>
+    <div class="lineflex"><span class="lbl">L'incarico di mediazione ha decorrenza dal</span>${ff('p2_6_dal')}<span>e scadrà il</span>${ff('p2_6_al')}<span>dopodiché s'intenderà tacitamente rinnovato, per una sola volta ed in</span></div>
+    <p class="cl">esclusiva, nel caso in cui lo stesso sia stato già conferito in esclusiva, per un pari periodo di tempo, salvo disdetta pervenuta all'AGENTE IMMOBILIARE a mezzo lettera raccomandata A.R. da pervenirsi almeno ${ff('p2_6_gg')} giorni prima della scadenza citata.</p>
+    <p class="cl">In caso di rinnovo dell'incarico, poiché lo stesso deve intendersi conferito all'AGENTE in forma esclusiva, viene riconosciuto in favore dell' "INCARICANTE" la facoltà di recesso anticipato dall'ulteriore periodo mediante disdetta da far pervenire all'AGENTE IMMOBILIARE a mezzo lettera raccomandata A.R. con un preavviso di giorni trenta. Soltanto ed esclusivamente in tale ultima previsione il recesso non produrrà l'inadempimento sanzionato al successivo art.9), lett. b) n.1).</p>
+
+    <div class="sect-title">7) PROVVIGIONE DELL'AGENTE IMMOBILIARE</div>
+    <div class="lineflex"><span class="lbl">7a) La provvigione dovuta all'AGENTE IMMOBILIARE è pari al</span>${ff('p2_7a_perc')}<span>% (diconsi</span>${ff('p2_7a_lettere',1)}<span>per cento) +IVA sul prezzo di vendita. Il compenso</span></div>
+    <p class="cl">maturerà quando l'acquirente avrà conoscenza dell'accettazione della proposta ai sensi dell'art. 1326 c.c.</p>
+    <p class="cl">7b) SALVO QUANTO PREVISTO DALL'ART.1756 c.c., NESSUN COMPENSO SARA' DOVUTO AL MEDIATORE PER L'ESECUZIONE DELL'INCARICO, ANCHE IN CASO DI MANCATA CONCLUSIONE DELL'AFFARE.</p>
+    <p class="cl">7c) Sarà dovuta, invece, l'intera provvigione nel caso in cui, anche dopo la scadenza dell'incarico, l'affare venga concluso con persone indicate dall'AGENTE IMMOBILIARE.</p>
+
+    <div class="sect-title">8) ESCLUSIVITÀ DELL'INCARICO DI MEDIAZIONE</div>
+    <p class="cl">Il presente incarico di mediazione viene conferito all'AGENTE IMMOBILIARE in forma:</p>
+    <p class="cl">8a) ESCLUSIVA: in tal caso l'AGENTE IMMOBILIARE si impegna a svolgere l'incarico di cui alla presente scrittura, a far visionare l'immobile alla clientela interessata, a pubblicizzare lo stesso con le modalità che riterrà opportune, ad assistere l'INCARICANTE anche dopo la conclusione dell'affare fino alla stipula dell'atto pubblico. In tal caso l'INCARICANTE garantisce che non verranno instaurate trattative per la vendita né direttamente con terzi, né avvalendosi di altri mediatori senza l'intermediazione dell'Agenzia, neppure dagli altri eventuali intestatari e garantisce allo stesso modo che non verrà conferito incarico ad altre Agenzie Immobiliari nel periodo di validità del presente incarico neppure dagli altri eventuali intestatari. La violazione di tali obblighi comporterà l'obbligo dell'INCARICANTE di corrispondere la penale di cui all'art. 9 lettera a).</p>
+    <p class="cl">8b) NON ESCLUSIVA: in tal caso, fermo restando le obbligazioni assunte dall'INCARICANTE, l'AGENTE IMMOBILIARE resta nella piena facoltà di svolgere o meno il presente incarico, avendo diritto alle provvigioni solo in caso di conclusione dell'affare. In deroga a quanto sopra previsto, resterà, parimenti, in sua facoltà pubblicizzare o meno l'incarico ed effettuare le relative visite, conservando in ogni caso il diritto al rimborso delle spese vive sostenute per la gestione dell'incarico, anche in caso di mancata conclusione dell'affare, in un massimo autorizzato pari a € ${ff('p2_8b_imp')} (diconsi euro ${ff('p2_8b_lettere',1)}). In tal caso, l'INCARICANTE si impegna a comunicare tempestivamente l'eventuale conclusione della vendita con terzi mediante esibizione dei relativi atti, restando responsabile in caso di ritardo nella comunicazione per l'eventuale inutile attività svolta dall'Agenzia. In relazione a quanto sopra l'INCARICANTE, dopo apposita trattativa, valutate le possibili opzioni con i rispettivi diritti ed obblighi, dichiara di optare per l'alternativa:</p>
+    <div class="lineflex"><label class="opt">${chk('p2_8_escl')}IN ESCLUSIVA</label><label class="opt">${chk('p2_8_noescl')}NON ESCLUSIVA</label></div>
+
+    <div class="sect-title">9) CLAUSOLA PENALE</div>
+    <p class="cl">Fatti salvi comprovati giustificati motivi, verificatisi per causa non imputabile all'INCARICANTE, questi dovrà riconoscere all'"AGENTE IMMOBILIARE" una penale nei seguenti casi:</p>
+    <div class="lineflex"><span class="lbl">9a) pari al</span>${ff('p2_9a_perc')}<span>% (diconsi</span>${ff('p2_9a_lettere',1)}<span>per cento) del prezzo di vendita fissato al punto 1) nel caso di rifiuto d'accettare una proposta d'acquisto</span></div>
+    <p class="cl">conforme alle condizioni stabilite nel presente incarico.</p>
+    <div class="lineflex"><span class="lbl">9b) pari al</span>${ff('p2_9b_perc')}<span>% (diconsi</span>${ff('p2_9b_lettere',1)}<span>per cento) del prezzo di vendita fissato al punto 1) nel caso di recesso dall'incarico prima della sua</span></div>
+    <p class="cl">naturale scadenza; per aver impedito le visite all'immobile; per mancata conclusione dell'affare a causa di errate indicazioni fornite dal VENDITORE.</p>
+
+    <div class="sect-title">10) ACCETTAZIONE DELL'INCARICO</div>
+    <p class="cl">L'AGENTE IMMOBILIARE comunicherà la propria accettazione, qualora quest'ultima non sia contestuale al conferimento dell'incarico, entro giorni 15 dalla sottoscrizione dello stesso, mediante telegramma, o raccomandata A.R.</p>
+
+    <div class="sect-title">11) COLLABORAZIONI E VISITE ALL'IMMOBILE</div>
+    <p class="cl">11a) L'INCARICANTE autorizza l'Agenzia a collaborare con tutti i consulenti immobiliari Frimm ovvero con gli aderenti alla MLS, i quali potranno raccogliere proposte di acquisto conformi al presente incarico.</p>
+    <div class="lineflex"><span class="lbl">11b) L'AGENTE IMMOBILIARE potrà far visitare l'immobile, tramite propri incaricati, con le seguenti modalità</span>${ff('p2_11b',1)}</div>
+
+    <div class="sect-title">12) LEGGE SULLA PRIVACY E NORMATIVA ANTIRICICLAGGIO</div>
+    <p class="cl">L'INCARICANTE dichiara di avere preso visione della informativa ai sensi dell'art. 13 del GDPR (General Data Protection Regulation) - Regolamento UE 2016/679 e, preso atto di essa,</p>
+    <div class="lineflex"><label class="opt">${chk('p2_12_si')}consente al trattamento dei propri dati personali</label><label class="opt">${chk('p2_12_no')}non consente al trattamento dei propri dati personali.</label></div>
+    <p class="cl">L'INCARICANTE è stato informato circa l'obbligatorietà degli adempimenti antiriciclaggio necessari per dar seguito alla presente proposta d'acquisto ai sensi del D.Lgs. 231/2007 e s.m.i..</p>
+
+    <div class="sect-title">13) NOTE:</div>
+    ${ta('p2_note')}
+
+    <div class="sign-row">
+      <div class="sign-box"><div class="ld">Luogo e data</div>${f('p2_luogodata1','w-lg')}</div>
+      <div class="sign-box"><div class="role">INCARICANTE</div></div>
+    </div>
+
+    <p class="cl" style="margin-top:6px;">Ai sensi degli artt. 33 e segg. del Codice del Consumo nonché degli artt. 1341 e 1342 c.c., l'INCARICANTE il Sig. ${ff('p2_negoz_sig',1)} dichiara altresì di avere espressamente negoziato con l'AGENTE IMMOBILIARE e successivamente approvato i seguenti articoli: 3 (proposta d'acquisto) 4 (condizioni di pagamento), 6 (durata e tacito rinnovo), 7 (provvigioni dell'agente immobiliare), 8 (esclusività dell'incarico di mediazione), 9 (clausole penale).</p>
+
+    <div class="sign-row">
+      <div class="sign-box"><div class="ld">Luogo e data</div>${f('p2_luogodata2','w-lg')}</div>
+      <div class="sign-box"><div class="role">INCARICANTE</div></div>
+    </div>
+
+    <div class="lineflex" style="margin-top:6px;"><span class="lbl">Per accettazione riceve e sottoscrive il presente incarico l'agenzia immobiliare</span>${ff('p2_acc_agenzia',1)}<span>C.F.</span>${ff('p2_acc_cf',1)}</div>
+    <div class="lineflex"><span class="lbl">iscritta al n.</span>${ff('p2_acc_num')}<span>del</span>${chk('p2_acc_reg')}<span class="opt">Registro delle Imprese del</span>${chk('p2_acc_rea')}<span class="opt">REA della CCIAA di</span>${ff('p2_acc_cciaa',1)}</div>
+
+    <div class="sign-row">
+      <div class="sign-box"><div class="ld">Luogo e data</div>${f('p2_luogodata3','w-lg')}</div>
+      <div class="sign-box"><div class="role">AGENTE IMMOBILIARE</div></div>
+    </div>
+
+    <div class="footer-note">L'Impresa Affiliante e l'Affiliato sono imprenditori indipendenti ed autonomi, ciascuno con propria separata responsabilità imprenditoriale, professionale, finanziaria e legale</div>
+  </div>`;
+}
+
+/* ============================================================
+   MONTAGGIO DELLE VISTE
+   A4: copertina, pag1, pag2(retro)  -> 4 facciate logiche
+       (in A4 reale: 4 fogli A4 = copertina + pag1 + pag2 + retro/note)
+   Layout originale = 1 foglio A3 piegato:
+       Foglio ESTERNO (fronte A3) = [ retro/pag2 | copertina ]
+       Foglio INTERNO (retro A3)  = [ pag1 | pag2 ]
+   Per fedeltà all'originale fornito (2 facciate A3), montiamo:
+       A3 facciata 1 (quella della copertina): COPERTINA a destra
+       A3 facciata 2 (il contratto):  PAG1(sx) + PAG2(dx)
+   ============================================================ */
+
+/* ----- A4 : 4 pagine impilate (copertina, pag1, pag2) ----- */
+/* NB: l'originale ha 4 facciate quando piegato: copertina, pag.interna sx (art1-4),
+   pag.interna dx (art5-13), e retro. Qui le facciate utili sono 3 (copertina vuota dietro).
+   Generiamo: Copertina + Pagina 1 + Pagina 2. La 4ª (retro copertina) è vuota nell'originale. */
+
+function buildA4(){
+  const c = document.getElementById('a4container');
+  c.innerHTML =
+    tplCover('Copertina') +
+    tplPag1('Pagina interna 1') +
+    tplPag2('Pagina interna 2 / Retro');
+}
+
+/* ----- A3 : due fogli orizzontali affiancati ----- */
+function buildA3(){
+  // Foglio 1 (come la pagina 1 dell'allegato A3): metà sx vuota/logo grande, metà dx copertina.
+  // Riproduciamo fedelmente l'allegato: facciata "copertina" è già divisa internamente (logo sx, titolo dx)
+  // quindi il foglio A3 #1 = la COPERTINA che occupa l'intera A3 landscape.
+  // Per semplicità e fedeltà la copertina viene resa a piena larghezza A3 (logo a sx, titolo a dx come l'originale).
+  const outer = document.getElementById('a3outer');
+  outer.innerHTML = tplCoverA3();
+
+  // Foglio 2 (pagina 2 dell'allegato A3): PAG1 a sinistra, PAG2 a destra
+  const inner = document.getElementById('a3inner');
+  inner.innerHTML =
+    tplPag1('A3 · sinistra') +
+    '<div class="a3-divider"></div>' +
+    tplPag2('A3 · destra');
+}
+
+/* Copertina a piena larghezza A3: logo a sinistra, titolo+riquadro a destra
+   (qui NON si applica il layout verticale usato in A4, perché il foglio va
+   piegato esattamente a metà e il contenuto deve restare sulla metà destra) */
+function tplCoverA3(){
+  return `
+  <div class="page cover cover-a3" style="width:100%;">
+    <span class="page-tag">A3 · Copertina</span>
+    <div class="cover-top">Modulo predisposto da Frimm S.p.A. a uso esclusivo dell'Affiliato</div>
+    <div class="cover-mid cover-mid-a3">
+      <div class="cover-left">
+        <div class="frimm-logo logo-slot">
+          <img class="logo-img" alt="logo" style="display:none">
+          <div class="logo-text">
+            <div class="big">FRIMM</div>
+            <div class="small">franchisee IMMOBILIARE</div>
+          </div>
+        </div>
+      </div>
+      <div class="cover-right">
+        <div class="title-block">
+          <div class="t1">INCARICO</div>
+          <div class="t2">DI MEDIAZIONE PER LA</div>
+          <div class="t3">VENDITA</div>
+          <div class="t4">IMMOBILIARE</div>
+        </div>
+        <div class="agency-box">
+          <div class="cover-summary" id="coverSummary2"></div>
+        </div>
+        <div class="law">Il presente documento è stato redatto in conformità al disposto della Legge 6 febbraio 1996, n. 52 ed è stato depositato ai sensi della Legge 3 febbraio 1989, n. 39 presso la C.C.I.A.A. di <input class="fld w-lg" data-f data-mirror="cover_cciaa" type="text"></div>
+        <div class="cover-footer">
+          <div class="logo2">FRIMM</div>
+          <div class="tag">Ogni agenzia Affiliata è un'impresa autonoma e indipendente</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ============================================================
+   PROBLEMA ID DUPLICATI:
+   I template A4 usano id="campo".
+   Le viste A3 #inner riusano gli stessi template (id duplicati).
+   Soluzione: dopo il build, rinominiamo gli id dei nodi A3 in
+   "campo__a3" e li sincronizziamo bidirezionalmente con gli A4
+   tramite l'attributo data-name.
+   ============================================================ */
+
+function indicizza(){
+  // Assegna data-name = id "logico" a tutti i campi del container A4 (sorgente di verità)
+  document.querySelectorAll('#a4container [data-f]').forEach(el=>{
+    if(el.id) el.dataset.name = el.id;
+  });
+  // Campi A3 inner: hanno gli stessi id -> li rinominiamo
+  document.querySelectorAll('#a3inner [data-f]').forEach(el=>{
+    if(el.id){ el.dataset.name = el.id; el.id = el.id + '__a3'; }
+  });
+  // Campi A3 copertina outer: usano data-mirror
+  document.querySelectorAll('#a3outer [data-mirror]').forEach(el=>{
+    el.dataset.name = el.dataset.mirror;
+  });
+}
+
+/* Sincronizzazione bidirezionale per data-name */
+function valoreDi(el){ return el.type==='checkbox' ? el.checked : el.value; }
+function setValore(el,v){ if(el.type==='checkbox') el.checked=!!v; else el.value=v||''; }
+
+function sincronizza(origine){
+  const name = origine.dataset.name;
+  if(!name) return;
+  const v = valoreDi(origine);
+  document.querySelectorAll('[data-name="'+name+'"]').forEach(el=>{
+    if(el!==origine){ setValore(el,v); if(el.classList && el.classList.contains('ffld')) autoLarghezza(el); }
+  });
+  if(origine.classList && origine.classList.contains('ffld')) autoLarghezza(origine);
+  autosalva();
+}
+
+function attachSync(){
+  document.querySelectorAll('[data-f]').forEach(el=>{
+    const ev = (el.type==='checkbox') ? 'change' : 'input';
+    el.addEventListener(ev, ()=>sincronizza(el));
+  });
+}
+
+/* Collega le automazioni: sesso->nato/nata, prezzo->lettere */
+function attachAutomazioni(){
+  // sesso (i radio sono solo in vista A4, una coppia per intestatario)
+  document.querySelectorAll('input[data-sex]').forEach(r=>{
+    r.addEventListener('change', ()=>{ aggiornaNatLabel(r.dataset.sex); autosalva(); });
+  });
+  // prezzo di vendita -> lettere (automatico mentre si digita)
+  document.querySelectorAll('[data-name="p1_prezzo"]').forEach(el=>{
+    el.addEventListener('input', ()=>aggiornaPrezzoLettere('p1_prezzo','p1_prezzolettere'));
+  });
+  // residuo mutuo -> lettere
+  document.querySelectorAll('[data-name="p1_mutuo"]').forEach(el=>{
+    el.addEventListener('input', ()=>aggiornaPrezzoLettere('p1_mutuo','p1_mutuolettere'));
+  });
+  // conversione automatica in lettere (MAIUSCOLO) per numeri interi piccoli:
+  // sezione 4 (caparra % e giorni) e sezione 5a (mesi)
+  const coppieIntere = [
+    ['p1_4a_perc','p1_4a_lettere'],     // % caparra -> CINQUE
+    ['p1_4a_gg','p1_4a_gglettere'],     // giorni -> DIECI
+    ['p2_5a_min','p2_5a_minlettere'],   // mesi min -> UNO
+    ['p2_5a_max','p2_5a_maxlettere'],   // mesi max -> CINQUE
+    ['p2_7a_perc','p2_7a_lettere'],     // provvigione %
+    ['p2_9a_perc','p2_9a_lettere'],     // penale %
+    ['p2_9b_perc','p2_9b_lettere']      // penale %
+  ];
+  coppieIntere.forEach(([num,let_])=>{
+    document.querySelectorAll('[data-name="'+num+'"]').forEach(el=>{
+      el.addEventListener('input', ()=>aggiornaInteroLettere(num, let_));
+    });
+  });
+  // auto-larghezza dei campi a flusso libero: crescono col contenuto (niente testo tagliato)
+  document.querySelectorAll('.ffld').forEach(el=>{
+    el.addEventListener('input', ()=>autoLarghezza(el));
+    autoLarghezza(el);
+  });
+  // aggiornamento riepilogo copertina: ogni campo rilevante aggiorna il box
+  const campiRiepilogo = ['p1_sig1','p1_sig2','p1_agenzia','p1_comune','p1_indirizzo','p1_nciv','p1_intestata','p1_destuso'];
+  campiRiepilogo.forEach(name=>{
+    document.querySelectorAll('[data-name="'+name+'"]').forEach(el=>{
+      el.addEventListener('input', aggiornaRiepilogoCopertina);
+    });
+  });
+  aggiornaNatLabel(1); aggiornaNatLabel(2);
+  aggiornaRiepilogoCopertina();
+}
+
+/* converte un numero intero piccolo nel campo lettere, in MAIUSCOLO (es. 5 -> CINQUE) */
+function aggiornaInteroLettere(campoNum, campoLettere){
+  const elNum = document.querySelector('[data-name="'+campoNum+'"]');
+  if(!elNum) return;
+  const raw = (elNum.value||'').replace(/[^\d]/g,'');
+  let testo='';
+  if(raw!==''){ const n=parseInt(raw,10); if(!isNaN(n)) testo = numeroInLettere(n).toUpperCase(); }
+  document.querySelectorAll('[data-name="'+campoLettere+'"]').forEach(el=>{
+    el.value = testo;
+    if(el.classList.contains('ffld')) autoLarghezza(el);
+  });
+  autosalva();
+}
+
+/* genera il riepilogo mostrato nel riquadro di copertina (agenzia, clienti, immobile) */
+function valDi(name){ const el=document.querySelector('[data-name="'+name+'"]'); return el?(el.value||'').trim():''; }
+function aggiornaRiepilogoCopertina(){
+  const ag = leggiDatiAgenzia();
+  // AGENZIA
+  let agenzia = ag.ag_nome || valDi('p1_agenzia') || '';
+  let agInd = '';
+  if(ag.ag_via){ agInd = ag.ag_via + (ag.ag_civ? ' '+ag.ag_civ:'') + (ag.ag_sede? ' - '+ag.ag_sede:'') + (ag.ag_prov? ' ('+ag.ag_prov+')':''); }
+  // CLIENTI
+  const c1 = valDi('p1_sig1'), c2 = valDi('p1_sig2');
+  // IMMOBILE
+  const comune = valDi('p1_comune'), via = valDi('p1_indirizzo'), civ = valDi('p1_nciv');
+  let immob = '';
+  if(via) immob = via + (civ? ' n. '+civ:'') + (comune? ' - '+comune:'');
+  else if(comune) immob = comune;
+
+  let html = '';
+  if(agenzia || agInd){
+    html += '<div class="cs-block"><div class="cs-titolo">Agenzia</div>';
+    if(agenzia) html += '<div class="cs-riga"><b>'+esc(agenzia)+'</b></div>';
+    if(agInd) html += '<div class="cs-riga">'+esc(agInd)+'</div>';
+    html += '</div>';
+  }
+  if(c1 || c2){
+    html += '<div class="cs-block"><div class="cs-titolo">'+(c2?'Incaricanti':'Incaricante')+'</div>';
+    if(c1) html += '<div class="cs-riga">'+esc(c1)+'</div>';
+    if(c2) html += '<div class="cs-riga">'+esc(c2)+'</div>';
+    html += '</div>';
+  }
+  if(immob){
+    html += '<div class="cs-block"><div class="cs-titolo">Immobile</div><div class="cs-riga">'+esc(immob)+'</div></div>';
+  }
+  if(!html){ html = '<div class="cs-vuoto">I dati di agenzia, cliente e immobile compariranno qui automaticamente man mano che compili il modulo.</div>'; }
+
+  document.querySelectorAll('.cover-summary').forEach(box=>{ box.innerHTML = html; });
+}
+function esc(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* adatta la larghezza del campo al testo digitato, senza tagliare */
+function autoLarghezza(el){
+  if(!el.classList.contains('ffld')) return;
+  const minW = el.classList.contains('flex-grow2')?200:(el.classList.contains('flex-grow')?90:40);
+  // misuro il testo con un elemento nascosto
+  let ghost = document.getElementById('__ghost_measure');
+  if(!ghost){
+    ghost = document.createElement('span');
+    ghost.id='__ghost_measure';
+    ghost.style.cssText='position:absolute;left:-9999px;top:-9999px;white-space:pre;visibility:hidden;';
+    document.body.appendChild(ghost);
+  }
+  const cs = getComputedStyle(el);
+  ghost.style.font = cs.font;
+  ghost.style.fontSize = cs.fontSize;
+  ghost.style.fontFamily = cs.fontFamily;
+  ghost.style.letterSpacing = cs.letterSpacing;
+  ghost.textContent = el.value || el.placeholder || '';
+  const w = ghost.offsetWidth + 16; // margine per il cursore
+  el.style.width = Math.max(minW, w) + 'px';
+}
+function ridimensionaTuttiCampi(){
+  document.querySelectorAll('.ffld').forEach(el=>autoLarghezza(el));
+}
+
+/* ============================================================
+   SALVATAGGIO / CARICAMENTO
+   ============================================================ */
+const STORAGE_KEY = 'frimm_incarico_corrente';
+
+function raccogliDati(){
+  const dati = {};
+  document.querySelectorAll('#a4container [data-name]').forEach(el=>{
+    dati[el.dataset.name] = valoreDi(el);
+  });
+  // sesso intestatari (non hanno data-name)
+  [1,2].forEach(n=>{
+    const r = document.querySelector('input[name="sex'+n+'"]:checked');
+    if(r) dati['_sex'+n] = r.value;
+  });
+  // dati catastali strutturati
+  try{ const c = localStorage.getItem('frimm_catasto_corrente'); if(c) dati['_catasto'] = JSON.parse(c); }catch(e){}
+  return dati;
+}
+
+function applicaDati(dati){
+  if(!dati) return;
+  Object.keys(dati).forEach(name=>{
+    if(name==='_sex1'||name==='_sex2'||name==='_catasto') return;
+    document.querySelectorAll('[data-name="'+name+'"]').forEach(el=>{
+      setValore(el, dati[name]);
+    });
+  });
+  // ripristino sesso
+  [1,2].forEach(n=>{
+    const v = dati['_sex'+n];
+    if(v){ const r=document.querySelector('input[name="sex'+n+'"][value="'+v+'"]'); if(r) r.checked=true; }
+    aggiornaNatLabel(n);
+  });
+  // ripristino dati catastali
+  if(dati['_catasto']){ try{ localStorage.setItem('frimm_catasto_corrente', JSON.stringify(dati['_catasto'])); }catch(e){} }
+  if(typeof aggiornaDisplayCatasto==='function') aggiornaDisplayCatasto();
+  ridimensionaTuttiCampi();
+  if(typeof aggiornaRiepilogoCopertina==='function') aggiornaRiepilogoCopertina();
+}
+
+function autosalva(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(raccogliDati())); }catch(e){}
+}
+
+function salvaIncarico(){
+  autosalva();
+  flash('💾 Incarico salvato nel browser');
+}
+
+function nuovoIncarico(){
+  if(!confirm('Vuoi svuotare tutti i campi e iniziare un nuovo incarico?')) return;
+  document.querySelectorAll('[data-f]').forEach(el=>{
+    if(el.type==='checkbox') el.checked=false; else el.value='';
+  });
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem('frimm_catasto_corrente');
+  catastoUnita = [];
+  precompilaAgenziaSeVuoto();
+  precompilaLuogoDataSeVuoto();
+  flash('🗑️ Nuovo incarico');
+}
+
+/* Esporta come file .json */
+function esportaJSON(){
+  const dati = raccogliDati();
+  const nome = (dati.p1_intestata || dati.p1_sig1 || 'incarico').toString().trim().replace(/[^a-z0-9]+/gi,'_').slice(0,40) || 'incarico';
+  const blob = new Blob([JSON.stringify(dati,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'incarico_' + nome + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function caricaFile(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const dati = JSON.parse(e.target.result);
+      applicaDati(dati);
+      autosalva();
+      flash('📂 Incarico caricato');
+    }catch(err){ alert('File non valido.'); }
+  };
+  reader.readAsText(file);
+  evt.target.value='';
+}
+
+/* ============================================================
+   STAMPA
+   ============================================================ */
+function setPageRule(size){
+  let st = document.getElementById('dynPage');
+  if(!st){ st=document.createElement('style'); st.id='dynPage'; document.head.appendChild(st); }
+  st.textContent = '@page{ size:'+size+'; margin:0; }';
+}
+
+/* ----- AUTO-FIT: adatta il contenuto di ogni pagina al foglio -----
+   Avvolge il contenuto di ogni .page in un .fit-inner (una sola volta),
+   poi misura e applica uno scale uniforme per riempire l'altezza del foglio
+   senza spazio bianco e senza sbordare. Funziona su qualsiasi browser. */
+function assicuraFitWrapper(page){
+  if(page.querySelector(':scope > .fit-inner')) return page.querySelector(':scope > .fit-inner');
+  const tag = page.querySelector(':scope > .page-tag');
+  const inner = document.createElement('div');
+  inner.className = 'fit-inner';
+  // sposto tutti i figli (tranne il page-tag) dentro inner
+  const figli = [...page.childNodes].filter(n=> n!==tag);
+  figli.forEach(n=> inner.appendChild(n));
+  page.appendChild(inner);
+  return inner;
+}
+
+function autoFitPagine(selettorePagine, alturaFoglioMm){
+  const Hpx = alturaFoglioMm/25.4*96; // altezza foglio in px (297mm ~ 1122.5)
+  document.querySelectorAll(selettorePagine).forEach(page=>{
+    const inner = assicuraFitWrapper(page);
+    // misuro a zoom naturale, senza clipping
+    inner.style.zoom='1';
+    inner.style.transform='none';
+    inner.style.width='100%';
+    inner.style.display='block';
+    page.style.height='auto';
+    page.style.minHeight='0';
+    page.style.maxHeight='none';
+    page.style.overflow='visible';
+    const cs = getComputedStyle(page);
+    const padTop=parseFloat(cs.paddingTop)||0, padBot=parseFloat(cs.paddingBottom)||0;
+    const target = Hpx - padTop - padBot;   // altezza utile da riempire
+    const natH = inner.scrollHeight;         // altezza naturale (zoom 1)
+    if(natH<=0){ return; }
+    // zoom che fa combaciare il contenuto con l'area utile, senza sbordare
+    let z = (target / natH) * 0.97;   // margine di sicurezza per non sbordare mai
+    z = Math.max(0.55, Math.min(z, 1.7));
+    inner.style.zoom = z;
+    // ora fisso il foglio all'altezza esatta e nascondo eventuali eccessi
+    page.style.height = Hpx+'px';
+    page.style.minHeight = Hpx+'px';
+    page.style.maxHeight = Hpx+'px';
+    page.style.overflow='hidden';
+  });
+}
+
+function resetFit(){
+  document.querySelectorAll('.fit-inner').forEach(inner=>{
+    inner.style.transform=''; inner.style.width=''; inner.style.display=''; inner.style.zoom='';
+  });
+  document.querySelectorAll('#a4container .page, #a3inner .page, #a3outer .cover-a3').forEach(p=>{
+    p.style.height=''; p.style.minHeight=''; p.style.maxHeight=''; p.style.overflow=''; p.style.display='';
+  });
+}
+
+function stampaA4(){
+  document.body.classList.remove('print-a3');
+  document.body.classList.add('print-a4');
+  setPageRule('A4 portrait');
+  // auto-fit di ciascuna pagina A4 (foglio 297mm). La copertina è esclusa: ha già
+  // spazio di design sufficiente e il suo layout a colonne (logo/titolo) non regge
+  // il wrapping forzato in display:block usato per il fit delle pagine di testo.
+  autoFitPagine('#a4container .page.contract', 297);
+  setTimeout(()=>{ window.print(); setTimeout(resetFit, 400); }, 120);
+}
+function stampaA3(){
+  document.body.classList.remove('print-a4');
+  document.body.classList.add('print-a3');
+  setPageRule('A3 landscape');
+  document.querySelectorAll('.a3-sheet').forEach(e=>e.style.transform='none');
+  // auto-fit solo del foglio interno (contratto denso, 2 mezze-pagine).
+  // La copertina resta a scala naturale (ha spazio di design come l'originale).
+  autoFitPagine('#a3inner .page', 297);
+  setTimeout(()=>{ window.print(); setTimeout(resetFit, 400); }, 120);
+}
+
+/* Messaggio temporaneo */
+function flash(msg){
+  let d = document.getElementById('flashbox');
+  if(!d){
+    d = document.createElement('div');
+    d.id='flashbox';
+    d.style.cssText='position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1b3a6b;color:#fff;padding:10px 22px;border-radius:8px;z-index:2000;font-size:14px;box-shadow:0 4px 14px rgba(0,0,0,.3);transition:opacity .3s;';
+    document.body.appendChild(d);
+  }
+  d.textContent=msg; d.style.opacity='1';
+  clearTimeout(d._t);
+  d._t=setTimeout(()=>{d.style.opacity='0';},1800);
+}
+
+/* ============================================================
+   ANTEPRIMA A3 A SCHERMO: scala per stare nella finestra
+   ============================================================ */
+function scalaAnteprimaA3(zoomFactor){
+  // A3 landscape = 420mm ~ 1587px. Mostriamo in anteprima ridotta.
+  const sheets = document.querySelectorAll('.a3-sheet.preview');
+  const maxW = document.querySelector('.scale-wrap').clientWidth - 40;
+  const a3px = 1587; // ~420mm @96dpi
+  let scale = Math.min(1, maxW / a3px);
+  if(zoomFactor) scale = scale * zoomFactor;
+  sheets.forEach(s=>{ s.style.transform = 'scale('+scale+')'; s.style.marginBottom = (s.offsetHeight*(scale-1))+'px'; });
+}
+
+/* ============================================================
+   AVVIO
+   ============================================================ */
+let vistaCorrente = 'a4';
+let zoomLevel = 1;
+function mostraVista(v){
+  vistaCorrente = v;
+  // resetto eventuali transform dell'altra vista
+  const a4c = document.getElementById('a4container');
+  if(a4c){ a4c.style.transform=''; a4c.style.marginBottom=''; }
+  document.querySelectorAll('.a4-sheet').forEach(e=>e.style.display = (v==='a4')?'block':'none');
+  document.querySelectorAll('.a3-sheet').forEach(e=>e.style.display = (v==='a3')?'flex':'none');
+  zoomLevel = 1;
+  applicaZoom();
+}
+
+window.addEventListener('DOMContentLoaded', ()=>{
+  buildA4();
+  buildA3();
+  indicizza();
+  attachSync();
+  attachAutomazioni();
+  attachLuogoData();
+  applicaLogoAlModulo();
+  aggiornaAnteprimaLogo();
+  // carica eventuale bozza salvata
+  try{
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if(saved){ applicaDatiAgenzia(true); applicaDati(JSON.parse(saved)); }
+    else { precompilaAgenziaSeVuoto(); }
+  }catch(e){}
+  applicaLogoAlModulo();
+  applicaStileCopertina();
+  fontMult = leggiFontMult();
+  applicaFontMult();
+  precompilaLuogoDataSeVuoto();
+  if(typeof aggiornaDisplayCatasto==='function') aggiornaDisplayCatasto();
+  mostraVista('a4');
+  setVistaBtn('a4');
+});
+window.addEventListener('resize', ()=>{ if(vistaCorrente==='a3') scalaAnteprimaA3(); });
+
+function setVistaBtn(v){
+  document.getElementById('vbA4').style.outline = (v==='a4')?'3px solid #ffd24a':'none';
+  document.getElementById('vbA3').style.outline = (v==='a3')?'3px solid #ffd24a':'none';
+}
+
+/* ============================================================
+   DATI AGENZIA — salvataggio e compilazione automatica
+   ============================================================ */
+const AG_KEY = 'frimm_dati_agenzia';
+const AG_FIELDS = ['ag_nome','ag_sede','ag_prov','ag_via','ag_civ','ag_cf','ag_num','ag_cciaa','ag_reg','ag_rea','ag_luogo'];
+
+/* Mappa: dato agenzia -> campi del modulo che deve riempire (data-name) */
+function mappaturaAgenzia(ag){
+  return {
+    // Sezione CONFERISCONO (pagina 1)
+    p1_agenzia: ag.ag_nome, p1_agsede: ag.ag_sede, p1_agprov: ag.ag_prov,
+    p1_agvia: ag.ag_via, p1_agciv: ag.ag_civ, p1_agcf: ag.ag_cf,
+    p1_agnum: ag.ag_num, p1_agcciaa: ag.ag_cciaa,
+    p1_agreg: ag.ag_reg, p1_agrea: ag.ag_rea,
+    // Blocco accettazione finale (pagina 2)
+    p2_acc_agenzia: ag.ag_nome, p2_acc_cf: ag.ag_cf,
+    p2_acc_num: ag.ag_num, p2_acc_cciaa: ag.ag_cciaa,
+    p2_acc_reg: ag.ag_reg, p2_acc_rea: ag.ag_rea,
+    // CCIAA in copertina
+    cover_cciaa: ag.ag_cciaa
+  };
+}
+
+function leggiDatiAgenzia(){
+  try{ return JSON.parse(localStorage.getItem(AG_KEY)) || {}; }catch(e){ return {}; }
+}
+
+function apriPannelloAgenzia(){
+  const ag = leggiDatiAgenzia();
+  AG_FIELDS.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    if(el.type==='checkbox') el.checked = !!ag[id];
+    else el.value = ag[id] || '';
+  });
+  aggiornaAnteprimaLogo();
+  document.getElementById('agOverlay').classList.add('open');
+}
+function chiudiPannelloAgenzia(){
+  document.getElementById('agOverlay').classList.remove('open');
+}
+
+/* ===== LOGO AGENZIA ===== */
+const LOGO_KEY = 'frimm_logo_agenzia';
+function leggiLogo(){ try{ return localStorage.getItem(LOGO_KEY) || ''; }catch(e){ return ''; } }
+
+function caricaLogo(evt){
+  const file = evt.target.files[0];
+  if(!file) return;
+  if(file.size > 1.5*1024*1024){
+    alert('Immagine troppo grande (max 1,5 MB). Usa un file più leggero.');
+    evt.target.value=''; return;
+  }
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      localStorage.setItem(LOGO_KEY, e.target.result);
+      aggiornaAnteprimaLogo();
+      applicaLogoAlModulo();
+      flash('🖼️ Logo caricato');
+    }catch(err){ alert('Impossibile salvare il logo (spazio insufficiente). Prova un\'immagine più piccola.'); }
+  };
+  reader.readAsDataURL(file);
+  evt.target.value='';
+}
+
+function rimuoviLogo(){
+  localStorage.removeItem(LOGO_KEY);
+  aggiornaAnteprimaLogo();
+  applicaLogoAlModulo();
+  flash('Logo rimosso');
+}
+
+function aggiornaAnteprimaLogo(){
+  const data = leggiLogo();
+  const prev = document.getElementById('ag_logo_preview');
+  if(!prev) return;
+  if(data){ prev.innerHTML = '<img src="'+data+'" alt="logo">'; }
+  else { prev.innerHTML = '<span class="logo-ph">Nessun logo caricato</span>'; }
+}
+
+/* Applica il logo a tutte le copertine (A4 e A3) */
+function applicaLogoAlModulo(){
+  const data = leggiLogo();
+  document.querySelectorAll('.frimm-logo').forEach(slot=>{
+    const img = slot.querySelector('.logo-img');
+    if(!img) return;
+    if(data){
+      img.src = data; img.style.display='block';
+      slot.classList.add('has-img');
+    } else {
+      img.src=''; img.style.display='none';
+      slot.classList.remove('has-img');
+    }
+  });
+}
+
+
+function raccogliDatiAgenzia(){
+  const ag = {};
+  AG_FIELDS.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    ag[id] = (el.type==='checkbox') ? el.checked : el.value;
+  });
+  return ag;
+}
+
+function salvaDatiAgenzia(){
+  const ag = raccogliDatiAgenzia();
+  localStorage.setItem(AG_KEY, JSON.stringify(ag));
+  applicaDatiAgenzia(true);
+  precompilaLuogoDataSeVuoto();
+  chiudiPannelloAgenzia();
+  flash('🏢 Dati agenzia salvati e applicati al modulo');
+}
+
+function applicaDatiAgenzia(silenzioso){
+  const ag = leggiDatiAgenzia();
+  // se il pannello è aperto uso i valori correnti del form
+  if(document.getElementById('agOverlay').classList.contains('open')){
+    Object.assign(ag, raccogliDatiAgenzia());
+  }
+  if(!ag || Object.keys(ag).length===0){
+    if(!silenzioso){ alert('Inserisci e salva prima i dati della tua agenzia.'); }
+    return;
+  }
+  const mappa = mappaturaAgenzia(ag);
+  Object.keys(mappa).forEach(name=>{
+    const v = mappa[name];
+    if(v===undefined || v===null || v==='') return;
+    document.querySelectorAll('[data-name="'+name+'"]').forEach(el=>{
+      setValore(el, v);
+    });
+  });
+  autosalva();
+  if(typeof aggiornaRiepilogoCopertina==='function') aggiornaRiepilogoCopertina();
+  if(!silenzioso){ chiudiPannelloAgenzia(); flash('✓ Dati agenzia inseriti nel modulo'); }
+}
+
+/* Applica automaticamente i dati agenzia ai campi vuoti dopo "Nuovo incarico" */
+function precompilaAgenziaSeVuoto(){
+  const ag = leggiDatiAgenzia();
+  if(!ag || !ag.ag_nome) return;
+  // applica solo se il campo agenzia è ancora vuoto (per non sovrascrivere incarichi caricati)
+  const elAg = document.querySelector('[data-name="p1_agenzia"]');
+  if(elAg && !elAg.value){ applicaDatiAgenzia(true); }
+}
+
+/* ============================================================
+   LUOGO E DATA — i tre campi sempre identici:
+   luogo = sede dell'agenzia, data = data di sistema (oggi).
+   Restano modificabili a mano; modificandone uno si aggiornano tutti.
+   ============================================================ */
+const LUOGODATA_FIELDS = ['p2_luogodata1','p2_luogodata2','p2_luogodata3'];
+
+function dataOggiIT(){
+  const d = new Date();
+  return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
+}
+function componiLuogoData(){
+  const ag = leggiDatiAgenzia();
+  const luogo = (ag && ag.ag_luogo) ? ag.ag_luogo : (ag && ag.ag_sede ? ag.ag_sede : '');
+  const data = dataOggiIT();
+  return luogo ? (luogo + ', ' + data) : data;
+}
+/* precompila i tre campi se sono vuoti (non sovrascrive un incarico caricato/compilato a mano) */
+function precompilaLuogoDataSeVuoto(){
+  const elementi = LUOGODATA_FIELDS.map(n=>document.querySelector('[data-name="'+n+'"]')).filter(Boolean);
+  const tuttiVuoti = elementi.every(el=>!el.value.trim());
+  if(tuttiVuoti){
+    const val = componiLuogoData();
+    LUOGODATA_FIELDS.forEach(n=>{
+      document.querySelectorAll('[data-name="'+n+'"]').forEach(el=>{ el.value = val; if(el.classList.contains('ffld')) autoLarghezza(el); });
+    });
+    autosalva();
+  }
+}
+/* sincronizza i tre campi quando l'utente ne modifica uno */
+function sincronizzaLuogoData(origine){
+  const v = origine.value;
+  LUOGODATA_FIELDS.forEach(n=>{
+    document.querySelectorAll('[data-name="'+n+'"]').forEach(el=>{
+      if(el!==origine){ el.value = v; if(el.classList.contains('ffld')) autoLarghezza(el); }
+    });
+  });
+  autosalva();
+}
+function attachLuogoData(){
+  LUOGODATA_FIELDS.forEach(n=>{
+    document.querySelectorAll('[data-name="'+n+'"]').forEach(el=>{
+      el.addEventListener('input', ()=>sincronizzaLuogoData(el));
+    });
+  });
+}
+
+/* ============================================================
+   RUBRICA INCARICHI SALVATI
+   ============================================================ */
+const RUB_KEY = 'frimm_rubrica_incarichi';
+
+function leggiRubrica(){
+  try{ return JSON.parse(localStorage.getItem(RUB_KEY)) || []; }catch(e){ return []; }
+}
+function scriviRubrica(arr){
+  localStorage.setItem(RUB_KEY, JSON.stringify(arr));
+}
+
+function apriRubrica(){
+  // suggerisco un nome di default basato sui dati del modulo
+  const dati = raccogliDati();
+  const sugg = (dati.p1_intestata || dati.p1_sig1 || '').toString().trim();
+  const indir = (dati.p1_indirizzo || '').toString().trim();
+  document.getElementById('rub_nome_nuovo').value = sugg ? (sugg + (indir? ' - '+indir : '')) : '';
+  renderRubrica();
+  document.getElementById('rubOverlay').classList.add('open');
+}
+function chiudiRubrica(){ document.getElementById('rubOverlay').classList.remove('open'); }
+
+function salvaInRubrica(){
+  const nome = document.getElementById('rub_nome_nuovo').value.trim() || ('Incarico del '+new Date().toLocaleDateString('it-IT'));
+  const arr = leggiRubrica();
+  const rec = { id: 'inc_'+Date.now(), nome: nome, data: new Date().toISOString(), dati: raccogliDati() };
+  arr.unshift(rec);
+  scriviRubrica(arr);
+  renderRubrica();
+  flash('📒 Incarico salvato in rubrica');
+}
+
+function apriDaRubrica(id){
+  const rec = leggiRubrica().find(r=>r.id===id);
+  if(!rec) return;
+  // svuoto e applico
+  document.querySelectorAll('[data-f]').forEach(el=>{ if(el.type==='checkbox') el.checked=false; else el.value=''; });
+  applicaDati(rec.dati);
+  applicaLogoAlModulo();
+  autosalva();
+  chiudiRubrica();
+  flash('✓ Incarico "'+rec.nome+'" aperto');
+}
+
+function eliminaDaRubrica(id){
+  const rec = leggiRubrica().find(r=>r.id===id);
+  if(!rec) return;
+  if(!confirm('Eliminare definitivamente "'+rec.nome+'" dalla rubrica?')) return;
+  scriviRubrica(leggiRubrica().filter(r=>r.id!==id));
+  renderRubrica();
+  flash('Incarico eliminato');
+}
+
+function esportaDaRubrica(id){
+  const rec = leggiRubrica().find(r=>r.id===id);
+  if(!rec) return;
+  const nomeFile = rec.nome.replace(/[^a-z0-9]+/gi,'_').slice(0,50) || 'incarico';
+  const blob = new Blob([JSON.stringify(rec.dati,null,2)], {type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='incarico_'+nomeFile+'.json'; a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function renderRubrica(){
+  const arr = leggiRubrica();
+  const cont = document.getElementById('rubList');
+  if(!arr.length){ cont.innerHTML = '<div class="rub-empty">Nessun incarico salvato. Compila il modulo e clicca "Salva incarico corrente".</div>'; return; }
+  cont.innerHTML = arr.map(r=>{
+    const d = new Date(r.data);
+    const dataStr = d.toLocaleDateString('it-IT') + ' ' + d.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+    const prezzo = r.dati && r.dati.p1_prezzo ? (' · € '+r.dati.p1_prezzo) : '';
+    return `<div class="rub-item">
+      <div class="rub-info">
+        <div class="rub-name">${escapeHtml(r.nome)}</div>
+        <div class="rub-meta">Salvato il ${dataStr}${escapeHtml(prezzo)}</div>
+      </div>
+      <button class="rub-open" onclick="apriDaRubrica('${r.id}')">Apri</button>
+      <button class="rub-exp" onclick="esportaDaRubrica('${r.id}')">Esporta</button>
+      <button class="rub-del" onclick="eliminaDaRubrica('${r.id}')">Elimina</button>
+    </div>`;
+  }).join('');
+}
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ============================================================
+   ZOOM DI COMPILAZIONE (solo a schermo, non influisce sulla stampa)
+   ============================================================ */
+function applicaZoom(){
+  document.getElementById('zoomVal').textContent = Math.round(zoomLevel*100)+'%';
+  if(vistaCorrente==='a4'){
+    const c = document.getElementById('a4container');
+    c.style.transform = 'scale('+zoomLevel+')';
+    c.style.transformOrigin = 'top center';
+    c.style.marginBottom = (c.offsetHeight*(zoomLevel-1))+'px';
+  } else {
+    scalaAnteprimaA3(zoomLevel);
+  }
+}
+function cambiaZoom(delta){
+  zoomLevel = Math.min(2.2, Math.max(0.4, Math.round((zoomLevel+delta)*10)/10));
+  applicaZoom();
+}
+function resetZoom(){
+  // "Adatta": calcola lo zoom per riempire la larghezza disponibile
+  const sw = document.querySelector('.scale-wrap');
+  if(vistaCorrente==='a4' && sw){
+    const maxW = sw.clientWidth - 40;
+    const a4px = 210/25.4*96; // ~794px
+    zoomLevel = Math.max(0.4, Math.min(2.2, maxW/a4px));
+  } else {
+    zoomLevel = 1;
+  }
+  applicaZoom();
+}
+
+/* ============================================================
+   DIMENSIONE CARATTERI DEL CONTRATTO (formattazione manuale)
+   Vale sia a schermo sia in stampa (è il font base, non lo zoom).
+   ============================================================ */
+const FONT_KEY = 'frimm_font_mult';
+let fontMult = 1.0;
+function leggiFontMult(){ const v=parseFloat(localStorage.getItem(FONT_KEY)); return isNaN(v)?1.0:v; }
+function applicaFontMult(){
+  document.querySelectorAll('.page.contract').forEach(p=> p.style.setProperty('--font-mult', fontMult));
+  const lbl=document.getElementById('fontVal'); if(lbl) lbl.textContent = Math.round(fontMult*100)+'%';
+}
+function cambiaCarattere(delta){
+  fontMult = Math.min(1.6, Math.max(0.7, Math.round((fontMult+delta)*100)/100));
+  localStorage.setItem(FONT_KEY, fontMult);
+  applicaFontMult();
+}
+function resetCarattere(){
+  fontMult = 1.0; localStorage.setItem(FONT_KEY, fontMult); applicaFontMult();
+  flash('Dimensione caratteri ripristinata');
+}
+
+/* ============================================================
+   DATI CATASTALI — immobile + pertinenze (più unità)
+   Memorizzati in un campo nascosto JSON; il riepilogo testuale
+   viene scritto in p1_catastali.
+   ============================================================ */
+const TIPI_UNITA = ['Immobile','Garage','Box auto','Posto auto','Cantina','Soffitta','Terreno','Pertinenza'];
+let catastoUnita = [];
+
+function apriCatasto(){
+  // popolo il datalist delle categorie (una volta)
+  const dl = document.getElementById('catCategorie');
+  if(dl && !dl.children.length){
+    dl.innerHTML = Object.keys(CATEGORIE_CATASTALI).map(k=>`<option value="${k}">${k} — ${CATEGORIE_CATASTALI[k]}</option>`).join('');
+  }
+  // carico dallo storage se presente, altrimenti parto con una unità "Immobile"
+  catastoUnita = leggiCatasto();
+  if(!catastoUnita.length){ catastoUnita = [nuovaUnita('Immobile')]; }
+  renderCatasto();
+  document.getElementById('catOverlay').classList.add('open');
+}
+function chiudiCatasto(){ document.getElementById('catOverlay').classList.remove('open'); }
+
+function nuovaUnita(tipo){
+  return {tipo: tipo||'Pertinenza', foglio:'', particella:'', sub:'', categoria:'', consistenza:'', rendita:''};
+}
+function leggiCatasto(){
+  try{ return JSON.parse(localStorage.getItem('frimm_catasto_corrente')) || []; }catch(e){ return []; }
+}
+
+function aggiungiUnitaCatasto(){
+  // salvo prima i valori correnti dai campi
+  raccogliCatastoDaUI();
+  catastoUnita.push(nuovaUnita('Pertinenza'));
+  renderCatasto();
+}
+function eliminaUnitaCatasto(i){
+  raccogliCatastoDaUI();
+  catastoUnita.splice(i,1);
+  if(!catastoUnita.length) catastoUnita=[nuovaUnita('Immobile')];
+  renderCatasto();
+}
+
+function raccogliCatastoDaUI(){
+  document.querySelectorAll('#catList .cat-unita').forEach((box,i)=>{
+    if(!catastoUnita[i]) return;
+    catastoUnita[i].tipo = box.querySelector('.cat-tipo').value;
+    catastoUnita[i].foglio = box.querySelector('[data-cat=foglio]').value;
+    catastoUnita[i].particella = box.querySelector('[data-cat=particella]').value;
+    catastoUnita[i].sub = box.querySelector('[data-cat=sub]').value;
+    catastoUnita[i].categoria = box.querySelector('[data-cat=categoria]').value;
+    catastoUnita[i].consistenza = box.querySelector('[data-cat=consistenza]').value;
+    catastoUnita[i].rendita = box.querySelector('[data-cat=rendita]').value;
+  });
+}
+
+function renderCatasto(){
+  const cont = document.getElementById('catList');
+  cont.innerHTML = catastoUnita.map((u,i)=>{
+    const opts = TIPI_UNITA.map(t=>`<option value="${t}"${t===u.tipo?' selected':''}>${t}</option>`).join('');
+    const descCat = descrizioneCategoria(u.categoria);
+    return `<div class="cat-unita">
+      <div class="cat-unita-head">
+        <select class="cat-tipo">${opts}</select>
+        <span class="cat-titolo">${i===0?'(unità principale)':'pertinenza'}</span>
+        <button class="cat-rm" onclick="eliminaUnitaCatasto(${i})">Rimuovi</button>
+      </div>
+      <div class="cat-grid">
+        <label>Foglio<input type="text" data-cat="foglio" value="${esc(u.foglio)}"></label>
+        <label>Particella<input type="text" data-cat="particella" value="${esc(u.particella)}"></label>
+        <label>Sub<input type="text" data-cat="sub" value="${esc(u.sub)}"></label>
+        <label>Categoria<input type="text" data-cat="categoria" list="catCategorie" value="${esc(u.categoria)}" placeholder="cerca: A/2…" oninput="aggiornaDescCat(this)" autocomplete="off"><span class="cat-desc">${esc(descCat)}</span></label>
+        <label>Consistenza<input type="text" data-cat="consistenza" value="${esc(u.consistenza)}" placeholder="es. 5,5 vani"></label>
+        <label>Rendita €<input type="text" data-cat="rendita" value="${esc(u.rendita)}" placeholder="es. 650,00"></label>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* categorie catastali italiane con descrizione (per ricerca/autocompletamento) */
+const CATEGORIE_CATASTALI = {
+  'A/1':'Abitazioni signorili','A/2':'Abitazioni civili','A/3':'Abitazioni economiche','A/4':'Abitazioni popolari',
+  'A/5':'Abitazioni ultrapopolari','A/6':'Abitazioni rurali','A/7':'Abitazioni in villini','A/8':'Abitazioni in ville',
+  'A/9':'Castelli, palazzi di pregio','A/10':'Uffici e studi privati','A/11':'Alloggi tipici dei luoghi',
+  'B/1':'Collegi, convitti, caserme','B/2':'Case di cura e ospedali','B/3':'Prigioni e riformatori','B/4':'Uffici pubblici',
+  'B/5':'Scuole e laboratori scientifici','B/6':'Biblioteche, musei, gallerie','B/7':'Cappelle e oratori','B/8':'Magazzini sotterranei',
+  'C/1':'Negozi e botteghe','C/2':'Magazzini e locali di deposito','C/3':'Laboratori per arti e mestieri',
+  'C/4':'Fabbricati per sport (senza fine di lucro)','C/5':'Stabilimenti balneari','C/6':'Stalle, scuderie, rimesse, autorimesse (box/garage)',
+  'C/7':'Tettoie chiuse o aperte','D/1':'Opifici','D/2':'Alberghi e pensioni','D/3':'Teatri, cinema, sale spettacolo',
+  'D/4':'Case di cura e ospedali (con fine di lucro)','D/5':'Istituti di credito, cambio e assicurazione','D/6':'Fabbricati per sport (con fine di lucro)',
+  'D/7':'Fabbricati per attività industriali','D/8':'Fabbricati per attività commerciali','D/10':'Fabbricati per attività agricole',
+  'E/1':'Stazioni per trasporti','E/2':'Ponti comunali e provinciali soggetti a pedaggio','E/3':'Costruzioni per esigenze pubbliche',
+  'F/1':'Area urbana','F/2':'Unità collabenti','F/3':'Unità in corso di costruzione','F/4':'Unità in corso di definizione','F/5':'Lastrico solare','F/6':'Fabbricato in attesa di dichiarazione',
+  'T':'Terreno'
+};
+function descrizioneCategoria(cat){
+  if(!cat) return '';
+  const key = cat.toUpperCase().replace(/\s/g,'');
+  return CATEGORIE_CATASTALI[key] || '';
+}
+function aggiornaDescCat(input){
+  const span = input.parentElement.querySelector('.cat-desc');
+  if(span) span.textContent = descrizioneCategoria(input.value);
+}
+
+function riepilogoCatasto(){
+  // genera la stringa da inserire nel modulo
+  return catastoUnita.map(u=>{
+    const parti=[];
+    if(u.foglio) parti.push('Fg. '+u.foglio);
+    if(u.particella) parti.push('Part. '+u.particella);
+    if(u.sub) parti.push('Sub '+u.sub);
+    if(u.categoria) parti.push('Cat. '+u.categoria);
+    if(u.consistenza) parti.push('Cons. '+u.consistenza);
+    if(u.rendita) parti.push('Rendita € '+u.rendita);
+    if(!parti.length) return '';
+    return (u.tipo? u.tipo+': ':'') + parti.join(', ');
+  }).filter(Boolean).join('  •  ');
+}
+
+function salvaCatasto(){
+  raccogliCatastoDaUI();
+  localStorage.setItem('frimm_catasto_corrente', JSON.stringify(catastoUnita));
+  aggiornaDisplayCatasto();
+  autosalva();
+  chiudiCatasto();
+  flash('🗂️ Dati catastali inseriti nel modulo');
+}
+
+/* scrive il riepilogo catastale nei div display (A4 e A3) */
+function aggiornaDisplayCatasto(){
+  const dati = leggiCatasto();
+  catastoUnita = dati;
+  const testo = riepilogoCatasto();
+  document.querySelectorAll('.cat-display, #catDisplay').forEach(el=>{ el.textContent = testo; });
+}
+
+
+/* ============================================================
+   1) CALCOLO CODICE FISCALE (algoritmo ufficiale italiano)
+   ============================================================ */
+const CF_MESI = ['A','B','C','D','E','H','L','M','P','R','S','T']; // gen..dic
+const CF_PARI = {'0':0,'1':1,'2':2,'3':3,'4':4,'5':5,'6':6,'7':7,'8':8,'9':9,'A':0,'B':1,'C':2,'D':3,'E':4,'F':5,'G':6,'H':7,'I':8,'J':9,'K':10,'L':11,'M':12,'N':13,'O':14,'P':15,'Q':16,'R':17,'S':18,'T':19,'U':20,'V':21,'W':22,'X':23,'Y':24,'Z':25};
+const CF_DISPARI = {'0':1,'1':0,'2':5,'3':7,'4':9,'5':13,'6':15,'7':17,'8':19,'9':21,'A':1,'B':0,'C':5,'D':7,'E':9,'F':13,'G':15,'H':17,'I':19,'J':21,'K':2,'L':4,'M':18,'N':20,'O':11,'P':3,'Q':6,'R':8,'S':12,'T':14,'U':16,'V':10,'W':22,'X':25,'Y':24,'Z':23};
+
+function cfConsonanti(s){ return (s||'').toUpperCase().replace(/[^A-Z]/g,'').replace(/[AEIOU]/g,''); }
+function cfVocali(s){ return (s||'').toUpperCase().replace(/[^A-Z]/g,'').replace(/[^AEIOU]/g,''); }
+
+function cfCognome(cognome){
+  const c = cfConsonanti(cognome), v = cfVocali(cognome);
+  let r = (c+v+'XXX').substring(0,3);
+  return r;
+}
+function cfNome(nome){
+  const c = cfConsonanti(nome);
+  let cod;
+  if(c.length>=4){ cod = c[0]+c[2]+c[3]; }   // se 4+ consonanti: 1ª,3ª,4ª
+  else { cod = c; }
+  const v = cfVocali(nome);
+  return (cod+v+'XXX').substring(0,3);
+}
+function cfData(dataStr, sesso){
+  // accetta gg/mm/aaaa, gg-mm-aaaa, aaaa-mm-gg
+  if(!dataStr) return null;
+  let g,m,a;
+  let s = dataStr.trim();
+  let mm = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if(mm){ g=+mm[1]; m=+mm[2]; a=+mm[3]; }
+  else { mm = s.match(/^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})$/); if(mm){ a=+mm[1]; m=+mm[2]; g=+mm[3]; } }
+  if(!mm) return null;
+  if(a<100){ a += (a>30?1900:2000); }
+  if(m<1||m>12||g<1||g>31) return null;
+  const aa = String(a).slice(-2);
+  const mc = CF_MESI[m-1];
+  let gg = (sesso==='F') ? g+40 : g;
+  return aa + mc + String(gg).padStart(2,'0');
+}
+/* tabella comuni: il codice catastale completo non è incorporabile (migliaia di comuni).
+   Calcolo il CF lasciando il codice catastale come placeholder che l'utente completa,
+   OPPURE, se l'utente inserisce un codice catastale noto, lo usa. */
+function cfCalcola(cognome, nome, dataStr, sesso, codCatastale){
+  const cc = cfCognome(cognome);
+  const nn = cfNome(nome);
+  const dd = cfData(dataStr, sesso);
+  if(!dd) return null;
+  let cat = (codCatastale||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  if(!/^[A-Z]\d{3}$/.test(cat)){ cat = 'Z000'; }  // placeholder estero/sconosciuto
+  const base = cc+nn+dd+cat;
+  // carattere di controllo
+  let somma=0;
+  for(let i=0;i<15;i++){
+    const ch = base[i];
+    somma += (i%2===0) ? CF_DISPARI[ch] : CF_PARI[ch];
+  }
+  const ctrl = String.fromCharCode(65 + (somma%26));
+  return base+ctrl;
+}
+
+/* ============================================================
+   TABELLA COMUNI CAMPANIA (codici catastali) per calcolo CF
+   Copre le 5 province: Avellino, Benevento, Caserta, Napoli, Salerno.
+   Chiave = nome comune normalizzato (maiuscolo, senza accenti/spazi multipli)
+   ============================================================ */
+const COMUNI_CAMPANIA = {
+"AGROPOLI":"A091","AILANO":"A107","AIROLA":"A110","ALBANELLA":"A146","ALBURNI":"M390","ALFANO":"A186","ALIFE":"A200","ALTAVILLA IRPINA":"A228","ALTAVILLA SILENTINA":"A230","ALVIGNANO":"A243","AMALFI":"A251","AMOROSI":"A265","ANACAPRI":"A268","ANDRETTA":"A284","ANGRI":"A294","AQUARA":"A343","AQUILONIA":"A347","ARIANO IRPINO":"A399","ARIENZO":"A403","ARPAIA":"A431","ARPAISE":"A432","ARZANO":"A455","ASCEA":"A460","ATENA LUCANA":"A484","ATRIPALDA":"A489","AULETTA":"A495","AVELLA":"A508","AVELLINO":"A509","AVERSA":"A512","BACOLI":"A535","BAGNOLI IRPINO":"A566","BAIANO":"A580","BARANO D'ISCHIA":"A617","BARONISSI":"A674","BASELICE":"A696","BATTIPAGLIA":"A717","BELLIZZI":"M294","BELLONA":"A755","BELLOSGUARDO":"A756","BENEVENTO":"A783","BISACCIA":"A881","BISCEGLIE":"A883","BONEA":"A970","BONITO":"A975","BOSCOREALE":"B076","BOSCOTRECASE":"B077","BRACIGLIANO":"B115","BRUSCIANO":"B227","BUCCINO":"B242","BUCINO":"B242","BUONABITACOLO":"B266","BUONALBERGO":"B267","CAGGIANO":"B351","CAIAZZO":"B362","CAIRANO":"B367","CALABRITTO":"B374","CALITRI":"B415","CALVANICO":"B437","CALVI":"B444","CALVI RISORTA":"B445","CALVIZZANO":"B452","CAMEROTA":"B476","CAMPAGNA":"B492","CAMPOLATTARO":"B541","CAMPOLI DEL MONTE TABURNO":"B542","CAMPORA":"B555","CANCELLO ED ARNONE":"B581","CANNALONGA":"B608","CAPACCIO PAESTUM":"B644","CAPACCIO":"B644","CAPACCIO-PAESTUM":"B644","CAPODRISE":"B667","CAPOSELE":"B674","CAPRIATI A VOLTURNO":"B704","CAPRIGLIA IRPINA":"B706","CAPUA":"B715","CARDITO":"B759","CARIFE":"B776","CARINARO":"B779","CARINOLA":"B781","CASAL DI PRINCIPE":"B872","CASALBORE":"B866","CASALBUONO":"B868","CASALDUNI":"B876","CASALETTO SPARTANO":"B888","CASALNUOVO DI NAPOLI":"B905","CASALVELINO":"B919","CASAMARCIANO":"B922","CASAMICCIOLA TERME":"B924","CASANDRINO":"B925","CASAPULLA":"B935","CASAVATORE":"B946","CASCANO":"B950","CASERTA":"B963","CASOLA DI NAPOLI":"B980","CASORIA":"B990","CASSANO IRPINO":"B997","CASTEL BARONIA":"C058","CASTEL CAMPAGNANO":"B494","CASTEL DI SASSO":"C097","CASTEL MORRONE":"C211","CASTEL SAN GIORGIO":"C259","CASTEL SAN LORENZO":"C262","CASTEL VOLTURNO":"C291","CASTELCIVITA":"C069","CASTELFRANCI":"C105","CASTELLABATE":"C125","CASTELLAMMARE DI STABIA":"C129","CASTELLO DEL MATESE":"C178","CASTELNUOVO CILENTO":"C231","CASTELNUOVO DI CONZA":"C235","CASTELPAGANO":"C245","CASTELPOTO":"C250","CASTELVENERE":"C280","CASTELVETERE IN VAL FORTORE":"C284","CASTELVETERE SUL CALORE":"C283","CAUTANO":"C359","CAVA DE' TIRRENI":"C361","CECCANO":"C413","CELLE DI BULGHERIA":"C444","CELLOLE":"M262","CERASO":"C485","CERCOLA":"C495","CERRETO SANNITA":"C525","CERVINARA":"C557","CERVINO":"C558","CESA":"C561","CESINALI":"C576","CETARA":"C584","CHIANCHE":"C606","CHIUSANO DI SAN DOMENICO":"C657","CICCIANO":"C675","CICERALE":"C676","CIMITILE":"C697","CIORLANO":"C716","CIRCELLO":"C719","COLLE SANNITA":"C846","COLLIANO":"C879","CONCA DEI MARINI":"C940","CONCA DELLA CAMPANIA":"C939","CONTRADA":"C971","CONTURSI TERME":"C974","CONZA DELLA CAMPANIA":"C976","CORBARA":"C984","CRISPANO":"D170","CUSANO MUTRI":"D230","DOMICELLA":"D331","DUGENTA":"D380","DURAZZANO":"D386","EBOLI":"D390","ERCOLANO":"H243","FAICCHIO":"D469","FELITTO":"D527","FISCIANO":"D615","FLUMERI":"D638","FONTANAROSA":"D671","FONTEGRECA":"D683","FORCHIA":"D693","FORINO":"D701","FORIO":"D702","FORMICOLA":"D709","FRAGNETO L'ABATE":"D754","FRAGNETO MONFORTE":"D755","FRASSO TELESINO":"D784","FRATTAMAGGIORE":"D789","FRATTAMINORE":"D790","FRIGENTO":"D798","FUTANI":"D832","GALLO MATESE":"D884","GALLUCCIO":"D886","GESUALDO":"D998","GIANO VETUSTO":"E011","GINESTRA DEGLI SCHIAVONI":"E034","GIOI":"E037","GIOIA SANNITICA":"E040","GIUGLIANO IN CAMPANIA":"E054","GIUNGANO":"E060","GRAGNANO":"E131","GRAZZANISE":"E158","GRECI":"E161","GROTTAMINARDA":"E206","GROTTOLELLA":"E214","GUARDIA SANFRAMONDI":"E249","GUARDIA LOMBARDI":"E245","GUARDIAREGIA":"E248","ISCHIA":"E329","ISPANI":"E365","LACEDONIA":"E397","LAPIO":"E447","LAUREANA CILENTO":"E480","LAURINO":"E486","LAURITO":"E487","LAURO":"E488","LAVIANO":"E498","LETTERE":"E557","LICINELLA":"B644","LIMATOLA":"E589","LIONI":"E605","LIVERI":"E620","LUOGOSANO":"E746","LUSCIANO":"E754","LUSTRA":"E767","MACERATA CAMPANIA":"E784","MADDALONI":"E791","MAGLIANO VETERE":"E814","MAIORI":"E839","MANOCALZATI":"E891","MARANO DI NAPOLI":"E906","MARIGLIANELLA":"E954","MARIGLIANO":"E955","MARZANO APPIO":"E998","MASSA LUBRENSE":"F030","MASSA DI SOMMA":"M289","MELITO IRPINO":"F110","MELITO DI NAPOLI":"F111","MELIZZANO":"F113","MERCATO SAN SEVERINO":"F138","MERCOGLIANO":"F141","META":"F162","MIGNANO MONTE LUNGO":"F203","MINORI":"F223","MIRABELLA ECLANO":"F230","MOIANO":"F274","MONACILIONI":"F283","MONDRAGONE":"F352","MONTAGUTO":"F384","MONTANO ANTILIA":"F426","MONTE SAN GIACOMO":"F618","MONTECALVO IRPINO":"F448","MONTECORICE":"F479","MONTECORVINO PUGLIANO":"F480","MONTECORVINO ROVELLA":"F481","MONTEFALCIONE":"F491","MONTEFORTE CILENTO":"F507","MONTEFORTE IRPINO":"F506","MONTEFREDANE":"F511","MONTEFUSCO":"F512","MONTELLA":"F546","MONTEMARANO":"F555","MONTEMILETTO":"F566","MONTERONI":"F604","MONTESANO SULLA MARCELLANA":"F625","MONTESARCHIO":"F636","MONTEVERDE":"F660","MONTORO":"M330","MORCONE":"F717","MORRA DE SANCTIS":"F744","MOSCHIANO":"F762","MUGNANO DEL CARDINALE":"F798","MUGNANO DI NAPOLI":"F799","NAPOLI":"F839","NOCERA INFERIORE":"F912","NOCERA SUPERIORE":"F913","NOLA":"F924","NUSCO":"F988","OCRE":"F996","OGLIASTRO CILENTO":"G011","OLEVANO SUL TUSCIANO":"G023","OLIVETO CITRA":"G039","OMIGNANO":"G063","ORTA DI ATELLA":"G130","OSPEDALETTO D'ALPINOLO":"G165","OTTAVIANO":"G190","PADULA":"G226","PAGANI":"G230","PAGO DEL VALLO DI LAURO":"G242","PAGO VEIANO":"G243","PALMA CAMPANIA":"G283","PALOMONTE":"G292","PANNARANO":"G311","PAOLISI":"G318","PAPER A":"G317","PARETE":"G333","PASTORANO":"G364","PATERNOPOLI":"G370","PAUPISI":"G386","PELLEZZANO":"G426","PERDIFUMO":"G447","PERITO":"G455","PESCO SANNITA":"G494","PETINA":"G509","PETRURO IRPINO":"G519","PIAGGINE":"G538","PIANA DI MONTE VERNA":"G541","PIANO DI SORRENTO":"G568","PIAZZA DI PANDOLA":"M330","PIEDIMONTE MATESE":"G596","PIETRADEFUSI":"G611","PIETRAMELARA":"G612","PIETRAROJA":"G620","PIETRASTORNINA":"G629","PIETRAVAIRANO":"G630","PIETRELCINA":"G631","PIGNATARO MAGGIORE":"G661","PIMONTE":"G670","POGGIOMARINO":"G762","POLLA":"G793","POLLENA TROCCHIA":"G795","POLLICA":"G796","POMIGLIANO D'ARCO":"G812","POMPEI":"G813","PONTECAGNANO FAIANO":"G834","PONTELANDOLFO":"G848","PONTELATONE":"G849","PORTICO DI CASERTA":"G903","PORTICI":"G902","POSITANO":"G932","POSTIGLIONE":"G939","POZZUOLI":"G964","PRAIANO":"G976","PRATA DI PRINCIPATO ULTRA":"G990","PRATA SANNITA":"G991","PRATELLA":"G995","PRATOLA SERRA":"H006","PROCIDA":"H072","PRrATA":"G990","PUGLIANELLO":"H087","QUADRELLE":"H097","QUALIANO":"H101","QUARTO":"H114","QUINDICI":"H128","RAVELLO":"H198","RECALE":"H210","RICIGLIANO":"H277","ROCCABASCERANA":"H382","ROCCADASPIDE":"H394","ROCCAGLORIOSA":"H412","ROCCAMONFINA":"H423","ROCCAPIEMONTE":"H431","ROCCARAINOLA":"H433","ROCCAROMANA":"H436","ROCCABASCERANA":"H382","ROFRANO":"H485","ROCCABASCERANA":"H382","ROTONDI":"H593","RUTINO":"H644","RUVIANO":"H165","SACCO":"H654","SALA CONSILINA":"H683","SALENTO":"H686","SALERNO":"H703","SALVITELLE":"H731","SAN BARTOLOMEO IN GALDO":"H764","SAN CIPRIANO PICENTINO":"H800","SAN CIPRIANO D'AVERSA":"H798","SAN FELICE A CANCELLO":"H834","SAN GENNARO VESUVIANO":"H860","SAN GIORGIO A CREMANO":"H892","SAN GIORGIO DEL SANNIO":"H894","SAN GIORGIO LA MOLARA":"H898","SAN GIUSEPPE VESUVIANO":"H931","SAN GREGORIO MAGNO":"H943","SAN GREGORIO MATESE":"H942","SAN LEUCIO DEL SANNIO":"H955","SAN LORENZELLO":"H957","SAN LORENZO MAGGIORE":"H967","SAN LUPO":"H973","SAN MANGO PIEMONTE":"H977","SAN MANGO SUL CALORE":"H975","SAN MARCELLINO":"H978","SAN MARCO DEI CAVOTI":"H984","SAN MARCO EVANGELISTA":"F043","SAN MARTINO SANNITA":"H997","SAN MARTINO VALLE CAUDINA":"I016","SAN MARZANO SUL SARNO":"I019","SAN MAURO CILENTO":"I031","SAN MICHELE DI SERINO":"I034","SAN NAZZARO":"I049","SAN NICOLA BARONIA":"I056","SAN NICOLA LA STRADA":"I056","SAN PAOLO BEL SITO":"I073","SAN PIETRO AL TANAGRO":"I089","SAN PIETRO INFINE":"I113","SAN POTITO SANNITICO":"I130","SAN PRISCO":"I131","SAN RUFO":"I143","SAN SALVATORE TELESINO":"I145","SAN SEBASTIANO AL VESUVIO":"I151","SAN TAMMARO":"I261","SAN VALENTINO TORIO":"I377","SAN VITALIANO":"I391","SANT'AGATA DE' GOTI":"I197","SANT'AGNELLO":"I208","SANT'ANASTASIA":"I262","SANT'ANDREA DI CONZA":"I264","SANT'ANGELO A CUPOLO":"I277","SANT'ANGELO A SCALA":"I280","SANT'ANGELO ALL'ESCA":"I275","SANT'ANGELO DEI LOMBARDI":"I281","SANT'ANGELO D'ALIFE":"I273","SANT'ANTIMO":"I293","SANT'ANTONIO ABATE":"I300","SANT'ARCANGELO TRIMONTE":"M261","SANT'ARSENIO":"I307","SANT'EGIDIO DEL MONTE ALBINO":"I317","SANTA LUCIA DI SERINO":"I218","SANTA MARIA A VICO":"I233","SANTA MARIA CAPUA VETERE":"I234","SANTA MARIA LA FOSSA":"I247","SANTA MARINA":"I253","SANTA PAOLINA":"I301","SANTOMENNA":"I260","SANZA":"I411","SAPRI":"I422","SARNO":"I438","SASSANO":"I451","SAVIANO":"I469","SCAFATI":"I483","SCALA":"I486","SCAMPITELLA":"I493","SCISCIANO":"I540","SECONDIGLIANO":"F839","SENERCHIA":"I606","SEonda":"I567","SERINO":"I630","SERRARA FONTANA":"I652","SERRE":"I666","SESSA AURUNCA":"I676","SESSA CILENTO":"I677","SIANO":"I720","SICIGNANO DEGLI ALBURNI":"M253","SOLOFRA":"I805","SOLOPACA":"I806","SOMMA VESUVIANA":"I820","SORBO SERPICO":"I843","SORRENTO":"I862","SPARANISE":"I885","STELLA CILENTO":"D735","STIO":"I960","STURNO":"I990","SUCCIVO":"I993","TAURANO":"L061","TAURASI":"L062","TEANO":"L083","TEGGIANO":"D292","TELESE TERME":"L086","TEORA":"L102","TERZIGNO":"L142","TEVEROLA":"L155","TOCCO CAUDIO":"L185","TORA E PICCILLI":"L205","TORCHIARA":"L212","TORELLA DEI LOMBARDI":"L214","TORRE ANNUNZIATA":"L245","TORRE DEL GRECO":"L259","TORRE LE NOCELLE":"L271","TORRE ORSAIA":"L274","TORRECUSO":"L253","TORRIONI":"L301","TRAMONTI":"L323","TRECASE":"M280","TRENTINARA":"L377","TREVICO":"L399","TUFINO":"L460","TUFO":"L461","VAIRANO PATENORA":"L540","VALLATA":"L589","VALLE AGRICOLA":"L594","VALLE DI MADDALONI":"L591","VALLESACCARDA":"L616","VALLO DELLA LUCANIA":"L628","VALVA":"L656","VENTICANO":"L739","VIBONATI":"L835","VICO EQUENSE":"L845","VIETRI SUL MARE":"L860","VILLA DI BRIANO":"D801","VILLA LITERNO":"L844","VILLAMAINA":"L965","VILLANOVA DEL BATTISTA":"L973","VISCIANO":"M072","VITULANO":"M093","VITULAZIO":"M092","VOLLA":"M115","VOLTURARA IRPINA":"M130","ZUNGOLI":"M203"
+};
+
+function normalizzaComune(s){
+  return (s||'').toUpperCase().trim()
+    .replace(/['’`]/g, "'")
+    .replace(/\s+/g,' ')
+    .replace(/[ÀÁÂÄ]/g,'A').replace(/[ÈÉÊË]/g,'E').replace(/[ÌÍÎÏ]/g,'I').replace(/[ÒÓÔÖ]/g,'O').replace(/[ÙÚÛÜ]/g,'U');
+}
+function codiceCatastale(comune){
+  const key = normalizzaComune(comune);
+  if(COMUNI_CAMPANIA[key]) return COMUNI_CAMPANIA[key];
+  // provo senza apostrofi/spazi per tolleranza
+  const key2 = key.replace(/[^A-Z]/g,'');
+  for(const k in COMUNI_CAMPANIA){ if(k.replace(/[^A-Z]/g,'')===key2) return COMUNI_CAMPANIA[k]; }
+  return '';
+}
+
+function calcolaCF(n){
+  // n = 1 o 2 (intestatario)
+  const sigEl = document.querySelector('[data-name="p1_sig'+n+'"]');
+  const dataEl = document.querySelector('[data-name="p1_natail'+n+'"]');
+  const comuneEl = document.querySelector('[data-name="p1_nat'+n+'"]');   // comune nascita (dopo "a")
+  const cfEl = document.querySelector('[data-name="p1_cf'+n+'"]');
+  const sesso = (document.querySelector('input[name="sex'+n+'"]:checked')||{}).value || 'M';
+  if(!sigEl || !cfEl) return;
+  const fullName = (sigEl.value||'').trim();
+  if(!fullName || !dataEl.value){
+    alert('Per calcolare il codice fiscale servono:\n• Nome e cognome (campo Sig.) scritti come "Cognome Nome"\n• Data di nascita (campo "il")\n• Comune di nascita (campo dopo "a")');
+    return;
+  }
+  const parti = fullName.split(/\s+/);
+  let cognome, nome;
+  if(parti.length===1){ cognome=parti[0]; nome=parti[0]; }
+  else if(parti.length===2){ cognome=parti[0]; nome=parti[1]; }
+  else { cognome=parti.slice(0,parti.length-1).join(''); nome=parti[parti.length-1]; }
+  // codice catastale: 1) cerco il comune nella tabella Campania; 2) se l'utente ha scritto direttamente un codice (es. H501) lo uso
+  const comuneVal = (comuneEl.value||'').trim();
+  let cat = codiceCatastale(comuneVal);
+  if(!cat && /^[A-Z]\d{3}$/i.test(comuneVal)) cat = comuneVal.toUpperCase();
+  const cf = cfCalcola(cognome, nome, dataEl.value, sesso, cat);
+  if(!cf){ alert('Data di nascita non valida. Usa il formato gg/mm/aaaa (es. 14/03/1985).'); return; }
+  document.querySelectorAll('[data-name="p1_cf'+n+'"]').forEach(el=>{ el.value = cf; if(el.classList.contains('ffld')) autoLarghezza(el); });
+  autosalva();
+  flash('Codice fiscale calcolato: '+cf);
+  if(!cat){
+    setTimeout(()=>alert('Codice fiscale calcolato: '+cf+'\n\nNota: il Comune "'+comuneVal+'" non è nell\'elenco (sono inclusi tutti i comuni della Campania). Gli ultimi 4 caratteri prima del controllo usano un segnaposto (Z000).\n\nPer un CF esatto di un comune fuori Campania, scrivi direttamente il suo codice catastale (es. H501) nel campo del comune di nascita e ricalcola.'), 60);
+  }
+}
+
+/* ============================================================
+   2) "nato / nata" in base al sesso
+   ============================================================ */
+function aggiornaNatLabel(n){
+  const sesso = (document.querySelector('input[name="sex'+n+'"]:checked')||{}).value || 'M';
+  const femmina = (sesso==='F');
+  const lbl = document.getElementById('natlbl'+n);
+  if(lbl) lbl.textContent = femmina ? 'nata' : 'nato';
+  const illa = document.getElementById('illa'+n);
+  if(illa) illa.textContent = femmina ? 'la' : 'il';
+  const sig = document.getElementById('sigsig'+n);
+  if(sig) sig.textContent = femmina ? 'Sig.ra' : 'Sig.';
+}
+
+/* ============================================================
+   3) PREZZO IN LETTERE (numero -> parole in italiano)
+   ============================================================ */
+function numeroInLettere(num){
+  num = Math.floor(Math.abs(num));
+  if(num===0) return 'zero';
+  const u=['','uno','due','tre','quattro','cinque','sei','sette','otto','nove','dieci','undici','dodici','tredici','quattordici','quindici','sedici','diciassette','diciotto','diciannove'];
+  const d=['','','venti','trenta','quaranta','cinquanta','sessanta','settanta','ottanta','novanta'];
+  function sotto100(n){
+    if(n<20) return u[n];
+    const dec=Math.floor(n/10), un=n%10;
+    let base=d[dec];
+    if(un===1||un===8) base=base.slice(0,-1); // venti->vent(uno/otto)
+    return base + u[un];
+  }
+  function sotto1000(n){
+    if(n<100) return sotto100(n);
+    const cent=Math.floor(n/100), resto=n%100;
+    let base = (cent===1)?'cento':(u[cent]+'cento');
+    return base + (resto? sotto100(resto):'');
+  }
+  function gruppo(n, singolare, plurale, attacca){
+    if(n===0) return '';
+    if(n===1 && singolare==='mille') return 'mille';
+    if(singolare==='mille') return sotto1000(n)+'mila';
+    return sotto1000(n)+(n===1?singolare:plurale);
+  }
+  let parole='';
+  const miliardi=Math.floor(num/1e9); num%=1e9;
+  const milioni=Math.floor(num/1e6); num%=1e6;
+  const migliaia=Math.floor(num/1e3); num%=1e3;
+  const resto=num;
+  if(miliardi){ parole += (miliardi===1?'unmiliardo':sotto1000(miliardi)+'miliardi'); }
+  if(milioni){ parole += (milioni===1?'unmilione':sotto1000(milioni)+'milioni'); }
+  if(migliaia){ parole += (migliaia===1?'mille':sotto1000(migliaia)+'mila'); }
+  if(resto){ parole += sotto1000(resto); }
+  return parole;
+}
+
+function aggiornaPrezzoLettere(campoNum, campoLettere){
+  const elNum = document.querySelector('[data-name="'+campoNum+'"]');
+  if(!elNum) return;
+  const raw = (elNum.value||'').replace(/[€\s]/g,'').replace(/\./g,'').replace(',', '.');
+  const n = parseFloat(raw);
+  let testo='';
+  if(!isNaN(n) && n>0){
+    const intero = Math.floor(n);
+    const cent = Math.round((n-intero)*100);
+    testo = numeroInLettere(intero);
+    if(cent>0) testo += '/'+String(cent).padStart(2,'0');
+  }
+  document.querySelectorAll('[data-name="'+campoLettere+'"]').forEach(el=>{ el.value = testo; if(el.classList.contains('ffld')) autoLarghezza(el); });
+  autosalva();
+}
+
+/* ============================================================
+   4) EDITOR COPERTINA (dimensione/posizione logo, titolo, riquadro)
+   ============================================================ */
+const COV_KEY = 'frimm_stile_copertina';
+const COV_DEFAULT = {logo_scale:100, logo_x:0, logo_y:0, title_scale:100, title_x:0, title_y:0, box_scale:100, box_y:0};
+
+function leggiStileCopertina(){ try{ return Object.assign({}, COV_DEFAULT, JSON.parse(localStorage.getItem(COV_KEY))||{}); }catch(e){ return Object.assign({},COV_DEFAULT); } }
+
+function applicaStileCopertina(){
+  const s = leggiStileCopertina();
+  document.querySelectorAll('.cover').forEach(cov=>{
+    cov.style.setProperty('--logo-scale', s.logo_scale/100);
+    cov.style.setProperty('--logo-x', s.logo_x+'px');
+    cov.style.setProperty('--logo-y', s.logo_y+'px');
+    cov.style.setProperty('--title-scale', s.title_scale/100);
+    cov.style.setProperty('--title-x', s.title_x+'px');
+    cov.style.setProperty('--title-y', s.title_y+'px');
+    cov.style.setProperty('--box-scale', s.box_scale/100);
+    cov.style.setProperty('--box-y', s.box_y+'px');
+  });
+}
+
+function apriEditorCopertina(){
+  const s = leggiStileCopertina();
+  document.getElementById('cov_logo_scale').value = s.logo_scale;
+  document.getElementById('cov_logo_x').value = s.logo_x;
+  document.getElementById('cov_logo_y').value = s.logo_y;
+  document.getElementById('cov_title_scale').value = s.title_scale;
+  document.getElementById('cov_title_x').value = s.title_x;
+  document.getElementById('cov_title_y').value = s.title_y;
+  document.getElementById('cov_box_scale').value = s.box_scale;
+  document.getElementById('cov_box_y').value = s.box_y;
+  onCovInput(); // aggiorna etichette e anteprima
+  // mostro la copertina in anteprima: passo alla vista A4 così si vede
+  if(vistaCorrente!=='a4'){ mostraVista('a4'); setVistaBtn('a4'); }
+  document.getElementById('covOverlay').classList.add('open');
+}
+function chiudiEditorCopertina(){ document.getElementById('covOverlay').classList.remove('open'); }
+
+function letturaSliderCopertina(){
+  return {
+    logo_scale:+document.getElementById('cov_logo_scale').value,
+    logo_x:+document.getElementById('cov_logo_x').value,
+    logo_y:+document.getElementById('cov_logo_y').value,
+    title_scale:+document.getElementById('cov_title_scale').value,
+    title_x:+document.getElementById('cov_title_x').value,
+    title_y:+document.getElementById('cov_title_y').value,
+    box_scale:+document.getElementById('cov_box_scale').value,
+    box_y:+document.getElementById('cov_box_y').value
+  };
+}
+
+function onCovInput(){
+  const s = letturaSliderCopertina();
+  // etichette
+  document.getElementById('cov_logo_scale_v').textContent = s.logo_scale+'%';
+  document.getElementById('cov_logo_x_v').textContent = s.logo_x;
+  document.getElementById('cov_logo_y_v').textContent = s.logo_y;
+  document.getElementById('cov_title_scale_v').textContent = s.title_scale+'%';
+  document.getElementById('cov_title_x_v').textContent = s.title_x;
+  document.getElementById('cov_title_y_v').textContent = s.title_y;
+  document.getElementById('cov_box_scale_v').textContent = s.box_scale+'%';
+  document.getElementById('cov_box_y_v').textContent = s.box_y;
+  // anteprima live (senza salvare ancora)
+  document.querySelectorAll('.cover').forEach(cov=>{
+    cov.style.setProperty('--logo-scale', s.logo_scale/100);
+    cov.style.setProperty('--logo-x', s.logo_x+'px');
+    cov.style.setProperty('--logo-y', s.logo_y+'px');
+    cov.style.setProperty('--title-scale', s.title_scale/100);
+    cov.style.setProperty('--title-x', s.title_x+'px');
+    cov.style.setProperty('--title-y', s.title_y+'px');
+    cov.style.setProperty('--box-scale', s.box_scale/100);
+    cov.style.setProperty('--box-y', s.box_y+'px');
+  });
+}
+
+function salvaStileCopertina(){
+  localStorage.setItem(COV_KEY, JSON.stringify(letturaSliderCopertina()));
+  applicaStileCopertina();
+  chiudiEditorCopertina();
+  flash('🎨 Personalizzazione copertina salvata');
+}
+
+function ripristinaCopertina(){
+  localStorage.removeItem(COV_KEY);
+  document.getElementById('cov_logo_scale').value = 100;
+  document.getElementById('cov_logo_x').value = 0;
+  document.getElementById('cov_logo_y').value = 0;
+  document.getElementById('cov_title_scale').value = 100;
+  document.getElementById('cov_title_x').value = 0;
+  document.getElementById('cov_title_y').value = 0;
+  document.getElementById('cov_box_scale').value = 100;
+  document.getElementById('cov_box_y').value = 0;
+  onCovInput();
+  flash('Copertina ripristinata');
+}
+
+</script>
+
+</body>
+</html>
