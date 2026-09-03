@@ -1,0 +1,28 @@
+{
+  "name": "Le case dalla A allo Z.io",
+  "short_name": "Le case A→Z",
+  "description": "Gestionale immobiliare",
+  "id": "./",
+  "start_url": ".",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F8FAFC",
+  "theme_color": "#2563EB",
+  "lang": "it-IT",
+  "share_target": {
+    "action": "./",
+    "method": "GET",
+    "params": {
+      "title": "condTitolo",
+      "text": "condTesto",
+      "url": "condLink"
+    }
+  },
+  "icons": [
+    { "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%232563EB'/%3E%3Cpath d='M100 246 L256 112 L412 246 L412 412 L308 412 L308 308 L204 308 L204 412 L100 412 Z' fill='white'/%3E%3C/svg%3E", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%232563EB'/%3E%3Cpath d='M100 246 L256 112 L412 246 L412 412 L308 412 L308 308 L204 308 L204 412 L100 412 Z' fill='white'/%3E%3C/svg%3E", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%232563EB'/%3E%3Cpath d='M100 246 L256 112 L412 246 L412 412 L308 412 L308 308 L204 308 L204 412 L100 412 Z' fill='white'/%3E%3C/svg%3E", "sizes": "192x192", "type": "image/svg+xml", "purpose": "maskable" },
+    { "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%232563EB'/%3E%3Cpath d='M100 246 L256 112 L412 246 L412 412 L308 412 L308 308 L204 308 L204 412 L100 412 Z' fill='white'/%3E%3C/svg%3E", "sizes": "512x512", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
