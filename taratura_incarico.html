@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Taratura modulo incarico — FRIMM</title>
+<!--
+  ════════════════════════════════════════════════════════════════════════
+  TARATURA DELLE POSIZIONI SUL MODULO                        [9 set 2026]
+  ------------------------------------------------------------------------
+  A cosa serve: il modulo FRIMM è una SCANSIONE, quindi dentro non c'è
+  testo a cui agganciarsi. Per scriverci sopra i dati bisogna sapere dove
+  cade ogni campo, e l'unico modo è indicarlo una volta a mano.
+  Come funziona: la pagina mostra il modulo, dice quale campo cercare, tu
+  clicchi sul punto dove deve iniziare la scritta, e la posizione viene
+  registrata. Alla fine si scarica un file con tutte le coordinate, che il
+  gestionale userà per sempre.
+  Le posizioni sono salvate in PERCENTUALE della pagina, non in pixel: così
+  valgono a qualunque ingrandimento e su qualunque schermo.
+  Il lavoro si può interrompere: resta salvato in questo browser.
+  ════════════════════════════════════════════════════════════════════════
+-->
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0F172A;color:#E2E8F0}
+  header{position:sticky;top:0;z-index:20;background:#1E293B;border-bottom:1px solid #334155;padding:10px 14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  h1{font-size:0.95rem;margin:0;font-weight:800;white-space:nowrap}
+  .btn{background:#334155;color:#E2E8F0;border:1px solid #475569;border-radius:9px;padding:8px 14px;font-size:0.85rem;font-weight:700;font-family:inherit;cursor:pointer}
+  .btn:hover{background:#475569}
+  .btn.primary{background:#2563EB;border-color:#2563EB;color:#fff}
+  .btn.ok{background:#15803D;border-color:#15803D;color:#fff}
+  .campo{flex:1;min-width:240px;background:#0B1220;border:1px solid #334155;border-radius:9px;padding:7px 12px}
+  .campo .et{font-size:0.66rem;text-transform:uppercase;letter-spacing:.6px;color:#64748B;font-weight:700}
+  .campo .nm{font-size:1rem;font-weight:800;color:#fff}
+  .campo .ds{font-size:0.76rem;color:#94A3B8}
+  .avanz{font-size:0.8rem;font-weight:700;color:#94A3B8;white-space:nowrap}
+  #wrap{position:relative;margin:14px auto;width:96%;max-width:1700px}
+  #wrap img{width:100%;display:block;background:#fff}
+  #wrap.attesa{cursor:crosshair}
+  .segno{position:absolute;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:rgba(37,99,235,.85);border:2px solid #fff;pointer-events:none}
+  .segno.fatto{background:rgba(21,128,61,.85)}
+  .segno span{position:absolute;left:14px;top:-4px;font-size:9px;background:rgba(15,23,42,.9);color:#fff;padding:1px 5px;border-radius:4px;white-space:nowrap}
+  .pagine{display:flex;gap:6px}
+  .pg{background:#0B1220;border:1px solid #334155;color:#94A3B8;border-radius:8px;padding:6px 12px;font-size:0.8rem;font-weight:700;cursor:pointer}
+  .pg.att{background:#2563EB;border-color:#2563EB;color:#fff}
+  #esito{position:fixed;inset:0;background:rgba(2,6,23,.94);z-index:40;display:none;padding:24px;overflow:auto}
+  #esito textarea{width:100%;height:60vh;background:#0B1220;color:#93C5FD;border:1px solid #334155;border-radius:10px;padding:12px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+  .nota{font-size:0.78rem;color:#94A3B8;line-height:1.5}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Taratura modulo</h1>
+  <div class="pagine">
+    <button class="pg att" id="pg1" onclick="vaiPagina(1)">Copertina</button>
+    <button class="pg" id="pg2" onclick="vaiPagina(2)">Modulo</button>
+  </div>
+  <div class="campo">
+    <div class="et">Clicca dove comincia questo campo</div>
+    <div class="nm" id="nome">—</div>
+    <div class="ds" id="desc"></div>
+  </div>
+  <div class="avanz" id="avanz">0 / 0</div>
+  <button class="btn" onclick="indietro()">Indietro</button>
+  <button class="btn" onclick="salta()">Salta</button>
+  <button class="btn ok" onclick="mostraEsito()">Fine — scarica</button>
+</header>
+
+<div id="wrap" class="attesa">
+  <img id="foglio" src="incarico_p1.png" alt="modulo">
+</div>
+
+<div id="esito">
+  <p class="nota">Ecco le posizioni registrate. Scarica il file e mandamelo: il gestionale lo userà per scrivere sul modulo.</p>
+  <textarea id="json" readonly></textarea>
+  <p>
+    <button class="btn primary" onclick="scarica()">Scarica posizioni_incarico.json</button>
+    <button class="btn" onclick="document.getElementById('esito').style.display='none'">Torna alla taratura</button>
+  </p>
+</div>
+
+<script>
+/* I campi da posizionare, nell'ordine in cui compaiono sul modulo.
+   Ogni voce: chiave interna, etichetta leggibile, pagina, e una descrizione
+   che dice esattamente dove guardare — perché su un modulo così fitto
+   sbagliare riga è facilissimo. */
+var CAMPI = [
+  ['cover_cciaa','C.C.I.A.A. di …',1,'In basso a destra, riga "depositato ai sensi della Legge 3 febbraio 1989".'],
+  ['cover_box','Riquadro grande in copertina',1,'Il rettangolo vuoto: clicca in alto a sinistra dentro il riquadro.'],
+
+  ['p1_sig1','1° incaricante — Sig./Sig.ra',2,'Prima riga: "Con la presente scrittura privata i/l… Sig./Sig.ra".'],
+  ['p1_nat1','1° incaricante — nato a',2,'Stessa riga, dopo "…nat… a".'],
+  ['p1_natail1','1° incaricante — il (data)',2,'Stessa riga, dopo "il".'],
+  ['p1_res1','1° incaricante — residente a',2,'Seconda riga: "residente a".'],
+  ['p1_resprov1','1° incaricante — provincia',2,'Seconda riga, dentro le parentesi dopo la residenza.'],
+  ['p1_via1','1° incaricante — Via/Piazza',2,'Seconda riga, dopo "Via/Piazza".'],
+  ['p1_civ1','1° incaricante — n. civico',2,'Seconda riga, dopo ", n."'],
+  ['p1_cf1','1° incaricante — C.F.',2,'Seconda riga, dopo "C.F."'],
+  ['p1_tel1','1° incaricante — tel.',2,'Seconda riga, dopo "tel."'],
+  ['p1_email1','1° incaricante — e-mail',2,'Terza riga, dopo "e-mail".'],
+  ['p1_doc1','1° incaricante — doc. identità',2,'Terza riga, dopo "doc. identità".'],
+  ['p1_docn1','1° incaricante — numero documento',2,'Terza riga, dopo ", n."'],
+  ['p1_ril1','1° incaricante — rilasciato da',2,'Terza riga, dopo "rilasciato da".'],
+  ['p1_dataril1','1° incaricante — in data',2,'Quarta riga, dopo "in data".'],
+  ['p1_scad1','1° incaricante — con scadenza il',2,'Quarta riga, dopo "con scadenza il".'],
+
+  ['p1_sig2','2° incaricante — Sig./Sig.ra',2,'Quarta riga, dopo "e…l… Sig./Sig.ra".'],
+  ['p1_nat2','2° incaricante — nato a',2,'Quarta riga, dopo "nat… a".'],
+  ['p1_natail2','2° incaricante — il (data)',2,'Quinta riga, dopo "il".'],
+  ['p1_res2','2° incaricante — residente a',2,'Quinta riga, dopo "residente a".'],
+  ['p1_via2','2° incaricante — Via/Piazza',2,'Quinta riga, dopo "Via/Piazza".'],
+  ['p1_cf2','2° incaricante — C.F.',2,'Sesta riga, "n… C.F.".'],
+  ['p1_tel2','2° incaricante — tel.',2,'Sesta riga, dopo "tel."'],
+  ['p1_email2','2° incaricante — e-mail',2,'Sesta riga, dopo "e-mail".'],
+  ['p1_doc2','2° incaricante — doc. identità',2,'Sesta riga, dopo "doc. identità".'],
+  ['p1_docn2','2° incaricante — numero documento',2,'Settima riga, dopo "n."'],
+  ['p1_ril2','2° incaricante — rilasciato da',2,'Settima riga, dopo "rilasciato da".'],
+  ['p1_dataril2','2° incaricante — in data',2,'Settima riga, dopo "in data".'],
+  ['p1_scad2','2° incaricante — con scadenza il',2,'Settima riga, dopo "con scadenza il".'],
+
+  ['p1_agenzia','Agenzia — denominazione',2,'Blocco CONFERISCONO: "all\'agenzia immobiliare".'],
+  ['p1_agsede','Agenzia — con sede in',2,'Riga successiva, dopo "con sede in".'],
+  ['p1_agprov','Agenzia — provincia',2,'Stessa riga, dentro le parentesi.'],
+  ['p1_agvia','Agenzia — Via/Piazza',2,'Stessa riga, dopo "Via/Piazza".'],
+  ['p1_agciv','Agenzia — n. civico',2,'Stessa riga, dopo ", n."'],
+  ['p1_agcf','Agenzia — C.F.',2,'Riga successiva, dopo "C.F."'],
+  ['p1_agnum','Agenzia — iscritta al n.',2,'Stessa riga, dopo "iscritta al n."'],
+  ['p1_agdel','Agenzia — del (data iscrizione)',2,'Stessa riga, dopo "del".'],
+  ['p1_agcciaa','Agenzia — REA della CCIAA di',2,'Stessa riga, dopo "REA della CCIAA di".'],
+
+  ['p1_intestata','Immobile — proprietà intestata a',2,'Riga "proprietà intestata a".'],
+  ['p1_comune','Immobile — Comune',2,'Riga "Comune".'],
+  ['p1_indirizzo','Immobile — indirizzo',2,'Stessa riga, dopo "indirizzo".'],
+  ['p1_nciv','Immobile — n. civico',2,'Stessa riga, dopo ", n."'],
+  ['p1_piano','Immobile — piano',2,'Stessa riga, dopo "piano".'],
+  ['p1_interno','Immobile — interno',2,'Stessa riga, dopo "Interno".'],
+  ['p1_destuso','Immobile — destinazione d\'uso',2,'Riga "destinazione d\'uso".'],
+  ['p1_catastali','Immobile — dati catastali',2,'Stessa riga, dopo "dati catastali".'],
+  ['p1_composizione','Immobile — composizione',2,'Riga "composizione".'],
+  ['p1_canone','Se locato — canone annuo',2,'Riga "AL CANONE ANNUO di €".'],
+  ['p1_contrreg','Se locato — contratto registrato con n.',2,'Stessa riga, dopo "come da contratto registrato con n."'],
+  ['p1_scadloc','Se locato — scadente il',2,'Stessa riga, dopo "in corso scadente il".'],
+
+  ['p1_prezzo','1) Prezzo di vendita richiesto',2,'Punto 1, riga "€".'],
+  ['p1_prezzolettere','1) Prezzo in lettere',2,'Punto 1, dentro la parentesi "(diconsi euro …)".'],
+  ['p1_mutuo','1) Residuo capitale mutuo',2,'Punto 1, riga "comprendente il residuo capitale mutuo attuale di".'],
+  ['p1_mutuolettere','1) Residuo mutuo in lettere',2,'Punto 1, dentro la parentesi successiva.'],
+
+  ['p2a_provenienza','2a) Titolo di provenienza',2,'Punto 2a.'],
+  ['p2b_destuso','2b) Destinazione d\'uso',2,'Punto 2b.'],
+  ['p2c_urbanistica','2c) Normativa edilizia-urbanistica',2,'Punto 2c, dopo "dichiara che l\'immobile è".'],
+  ['p2d_impianti','2d) Conformità impianti',2,'Punto 2d, dopo "dichiara che l\'immobile è".'],
+  ['p2e_agibilita','2e) Certificato di agibilità',2,'Punto 2e, dopo "dichiara che l\'immobile".'],
+  ['p2f_ape','2f) Classe energetica',2,'Punto 2f, dopo "classe energetica".'],
+  ['p2f_ipe','2f) Indice di prestazione energetica',2,'Punto 2f, dopo "indice di prestazione energetica".'],
+  ['p2f_poiche','2f) …poiché',2,'Punto 2f, riga "del venditore, poiché".'],
+  ['p2g_trascrizioni','2g) Iscrizioni e trascrizioni',2,'Punto 2g, dopo "dichiara che".'],
+  ['p2h_ordinarie','2h) Spese condominiali ordinarie',2,'Punto 2h, dopo "esse sono pari a circa".'],
+  ['p2i_straordinarie','2i) Opere straordinarie',2,'Punto 2i, dopo "dichiara che allo stato".'],
+
+  ['p4a_caparra','4a) Caparra — percentuale',2,'Punto 4a, dopo "pari almeno al".'],
+  ['p4a_lettere','4a) Caparra in lettere',2,'Punto 4a, dentro la parentesi "(diconsi …)".'],
+  ['p4a_giorni','4a) Giorni per il rogito',2,'Punto 4a, dopo "(diconsi ……) giorni".'],
+  ['p5a_mesi','5a) Atto non prima di … mesi',2,'Punto 5a, dopo "non prima di".'],
+  ['p5a_giorni','5a) …e non dopo … giorni',2,'Punto 5a, dopo "e non dopo".'],
+  ['p5c_eccezione','5c) Eccezione',2,'Punto 5c, dopo "ad eccezione di".'],
+  ['p5d_libero','5d) Consegnato alla data del …',2,'Punto 5d, dopo "verrà consegnato alla data del".'],
+
+  ['p2_6_dal','6) Incarico — decorrenza',2,'Punto 6, dopo "ha decorrenza dal".'],
+  ['p2_6_al','6) Incarico — scadenza',2,'Punto 6, dopo "e scadrà il".'],
+  ['p2_6_mesi','6) Rinnovo — per … mesi',2,'Punto 6, dopo "tacitamente rinnovato, per una sola volta ed in esclusiva".'],
+  ['p2_6_giorni','6) Preavviso — giorni prima',2,'Punto 6, dopo "per un pari periodo di tempo, salvo disdetta … giorni prima".'],
+
+  ['p2_7a_perc','7a) Provvigione — percentuale',2,'Punto 7a, dopo "è pari al".'],
+  ['p2_7a_lettere','7a) Provvigione in lettere',2,'Punto 7a, dentro "(diconsi … per cento)".'],
+
+  ['p2_8_escl','8) Casella IN ESCLUSIVA',2,'Punto 8, il quadratino prima di "IN ESCLUSIVA".'],
+  ['p2_8_noescl','8) Casella NON ESCLUSIVA',2,'Punto 8, il quadratino prima di "NON ESCLUSIVA".'],
+  ['p2_8b_euro','8b) Rimborso spese €',2,'Punto 8b, riga "€ …".'],
+
+  ['p2_9a_perc','9a) Penale — percentuale',2,'Punto 9a, dopo "pari al".'],
+  ['p2_9a_lettere','9a) Penale in lettere',2,'Punto 9a, dentro la parentesi.'],
+  ['p2_9b_perc','9b) Penale recesso — percentuale',2,'Punto 9b, dopo "pari al".'],
+  ['p2_9b_lettere','9b) Penale recesso in lettere',2,'Punto 9b, dentro la parentesi.'],
+
+  ['p2_12_si','12) Privacy — CONSENTE',2,'Punto 12, quadratino prima di "consente al trattamento".'],
+  ['p2_12_no','12) Privacy — NON CONSENTE',2,'Punto 12, quadratino prima di "non consente".'],
+  ['p2_13_note','13) Note',2,'Punto 13, prima riga puntinata.'],
+  ['p2_13_note2','13) Note — seconda riga',2,'Punto 13, seconda riga.'],
+
+  ['p2_luogodata1','Firma 1 — Luogo e data',2,'In basso: primo "Luogo e data" (INCARICANTE).'],
+  ['p2_firma1','Firma 1 — riga della firma',2,'Sopra la scritta INCARICANTE, primo blocco.'],
+  ['p2_negoziato','Firma — "l\'INCARICANTE il Sig."',2,'Riga "ai sensi degli artt. 33 e segg. … l\'INCARICANTE il Sig."'],
+  ['p2_luogodata2','Firma 2 — Luogo e data',2,'Secondo "Luogo e data" (INCARICANTE).'],
+  ['p2_firma2','Firma 2 — riga della firma',2,'Sopra la seconda scritta INCARICANTE.'],
+  ['p2_acc_num','Accettazione — iscritta al n.',2,'In basso: "iscritta al n. …".'],
+  ['p2_acc_del','Accettazione — del (data)',2,'Stessa riga, dopo "del".'],
+  ['p2_acc_cciaa','Accettazione — REA della CCIAA di',2,'Stessa riga, dopo "REA della CCIAA di".'],
+  ['p2_acc_cf','Accettazione — C.F.',2,'Stessa riga, dopo "C.F."'],
+  ['p2_luogodata3','Firma agenzia — Luogo e data',2,'Terzo "Luogo e data" (AGENTE IMMOBILIARE).'],
+  ['p2_firma3','Firma agenzia — riga della firma',2,'Sopra la scritta AGENTE IMMOBILIARE.']
+];
+
+var CHIAVE = 'taratura_incarico_v1';
+var pos = {};
+var idx = 0;
+var pagina = 1;
+
+try{ pos = JSON.parse(localStorage.getItem(CHIAVE) || '{}'); }catch(e){ pos = {}; }
+
+function salva(){ try{ localStorage.setItem(CHIAVE, JSON.stringify(pos)); }catch(e){} }
+
+/* Primo campo non ancora posizionato della pagina corrente */
+function primoDaFare(){
+  for(var i=0;i<CAMPI.length;i++){
+    if(CAMPI[i][2]===pagina && !pos[CAMPI[i][0]]) return i;
+  }
+  for(var j=0;j<CAMPI.length;j++){ if(CAMPI[j][2]===pagina) return j; }
+  return 0;
+}
+
+function vaiPagina(n){
+  pagina = n;
+  document.getElementById('foglio').src = (n===1 ? 'incarico_p1.png' : 'incarico_p2.png');
+  document.getElementById('pg1').className = 'pg' + (n===1?' att':'');
+  document.getElementById('pg2').className = 'pg' + (n===2?' att':'');
+  idx = primoDaFare();
+  disegna();
+}
+
+function disegna(){
+  var c = CAMPI[idx];
+  document.getElementById('nome').textContent = c ? c[1] : '—';
+  document.getElementById('desc').textContent = c ? c[3] : '';
+  var diPag = CAMPI.filter(function(x){ return x[2]===pagina; });
+  var fatti = diPag.filter(function(x){ return pos[x[0]]; }).length;
+  document.getElementById('avanz').textContent = fatti + ' / ' + diPag.length +
+    '  ·  totale ' + Object.keys(pos).length + ' / ' + CAMPI.length;
+  // segni
+  var wrap = document.getElementById('wrap');
+  [].slice.call(wrap.querySelectorAll('.segno')).forEach(function(s){ s.remove(); });
+  diPag.forEach(function(x){
+    var p = pos[x[0]];
+    if(!p) return;
+    var d = document.createElement('div');
+    d.className = 'segno' + (x[0]===(c&&c[0]) ? '' : ' fatto');
+    d.style.left = p.x + '%';
+    d.style.top  = p.y + '%';
+    d.innerHTML = '<span>' + x[0] + '</span>';
+    wrap.appendChild(d);
+  });
+}
+
+document.getElementById('wrap').addEventListener('click', function(e){
+  var img = document.getElementById('foglio');
+  var r = img.getBoundingClientRect();
+  var x = ((e.clientX - r.left) / r.width) * 100;
+  var y = ((e.clientY - r.top) / r.height) * 100;
+  if(x<0||x>100||y<0||y>100) return;
+  var c = CAMPI[idx];
+  if(!c) return;
+  /* Percentuali con tre decimali: su un foglio A3 sono meno di un decimo
+     di millimetro, quindi la precisione del clic non si perde. */
+  pos[c[0]] = { p: c[2], x: +x.toFixed(3), y: +y.toFixed(3) };
+  salva();
+  avanti();
+});
+
+function avanti(){
+  for(var i=idx+1;i<CAMPI.length;i++){
+    if(CAMPI[i][2]===pagina && !pos[CAMPI[i][0]]){ idx=i; disegna(); return; }
+  }
+  for(var j=0;j<CAMPI.length;j++){
+    if(CAMPI[j][2]===pagina && !pos[CAMPI[j][0]]){ idx=j; disegna(); return; }
+  }
+  idx = Math.min(idx+1, CAMPI.length-1);
+  disegna();
+}
+function indietro(){
+  for(var i=idx-1;i>=0;i--){ if(CAMPI[i][2]===pagina){ idx=i; disegna(); return; } }
+}
+function salta(){
+  for(var i=idx+1;i<CAMPI.length;i++){ if(CAMPI[i][2]===pagina){ idx=i; disegna(); return; } }
+}
+
+function mostraEsito(){
+  var out = { modulo:'FRIMM incarico vendita', tarato:new Date().toISOString().slice(0,10), campi:pos };
+  document.getElementById('json').value = JSON.stringify(out, null, 1);
+  document.getElementById('esito').style.display = 'block';
+}
+function scarica(){
+  var b = new Blob([document.getElementById('json').value], {type:'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = 'posizioni_incarico.json';
+  a.click();
+}
+
+vaiPagina(1);
+</script>
+</body>
+</html>
