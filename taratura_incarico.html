@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Taratura modulo incarico — FRIMM</title>
+<!--
+  ════════════════════════════════════════════════════════════════════════
+  TARATURA DEL MODULO — versione 2                          [10 set 2026]
+  ------------------------------------------------------------------------
+  COSA CAMBIA RISPETTO ALLA PRIMA VERSIONE, e perché.
+  Prima si registrava UN PUNTO per campo. Non basta: un cognome lungo o un
+  indirizzo lungo sbordano oltre la riga puntinata, e sul modulo non c'è
+  spazio per allargarsi.
+  Ora si registra il SEGMENTO — dove comincia e dove finisce la riga. Sapendo
+  quanto spazio c'è, la scritta si adatta: parte dal corpo normale e
+  rimpicciolisce quanto serve per entrare, fino a un minimo leggibile. È
+  quello che fa la mano quando il cognome è lungo.
+  Quattro tipi di segno:
+    testo      — la scritta sulla riga, che si adatta alla larghezza
+    lettera    — un solo carattere in uno spazio stretto (la "o" di "nat…")
+    crocetta   — la X dentro un quadratino (un clic solo)
+    barratura  — una riga tirata sopra l'alternativa che non vale
+  Le posizioni sono in PERCENTUALE della pagina: valgono a qualunque
+  ingrandimento e su qualunque schermo. Il lavoro si salva mentre procedi.
+  ════════════════════════════════════════════════════════════════════════
+-->
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#0F172A;color:#E2E8F0}
+  header{position:sticky;top:0;z-index:20;background:#1E293B;border-bottom:1px solid #334155;padding:10px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  h1{font-size:0.92rem;margin:0;font-weight:800;white-space:nowrap}
+  .btn{background:#334155;color:#E2E8F0;border:1px solid #475569;border-radius:9px;padding:8px 13px;font-size:0.83rem;font-weight:700;font-family:inherit;cursor:pointer}
+  .btn:hover{background:#475569}
+  .btn.primary{background:#2563EB;border-color:#2563EB;color:#fff}
+  .btn.ok{background:#15803D;border-color:#15803D;color:#fff}
+  .campo{flex:1;min-width:250px;background:#0B1220;border:1px solid #334155;border-radius:9px;padding:7px 12px}
+  .campo .et{font-size:0.64rem;text-transform:uppercase;letter-spacing:.6px;color:#64748B;font-weight:700}
+  .campo .nm{font-size:0.98rem;font-weight:800;color:#fff}
+  .campo .ds{font-size:0.75rem;color:#94A3B8}
+  .passo{font-size:0.74rem;font-weight:800;color:#FBBF24;margin-top:2px}
+  .avanz{font-size:0.78rem;font-weight:700;color:#94A3B8;white-space:nowrap}
+  #wrap{position:relative;margin:12px auto;width:97%;max-width:1800px}
+  #wrap img{width:100%;display:block;background:#fff}
+  #wrap.attesa{cursor:crosshair}
+  .seg{position:absolute;height:0;border-top:2px solid rgba(21,128,61,.9);pointer-events:none}
+  .seg.corrente{border-top-color:#2563EB}
+  .seg.barratura{border-top-color:rgba(220,38,38,.9)}
+  .seg .tag{position:absolute;left:0;top:-13px;font-size:8px;background:rgba(15,23,42,.88);color:#fff;padding:1px 4px;border-radius:3px;white-space:nowrap}
+  .puntoA{position:absolute;width:10px;height:10px;margin:-5px 0 0 -5px;border-radius:50%;background:#2563EB;border:2px solid #fff;pointer-events:none}
+  .prova{position:absolute;color:#0F172A;white-space:nowrap;pointer-events:none;font-family:'Helvetica Neue',Arial,sans-serif;transform:translateY(-100%)}
+  .pagine{display:flex;gap:6px}
+  .pg{background:#0B1220;border:1px solid #334155;color:#94A3B8;border-radius:8px;padding:6px 11px;font-size:0.78rem;font-weight:700;cursor:pointer}
+  .pg.att{background:#2563EB;border-color:#2563EB;color:#fff}
+  #esito{position:fixed;inset:0;background:rgba(2,6,23,.95);z-index:40;display:none;padding:22px;overflow:auto}
+  #esito textarea{width:100%;height:58vh;background:#0B1220;color:#93C5FD;border:1px solid #334155;border-radius:10px;padding:12px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+  .nota{font-size:0.78rem;color:#94A3B8;line-height:1.5}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Taratura</h1>
+  <div class="pagine">
+    <button class="pg att" id="pg1" onclick="vaiPagina(1)">Copertina</button>
+    <button class="pg" id="pg2" onclick="vaiPagina(2)">Modulo</button>
+  </div>
+  <div class="campo">
+    <div class="et" id="tipo">campo</div>
+    <div class="nm" id="nome">&mdash;</div>
+    <div class="ds" id="desc"></div>
+    <div class="passo" id="passo"></div>
+  </div>
+  <div class="avanz" id="avanz">0 / 0</div>
+  <button class="btn" onclick="indietro()">Indietro</button>
+  <button class="btn" onclick="salta()">Salta</button>
+  <button class="btn" id="btnProva" onclick="togglProva()">Prova</button>
+  <button class="btn ok" onclick="mostraEsito()">Fine &mdash; scarica</button>
+</header>
+
+<div id="wrap" class="attesa">
+  <img id="foglio" src="incarico_p1.png" alt="modulo">
+</div>
+
+<div id="esito">
+  <p class="nota">Posizioni registrate. Scarica il file e mandamelo.</p>
+  <textarea id="json" readonly></textarea>
+  <p>
+    <button class="btn primary" onclick="scarica()">Scarica posizioni_incarico.json</button>
+    <button class="btn" onclick="document.getElementById('esito').style.display='none'">Torna alla taratura</button>
+  </p>
+</div>
+
+<script>
+/* Ogni campo: chiave, etichetta, pagina, dove guardare, tipo, esempio lungo.
+   L'esempio serve alla PROVA: mostra il caso peggiore, così se ci sta quello
+   ci sta tutto. */
+var CAMPI = [
+  ['cover_cciaa','C.C.I.A.A. di', 1, 'In basso a destra, riga "depositato ai sensi della Legge 3 febbraio 1989".', 'testo', 'Salerno'],
+  ['cover_box','Riquadro grande in copertina', 1, 'Il rettangolo vuoto: segna la prima riga utile, da sinistra a destra.', 'testo', 'VIA MADONNA DEL CARMINE, 230 - AGROPOLI'],
+
+  ['p1_ill','"i/l..." la lettera', 2, 'Prima riga: lo spazio dopo "Con la presente scrittura privata i/l".', 'lettera', 'a'],
+  ['p1_sig1','1 incaricante - Sig./Sig.ra', 2, 'Prima riga, dopo "Sig./Sig.ra".', 'testo', 'CARNICELLI VINCENZO MARIA'],
+  ['p1_sig1_barra','Barra "Sig." oppure "Sig.ra"', 2, 'Tira la riga sopra la parte che NON vale.', 'barratura', ''],
+  ['p1_nat1','"nat..." la lettera', 2, 'Lo spazio subito dopo "nat".', 'lettera', 'o'],
+  ['p1_nat1_a','1 incaricante - nato a', 2, 'Dopo "nat... a", fino a dove comincia "il".', 'testo', 'Capaccio Paestum'],
+  ['p1_natail1','1 incaricante - il (data)', 2, 'Dopo "il", lo spazio della data.', 'testo', '12/03/1968'],
+  ['p1_res1','1 incaricante - residente a', 2, 'Seconda riga, dopo "residente a".', 'testo', 'Capaccio Paestum'],
+  ['p1_resprov1','1 incaricante - provincia', 2, 'Seconda riga, dentro le parentesi.', 'testo', 'SA'],
+  ['p1_via1','1 incaricante - Via/Piazza', 2, 'Seconda riga, dopo "Via/Piazza".', 'testo', 'VIA MADONNA DEL CARMINE'],
+  ['p1_civ1','1 incaricante - n. civico', 2, 'Seconda riga, dopo ", n."', 'testo', '230/B'],
+  ['p1_cf1','1 incaricante - C.F.', 2, 'Seconda riga, dopo "C.F."', 'testo', 'CRNVCN68C12B644X'],
+  ['p1_tel1','1 incaricante - tel.', 2, 'Seconda riga, dopo "tel."', 'testo', '329 806 1072'],
+  ['p1_email1','1 incaricante - e-mail', 2, 'Terza riga, dopo "e-mail".', 'testo', 'vincenzo.carnicelli@frimm.com'],
+  ['p1_doc1','1 incaricante - doc. identita', 2, 'Terza riga, dopo "doc. identita".', 'testo', 'Carta identita'],
+  ['p1_docn1','1 incaricante - numero documento', 2, 'Terza riga, dopo ", n."', 'testo', 'CA12345AB'],
+  ['p1_ril1','1 incaricante - rilasciato da', 2, 'Terza riga, dopo "rilasciato da".', 'testo', 'Comune di Capaccio Paestum'],
+  ['p1_dataril1','1 incaricante - in data', 2, 'Quarta riga, dopo "in data".', 'testo', '01/02/2020'],
+  ['p1_scad1','1 incaricante - con scadenza il', 2, 'Quarta riga, dopo "con scadenza il".', 'testo', '01/02/2030'],
+
+  ['p1_sig2','2 incaricante - Sig./Sig.ra', 2, 'Quarta riga, dopo "e...l... Sig./Sig.ra".', 'testo', 'SQUILLANTE GAETANA'],
+  ['p1_nat2','"nat..." del secondo', 2, 'Lo spazio dopo "nat" del secondo intestatario.', 'lettera', 'a'],
+  ['p1_nat2_a','2 incaricante - nato a', 2, 'Dopo "nat... a".', 'testo', 'Agropoli'],
+  ['p1_natail2','2 incaricante - il (data)', 2, 'Quinta riga, dopo "il".', 'testo', '05/07/1972'],
+  ['p1_res2','2 incaricante - residente a', 2, 'Quinta riga, dopo "residente a".', 'testo', 'Agropoli'],
+  ['p1_via2','2 incaricante - Via/Piazza', 2, 'Quinta riga, dopo "Via/Piazza".', 'testo', 'VIA SALITA SAN GIUSEPPE'],
+  ['p1_cf2','2 incaricante - C.F.', 2, 'Sesta riga, dopo "C.F."', 'testo', 'SQLGTN72L45A091Y'],
+  ['p1_tel2','2 incaricante - tel.', 2, 'Sesta riga, dopo "tel."', 'testo', '329 806 1072'],
+  ['p1_email2','2 incaricante - e-mail', 2, 'Sesta riga, dopo "e-mail".', 'testo', 'gaetana.squillante@gmail.com'],
+  ['p1_doc2','2 incaricante - doc. identita', 2, 'Sesta riga, dopo "doc. identita".', 'testo', 'Carta identita'],
+  ['p1_docn2','2 incaricante - numero documento', 2, 'Settima riga, dopo "n."', 'testo', 'CA98765CD'],
+  ['p1_ril2','2 incaricante - rilasciato da', 2, 'Settima riga, dopo "rilasciato da".', 'testo', 'Comune di Agropoli'],
+  ['p1_dataril2','2 incaricante - in data', 2, 'Settima riga, dopo "in data".', 'testo', '14/09/2021'],
+  ['p1_scad2','2 incaricante - con scadenza il', 2, 'Settima riga, dopo "con scadenza il".', 'testo', '14/09/2031'],
+
+  ['p1_agenzia','Agenzia - denominazione', 2, 'Blocco CONFERISCONO: "all\'agenzia immobiliare".', 'testo', 'FRIMM CAPITAL CASA PAESTUM'],
+  ['p1_agsede','Agenzia - con sede in', 2, 'Riga successiva, dopo "con sede in".', 'testo', 'Agropoli'],
+  ['p1_agprov','Agenzia - provincia', 2, 'Stessa riga, dentro le parentesi.', 'testo', 'SA'],
+  ['p1_agvia','Agenzia - Via/Piazza', 2, 'Stessa riga, dopo "Via/Piazza".', 'testo', 'VIA PIAVE'],
+  ['p1_agciv','Agenzia - n. civico', 2, 'Stessa riga, dopo ", n."', 'testo', '12'],
+  ['p1_agcf','Agenzia - C.F. / P.IVA', 2, 'Riga successiva, dopo "C.F."', 'testo', '01234567890'],
+  ['p1_agnum','Agenzia - iscritta al n.', 2, 'Stessa riga, dopo "iscritta al n."', 'testo', '123456'],
+  ['p1_agdel','Agenzia - del (data)', 2, 'Stessa riga, dopo "del".', 'testo', '01/01/2015'],
+  ['p1_agreg','Crocetta "Registro delle Imprese"', 2, 'Il quadratino prima di "Registro delle Imprese".', 'crocetta', ''],
+  ['p1_agrea','Crocetta "REA"', 2, 'Il quadratino prima di "REA della CCIAA".', 'crocetta', ''],
+  ['p1_agcciaa','Agenzia - CCIAA di', 2, 'Stessa riga, dopo "REA della CCIAA di".', 'testo', 'Salerno'],
+
+  ['p1_intestata','Immobile - proprieta intestata a', 2, 'Riga "proprieta intestata a".', 'testo', 'CARNICELLI VINCENZO e SQUILLANTE GAETANA'],
+  ['p1_comune','Immobile - Comune', 2, 'Riga "Comune".', 'testo', 'Capaccio Paestum'],
+  ['p1_indirizzo','Immobile - indirizzo', 2, 'Stessa riga, dopo "indirizzo".', 'testo', 'VIA MADONNA DEL CARMINE'],
+  ['p1_nciv','Immobile - n. civico', 2, 'Stessa riga, dopo ", n."', 'testo', '230'],
+  ['p1_piano','Immobile - piano', 2, 'Stessa riga, dopo "piano".', 'testo', '2'],
+  ['p1_interno','Immobile - interno', 2, 'Stessa riga, dopo "Interno".', 'testo', '7'],
+  ['p1_destuso','Immobile - destinazione d\'uso', 2, 'Riga "destinazione d\'uso".', 'testo', 'Abitazione civile'],
+  ['p1_catastali','Immobile - dati catastali', 2, 'Stessa riga, dopo "dati catastali".', 'testo', 'Fg. 43 Part. 120 Sub 7 Cat. A/2 Cl. 3'],
+  ['p1_composizione','Immobile - composizione', 2, 'Riga "composizione".', 'testo', 'Ingresso, soggiorno, cucina, 3 camere, 2 bagni, terrazzo'],
+  ['p1_st_libero','Crocetta LIBERO', 2, 'Il quadratino prima di "LIBERO".', 'crocetta', ''],
+  ['p1_st_occupato','Crocetta OCCUPATO DAL PROPRIETARIO', 2, 'Il quadratino prima di "OCCUPATO DAL PROPRIETARIO".', 'crocetta', ''],
+  ['p1_st_costruzione','Crocetta IN COSTRUZIONE', 2, 'Il quadratino prima di "IN COSTRUZIONE".', 'crocetta', ''],
+  ['p1_st_nuda','Crocetta NUDA PROPRIETA', 2, 'Il quadratino prima di "NUDA PROPRIETA".', 'crocetta', ''],
+  ['p1_st_superf','Crocetta PROPRIETA SUPERFICIARIA', 2, 'Il quadratino prima di "PROPRIETA SUPERFICIARIA".', 'crocetta', ''],
+  ['p1_st_locato','Crocetta LOCATO A', 2, 'Il quadratino prima di "LOCATO A".', 'crocetta', ''],
+  ['p1_locatoa','Se locato - a chi', 2, 'Dopo "LOCATO A".', 'testo', 'ROSSI MARIO'],
+  ['p1_canone','Se locato - canone annuo', 2, 'Riga "AL CANONE ANNUO di euro".', 'testo', '6.000,00'],
+  ['p1_contrreg','Se locato - contratto registrato n.', 2, 'Dopo "come da contratto registrato con n."', 'testo', '1234/3T'],
+  ['p1_scadloc','Se locato - scadente il', 2, 'Dopo "in corso scadente il".', 'testo', '31/12/2028'],
+
+  ['p1_prezzo','1) Prezzo di vendita richiesto', 2, 'Punto 1, riga con il simbolo euro.', 'testo', '290.000,00'],
+  ['p1_prezzolettere','1) Prezzo in lettere', 2, 'Punto 1, dentro "(diconsi euro ...)".', 'testo', 'duecentonovantamila/00'],
+  ['p1_mutuo','1) Residuo capitale mutuo', 2, 'Punto 1, dopo "residuo capitale mutuo attuale di".', 'testo', '85.000,00'],
+  ['p1_mutuolettere','1) Residuo mutuo in lettere', 2, 'Punto 1, dentro la parentesi successiva.', 'testo', 'ottantacinquemila/00'],
+
+  ['p2a_provenienza','2a) Titolo di provenienza', 2, 'Punto 2a.', 'testo', 'Atto Notaio Esposito del 12/05/2004 rep. 12345'],
+  ['p2b_destuso','2b) Destinazione d\'uso', 2, 'Punto 2b.', 'testo', 'Abitazione civile A/2'],
+  ['p2c_urbanistica','2c) Normativa edilizia-urbanistica', 2, 'Punto 2c, dopo "dichiara che l\'immobile e".', 'testo', 'conforme - Concessione n. 45 del 1998'],
+  ['p2d_impianti','2d) Conformita impianti', 2, 'Punto 2d, dopo "dichiara che l\'immobile e".', 'testo', 'dotato di dichiarazioni di conformita'],
+  ['p2e_agibilita','2e) Certificato di agibilita', 2, 'Punto 2e, dopo "dichiara che l\'immobile".', 'testo', 'e dotato di agibilita n. 12 del 1999'],
+  ['p2f_ape','2f) Classe energetica', 2, 'Punto 2f, dopo "classe energetica".', 'testo', 'G'],
+  ['p2f_ipe','2f) Indice di prestazione energetica', 2, 'Punto 2f, dopo "indice di prestazione energetica".', 'testo', '175,40'],
+  ['p2f_ck1','Crocetta "non e dotato di ACE/APE" (1a)', 2, 'Il primo quadratino del punto 2f.', 'crocetta', ''],
+  ['p2f_ck2','Crocetta "non e dotato di ACE/APE" (2a)', 2, 'Il secondo quadratino del punto 2f.', 'crocetta', ''],
+  ['p2f_poiche','2f) ...poiche', 2, 'Punto 2f, riga "del venditore, poiche".', 'testo', 'immobile collabente'],
+  ['p2g_trascrizioni','2g) Iscrizioni e trascrizioni', 2, 'Punto 2g, dopo "dichiara che".', 'testo', 'esiste ipoteca volontaria a favore di Banca'],
+  ['p2h_ordinarie','2h) Spese condominiali ordinarie', 2, 'Punto 2h, dopo "esse sono pari a circa".', 'testo', '1.200,00'],
+  ['p2i_straordinarie','2i) Opere straordinarie', 2, 'Punto 2i, dopo "dichiara che allo stato".', 'testo', 'non sono deliberate opere straordinarie'],
+
+  ['p4a_caparra','4a) Caparra - percentuale', 2, 'Punto 4a, dopo "pari almeno al".', 'testo', '10'],
+  ['p4a_lettere','4a) Caparra in lettere', 2, 'Punto 4a, dentro "(diconsi ...)".', 'testo', 'dieci'],
+  ['p4a_giorni','4a) Giorni per il rogito', 2, 'Punto 4a, dopo "(diconsi ......) giorni".', 'testo', '120'],
+  ['p5a_mesi','5a) Atto non prima di ... mesi', 2, 'Punto 5a, dopo "non prima di".', 'testo', '2'],
+  ['p5a_giorni','5a) ...e non dopo ... giorni', 2, 'Punto 5a, dopo "e non dopo".', 'testo', '180'],
+  ['p5c_eccezione','5c) Eccezione', 2, 'Punto 5c, dopo "ad eccezione di".', 'testo', 'servitu di passaggio a favore del mappale 118'],
+  ['p5d_libero','5d) Consegnato alla data del', 2, 'Punto 5d, dopo "verra consegnato alla data del".', 'testo', '30/06/2027'],
+
+  ['p2_6_dal','6) Incarico - decorrenza', 2, 'Punto 6, dopo "ha decorrenza dal".', 'testo', '10/09/2026'],
+  ['p2_6_al','6) Incarico - scadenza', 2, 'Punto 6, dopo "e scadra il".', 'testo', '10/03/2027'],
+  ['p2_6_mesi','6) Rinnovo - per ... mesi', 2, 'Punto 6, dopo "per una sola volta ed in esclusiva".', 'testo', '6'],
+  ['p2_6_giorni','6) Preavviso - giorni prima', 2, 'Punto 6, dopo "salvo disdetta ... giorni prima".', 'testo', '30'],
+
+  ['p2_7a_perc','7a) Provvigione - percentuale', 2, 'Punto 7a, dopo "e pari al".', 'testo', '3'],
+  ['p2_7a_lettere','7a) Provvigione in lettere', 2, 'Punto 7a, dentro "(diconsi ... per cento)".', 'testo', 'tre'],
+
+  ['p2_8_escl','8) Crocetta IN ESCLUSIVA', 2, 'Il quadratino prima di "IN ESCLUSIVA".', 'crocetta', ''],
+  ['p2_8_noescl','8) Crocetta NON ESCLUSIVA', 2, 'Il quadratino prima di "NON ESCLUSIVA".', 'crocetta', ''],
+  ['p2_8b_euro','8b) Rimborso spese', 2, 'Punto 8b, riga con il simbolo euro.', 'testo', '1.500,00'],
+
+  ['p2_9a_perc','9a) Penale - percentuale', 2, 'Punto 9a, dopo "pari al".', 'testo', '3'],
+  ['p2_9a_lettere','9a) Penale in lettere', 2, 'Punto 9a, dentro la parentesi.', 'testo', 'tre'],
+  ['p2_9b_perc','9b) Penale recesso - percentuale', 2, 'Punto 9b, dopo "pari al".', 'testo', '2'],
+  ['p2_9b_lettere','9b) Penale recesso in lettere', 2, 'Punto 9b, dentro la parentesi.', 'testo', 'due'],
+
+  ['p2_12_si','12) Crocetta CONSENTE', 2, 'Il quadratino prima di "consente al trattamento".', 'crocetta', ''],
+  ['p2_12_no','12) Crocetta NON CONSENTE', 2, 'Il quadratino prima di "non consente".', 'crocetta', ''],
+  ['p2_13_note','13) Note - prima riga', 2, 'Punto 13, prima riga puntinata.', 'testo', 'Immobile visionato in data odierna. Chiavi in agenzia.'],
+  ['p2_13_note2','13) Note - seconda riga', 2, 'Punto 13, seconda riga.', 'testo', 'Il proprietario valuta proposte oltre i 280.000 euro.'],
+
+  ['p2_luogodata1','Firma 1 - Luogo e data', 2, 'Primo "Luogo e data" (INCARICANTE).', 'testo', 'Agropoli, 10/09/2026'],
+  ['p2_negoziato','Firma - "l\'INCARICANTE il Sig."', 2, 'Riga "ai sensi degli artt. 33 e segg. ... il Sig."', 'testo', 'CARNICELLI VINCENZO'],
+  ['p2_luogodata2','Firma 2 - Luogo e data', 2, 'Secondo "Luogo e data" (INCARICANTE).', 'testo', 'Agropoli, 10/09/2026'],
+  ['p2_acc_num','Accettazione - iscritta al n.', 2, 'In basso: "iscritta al n."', 'testo', '123456'],
+  ['p2_acc_del','Accettazione - del (data)', 2, 'Stessa riga, dopo "del".', 'testo', '01/01/2015'],
+  ['p2_acc_reg','Crocetta "Registro Imprese" (accettazione)', 2, 'Il quadratino in basso prima di "Registro delle Imprese".', 'crocetta', ''],
+  ['p2_acc_rea','Crocetta "REA" (accettazione)', 2, 'Il quadratino in basso prima di "REA della CCIAA".', 'crocetta', ''],
+  ['p2_acc_cciaa','Accettazione - CCIAA di', 2, 'Stessa riga, dopo "REA della CCIAA di".', 'testo', 'Salerno'],
+  ['p2_acc_cf','Accettazione - C.F.', 2, 'Stessa riga, dopo "C.F."', 'testo', '01234567890'],
+  ['p2_luogodata3','Firma agenzia - Luogo e data', 2, 'Terzo "Luogo e data" (AGENTE IMMOBILIARE).', 'testo', 'Agropoli, 10/09/2026']
+];
+
+var CHIAVE = 'taratura_incarico_v2';
+var pos = {};
+var idx = 0, pagina = 1, primoClic = null, modoProva = false;
+
+try { pos = JSON.parse(localStorage.getItem(CHIAVE) || '{}'); } catch (e) { pos = {}; }
+function salva(){ try { localStorage.setItem(CHIAVE, JSON.stringify(pos)); } catch (e) {} }
+
+function tipoDi(c){ return (c && c[4]) || 'testo'; }
+function dueClic(c){ return tipoDi(c) !== 'crocetta'; }
+
+function primoDaFare(){
+  for (var i = 0; i < CAMPI.length; i++) if (CAMPI[i][2] === pagina && !pos[CAMPI[i][0]]) return i;
+  for (var j = 0; j < CAMPI.length; j++) if (CAMPI[j][2] === pagina) return j;
+  return 0;
+}
+
+function vaiPagina(n){
+  pagina = n; primoClic = null;
+  document.getElementById('foglio').src = (n === 1 ? 'incarico_p1.png' : 'incarico_p2.png');
+  document.getElementById('pg1').className = 'pg' + (n === 1 ? ' att' : '');
+  document.getElementById('pg2').className = 'pg' + (n === 2 ? ' att' : '');
+  idx = primoDaFare();
+  disegna();
+}
+
+var ETICHETTE = {
+  testo: 'Scritta sulla riga - due clic: inizio e fine',
+  lettera: 'Una lettera sola - due clic: lo spazio dove entra',
+  crocetta: 'Crocetta - un clic al centro del quadratino',
+  barratura: 'Barratura - due clic: da dove a dove tirare la riga'
+};
+
+function disegna(){
+  var c = CAMPI[idx];
+  document.getElementById('tipo').textContent = c ? ETICHETTE[tipoDi(c)] : '';
+  document.getElementById('nome').textContent = c ? c[1] : '-';
+  document.getElementById('desc').textContent = c ? c[3] : '';
+  document.getElementById('passo').textContent = !c ? ''
+    : (dueClic(c) ? (primoClic ? 'ora clicca la FINE' : 'clicca l\'INIZIO') : 'un clic al centro');
+
+  var diPag = CAMPI.filter(function (x) { return x[2] === pagina; });
+  var fatti = diPag.filter(function (x) { return pos[x[0]]; }).length;
+  document.getElementById('avanz').textContent = fatti + ' / ' + diPag.length
+    + '  ·  totale ' + Object.keys(pos).length + ' / ' + CAMPI.length;
+  document.getElementById('btnProva').textContent = modoProva ? 'Torna a tarare' : 'Prova';
+
+  var wrap = document.getElementById('wrap');
+  [].slice.call(wrap.querySelectorAll('.seg,.puntoA,.prova')).forEach(function (e) { e.remove(); });
+  var r = document.getElementById('foglio').getBoundingClientRect();
+
+  diPag.forEach(function (x) {
+    var p = pos[x[0]];
+    if (!p) return;
+    var corrente = (c && x[0] === c[0]);
+    if (p.t === 'crocetta') {
+      var d = document.createElement('div');
+      d.className = 'puntoA';
+      d.style.left = p.x + '%'; d.style.top = p.y + '%';
+      if (!corrente) d.style.background = '#15803D';
+      wrap.appendChild(d);
+    } else {
+      var s = document.createElement('div');
+      s.className = 'seg' + (corrente ? ' corrente' : '') + (p.t === 'barratura' ? ' barratura' : '');
+      s.style.left = p.x + '%'; s.style.top = p.y + '%'; s.style.width = p.w + '%';
+      s.innerHTML = '<span class="tag">' + x[0] + '</span>';
+      wrap.appendChild(s);
+    }
+    if (modoProva && p.t !== 'crocetta' && p.t !== 'barratura') {
+      var el = document.createElement('div');
+      el.className = 'prova';
+      el.textContent = x[5] || x[1];
+      el.style.left = p.x + '%'; el.style.top = p.y + '%';
+      wrap.appendChild(el);
+      var largPx = (p.w / 100) * r.width;
+      var normale = r.width * (p.t === 'lettera' ? 0.0075 : 0.0078);
+      var minimo = r.width * 0.0055;
+      var f = normale, giri = 0;
+      el.style.fontSize = f + 'px';
+      while (el.scrollWidth > largPx && f > minimo && giri < 80) { f -= 0.4; el.style.fontSize = f + 'px'; giri++; }
+      var entra = el.scrollWidth <= largPx;
+      el.style.color = entra ? '#0F172A' : '#B91C1C';
+      el.title = entra ? '' : 'NON CI STA nemmeno al corpo minimo';
+    }
+  });
+}
+
+document.getElementById('wrap').addEventListener('click', function (e) {
+  if (modoProva) return;
+  var img = document.getElementById('foglio');
+  var r = img.getBoundingClientRect();
+  var x = ((e.clientX - r.left) / r.width) * 100;
+  var y = ((e.clientY - r.top) / r.height) * 100;
+  if (x < 0 || x > 100 || y < 0 || y > 100) return;
+  var c = CAMPI[idx];
+  if (!c) return;
+  var t = tipoDi(c);
+
+  if (!dueClic(c)) {
+    pos[c[0]] = { p: c[2], t: t, x: +x.toFixed(3), y: +y.toFixed(3) };
+    salva(); avanti(); return;
+  }
+  if (!primoClic) {
+    primoClic = { x: x, y: y };
+    disegna();
+    var d = document.createElement('div');
+    d.className = 'puntoA';
+    d.style.left = x + '%'; d.style.top = y + '%';
+    document.getElementById('wrap').appendChild(d);
+    document.getElementById('passo').textContent = 'ora clicca la FINE';
+    return;
+  }
+  var x1 = Math.min(primoClic.x, x), x2 = Math.max(primoClic.x, x);
+  /* La riga di scrittura e quella del PRIMO clic: il secondo dice solo dove
+     finisce lo spazio, e la mano non e mai perfettamente dritta. */
+  pos[c[0]] = { p: c[2], t: t, x: +x1.toFixed(3), y: +primoClic.y.toFixed(3), w: +(x2 - x1).toFixed(3) };
+  primoClic = null;
+  salva(); avanti();
+});
+
+function avanti(){
+  for (var i = idx + 1; i < CAMPI.length; i++) if (CAMPI[i][2] === pagina && !pos[CAMPI[i][0]]) { idx = i; disegna(); return; }
+  for (var j = 0; j < CAMPI.length; j++) if (CAMPI[j][2] === pagina && !pos[CAMPI[j][0]]) { idx = j; disegna(); return; }
+  idx = Math.min(idx + 1, CAMPI.length - 1);
+  disegna();
+}
+function indietro(){
+  primoClic = null;
+  for (var i = idx - 1; i >= 0; i--) if (CAMPI[i][2] === pagina) { idx = i; disegna(); return; }
+}
+function salta(){
+  primoClic = null;
+  for (var i = idx + 1; i < CAMPI.length; i++) if (CAMPI[i][2] === pagina) { idx = i; disegna(); return; }
+}
+function togglProva(){
+  modoProva = !modoProva; primoClic = null;
+  document.getElementById('wrap').className = modoProva ? '' : 'attesa';
+  disegna();
+}
+
+function mostraEsito(){
+  var out = { modulo: 'FRIMM incarico vendita', versione: 2, tarato: new Date().toISOString().slice(0, 10), campi: pos };
+  document.getElementById('json').value = JSON.stringify(out, null, 1);
+  document.getElementById('esito').style.display = 'block';
+}
+function scarica(){
+  var b = new Blob([document.getElementById('json').value], { type: 'application/json' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(b);
+  a.download = 'posizioni_incarico.json';
+  a.click();
+}
+
+window.addEventListener('resize', function () { if (modoProva) disegna(); });
+vaiPagina(1);
+</script>
+</body>
+</html>
