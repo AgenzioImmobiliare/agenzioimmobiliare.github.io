@@ -714,6 +714,11 @@ body{font-family:'Inter',sans-serif;background:var(--bg,#F5F7FA);color:var(--tex
 .simm-sep{width:1px;height:24px;background:var(--border2);margin:0 3px;flex-shrink:0;}
 /* [2 set 2026] Tab della scheda immobile: prima al passaggio cambiava solo
    il colore del testo, da un grigio a un grigio poco più scuro. */
+/* [12 set 2026] La barra delle linguette non aveva una classe: nella scheda
+   immobile è scritta a mano ogni volta. Definirla qui la rende riusabile e
+   soprattutto FLESSIBILE — senza, le linguette sono blocchi e si impilano
+   una sotto l'altra invece di stare in fila. */
+.simm-tabs{display:flex;align-items:stretch;gap:2px;flex-wrap:wrap;border-bottom:2px solid var(--border);}
 .simm-tab{padding:9px 16px;cursor:pointer;font-size:0.86rem;font-weight:600;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;border-radius:8px 8px 0 0;transition:background .13s,color .13s,border-color .13s;}
 .simm-tab:hover{background:var(--bg3);color:var(--text);}
 .simm-tab.attivo{color:var(--brand);border-bottom-color:var(--brand);background:var(--brand-pale);}
@@ -15953,7 +15958,7 @@ body.mob-sheet-open{ overflow:hidden; }
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.12set-TAB';
+var APP_VERSION = 'v.12set-TAB2';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -59141,12 +59146,21 @@ try{ window.aggiornaRecord = aggiornaRecord; }catch(e){}
   function _quote(){
     var salv=null;
     try{ salv=JSON.parse(localStorage.getItem(CH_QUOTE)||'null'); }catch(e){}
-    if(salv && typeof salv==='object') return { agente:_n(salv.agente), ufficio:_n(salv.ufficio) };
-    return { agente:_piuFrequente('percAgente',50), ufficio:_piuFrequente('percUfficio',2.5) };
+    /* [12 set 2026] "accTeorica" è la provvigione che chiedi di solito
+       all'acquirente. Serve a far vedere quanto varrebbe un affare se anche
+       il compratore pagasse, là dove sulla pratica quel dato non è ancora
+       stato scritto. È un'ipotesi e resta marcata come tale: non entra mai
+       nei totali su cui puoi contare. */
+    if(salv && typeof salv==='object') return {
+      agente:_n(salv.agente), ufficio:_n(salv.ufficio),
+      accTeorica: (salv.accTeorica===undefined||salv.accTeorica==='') ? 3 : _n(salv.accTeorica)
+    };
+    return { agente:_piuFrequente('percAgente',50), ufficio:_piuFrequente('percUfficio',2.5), accTeorica:3 };
   }
   window._paSalvaQuote=function(){
     var a=document.getElementById('pa-q-agente'), u=document.getElementById('pa-q-ufficio');
-    try{ localStorage.setItem(CH_QUOTE, JSON.stringify({agente:_n(a&&a.value), ufficio:_n(u&&u.value)})); }catch(e){}
+    var t=document.getElementById('pa-q-acqt');
+    try{ localStorage.setItem(CH_QUOTE, JSON.stringify({agente:_n(a&&a.value), ufficio:_n(u&&u.value), accTeorica:_n(t&&t.value)})); }catch(e){}
     apriProvvAttese();
   };
   /* Dal lordo dell'affare a quello che resta a te. */
@@ -59201,6 +59215,9 @@ try{ window.aggiornaRecord = aggiornaRecord; }catch(e){}
       /* [12 set 2026] Da dove viene il compenso: venditore, acquirente o
          entrambi. Prima si vedeva un totale senza sapere cosa ci fosse dentro. */
       var _pv=_n(p.percV), _pa=_n(p.percA);
+      /* Se la parte acquirente non è stata pattuita, si mostra accanto quanto
+         varrebbe con la percentuale che chiedi di solito. */
+      var _teorico = (_pa>0) ? 0 : importo*_n(q.accTeorica)/100;
       var _origine = (_pv>0||_pa>0)
         ? [ (_pv>0?_pv+'% venditore':''), (_pa>0?_pa+'% acquirente':'') ].filter(Boolean).join(' + ')
         : perc+'% (da incarico, manca la parte acquirente)';
@@ -59214,6 +59231,7 @@ try{ window.aggiornaRecord = aggiornaRecord; }catch(e){}
              +(_mut?' · in attesa di delibera mutuo'+(p.mutuoDelibera?' entro il '+((typeof fmtD==='function')?fmtD(p.mutuoDelibera):p.mutuoDelibera):''):'')
              +(_ris?' · il venditore può ancora accettare una proposta migliore':''),
         valore:_lordo, netto:_netto(_lordo,q), reale:false, perc:perc, mutuo:_mut, riserva:_ris,
+        teorico:_teorico, percTeorica:_n(q.accTeorica),
         immIdx:parseInt(p.immRef), data:p.drogito||p.scadProp||p.dprop };
       (esito==='accettata'?G.accettate:G.inCorso).push(v);
     });
@@ -59312,10 +59330,12 @@ try{ window.aggiornaRecord = aggiornaRecord; }catch(e){}
       +   cella('4 · Da incassare', m, '#15803D')
       + '</div>'
       + '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:0.72rem;color:var(--text4);line-height:1.5">'
-      +   '<span>La tua quota è <strong>'+q.agente+'%</strong> meno <strong>'+q.ufficio+'%</strong> di ufficio, applicata solo dove la provvigione non è ancora registrata (voci con <strong>*</strong>).</span>'
+      +   '<span>La tua quota è <strong>'+q.agente+'%</strong> meno <strong>'+q.ufficio+'%</strong> di ufficio, applicata solo dove la provvigione non è ancora registrata (voci con <strong>*</strong>). '
+      +     'La terza casella è la provvigione che chiedi di solito all\'acquirente (<strong>'+q.accTeorica+'%</strong>): dove non l\'hai ancora pattuita, la riga mostra in viola quanto varrebbe.</span>'
       +   '<span style="display:inline-flex;gap:5px;align-items:center">'
       +     '<input id="pa-q-agente" class="finput" style="width:58px;padding:4px 6px;text-align:right" value="'+q.agente+'">'
       +     '<input id="pa-q-ufficio" class="finput" style="width:58px;padding:4px 6px;text-align:right" value="'+q.ufficio+'">'
+      +     '<input id="pa-q-acqt" class="finput" style="width:58px;padding:4px 6px;text-align:right" value="'+q.accTeorica+'" title="Provvigione che chiedi di solito all\'acquirente: serve a stimare gli affari dove non l\'hai ancora pattuita">'
       +     '<button onclick="_paSalvaQuote()" class="btn btn-outline btn-sm" style="padding:4px 9px">Ricalcola</button>'
       +   '</span>'
       + '</div></div>';
@@ -59343,6 +59363,11 @@ try{ window.aggiornaRecord = aggiornaRecord; }catch(e){}
         + '<div style="text-align:right;white-space:nowrap;min-width:100px">'
         +   '<div style="font-weight:800;color:var(--text)">'+_eur(v.valore)+'</div>'
         +   '<div style="font-size:0.74rem;font-weight:700;color:'+(v.reale?'#15803D':'var(--text4)')+'">a te '+_eur(v.netto||0)+(v.reale?'':' *')+'</div>'
+        /* [12 set 2026] Quanto varrebbe se anche l'acquirente pagasse. Scritto
+           in corsivo e tratteggiato: è un'ipotesi, non un dato pattuito. */
+        +   (v.teorico>0
+              ? '<div style="font-size:0.72rem;font-style:italic;color:#6D28D9;border-top:1px dashed #DDD6FE;margin-top:3px;padding-top:3px" title="Se anche l\'acquirente pagasse il '+v.percTeorica+'%">+ '+_eur(v.teorico)+' con acq.</div>'
+              : '')
         + '</div>'
         /* [8 set 2026] Matita solo dove la percentuale è SUPPOSTA e c'è un
            immobile a cui appartiene. Corregge im.incPerc sulla scheda, non un
@@ -62114,7 +62139,7 @@ try{
   // una copia vecchia di questi file anche dopo un aggiornamento su GitHub.
   // Cambia _MOD_V ad ogni modifica a un modulo, così il browser è costretto
   // a riscaricarlo. Usa la stessa data del badge versione, es. '20260702'.
-  const _MOD_V = '20260912C';
+  const _MOD_V = '20260912D';
   const moduli = [
     ['Richieste', './src/modules/richieste/index.js?v=' + _MOD_V],
     ['Clienti',   './src/modules/clienti/index.js?v=' + _MOD_V],
