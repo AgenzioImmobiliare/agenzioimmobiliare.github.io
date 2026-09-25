@@ -1,0 +1,705 @@
+// modules/provvattese/provvattese.view.js — Provvigioni attese
+// ----------------------------------------------------------------------------
+// Estratta dal monolite il 15 set 2026. Era una delle dodici parti indipendenti
+// dentro un unico blocco inline da 208 KB.
+//
+// PAGINA DI SOLA LETTURA: guarda immobili, pratiche e provvigioni e non li
+// modifica mai. Le uniche cose che scrive sono stimaPercV e stimaPercA, campi
+// che esistono solo per lei.
+//
+// DIPENDENZE dal monolite (via window): D, saveD, dlgAlert, fmtD.
+// _paCalcola è esposta su window perché la usa anche il Bilancio: è la stessa
+// fonte per il pipeline, così i due conti non possono divergere.
+//
+// NB: in un modulo ES le funzioni non sono globali. Le chiamate a funzioni del
+// monolite vanno protette, altrimenti un nome mancante non è un errore visibile
+// ma una pagina che non si apre.
+// ----------------------------------------------------------------------------
+
+/* [15 set 2026] Le chiamate a saveD e dlgAlert sono protette da un typeof:
+   vivono nel monolite, non qui. Da dentro un modulo un nome mancante non dà
+   un errore visibile in console, dà una pagina che non si apre. */
+
+(function(){
+  /* [8 set 2026] CORRETTO. La versione precedente toglieva SEMPRE i punti,
+     trattandoli come separatori delle migliaia: così "5.6" diventava 56 e
+     "93.2" diventava 932, e sullo schermo comparivano provvigioni "al 932%".
+     Regola giusta: se c'è la virgola, i punti sono migliaia (1.234,56);
+     se la virgola non c'è, un punto solo è il separatore decimale (5.6) e
+     più punti sono migliaia (1.234.567). */
+  function _n(v){
+    if(typeof v === 'number') return isNaN(v) ? 0 : v;
+    var s = String(v==null?'':v).trim().replace(/[^\d.,-]/g,'');
+    if(!s) return 0;
+    if(s.indexOf(',') >= 0){ s = s.replace(/\./g,'').replace(',','.'); }
+    else {
+      var parti = s.split('.');
+      /* Senza virgola: più punti sono migliaia (1.234.567); un punto solo
+         seguito da ESATTAMENTE tre cifre è anch'esso migliaia (250.000),
+         mentre con una o due cifre è il decimale (5.6 · 93.25). */
+      if(parti.length > 2) s = parti.join('');
+      else if(parti.length === 2 && /^\d{3}$/.test(parti[1])) s = parti.join('');
+    }
+    var x = parseFloat(s);
+    return isNaN(x) ? 0 : x;
+  }
+  function _eur(v){ return '€ ' + Math.round(v).toLocaleString('it-IT'); }
+  function _gg(d){ var t=Date.parse(String(d||'').slice(0,10)+'T00:00:00'); return isNaN(t)?null:Math.round((t-new Date().setHours(0,0,0,0))/86400000); }
+  function _attivo(im){ var s=String(im&&im.stato||'').toLowerCase(); return s===''||s==='attivo'||s==='proposta'; }
+  /* [8 set 2026] QUOTA AGENZIA E QUOTA AGENTE.
+     Dove la provvigione è già registrata si usano LE SUE percentuali vere.
+     Dove non c'è ancora nulla (proposte e portafoglio) servono due numeri: li
+     propongo leggendoli dalle provvigioni che hai già fatto — il valore più
+     ricorrente — e li lascio modificabili in cima alla schermata, perché non
+     voglio che una percentuale supposta si travesta da dato certo.
+     La scelta resta su questo dispositivo: è un'ipotesi di lettura, non un
+     dato dell'agenzia da sincronizzare. */
+  var CH_QUOTE='lecase_quote_attese';
+  function _piuFrequente(campo, difetto){
+    var c={}, prov=Array.isArray(D.provvigioni)?D.provvigioni:[];
+    prov.forEach(function(p){ var v=_n(p&&p[campo]); if(v>0) c[v]=(c[v]||0)+1; });
+    var best=null, n=0;
+    Object.keys(c).forEach(function(k){ if(c[k]>n){ n=c[k]; best=parseFloat(k); } });
+    return best===null?difetto:best;
+  }
+  function _quote(){
+    var salv=null;
+    try{ salv=JSON.parse(localStorage.getItem(CH_QUOTE)||'null'); }catch(e){}
+    /* [12 set 2026] "accTeorica" è la provvigione che chiedi di solito
+       all'acquirente. Serve a far vedere quanto varrebbe un affare se anche
+       il compratore pagasse, là dove sulla pratica quel dato non è ancora
+       stato scritto. È un'ipotesi e resta marcata come tale: non entra mai
+       nei totali su cui puoi contare. */
+    if(salv && typeof salv==='object') return {
+      agente:_n(salv.agente), ufficio:_n(salv.ufficio),
+      accTeorica: (salv.accTeorica===undefined||salv.accTeorica==='') ? 3 : _n(salv.accTeorica)
+    };
+    return { agente:_piuFrequente('percAgente',50), ufficio:_piuFrequente('percUfficio',2.5), accTeorica:3 };
+  }
+  window._paSalvaQuote=function(){
+    var a=document.getElementById('pa-q-agente'), u=document.getElementById('pa-q-ufficio');
+    var t=document.getElementById('pa-q-acqt');
+    try{ localStorage.setItem(CH_QUOTE, JSON.stringify({agente:_n(a&&a.value), ufficio:_n(u&&u.value), accTeorica:_n(t&&t.value)})); }catch(e){}
+    apriProvvAttese();
+  };
+  /* Dal lordo dell'affare a quello che resta a te. */
+  function _netto(lordo, q){ return lordo * (q.agente/100) * (1 - q.ufficio/100); }
+  /* [15 set 2026] La parte acquirente entra nel totale anche quando è solo
+     stimata: la provvigione matura sull'accordo di entrambe le parti. La
+     distinzione fra pattuito e stimato resta, ma nella nota della riga. */
+  function _ceSommaAcq(pattuito, stimato){ return pattuito + (stimato || 0); }
+  /* [16 set 2026] Posizione dell'immobile di una pratica: prima l'uuid, che
+     non cambia, poi il vecchio riferimento per posizione. */
+  function _immIdxDi(p){
+    var imm = Array.isArray(D.immobili) ? D.immobili : [];
+    if(p && p.immUuid){
+      var k = imm.findIndex(function(im){ return im && im.uuid === p.immUuid; });
+      if(k >= 0) return k;
+    }
+    return parseInt(p && p.immRef);
+  }
+  /* [16 set 2026] Una pratica è una trattativa ancora aperta solo se la
+     pratica stessa è in fase di proposta e l'immobile non è già venduto,
+     affittato o archiviato. Lo stato dell'immobile lo decide una sola
+     funzione, statoImmobileEff, che vive nel monolite. */
+  function _trattativaAperta(p, im, idx){
+    var fase = String(p && p.stato || '').toLowerCase();
+    if(fase === 'vendita' || fase === 'revoca') return false;
+    if(!im) return true;
+    var st;
+    try{
+      st = (typeof window.statoImmobileEff === 'function')
+        ? window.statoImmobileEff(im, idx)
+        : String(im.stato || '').toLowerCase();
+    }catch(e){ st = String(im.stato || '').toLowerCase(); }
+    return !(st === 'venduto' || st === 'affittato' || st === 'archiviato');
+  }
+  function _nomeImm(im, fallback){
+    if(!im) return fallback||'immobile non collegato';
+    return (im.ref?'Ref.'+im.ref+' · ':'')+((im.tipo||'Immobile')+' '+(im.comune||'')).trim();
+  }
+  /* Provvigione attesa su un importo: percentuale venditore + acquirente,
+     con ripiego sulla percentuale dell'incarico se la pratica non le ha. */
+  function _perc(im, pratica, importo){
+    var pv=_n(pratica&&pratica.percV), pa=_n(pratica&&pratica.percA);
+    var tot=pv+pa;
+    if(tot>0) return tot;
+    var inc=_n(im&&im.incPerc);
+    if(inc>0) return inc;
+    /* [13 set 2026] RIPIEGO SULL'IMPORTO FISSO. Un incarico può pattuire un
+       compenso fisso invece di una percentuale (incImp senza incPerc). Prima
+       questo ramo restituiva 0 e il chiamante scartava la riga: l'immobile si
+       vedeva finché era in portafoglio — dove il fisso è già gestito — e
+       spariva dal conto nel momento in cui arrivava una proposta, cioè quando
+       diventava più concreto. Il fisso va convertito in percentuale
+       equivalente perché chi chiama fa importo*perc/100. */
+    var fisso=_n(im&&im.incImp), imp=_n(importo);
+    if(fisso>0 && imp>0) return fisso/imp*100;
+    return 0;
+  }
+
+  function _calcola(){
+    var q=_quote();
+    var imm=Array.isArray(D.immobili)?D.immobili:[];
+    var prat=Array.isArray(D.pratiche)?D.pratiche:[];
+    var prov=Array.isArray(D.provvigioni)?D.provvigioni:[];
+    var G={maturato:[], accettate:[], inCorso:[], portafoglio:[], scadenze:[]};
+
+    prov.forEach(function(p){
+      if(!p) return;
+      /* [24 set 2026] QUANTO RESTA SI LEGGE DAI DOCUMENTI, con la stessa
+         funzione del Bilancio (_provIncassoAgente): le due pagine non possono
+         più raccontare storie diverse. Prima qui contava lo "stato" scritto
+         nella scheda: Frigenti risultava "Incassata" con 4.000 ancora da
+         ricevere, Cardonia "Parzialmente incassata" con il residuo sbagliato.
+         Vale per le provvigioni che hanno le righe di pagamento all'agente;
+         le vecchie senza righe restano col criterio di prima. */
+      var _INC = (typeof window._provIncassoAgente === 'function') ? window._provIncassoAgente(p) : null;
+      if(_INC && _INC.daDocumenti){
+        if(!(_INC.resta > 0.009)) return;
+        var imD=imm[parseInt(p.immRef)];
+        var totD=_n(p.totale), spettaD=_INC.spetta;
+        /* il residuo della TUA quota, riportato sulla provvigione intera con lo
+           stesso rapporto che questo affare ha davvero */
+        var restaIntera = (totD>0 && spettaD>0) ? _INC.resta*(totD/spettaD) : _INC.resta;
+        G.maturato.push({ prop:(imD&&imD.contatto)||p.venditore||'', titolo:_nomeImm(imD, p.descr),
+          nota:(_INC.ricevuto>0.009?'incassati '+_eur(_INC.ricevuto)+' su '+_eur(spettaD)+' · ':'')+'vendita '+_eur(_n(p.importoVendita)),
+          valore:restaIntera, netto:_INC.resta, reale:(totD>0&&spettaD>0), immIdx:parseInt(p.immRef), data:p.data });
+        return;
+      }
+      var st=String(p.statoPag||'');
+      if(st!=='Da Incassare' && st!=='Parzialmente Incassata') return;
+      var im=imm[parseInt(p.immRef)];
+      var incassato=0;
+      if(Array.isArray(p.pagamenti)) p.pagamenti.forEach(function(x){ incassato+=_n(x&&x.importo); });
+      var resta=_n(p.totale)-incassato;
+      if(resta<=0) resta=_n(p.totale);
+      /* Qui le percentuali vere ci sono: si applica lo STESSO rapporto fra
+         netto agente e totale che quella provvigione ha davvero, così il
+         residuo eredita la ripartizione reale invece di una supposta. */
+      var tot=_n(p.totale), nettoReg=_n(p.quotaAgenteNetto)||_n(p.quotaAgente);
+      var nettoRes = (tot>0 && nettoReg>0) ? resta*(nettoReg/tot) : _netto(resta,q);
+      G.maturato.push({ prop:(im&&im.contatto)||p.venditore||'', titolo:_nomeImm(im, p.descr), nota:(st==='Parzialmente Incassata'?'parzialmente incassata · ':'')+'vendita '+_eur(_n(p.importoVendita)), valore:resta, netto:nettoRes, reale:(tot>0&&nettoReg>0), immIdx:parseInt(p.immRef), data:p.data });
+    });
+
+    prat.forEach(function(p){
+      if(!p) return;
+      var esito=String(p.esitoProp||'');
+      if(esito!=='accettata' && esito!=='in_corso') return;
+      /* [16 set 2026] L'esito della proposta resta "in corso" anche dopo il
+         rogito: guardarlo da solo riportava fra le trattative gli immobili
+         già venduti. Ora conta anche la fase della pratica e lo stato
+         dell'immobile. */
+      var _ii=_immIdxDi(p);
+      var im=imm[_ii];
+      if(!_trattativaAperta(p, im, _ii)) return;
+      var importo=_n(p.importoProp) || _n(p.prezzoRich) || _n(im&&im.prezzo);
+      var perc=_perc(im,p,importo);
+      if(!importo || !perc) return;
+      var _lordo=importo*perc/100;
+      /* [12 set 2026] Da dove viene il compenso: venditore, acquirente o
+         entrambi. Prima si vedeva un totale senza sapere cosa ci fosse dentro. */
+      var _pv=_n(p.percV), _pa=_n(p.percA);
+      /* Se la parte acquirente non è stata pattuita, si mostra accanto quanto
+         varrebbe con la percentuale che chiedi di solito. */
+      /* [15 set 2026] come sopra: la parte acquirente si somma anche quando non
+         è stata pattuita nella proposta. */
+      var _teorico = 0;
+      var _accStim = (_pa>0) ? 0 : importo*_n(q.accTeorica)/100;
+      /* [13 set 2026] Se il numero arriva dall'importo fisso, la percentuale
+         mostrata sarebbe una percentuale calcolata da me, mai pattuita con
+         nessuno: si scrive l'importo, non quella. */
+      var _daFisso = (_pv<=0 && _pa<=0 && _n(im&&im.incPerc)<=0 && _n(im&&im.incImp)>0);
+      var _origine = (_pv>0||_pa>0)
+        ? [ (_pv>0?_pv+'% venditore':''), (_pa>0?_pa+'% acquirente':'') ].filter(Boolean).join(' + ')
+        : (_daFisso
+            ? _eur(_n(im.incImp))+' fissi (da incarico, manca la parte acquirente)'
+            : perc+'% (da incarico, manca la parte acquirente)');
+      /* [9 set 2026] Una proposta accettata ma subordinata al mutuo non è
+         "manca solo il rogito": se la banca dice no, l'affare salta. Resta nel
+         suo gradino ma si vede, e il quadro in cima ne tiene il conto. */
+      var _mut = !!p.mutuoSubordinata;
+      var _ris = !!p.riservaMigliorOfferta;
+      var v={ prop:(im&&im.contatto)||p.venditore||'', titolo:_nomeImm(im, p.descr),
+        nota:(p.acquirente?'da '+p.acquirente+' · ':'')+_eur(importo)+' · '+_origine
+             +(_accStim>0 ? ' + '+_n(q.accTeorica)+'% acquirente stimato' : '')
+             +(_mut?' · in attesa di delibera mutuo'+(p.mutuoDelibera?' entro il '+((typeof fmtD==='function')?fmtD(p.mutuoDelibera):p.mutuoDelibera):''):'')
+             +(_ris?' · il venditore può ancora accettare una proposta migliore':''),
+        /* [15 set 2026] alla parte pattuita si somma quella dell'acquirente
+           stimata, quando nella proposta non è stata indicata */
+        valore:_ceSommaAcq(_lordo, _accStim), netto:_netto(_ceSommaAcq(_lordo, _accStim), q), reale:false,
+        accStimata:_accStim,
+        perc:(_daFisso?null:perc), fisso:(_daFisso?_n(im.incImp):null),
+        mutuo:_mut, riserva:_ris,
+        teorico:_teorico, percTeorica:_n(q.accTeorica),
+        immIdx:_ii, data:p.drogito||p.scadProp||p.dprop };
+      (esito==='accettata'?G.accettate:G.inCorso).push(v);
+    });
+
+    /* Solo una proposta ACCETTATA toglie un incarico dai rischi: una proposta
+       in corso può ancora saltare, e un incarico che scade mentre la
+       trattativa è aperta è esattamente il caso da tenere d'occhio. */
+    var conProposta={};
+    prat.forEach(function(p){
+      if(!p) return;
+      if(String(p.esitoProp||'')==='accettata') conProposta[_immIdxDi(p)]=true;
+    });
+    imm.forEach(function(im, _ii){
+      if(!im || !_attivo(im)) return;
+      var prezzo=_n(im.prezzo), perc=_n(im.incPerc), fisso=_n(im.incImp);
+      var val = fisso>0 ? fisso : (prezzo*perc/100);
+      /* [12 set 2026] Anche qui la parte acquirente. Un immobile che vendi ti
+         paga da TUTTI E DUE i lati: mostrarne uno solo dimezza il valore di
+         quello che hai in mano e, sulle scadenze, dimezza la perdita. */
+      /* ── [13 set 2026] STIME DI PORTAFOGLIO ────────────────────────────
+         Due percentuali che decidi tu, immobile per immobile, valide finché
+         quell'immobile è solo in portafoglio o a rischio.
+         Vivono in campi DEDICATI — stimaPercV e stimaPercA — che nessun'altra
+         parte del gestionale legge o scrive: l'incarico continua ad avere il
+         suo incPerc, la pratica i suoi percV e percA, e nessuno dei due viene
+         toccato da qui.
+         Appena nasce una proposta, questa riga non compare più: il calcolo
+         passa alla pratica, cioè ai dati inseriti nel posto giusto. */
+      var _sv = (im.stimaPercV===''||im.stimaPercV===undefined||im.stimaPercV===null) ? null : _n(im.stimaPercV);
+      var _sa = (im.stimaPercA===''||im.stimaPercA===undefined||im.stimaPercA===null) ? null : _n(im.stimaPercA);
+      /* venditore: se non l'hai scritta qui, vale quella dell'incarico */
+      var _percV_eff = (_sv!==null) ? _sv : perc;
+      var _valV = (fisso>0 && _sv===null) ? fisso : prezzo*_percV_eff/100;
+      /* acquirente: se non l'hai scritta qui, vale la percentuale teorica */
+      var _percA_eff = (_sa!==null) ? _sa : _n(q.accTeorica);
+      var _valA = prezzo*_percA_eff/100;
+      /* [15 set 2026] La parte acquirente entra SEMPRE nel totale, anche quando
+         non è ancora pattuita: la provvigione matura quando l'affare si chiude,
+         e si chiude con l'accordo di tutte e due le parti. Prima restava fuori
+         e compariva a lato in viola, così il totale generale mostrava metà di
+         quello che l'immobile vale davvero.
+         Resta la distinzione visiva: dove la percentuale è solo quella che
+         chiedi di solito, la riga lo dice. */
+      var _teoP = 0;
+      /* [13 set 2026] Prima un immobile con provvigione a zero o non indicata
+         spariva dall'elenco senza spiegazione. Ora resta, con l'avviso: un
+         dato mancante va visto, non nascosto. */
+      var _valTot = _valV + _valA;
+      G.portafoglio.push({ prop:im.contatto||'', titolo:_nomeImm(im),
+        nota:_eur(prezzo)+(fisso>0&&_sv===null?' · importo fisso':'')+(_valTot>0?'':' · provvigione non indicata'),
+        valore:_valTot, netto:_netto(_valTot,q), reale:false, perc:(fisso>0&&_sv===null?null:perc),
+        fisso:(fisso>0&&_sv===null?fisso:null), manca:(_valTot<=0), teorico:_teoP,
+        percTeorica:_n(q.accTeorica), immIdx:_ii, data:im.incFine,
+        /* i dati delle due colonne */
+        stima:true, percV:_percV_eff, percA:_percA_eff, valV:_valV, valA:_valA,
+        svImpostata:(_sv!==null), saImpostata:(_sa!==null) });
+      var g=_gg(im.incFine);
+      if(g!==null && g<=90 && val>0 && !conProposta[_ii]){
+        G.scadenze.push({ prop:im.contatto||'', titolo:_nomeImm(im), nota:(g<0?'scaduto da '+(-g)+' giorni':'scade fra '+g+' giorni'), valore:_valTot, netto:_netto(_valTot,q), reale:false, perc:(fisso>0&&_sv===null?null:perc), fisso:(fisso>0&&_sv===null?fisso:null), teorico:_teoP, percTeorica:_n(q.accTeorica), immIdx:_ii, data:im.incFine, urgenza:g,
+          stima:true, percV:_percV_eff, percA:_percA_eff, valV:_valV, valA:_valA,
+          svImpostata:(_sv!==null), saImpostata:(_sa!==null) });
+      }
+    });
+
+    /* ── [9 set 2026] UN IMMOBILE, UN GRADINO SOLO ────────────────────────
+       Prima lo stesso immobile poteva comparire in due gradini insieme —
+       trovato sul Ref.0036, che ha una provvigione già registrata E una
+       pratica ancora "in corso" — e il suo valore veniva contato due volte.
+       Ora vale la precedenza: maturato, poi accettate, poi in corso, poi
+       portafoglio. Un immobile che compare più in alto sparisce da sotto.
+       Dentro lo STESSO gradino restano invece tutte le voci: due provvigioni
+       diverse sullo stesso immobile sono due incassi diversi, non un doppione.
+       Le scadenze non sono un gradino ma un rischio, e restano a parte. */
+    var _visto = {};
+    function _chiave(v){
+      return (v.immIdx===undefined || v.immIdx===null || isNaN(v.immIdx)) ? null : String(v.immIdx);
+    }
+    function _filtra(lista){
+      var out = lista.filter(function(v){ var k=_chiave(v); return !(k!==null && _visto[k]); });
+      out.forEach(function(v){ var k=_chiave(v); if(k!==null) _visto[k]=true; });
+      return out;
+    }
+    G.maturato    = _filtra(G.maturato);
+    G.accettate   = _filtra(G.accettate);
+    G.inCorso     = _filtra(G.inCorso);
+    G.portafoglio = _filtra(G.portafoglio);
+
+    Object.keys(G).forEach(function(k){ G[k].sort(function(a,b){ return b.valore-a.valore; }); });
+    G.scadenze.sort(function(a,b){ return a.urgenza-b.urgenza; });
+    /* [25 set 2026] PORTAFOGLIO in ordine di CODICE (Ref.0006, 0012, 0013…).
+       Prima era per valore: cambiando una percentuale l'immobile saliva o
+       scendeva di posto mentre ci lavoravi. Il codice non cambia con le
+       percentuali, quindi le righe restano ferme. Senza codice → in fondo. */
+    (function(){
+      var imms = Array.isArray(D.immobili) ? D.immobili : [];
+      function ref(v){ var im = imms[v.immIdx]; return (im && im.ref) ? String(im.ref).trim() : ''; }
+      G.portafoglio.sort(function(a,b){
+        var ra = ref(a), rb = ref(b);
+        if(!ra && !rb) return 0;
+        if(!ra) return 1;
+        if(!rb) return -1;
+        return ra.localeCompare(rb, 'it', { numeric:true, sensitivity:'base' });
+      });
+    })();
+    return G;
+  }
+
+  /* [8 set 2026] QUADRO DEI TOTALI, in cima.
+     Sul telefono le sezioni sono lunghe e i totali finivano fuori schermo:
+     qui si vede tutto in un colpo d'occhio prima di scorrere. I quattro
+     gradini NON si sommano fra loro — sono livelli di certezza diversi —
+     ma i primi due sì: sono le due voci su cui puoi contare davvero, e
+     quella somma è l'unico "totale generale" che abbia senso. */
+  function _quadro(G){
+    var q=_quote();
+    function T(l){ return { lordo:l.reduce(function(s,v){return s+v.valore;},0), netto:l.reduce(function(s,v){return s+(v.netto||0);},0) }; }
+    var m=T(G.maturato), a=T(G.accettate), c=T(G.inCorso), pf=T(G.portafoglio);
+    var certo={ lordo:m.lordo+a.lordo, netto:m.netto+a.netto };
+    var mut=T(G.accettate.filter(function(v){ return v.mutuo || v.riserva; }));
+    /* [12 set 2026] Stessa veste delle altre schede del gestionale: fondo
+       bianco, bordo sottile, angoli da 12. Prima era un riquadro grigio che
+       non somigliava a nient'altro. */
+    /* [15 set 2026] TESTATA ASCIUTTA. Prima quattro righe di spiegazione e una
+       fila di campi occupavano mezzo schermo prima di arrivare ai numeri. Le
+       spiegazioni restano dove servono (sulle singole sezioni), i campi delle
+       percentuali stanno solo in Portafoglio e A rischio, cioè le uniche due
+       viste dove quelle percentuali cambiano qualcosa. */
+    /* [17 set 2026] Come il Bilancio: una riga di sintesi e quattro riquadri
+       nell'ordine del percorso di un affare. Premere un riquadro apre la sua
+       linguetta. */
+    var card = function(chiave, et, t){
+      var col = PA_COL[chiave];
+      return '<button class="pa-card' + (_paTabAttiva === chiave ? ' on' : '') + '" style="color:' + col + '" '
+        + 'onclick="_paTab(\'' + chiave + '\')">'
+        + '<div class="et">' + et + '</div>'
+        + '<div class="val" style="color:' + col + '">' + _eur(t.lordo) + '</div>'
+        + '<div class="sot">a te ' + _eur(t.netto) + '</div></button>';
+    };
+    return '<div class="pa-info">Su cui puoi contare: <b>' + _eur(certo.lordo) + '</b>'
+      + ' — a te <b style="color:' + PA_COL.maturato + '">' + _eur(certo.netto) + '</b>'
+      + ' <span style="color:var(--text3)">(da incassare più proposte accettate)</span>'
+      + (mut.lordo > 0 ? ' · <span style="color:' + PA_COL.inCorso + ';font-weight:700">'
+          + _eur(mut.lordo) + ' non ancora al sicuro</span>'
+          + ' <span style="color:var(--text3)">(mutuo da deliberare o miglior offerta)</span>' : '')
+      + '</div>'
+      + '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">'
+      + card('portafoglio', '1 · Portafoglio', pf)
+      + card('inCorso', '2 · In corso', c)
+      + card('accettate', '3 · Accettate', a)
+      + card('maturato', '4 · Da incassare', m)
+      + '</div>';
+  }
+
+  /* [15 set 2026] I campi delle percentuali, spostati qui dalla testata:
+     compaiono solo sopra Portafoglio e A rischio, le due viste dove servono
+     davvero — sono stime, e quelle percentuali le governano. Altrove erano
+     comandi senza effetto visibile. */
+  function _paCampiQuote(){
+    var q = _quote();
+    return '<div class="pa-quote">'
+      + '<span style="font-size:0.74rem;font-weight:700;color:var(--text2)">Stima con</span>'
+      + '<span style="display:inline-flex;gap:5px;align-items:center">'
+      +   '<input id="pa-q-agente" class="finput" style="width:52px;padding:4px 6px;text-align:right" value="'+q.agente+'" title="La tua quota sulla provvigione">'
+      +   '<span style="font-size:0.74rem;color:var(--text3)">% a te, meno</span>'
+      +   '<input id="pa-q-ufficio" class="finput" style="width:52px;padding:4px 6px;text-align:right" value="'+q.ufficio+'" title="Trattenuta dell ufficio">'
+      +   '<span style="font-size:0.74rem;color:var(--text3)">% di ufficio ·</span>'
+      +   '<input id="pa-q-acqt" class="finput" style="width:52px;padding:4px 6px;text-align:right" value="'+q.accTeorica+'" title="Provvigione che chiedi di solito all acquirente">'
+      +   '<span style="font-size:0.74rem;color:var(--text3)">% all acquirente</span>'
+      + '</span>'
+      + '<button onclick="_paSalvaQuote()" class="btn btn-outline btn-sm" style="padding:4px 10px">Ricalcola</button>'
+      + '<span style="font-size:0.71rem;color:var(--text4);flex:1;min-width:160px">'
+      + 'valgono solo dove la provvigione non è ancora registrata</span>'
+      + '</div>';
+  }
+  /* [8 set 2026] I totali parziali hanno un fondo tenue del colore della
+     sezione: scorrendo l'elenco sul telefono si riconoscono a colpo d'occhio
+     senza doverli cercare fra le righe. */
+  var _TINTA={ '#15803D':'#F0FDF4', '#1D4ED8':'#EFF6FF', '#D97706':'#FFFBEB', '#DC2626':'#FEF2F2' };
+  /* [17 set 2026] STESSA VESTE DEL BILANCIO. Colori pieni ma scuri, una sola
+     tinta per gradino, linguette a pillola, righe sottili e numeri allineati.
+     Le tinte vecchie restano sopra per compatibilità, ma non si usano più. */
+  var PA_COL = {
+    maturato:'#0F5132', accettate:'#1E3A8A', inCorso:'#B45309',
+    portafoglio:'#334155', scadenze:'#7F1D1D'
+  };
+  var PA_CSS = ''
+    + '#pa-wrap .pa-testa{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;'
+    +   'border-bottom:2px solid var(--text);padding-bottom:12px;margin-bottom:14px}'
+    + '#pa-wrap .pa-tit{font-size:1.5rem;font-weight:800;letter-spacing:-.4px;line-height:1}'
+    + '#pa-wrap .pa-ling{display:flex;gap:8px;flex-wrap:wrap}'
+    + '#pa-wrap .pa-l{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:20px;'
+    +   'border:1.5px solid var(--border);background:var(--bg);cursor:pointer;font-family:inherit;'
+    +   'font-size:0.81rem;font-weight:700;color:var(--text2);transition:all .15s;line-height:1;white-space:nowrap}'
+    + '#pa-wrap .pa-l:hover{border-color:var(--text3);color:var(--text)}'
+    + '#pa-wrap .pa-l .pall{width:7px;height:7px;border-radius:50%;flex-shrink:0}'
+    + '#pa-wrap .pa-l .n{font-size:0.7rem;font-weight:700;opacity:.6}'
+    + '#pa-wrap .pa-l.on{color:#fff;border-color:transparent;box-shadow:0 2px 8px rgba(0,0,0,.14)}'
+    + '#pa-wrap .pa-l.on .pall{background:rgba(255,255,255,.95)!important}'
+    + '#pa-wrap .pa-l.on .n{opacity:.85}'
+    + '#pa-wrap .pa-info{background:var(--bg2);border:1px solid var(--border);border-radius:12px;'
+    +   'padding:10px 14px;margin-bottom:12px;font-size:0.83rem;color:var(--text2);line-height:1.6}'
+    + '#pa-wrap .pa-info b{color:var(--text)}'
+    + '#pa-wrap .pa-card{flex:1;min-width:155px;background:var(--bg2);border:1px solid var(--border);'
+    +   'border-radius:12px;padding:11px 14px;cursor:pointer;transition:border-color .15s,box-shadow .15s;text-align:left;'
+    +   'font-family:inherit}'
+    + '#pa-wrap .pa-card:hover{border-color:var(--text3)}'
+    + '#pa-wrap .pa-card.on{box-shadow:0 0 0 2px currentColor inset}'
+    + '#pa-wrap .pa-card .et{font-size:0.71rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.4px}'
+    + '#pa-wrap .pa-card .val{font-size:1.3rem;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums}'
+    + '#pa-wrap .pa-card .sot{font-size:0.73rem;color:var(--text2);font-variant-numeric:tabular-nums}'
+    + '#pa-wrap .pa-col{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg2)}'
+    + '#pa-wrap .pa-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:11px 16px;'
+    +   'border-bottom:2px solid currentColor}'
+    + '#pa-wrap .pa-head .t{font-size:1rem;font-weight:800}'
+    + '#pa-wrap .pa-head .s{flex:1;min-width:150px;font-size:0.76rem;color:var(--text3);font-weight:500}'
+    + '#pa-wrap .pa-riga{display:flex;gap:12px;align-items:center;padding:9px 16px;flex-wrap:wrap;'
+    +   'border-bottom:1px solid var(--border)}'
+    + '#pa-wrap .pa-riga:nth-of-type(even){background:rgba(127,127,127,.04)}'
+    + '#pa-wrap .pa-riga:hover{background:rgba(127,127,127,.08)}'
+    + '#pa-wrap .pa-riga .tt{font-size:0.86rem;font-weight:600;color:var(--text)}'
+    + '#pa-wrap .pa-riga .sub{font-size:0.75rem;color:var(--text3);display:flex;align-items:center;gap:5px;flex-wrap:wrap}'
+    + '#pa-wrap .pa-num{font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}'
+    + '#pa-wrap .pa-bad{font-size:0.62rem;font-weight:700;letter-spacing:.3px;text-transform:uppercase;'
+    +   'border:1px solid currentColor;border-radius:20px;padding:1px 7px;opacity:.85}'
+    + '#pa-wrap .pa-perc{font-size:0.72rem;font-weight:700;color:var(--text3);border:1px solid var(--border);'
+    +   'border-radius:20px;padding:2px 9px;white-space:nowrap;font-variant-numeric:tabular-nums}'
+    + '#pa-wrap .pa-apri{background:transparent;border:1px solid var(--border);border-radius:8px;padding:4px 10px;'
+    +   'font-family:inherit;font-size:0.76rem;font-weight:600;color:var(--text2);cursor:pointer;white-space:nowrap}'
+    + '#pa-wrap .pa-apri:hover{border-color:var(--text3);color:var(--text)}'
+    + '#pa-wrap .pa-fine{display:flex;justify-content:space-between;align-items:baseline;gap:12px;'
+    +   'padding:11px 16px;border-top:2px solid var(--text);font-weight:800;font-size:0.9rem}'
+    + '#pa-wrap .pa-vuoto{padding:14px 16px;font-size:0.82rem;color:var(--text3);font-style:italic}'
+    + '#pa-wrap .pa-nota{font-size:0.78rem;color:var(--text2);margin-bottom:10px;line-height:1.6}'
+    + '#pa-wrap .pa-quote{display:flex;gap:9px;align-items:center;flex-wrap:wrap;background:var(--bg2);'
+    +   'border:1px solid var(--border);border-radius:12px;padding:8px 14px;margin-bottom:12px}';
+  function _sez(titolo, spiega, voci, colore, chiave){
+    if(chiave && PA_COL[chiave]) colore = PA_COL[chiave];
+    var tot=voci.reduce(function(s,v){ return s+v.valore; },0);
+    var totNetto=voci.reduce(function(s,v){ return s+(v.netto||0); },0);
+    var totTeorico=voci.reduce(function(s,v){ return s+(v.teorico||0); },0);
+    var righe=voci.length ? voci.map(function(v){
+      return '<div class="pa-riga">'
+        + '<div style="flex:1;min-width:190px">'
+        +   '<div class="tt">'+String(v.titolo).replace(/</g,'&lt;')+'</div>'
+        /* [8 set 2026] Il proprietario, perché i codici da soli non dicono di
+           quale casa si tratta e qui non ci sono le foto come negli elenchi. */
+        +   ((v.mutuo||v.riserva) ? '<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:2px">'
+              + (v.mutuo ? '<span class="pa-bad" style="color:#B45309">In attesa di mutuo</span>' : '')
+              + (v.riserva ? '<span class="pa-bad" style="color:#6D28D9">Salvo miglior offerta</span>' : '')
+              + '</div>' : '')
+        +   (v.manca ? '<div style="margin-top:3px"><span class="pa-bad" style="color:#B45309">Provvigione da indicare</span></div>' : '')
+        +   (v.prop ? '<div class="sub" style="color:var(--text2);font-weight:600"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>'+String(v.prop).replace(/</g,'&lt;')+'</div>' : '')
+        +   '<div class="sub">'+String(v.nota).replace(/</g,'&lt;')+'</div>'
+        + '</div>'
+        + '<div class="pa-num" style="min-width:100px">'
+        +   '<div style="font-weight:800;color:var(--text);font-size:0.92rem">'+_eur(v.valore)+'</div>'
+        +   '<div style="font-size:0.74rem;font-weight:700;color:'+(v.reale?PA_COL.maturato:'var(--text3)')+'" title="'+(v.reale?'quota registrata':'quota stimata')+'">a te '+_eur(v.netto||0)+(v.reale?'':' *')+'</div>'
+        /* [12 set 2026] Quanto varrebbe se anche l'acquirente pagasse. Scritto
+           in corsivo e tratteggiato: è un'ipotesi, non un dato pattuito. */
+        +   (v.teorico>0
+              ? '<div style="font-size:0.72rem;font-style:italic;color:#6D28D9;border-top:1px dashed #DDD6FE;margin-top:3px;padding-top:3px" title="Se anche l\'acquirente pagasse il '+v.percTeorica+'%">+ '+_eur(v.teorico)+' con acq.</div>'
+              : '')
+        + '</div>'
+        /* [8 set 2026] Matita solo dove la percentuale è SUPPOSTA e c'è un
+           immobile a cui appartiene. Corregge im.incPerc sulla scheda, non un
+           valore di comodo: il dato si sistema alla fonte e sparisce da tutte
+           le altre schermate. Dove la provvigione è registrata non compare:
+           lì i numeri sono quelli veri e non vanno toccati da qui. */
+        /* [13 set 2026] LA MATITA È STATA TOLTA.
+           Scriveva incPerc sulla SCHEDA DELL'IMMOBILE: da qui si cambiava un
+           dato che vive altrove. Mettendo 0 si azzerava la provvigione vera
+           dell'immobile e la riga spariva dall'elenco, perché il portafoglio
+           mostra solo le voci di valore maggiore di zero.
+           Questa pagina è di statistiche: legge e basta. Al posto della
+           matita, la percentuale scritta e un pulsante che APRE la scheda,
+           dove la correzione si fa nel posto giusto. */
+        /* [13 set 2026] Le due colonne, solo in portafoglio e a rischio. */
+        + (v.stima
+            ? '<div style="display:flex;gap:6px;flex-shrink:0">'
+              + _colonna('Venditore', v.immIdx, 'V', v.percV, v.valV, v.svImpostata, '#1D4ED8')
+              + _colonna('Acquirente', v.immIdx, 'A', v.percA, v.valA, v.saImpostata, '#6D28D9')
+              + '</div>'
+            : ((v.perc!==null&&v.perc!==undefined) || v.fisso
+                ? '<span class="pa-perc">'
+                  + (v.fisso ? _eur(v.fisso) : v.perc+'%') + '</span>'
+                : ''))
+        + (v.immIdx>=0
+            ? '<button class="pa-apri" title="Apri la scheda dell\'immobile" onclick="chiudiProvvAttese();openSchedaImmobile('+v.immIdx+')">Apri</button>'
+            : '')
+        + '</div>';
+    }).join('') : '<div class="pa-vuoto">Niente in questo gradino.</div>';
+    /* [17 set 2026] riquadro come le colonne del Bilancio: titolo nel colore
+       del gradino con la riga sotto, totale in fondo con la riga scura */
+    return '<div class="pa-col" style="margin-bottom:14px">'
+      + '<div class="pa-head" style="color:'+colore+'">'
+      +   '<div class="t">'+titolo+'</div>'
+      +   '<div class="s">'+spiega+'</div>'
+      + '</div>'
+      + righe
+      + '<div class="pa-fine"><span>Totale · ' + voci.length + (voci.length === 1 ? ' voce' : ' voci') + '</span>'
+      +   '<div class="pa-num">'
+      +     '<div style="font-size:1.05rem;font-weight:800;color:'+colore+'">'+_eur(tot)+'</div>'
+      +     '<div style="font-size:0.78rem;font-weight:700;color:var(--text2)">a te '+_eur(totNetto)+'</div>'
+      /* [12 set 2026] Quanto varrebbe con la parte acquirente: sul totale di
+         sezione serve più che sulla singola riga, perché è la cifra che
+         guardi quando decidi se rinnovare un incarico. */
+      +     (totTeorico>0 ? '<div style="font-size:0.74rem;font-style:italic;color:#6D28D9">+ '+_eur(totTeorico)+' con acquirente</div>' : '')
+      +   '</div>'
+      + '</div>'
+      + '</div>';
+  }
+
+  /* Correzione in linea: il pulsante si trasforma in casella. Niente prompt(),
+     che in alcuni contesti di questa applicazione non compare affatto. */
+  /* Una colonna: intestazione, casella della percentuale, importo maturato.
+     Il fondo è pieno quando il valore l'hai indicato tu, tratteggiato quando
+     è ancora quello di partenza (incarico per il venditore, percentuale
+     teorica per l'acquirente). */
+  function _colonna(et, immIdx, lato, perc, val, impostata, col){
+    var id='pa-st-'+lato+'-'+immIdx;
+    return '<div style="min-width:104px;text-align:center;border:1px '+(impostata?'solid':'dashed')+' '+(impostata?col:'var(--border2)')+';border-radius:8px;padding:4px 6px;background:'+(impostata?'var(--bg2)':'transparent')+'">'
+      + '<div style="font-size:0.6rem;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:'+(impostata?col:'var(--text3)')+'">'+et+'</div>'
+      + '<div style="display:flex;align-items:center;justify-content:center;gap:3px;margin:2px 0">'
+      +   '<input id="'+id+'" value="'+(perc||0)+'" inputmode="decimal"'
+      +     ' onchange="_paStima('+immIdx+',\''+lato+'\',this.value)"'
+      +     ' onkeydown="if(event.key===\'Enter\'){event.preventDefault();this.blur();}"'
+      +     ' style="width:46px;text-align:right;font-size:0.8rem;font-weight:700;color:var(--text);border:1px solid var(--border2);border-radius:5px;padding:2px 4px;font-family:inherit;background:var(--bg)">'
+      +   '<span style="font-size:0.74rem;font-weight:700;color:var(--text3)">%</span>'
+      + '</div>'
+      + '<div style="font-size:0.78rem;font-weight:800;color:'+(impostata?col:'var(--text3)')+'">'+_eur(val||0)+'</div>'
+      + '</div>';
+  }
+
+  /* [25 set 2026] Ridisegna la pagina RESTANDO dov'eri: stessa posizione di
+     scorrimento e, se eri su una casella, di nuovo su quella casella (gli id
+     pa-st-V-n / pa-st-A-n restano gli stessi). Prima apriProvvAttese() da solo
+     ricostruiva tutto e la lista tornava in cima. */
+  function _paRidisegna(){
+    var sc = document.getElementById('pa-scroll');
+    var top = sc ? sc.scrollTop : 0;
+    var att = document.activeElement;
+    var attId = (att && att.id && att.id.indexOf('pa-st-')===0) ? att.id : '';
+    apriProvvAttese();
+    var sc2 = document.getElementById('pa-scroll');
+    if(sc2) sc2.scrollTop = top;
+    if(attId){
+      var el = document.getElementById(attId);
+      if(el){ try{ el.focus({ preventScroll:true }); el.select && el.select(); }catch(e){} }
+    }
+  }
+
+  /* Scrive SOLO stimaPercV / stimaPercA sull'immobile: campi che esistono
+     unicamente per questa schermata. incPerc, percV e percA non si toccano. */
+  window._paStima=function(immIdx, lato, valore){
+    var im=(Array.isArray(D.immobili)?D.immobili:[])[immIdx];
+    if(!im) return;
+    var v=String(valore==null?'':valore).trim();
+    var n=_n(v);
+    if(v!=='' && (n<0 || n>100)){
+      typeof dlgAlert==='function'&&dlgAlert('La percentuale deve stare fra 0 e 100.','','Valore non valido');
+      setTimeout(_paRidisegna, 0); return;
+    }
+    if(lato==='V') im.stimaPercV = v; else im.stimaPercA = v;
+    try{ (typeof saveD==='function'&&saveD()); }catch(e){ console.warn('[Provvigioni attese] saveD KO:', e); }
+    /* un istante DOPO: se hai premuto Tab il cursore si è già spostato sulla
+       casella successiva, e _paRidisegna lo rimette lì nella pagina nuova */
+    setTimeout(_paRidisegna, 0);
+  };
+
+  /* [13 set 2026] _paModPerc rimossa: scriveva sulla scheda immobile da una
+     pagina che deve solo leggere. La correzione della provvigione si fa nella
+     scheda dell'immobile o nella pratica, dove quel dato vive. */
+
+  /* ── LINGUETTE ──────────────────────────────────────────────────────────
+     Stesse classi della scheda immobile (.simm-tabs, .simm-tab): si vede una
+     sezione per volta invece di scorrere fino in fondo. */
+  var _paTabAttiva = 'maturato';
+  function _tot(l){ return l.reduce(function(s,v){ return s+v.valore; },0); }
+  function _totT(l){ return l.reduce(function(s,v){ return s+(v.teorico||0); },0); }
+  function _linguette(G){
+    var voci=[
+      ['maturato','4 · Da incassare', G.maturato, '#15803D'],
+      ['accettate','3 · Accettate',   G.accettate,'#1D4ED8'],
+      ['inCorso','2 · In corso',      G.inCorso,  '#D97706'],
+      ['portafoglio','1 · Portafoglio',G.portafoglio,'var(--text2)'],
+      ['scadenze','A rischio',        G.scadenze, '#DC2626']
+    ];
+    /* [17 set 2026] pillole come nel Bilancio: gli importi stanno già nei
+       riquadri sopra, qui basta il numero delle voci */
+    return '<div class="pa-ling">'
+      + voci.map(function(v){
+          if(v[0]==='scadenze' && !v[2].length) return '';
+          var col = PA_COL[v[0]], on = (_paTabAttiva===v[0]);
+          return '<button class="pa-l'+(on?' on':'')+'" style="'+(on?'background:'+col:'')+'" '
+            + 'onclick="_paTab(\''+v[0]+'\')">'
+            + '<span class="pall" style="background:'+col+'"></span>'
+            + v[1] + ' <span class="n">'+v[2].length+'</span></button>';
+        }).join('')
+      + '</div>';
+  }
+  function _contenutoTab(G, quale){
+    if(quale==='scadenze'){
+      var _perdo=_tot(G.scadenze), _perdoT=_totT(G.scadenze);
+      /* [15 set 2026] I campi delle percentuali stanno qui e in Portafoglio:
+         sono le due viste fatte di stime, dove cambiarli cambia i numeri. */
+      return _paCampiQuote()
+        + '<div class="pa-nota">'
+        + 'Incarichi in scadenza entro 90 giorni senza una proposta accettata.'
+        + (_perdo>0 ? ' <strong style="color:'+PA_COL.scadenze+'">Se li perdi se ne vanno '+_eur(_perdo)+'</strong>'
+            + (_perdoT>0 ? ' <span style="color:#6D28D9;font-style:italic">più '+_eur(_perdoT)+' di parte acquirente</span>' : '') : '')
+        + '</div>'
+        + _sez('Incarichi in scadenza', 'da rinnovare o da lasciar andare', G.scadenze, '#DC2626', 'scadenze');
+    }
+    var mappa={
+      maturato:   ['4 · Da incassare','lavoro fatto, soldi non arrivati', G.maturato, '#15803D'],
+      accettate:  ['3 · Proposte accettate','manca solo il rogito', G.accettate, '#1D4ED8'],
+      inCorso:    ['2 · Proposte in corso','in trattativa, possono saltare', G.inCorso, '#D97706'],
+      portafoglio:['1 · Portafoglio','se si vendessero tutti — non succede mai', G.portafoglio, 'var(--text2)']
+    };
+    var v=mappa[quale]||mappa.maturato;
+    return (quale === 'portafoglio' ? _paCampiQuote() : '')
+      + _sez(v[0], v[1], v[2], v[3], mappa[quale] ? quale : 'maturato');
+  }
+  /* [14 set 2026] Esposta per il modulo Obiettivi, che deve sapere cosa c'è
+     in pipeline. È di SOLA LETTURA (nessun saveD, scrive solo sul proprio
+     oggetto di lavoro): riusarla evita di avere due conti diversi dello
+     stesso portafoglio che col tempo divergono. */
+  window._paCalcola=_calcola;
+  window._paTab=function(quale){ _paTabAttiva=quale; apriProvvAttese(); };
+
+  window.chiudiProvvAttese=function(){ var w=document.getElementById('pa-wrap'); if(w) w.remove(); };
+  window.apriProvvAttese=function(){
+    chiudiProvvAttese();
+    var G;
+    try{ G=_calcola(); }catch(e){ console.warn('[Provvigioni attese] KO:', e); G={maturato:[],accettate:[],inCorso:[],portafoglio:[],scadenze:[]}; }
+    var w=document.createElement('div');
+    w.id='pa-wrap';
+    if(!document.getElementById('pa-css')){
+      var st=document.createElement('style'); st.id='pa-css'; st.textContent=PA_CSS;
+      document.head.appendChild(st);
+    }
+    w.style.cssText='position:fixed;top:0;right:0;bottom:0;left:0;z-index:9000;background:var(--bg);display:flex;flex-direction:column;overflow:hidden';
+    w.innerHTML='<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg2);border-bottom:1px solid var(--border);flex-shrink:0">'
+      + '<button onclick="chiudiProvvAttese()" class="btn btn-outline btn-sm" style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg> Chiudi</button>'
+      + '<div style="font-weight:800;color:var(--text);font-size:0.95rem">Provvigioni attese</div></div>'
+      + '<div id="pa-scroll" style="flex:1;overflow:auto;padding:16px 22px"><div style="max-width:1400px;margin:0 auto">'
+      /* [17 set 2026] testata come il Bilancio: titolo, linguette, data */
+      +   '<div class="pa-testa">'
+      +     '<span class="pa-tit">PROVVIGIONI ATTESE</span>'
+      +     _linguette(G)
+      +     '<div style="text-align:right;line-height:1.4;flex:1 1 180px;min-width:0;margin-left:auto">'
+      +       (function(){ var n=''; try{ if(typeof getNomeAgenzia==='function') n=getNomeAgenzia()||''; }catch(e){}
+                 return n ? '<div style="font-size:0.82rem;font-weight:700;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+String(n).replace(/</g,'&lt;')+'</div>' : ''; })()
+      +       '<div style="font-size:0.74rem;color:var(--text3);white-space:nowrap">statistiche, sola lettura · aggiornato al '+new Date().toLocaleDateString('it-IT')+'</div>'
+      +     '</div>'
+      +   '</div>'
+      +   _quadro(G)
+      /* [12 set 2026] Le sezioni seguono lo stesso ordine della pipeline in
+         cima: dal più vicino alla cassa al più lontano. Prima la lettura era
+         la stessa ma senza i numeri di tappa, e non si capiva che fosse un
+         percorso. */
+      /* [12 set 2026] LINGUETTE al posto delle quattro sezioni impilate.
+         Prima bisognava scorrere fino in fondo per arrivare al portafoglio.
+         Stesse classi della scheda immobile (.simm-tabs, .simm-tab): niente
+         grafica nuova da imparare. */
+      +   '<div id="pa-corpo">' + _contenutoTab(G, _paTabAttiva) + '</div>'
+      + '</div></div>';
+    document.body.appendChild(w);
+    try{ if(typeof window._ceSeguiMenu === 'function') window._ceSeguiMenu(w); }catch(e){}
+  };
+})();
