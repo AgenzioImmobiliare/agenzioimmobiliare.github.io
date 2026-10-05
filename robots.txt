@@ -1,0 +1,12 @@
+# [5 ott 2026] Google può leggere solo le pagine pubbliche.
+# Gestionale (index.html), Marketing Hub e moduli restano fuori dalle ricerche.
+User-agent: *
+Allow: /valuta-casa.html
+Allow: /linkinbio.html
+Allow: /img/
+Allow: /foto/
+Allow: /lib-pubblica.js
+Allow: /valuta-dati.js
+Disallow: /
+
+Sitemap: https://agenzioimmobiliare.github.io/sitemap.xml
