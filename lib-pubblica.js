@@ -132,5 +132,34 @@
     var oggi = oggiISO();
     return ((p && p.eventi) || []).filter(function(e){ var f = e.dataA || e.data || ''; return !f || f >= oggi; });
   }
-  window.LIB = { costruisci:costruisci, impronta:impronta, scrivi:scrivi, leggi:leggi, scriviDoc:scriviDoc, leggiDoc:leggiDoc, cfgBase:cfgBase, eventiValidi:eventiValidi, dataIT:dataIT, url:SITO + 'linkinbio.html', urlValuta:SITO + 'valuta-casa.html' };
+  /* [5 ott 2026] STATISTICHE della landing Valuta casa (scelta di Enzo):
+     ogni evento è un documento a sé in statLanding, scritto SENZA login.
+     Niente nomi, niente IP, niente codici salvati nel browser: la "sessione"
+     vive solo finché la pagina resta aperta. Le legge solo Enzo (Hub).
+     Regola Firestore che serve (da aggiungere una volta):
+       match /statLanding/{id} {
+         allow create: if request.resource.data.keys().hasOnly(['e','s','c','ts','g','o','f','x','d'])
+           && request.resource.data.e is string && request.resource.data.e.size() <= 20
+           && request.resource.data.s is string && request.resource.data.s.size() <= 16
+           && request.resource.data.ts is int
+           && (!('d' in request.resource.data) || (request.resource.data.d is map && request.resource.data.d.size() <= 25));
+         allow read, delete: if request.auth != null && request.auth.uid == '<uid di Enzo>';
+       }                                                                      */
+  function valoreFS(v){
+    if(v === null || v === undefined) return { nullValue:null };
+    if(typeof v === 'boolean') return { booleanValue:v };
+    if(typeof v === 'number') return Number.isInteger(v) ? { integerValue:String(v) } : { doubleValue:v };
+    if(Array.isArray(v)) return { arrayValue:{ values:v.slice(0, 30).map(valoreFS) } };
+    if(typeof v === 'object'){ var f = {}; Object.keys(v).slice(0, 25).forEach(function(k){ if(v[k] !== undefined) f[k] = valoreFS(v[k]); }); return { mapValue:{ fields:f } }; }
+    return { stringValue:String(v).slice(0, 300) };
+  }
+  function evento(dati){
+    var f = {}; Object.keys(dati).forEach(function(k){ if(dati[k] !== undefined) f[k] = valoreFS(dati[k]); });
+    var url = 'https://firestore.googleapis.com/v1/projects/' + PROGETTO + '/databases/(default)/documents/statLanding?key=' + CHIAVE;
+    try {
+      return fetch(url, { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ fields:f }), keepalive:true })
+        .then(function(r){ return r.ok; }).catch(function(){ return false; });
+    } catch(e){ return Promise.resolve(false); }
+  }
+  window.LIB = { costruisci:costruisci, evento:evento, impronta:impronta, scrivi:scrivi, leggi:leggi, scriviDoc:scriviDoc, leggiDoc:leggiDoc, cfgBase:cfgBase, eventiValidi:eventiValidi, dataIT:dataIT, url:SITO + 'linkinbio.html', urlValuta:SITO + 'valuta-casa.html' };
 })();
