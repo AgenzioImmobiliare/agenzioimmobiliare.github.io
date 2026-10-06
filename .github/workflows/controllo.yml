@@ -1,0 +1,46 @@
+# Controllo automatico del sito (6 ottobre 2026)
+# Parte da solo a ogni caricamento sul ramo main (GitHub Desktop → Push).
+# Se trova un errore, il segno accanto al caricamento diventa una X rossa
+# e GitHub manda un'email. Il sito viene pubblicato lo stesso: il controllo
+# AVVISA, non blocca.
+# Si può lanciare anche a mano: scheda Actions → "Controllo del sito" → Run workflow.
+name: Controllo del sito
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  controllo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Scarica il sito
+        uses: actions/checkout@v4
+
+      - name: Prepara Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Installa il browser di prova
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.0
+          npx playwright install --with-deps chromium
+
+      - name: Controlla sintassi e apre tutte le sezioni
+        run: node tests/controllo.mjs
+        env:
+          FOTO: foto-controllo
+
+      - name: Conserva le foto delle sezioni (solo se qualcosa non va)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: foto-sezioni
+          path: foto-controllo
+          retention-days: 7
