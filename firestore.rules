@@ -1,0 +1,67 @@
+rules_version = '2';
+// ══════════════════════════════════════════════════════════════════════
+// REGOLE FIRESTORE COMPLETE — gestionale "Le case dalla A allo Z.io"
+// Preparate il 6 ottobre 2026. NON si pubblicano da GitHub: si copiano in
+// console.firebase.google.com → progetto agenzioimmobiliare → Firestore
+// Database → Regole → incolla → Pubblica.
+//
+// Prima di pubblicare sostituire:
+//   UID_ENZO        → l'uid che stampa statoAccesso() in Console (F12)
+//   UID_CONNETTORE  → l'uid dell'utente "connettore" (sola lettura)
+// e verificare che statoAccesso() dica "identificato" su ufficio, casa e
+// telefono. Se un dispositivo non è identificato, NON pubblicare.
+//
+// Chi può fare cosa:
+//   Enzo        → legge e scrive tutto il gestionale e l'Hub
+//   connettore  → SOLO legge l'archivio del gestionale (per Claude)
+//   chiunque    → legge pubblico/* (Link in Bio, Valuta casa) e
+//                 aggiunge eventi anonimi in statLanding
+// Tutto il resto è chiuso.
+// ══════════════════════════════════════════════════════════════════════
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function eEnzo() {
+      return request.auth != null && request.auth.uid == 'UID_ENZO';
+    }
+    function eConnettore() {
+      return request.auth != null && request.auth.uid == 'UID_CONNETTORE';
+    }
+
+    // Archivio del gestionale e dell'Hub: users/usr_001/data/lecaseAZ2_*
+    // (+ snapshots). La cartella si chiama ancora usr_001: il nome non
+    // conta, conta CHI entra.
+    match /users/{utente}/{sotto=**} {
+      allow read: if eEnzo() || eConnettore();
+      allow write: if eEnzo();
+    }
+
+    // Elenco utenti (senza password dal 23 settembre) e configurazione,
+    // più la vecchia raccolta unica di prima del multi-utente.
+    match /gestionale/{doc=**} {
+      allow read, write: if eEnzo();
+    }
+
+    // Pagine pubbliche: le legge chiunque, le scrive solo Enzo dall'Hub
+    match /pubblico/{doc} {
+      allow read: if true;
+      allow write: if eEnzo();
+    }
+
+    // Statistiche anonime della landing: chiunque AGGIUNGE un evento
+    // (forma controllata), solo Enzo legge e cancella. Nessuno modifica.
+    match /statLanding/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['e','s','c','ts','g','o','f','x','d'])
+        && request.resource.data.e is string && request.resource.data.e.size() <= 20
+        && request.resource.data.s is string && request.resource.data.s.size() <= 16
+        && request.resource.data.ts is int
+        && (!('d' in request.resource.data) || (request.resource.data.d is map && request.resource.data.d.size() <= 25));
+      allow read, delete: if eEnzo();
+    }
+
+    // Qualunque altra cosa: chiusa
+    match /{tutto=**} {
+      allow read, write: if false;
+    }
+  }
+}
