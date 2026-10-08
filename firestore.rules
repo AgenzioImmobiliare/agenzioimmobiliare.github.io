@@ -8,12 +8,15 @@ rules_version = '2';
 // Prima di pubblicare sostituire:
 //   UID_ENZO        → l'uid che stampa statoAccesso() in Console (F12)
 //   UID_CONNETTORE  → l'uid dell'utente "connettore" (sola lettura)
+//   UID_WORKER      → l'uid dell'utente "worker" (Worker "richieste", 8 ott 2026)
 // e verificare che statoAccesso() dica "identificato" su ufficio, casa e
 // telefono. Se un dispositivo non è identificato, NON pubblicare.
 //
 // Chi può fare cosa:
 //   Enzo        → legge e scrive tutto il gestionale e l'Hub
 //   connettore  → SOLO legge l'archivio del gestionale (per Claude)
+//   worker      → SOLO legge e scrive le due caselle dei moduli pubblici
+//                 (inbox_richieste_clienti, inbox_lead_valutazione)
 //   chiunque    → legge pubblico/* (Link in Bio, Valuta casa) e
 //                 aggiunge eventi anonimi in statLanding
 // Tutto il resto è chiuso.
@@ -26,6 +29,20 @@ service cloud.firestore {
     }
     function eConnettore() {
       return request.auth != null && request.auth.uid == 'UID_CONNETTORE';
+    }
+    function eWorker() {
+      return request.auth != null && request.auth.uid == 'UID_WORKER';
+    }
+
+    // [8 ott 2026] Caselle dei moduli pubblici, scritte dal Worker "richieste".
+    // Il worker può solo leggerle e riscriverle (mai cancellarle), e solo
+    // con i due campi della casella. Tutto il resto di users/ gli resta chiuso.
+    match /users/{utente}/data/{casella} {
+      allow get: if eWorker()
+        && casella in ['inbox_richieste_clienti', 'inbox_lead_valutazione'];
+      allow create, update: if eWorker()
+        && casella in ['inbox_richieste_clienti', 'inbox_lead_valutazione']
+        && request.resource.data.keys().hasOnly(['valore', '_ts']);
     }
 
     // Archivio del gestionale e dell'Hub: users/usr_001/data/lecaseAZ2_*
