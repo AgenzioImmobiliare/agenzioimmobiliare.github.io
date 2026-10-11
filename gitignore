@@ -1,0 +1,16 @@
+# Cose del PC che NON vanno mai sul sito (11 ott 2026)
+
+# Backup del gestionale: contengono i dati dei clienti
+*backup*
+*.bak
+
+# Programmi e avvii che girano solo sul PC
+scraper-server/
+node_modules/
+dist/
+*.bat
+*.exe
+*.log
+Sito Form/
+COME_CREARE_EXE.md
+GUIDA_USO.md
