@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aggiorna catasto</title>
+<!-- [11 ott 2026] Aggiornamento semestrale dei dati della Mappa catastale.
+     Si apre dal sito (agenzioimmobiliare.github.io/strumenti/aggiorna-catasto.html),
+     legge lo ZIP scaricato dall'Agenzia delle Entrate, converte i comuni scelti
+     con lo STESSO convertitore usato la prima volta (catasto-converti.js) e
+     restituisce un solo ZIP con la cartella catasto/ da copiare nel repository.
+     Tutto avviene nel browser: niente viene spedito da nessuna parte. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="catasto-converti.js"></script>
+<style>
+:root{--bg:#0B1220;--bg2:#111827;--bg3:#0F172A;--text:#F1F5F9;--text2:#CBD5E1;--text3:#94A3B8;--border:#1F2937;--border2:#334155;--brand:#EA580C;--ok:#22C55E;--ko:#F87171}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]){--bg:#F8FAFC;--bg2:#FFFFFF;--bg3:#F1F5F9;--text:#0F172A;--text2:#334155;--text3:#64748B;--border:#E2E8F0;--border2:#CBD5E1;--ok:#15803D;--ko:#B91C1C}}
+:root[data-theme="dark"]{--bg:#0B1220;--bg2:#111827;--bg3:#0F172A;--text:#F1F5F9;--text2:#CBD5E1;--text3:#94A3B8;--border:#1F2937;--border2:#334155}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:15px;line-height:1.5}
+.pagina{max-width:860px;margin:0 auto;padding:28px 16px 60px}
+h1{font-size:1.5rem;margin:0 0 4px;letter-spacing:-.2px;display:flex;align-items:center;gap:10px}
+.sotto{color:var(--text3);margin:0 0 22px;font-size:.92rem}
+.passo{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:14px}
+.passo h2{font-size:.78rem;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.passo h2 b{display:inline-flex;width:22px;height:22px;border-radius:50%;background:var(--brand);color:#fff;align-items:center;justify-content:center;font-size:.75rem}
+.zona{border:2px dashed var(--border2);border-radius:12px;padding:26px 16px;text-align:center;color:var(--text2);cursor:pointer;transition:border-color .15s,background .15s}
+.zona.sopra{border-color:var(--brand);background:rgba(234,88,12,.08)}
+.zona small{display:block;color:var(--text3);margin-top:4px}
+.elenco{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:6px}
+.elenco label{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:9px;background:var(--bg3);cursor:pointer;font-size:.88rem}
+.elenco label .nuovo{margin-left:auto;font-size:.68rem;font-weight:700;color:var(--brand);text-transform:uppercase}
+.elenco input{accent-color:var(--brand);width:16px;height:16px}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:10px;border:1px solid var(--border2);background:transparent;color:var(--text);padding:9px 16px;font:inherit;font-weight:700;font-size:.88rem;cursor:pointer}
+.btn-primario{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.righe{margin:12px 0 0;padding:0;list-style:none;font-size:.86rem}
+.righe li{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--border)}
+.righe li:last-child{border-bottom:none}
+.righe .nome{flex:1}
+.righe .stato{color:var(--text3);font-variant-numeric:tabular-nums}
+.righe .ok{color:var(--ok)} .righe .ko{color:var(--ko)}
+.attuale{font-size:.86rem;color:var(--text2)}
+.attuale span{display:inline-block;margin:2px 6px 2px 0;padding:2px 8px;border-radius:12px;background:var(--bg3);border:1px solid var(--border)}
+ol.istr{margin:6px 0 0;padding-left:20px;color:var(--text2);font-size:.9rem}
+ol.istr code{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:1px 5px;font-size:.84rem}
+.nota{font-size:.78rem;color:var(--text3);margin-top:16px}
+.barra{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;align-items:center}
+</style>
+</head>
+<body>
+<div class="pagina">
+  <h1>
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--brand)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+    Aggiorna catasto
+  </h1>
+  <p class="sotto">I dati della Mappa catastale vengono dall'Agenzia delle Entrate, che li aggiorna ogni sei mesi. Qui li sostituisci senza programmi: tutto avviene in questa pagina, niente viene spedito.</p>
+
+  <div class="passo">
+    <h2>Dati in uso adesso</h2>
+    <div id="attuale" class="attuale">Leggo…</div>
+  </div>
+
+  <div class="passo">
+    <h2><b>1</b> Trascina lo ZIP dell'Agenzia</h2>
+    <div id="zona" class="zona" tabindex="0">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <div><b>Trascina qui</b> lo ZIP, oppure tocca per sceglierlo</div>
+      <small>Va bene lo ZIP della provincia (es. SA.zip), quelli dei singoli comuni (es. A091_AGROPOLI.zip) o i file .gml</small>
+    </div>
+    <input id="file" type="file" accept=".zip,.gml" multiple hidden>
+  </div>
+
+  <div class="passo" id="passo2" hidden>
+    <h2><b>2</b> Scegli i comuni</h2>
+    <div class="barra" style="margin:0 0 10px">
+      <button class="btn" id="tuttiMiei" type="button">Solo quelli già in uso</button>
+      <button class="btn" id="nessuno" type="button">Nessuno</button>
+    </div>
+    <div id="elenco" class="elenco"></div>
+    <div class="barra">
+      <button class="btn btn-primario" id="converti" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>
+        Converti
+      </button>
+      <span id="conteggio" style="color:var(--text3);font-size:.86rem"></span>
+    </div>
+    <ul id="righe" class="righe"></ul>
+  </div>
+
+  <div class="passo" id="passo3" hidden>
+    <h2><b>3</b> Scarica e carica su GitHub</h2>
+    <button class="btn btn-primario" id="scarica" type="button">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Scarica catasto-aggiornato.zip
+    </button>
+    <ol class="istr">
+      <li>Apri lo ZIP: dentro c'è la cartella <code>catasto</code>.</li>
+      <li>Copiala nella cartella del repository sul PC, sopra quella che c'è già, e conferma <b>Sostituisci</b>.</li>
+      <li>In GitHub Desktop: scrivi "aggiorno catasto", poi <b>Commit</b> e <b>Push</b>.</li>
+      <li>Riapri la Mappa catastale: in basso compare la data nuova dei dati.</li>
+    </ol>
+    <p class="nota">I comuni che non hai convertito restano come sono: l'elenco nuovo li comprende comunque.</p>
+  </div>
+
+  <p class="nota">Cartografia catastale © Agenzia delle Entrate, licenza CC BY 4.0.</p>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  var C = window.CatastoConverti;
+  var $ = function(id){ return document.getElementById(id); };
+  var indiceAttuale = null;        // catasto/indice.json del sito, se raggiungibile
+  var trovati = {};                // COD → {nome, ple:fn, map:fn} (funzioni che leggono il testo)
+  var risultato = null;            // ZIP pronto
+
+  function esc(t){ return String(t == null ? '' : t).replace(/&/g,'&amp;').replace(/</g,'&lt;'); }
+  function dataIt(d){ var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || ''); return m ? m[3] + '/' + m[2] + '/' + m[1] : (d || '—'); }
+  function mb(n){ return (n / 1048576).toLocaleString('it-IT', {maximumFractionDigits:1}) + ' MB'; }
+
+  if(!C || typeof JSZip === 'undefined'){
+    $('attuale').innerHTML = '<span style="color:var(--ko)">La pagina non ha caricato i suoi strumenti: controlla la connessione e ricarica.</span>';
+  }
+
+  /* i dati in uso: si leggono dal sito stesso */
+  fetch('../catasto/indice.json', {cache:'no-cache'}).then(function(r){ if(!r.ok) throw 0; return r.json(); }).then(function(j){
+    indiceAttuale = j;
+    var c = j.comuni || [];
+    $('attuale').innerHTML = c.length
+      ? c.map(function(x){ return '<span>' + esc(x.nome) + ' · ' + dataIt(x.data) + '</span>'; }).join('')
+      : 'Nessun comune caricato.';
+  }).catch(function(){
+    $('attuale').textContent = 'Non riesco a leggere i dati del sito (pagina aperta dal PC?). Puoi convertire lo stesso: l\'elenco conterrà solo i comuni che converti ora.';
+  });
+
+  /* --- lettura degli ZIP, anche uno dentro l'altro --- */
+  function gmlInfo(nome){
+    var base = nome.split('/').pop();
+    var m = /^([A-Z]\d{3})_(.+)_(ple|map)\.gml$/i.exec(base);
+    return m ? { cod:m[1].toUpperCase(), nome:m[2].replace(/_/g, ' '), tipo:m[3].toLowerCase() } : null;
+  }
+  function registra(info, leggi){
+    var t = trovati[info.cod] || (trovati[info.cod] = { cod:info.cod, nome:info.nome });
+    t[info.tipo] = leggi;
+  }
+  function esplora(zip, profondita){
+    var lavori = [];
+    zip.forEach(function(percorso, voce){
+      if(voce.dir) return;
+      var g = gmlInfo(percorso);
+      if(g){ registra(g, function(){ return voce.async('string'); }); return; }
+      if(/\.zip$/i.test(percorso) && profondita < 4){
+        lavori.push(voce.async('uint8array').then(JSZip.loadAsync).then(function(z){ return esplora(z, profondita + 1); }));
+      }
+    });
+    return Promise.all(lavori);
+  }
+  function apriFile(lista){
+    trovati = {}; risultato = null;
+    $('passo3').hidden = true; $('righe').innerHTML = '';
+    $('zona').querySelector('div').innerHTML = '<b>Leggo ' + lista.length + ' file…</b>';
+    var lavori = Array.prototype.map.call(lista, function(f){
+      if(/\.gml$/i.test(f.name)){
+        var g = gmlInfo(f.name);
+        if(g) registra(g, function(){ return f.text(); });
+        return Promise.resolve();
+      }
+      return JSZip.loadAsync(f).then(function(z){ return esplora(z, 1); });
+    });
+    Promise.all(lavori).then(mostraElenco).catch(function(e){
+      $('zona').querySelector('div').innerHTML = '<b style="color:var(--ko)">Non riesco ad aprire il file:</b> ' + esc(e && e.message || e);
+    });
+  }
+  function mostraElenco(){
+    var cod = Object.keys(trovati).filter(function(k){ return trovati[k].ple; }).sort(function(a, b){
+      return trovati[a].nome.localeCompare(trovati[b].nome);
+    });
+    if(!cod.length){
+      $('zona').querySelector('div').innerHTML = '<b style="color:var(--ko)">Nel file non ho trovato comuni del catasto.</b> Serve lo ZIP scaricato dal servizio di download della cartografia dell\'Agenzia.';
+      return;
+    }
+    $('zona').querySelector('div').innerHTML = '<b>Trovati ' + cod.length + ' comuni.</b> Puoi trascinare un altro file per ricominciare.';
+    var inUso = {};
+    ((indiceAttuale && indiceAttuale.comuni) || []).forEach(function(c){ inUso[c.c] = true; });
+    var nessunoInUso = !Object.keys(inUso).length;
+    $('elenco').innerHTML = cod.map(function(k){
+      var sel = nessunoInUso || inUso[k];
+      return '<label><input type="checkbox" value="' + k + '"' + (sel ? ' checked' : '') + '> '
+        + esc(trovati[k].nome.toLowerCase().replace(/(^|\s)\S/g, function(x){ return x.toUpperCase(); }))
+        + (inUso[k] || nessunoInUso ? '' : '<span class="nuovo">nuovo</span>') + '</label>';
+    }).join('');
+    $('passo2').hidden = false;
+    conta();
+  }
+  function scelti(){ return Array.prototype.map.call(document.querySelectorAll('#elenco input:checked'), function(i){ return i.value; }); }
+  function conta(){
+    var n = scelti().length;
+    $('conteggio').textContent = n ? n + ' comuni da convertire' : 'Spunta almeno un comune';
+    $('converti').disabled = !n;
+  }
+
+  /* --- conversione, un comune alla volta (la memoria del telefono ringrazia) --- */
+  function converti(){
+    var lista = scelti();
+    if(!lista.length) return;
+    $('converti').disabled = true; $('passo3').hidden = true;
+    var out = new JSZip(), riass = [], i = 0, totale = 0;
+    $('righe').innerHTML = lista.map(function(k){
+      return '<li id="r-' + k + '"><span class="nome">' + esc(trovati[k].nome) + '</span><span class="stato">in attesa</span></li>';
+    }).join('');
+    function stato(k, testo, cls){ var s = document.querySelector('#r-' + k + ' .stato'); if(s){ s.textContent = testo; s.className = 'stato ' + (cls || ''); } }
+    function prossimo(){
+      if(i >= lista.length) return fine();
+      var k = lista[i++], t = trovati[k];
+      stato(k, 'converto…');
+      Promise.all([t.ple(), t.map ? t.map() : Promise.resolve('')]).then(function(testi){
+        var r = C.convertiComune(k, t.nome, testi[0], testi[1]);
+        var peso = 0;
+        Object.keys(r.file).forEach(function(n){ out.file('catasto/' + k + '/' + n, r.file[n]); peso += r.file[n].length; });
+        totale += peso; riass.push(r.riassunto);
+        var nm = document.querySelector('#r-' + k + ' .nome'); if(nm) nm.textContent = r.nome;
+        stato(k, r.riassunto.fogli + ' fogli · ' + r.riassunto.particelle.toLocaleString('it-IT') + ' particelle · ' + mb(peso) + ' · dati del ' + dataIt(r.data), 'ok');
+        setTimeout(prossimo, 30);
+      }).catch(function(e){
+        stato(k, 'errore: ' + (e && e.message || e), 'ko');
+        setTimeout(prossimo, 30);
+      });
+    }
+    function fine(){
+      if(!riass.length){ $('converti').disabled = false; return; }
+      out.file('catasto/indice.json', C.componiIndice(indiceAttuale, riass));
+      out.generateAsync({type:'blob', compression:'DEFLATE', compressionOptions:{level:6}}).then(function(blob){
+        risultato = blob;
+        $('passo3').hidden = false;
+        $('conteggio').textContent = 'Pronto: ' + riass.length + ' comuni, ' + mb(totale) + ' di dati (lo ZIP pesa ' + mb(blob.size) + ')';
+        $('converti').disabled = false;
+        $('passo3').scrollIntoView({behavior:'smooth', block:'start'});
+      });
+    }
+    prossimo();
+  }
+
+  /* --- comandi --- */
+  var zona = $('zona');
+  zona.addEventListener('click', function(){ $('file').click(); });
+  zona.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); $('file').click(); } });
+  zona.addEventListener('dragover', function(e){ e.preventDefault(); zona.classList.add('sopra'); });
+  zona.addEventListener('dragleave', function(){ zona.classList.remove('sopra'); });
+  zona.addEventListener('drop', function(e){ e.preventDefault(); zona.classList.remove('sopra'); if(e.dataTransfer.files.length) apriFile(e.dataTransfer.files); });
+  $('file').addEventListener('change', function(){ if(this.files.length) apriFile(this.files); this.value = ''; });
+  $('elenco').addEventListener('change', conta);
+  $('nessuno').addEventListener('click', function(){ document.querySelectorAll('#elenco input').forEach(function(i){ i.checked = false; }); conta(); });
+  $('tuttiMiei').addEventListener('click', function(){
+    var inUso = {};
+    ((indiceAttuale && indiceAttuale.comuni) || []).forEach(function(c){ inUso[c.c] = true; });
+    document.querySelectorAll('#elenco input').forEach(function(i){ i.checked = !!inUso[i.value]; });
+    conta();
+  });
+  $('converti').addEventListener('click', converti);
+  $('scarica').addEventListener('click', function(){
+    if(!risultato) return;
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(risultato); a.download = 'catasto-aggiornato.zip';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+  });
+})();
+</script>
+</body>
+</html>
