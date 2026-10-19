@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Documenti per il tecnico — FRIMM Capital Casa Paestum</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<!-- [19 ott 2026] PAGINA DEL TECNICO (Acquisizioni, pezzo 3).
+     Il gestionale crea un link tecnico.html#s=ID-DELLO-SCRIPT&t=TOKEN e un codice
+     di 6 cifre. Questa pagina NON ha dati suoi: chiede tutto allo script
+     Google di Enzo (versione 5), che controlla link, codice e scadenza e
+     mostra solo la cartella "Documenti" di quell'immobile (mai "Identità").
+     Il link sta dopo il # e non viene mai mandato a nessun server.
+     Il tecnico scarica i documenti e carica i suoi (PDF o foto, a pezzi da
+     4 MB); il gestionale li ritrova con "Aggiorna". -->
+<meta name="theme-color" content="#16325C">
+<link rel="icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --brand:#16325C; --accent:#E2762B; --accent-2:#C9611A; --accent-soft:#FDF1E8;
+  --ink:#0F1C33; --text:#2C3A52; --muted:#66758C; --line:#E2E7EF; --soft:#F5F7FA; --bg:#FFFFFF; --card:#FFFFFF;
+  --ok:#15803D; --ko:#B91C1C; --shadow:0 18px 50px -18px rgba(15,28,51,.22);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --ink:#F1F5F9; --text:#CBD5E1; --muted:#94A3B8; --line:#24324A; --soft:#111A2E; --bg:#0B1220; --card:#0F1829; --accent-soft:#2A1A0E; --ok:#4ADE80; --ko:#F87171; --shadow:none; }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2{font-family:"Plus Jakarta Sans",Inter,sans-serif;color:var(--ink);letter-spacing:-.02em;margin:0}
+.testa{background:var(--brand);color:#fff;padding:22px 16px 26px}
+.testa .w{max-width:880px;margin:0 auto}
+.eyebrow{font-size:.72rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#F6B98A}
+.testa h1{color:#fff;font-size:1.55rem;margin-top:6px}
+.testa p{margin:6px 0 0;color:#C9D5E8;font-size:.95rem}
+.w{max-width:880px;margin:0 auto;padding:0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);margin:18px 0;overflow:hidden}
+.card h2{font-size:1.05rem;padding:16px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.card h2 small{font:500 .82rem Inter,sans-serif;color:var(--muted);margin-left:auto}
+.corpo{padding:16px 18px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:10px;padding:10px 14px;font:600 .92rem Inter,sans-serif;cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn.pieno{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn svg{width:17px;height:17px;flex:none}
+.codice{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.codice input{font:700 1.5rem/1 "Plus Jakarta Sans",Inter,sans-serif;letter-spacing:.35em;width:13ch;padding:12px 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);text-align:center}
+.codice input:focus,select:focus,.campo:focus{outline:2px solid var(--accent);outline-offset:1px}
+.msg{margin:12px 0 0;font-size:.92rem;font-weight:600}
+.msg.ko{color:var(--ko)} .msg.ok{color:var(--ok)}
+.riga{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid var(--line)}
+.riga:last-child{border-bottom:none}
+.riga .ic{width:36px;height:36px;border-radius:10px;background:var(--accent-soft);color:var(--accent-2);display:flex;align-items:center;justify-content:center;flex:none}
+.riga .ic svg{width:18px;height:18px}
+.riga .n{flex:1;min-width:0}
+.riga .n b{display:block;color:var(--ink);font-weight:600;font-size:.94rem;word-break:break-word}
+.riga .n span{font-size:.8rem;color:var(--muted)}
+.tag{display:inline-block;white-space:nowrap;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ok);border:1px solid currentColor;border-radius:20px;padding:1px 7px;margin-left:6px;vertical-align:1px}
+.vuoto{padding:18px;color:var(--muted);font-size:.92rem}
+label.l{display:flex;flex-direction:column;gap:6px;font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:12px}
+select,.campo{font:500 .95rem Inter,sans-serif;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);text-transform:none;letter-spacing:0}
+.barra{height:6px;background:var(--soft);border-radius:6px;overflow:hidden;margin-top:10px}
+.barra i{display:block;height:100%;background:var(--accent);width:0;transition:width .2s}
+.nota{font-size:.82rem;color:var(--muted);margin-top:10px}
+.piede{max-width:880px;margin:0 auto;padding:6px 16px 40px;font-size:.8rem;color:var(--muted)}
+.nascosto{display:none!important}
+@media (max-width:560px){ .riga{flex-wrap:wrap} .riga .n{flex:1 1 calc(100% - 50px)} .riga .btn{flex:1 1 100%} .testa h1{font-size:1.3rem} }
+</style>
+</head>
+<body>
+<header class="testa"><div class="w">
+  <div class="eyebrow">Documenti per il tecnico</div>
+  <h1 id="titolo">Documenti dell'immobile</h1>
+  <p id="sotto">Scrivi il codice che ti è arrivato insieme al link.</p>
+</div></header>
+
+<main class="w">
+  <section class="card" id="box-codice">
+    <h2>Codice di accesso</h2>
+    <div class="corpo">
+      <form class="codice" id="f-codice" autocomplete="off">
+        <input id="codice" inputmode="numeric" pattern="[0-9]*" maxlength="6" placeholder="000000" aria-label="Codice di 6 cifre">
+        <button class="btn pieno" id="entra" type="submit">Entra</button>
+      </form>
+      <div class="msg" id="msg-codice" role="status"></div>
+      <div class="nota">Il codice è di 6 cifre. Dopo 5 codici sbagliati il link si blocca.</div>
+    </div>
+  </section>
+
+  <section class="card nascosto" id="box-doc">
+    <h2>Documenti <small id="n-doc"></small></h2>
+    <div id="elenco"></div>
+  </section>
+
+  <section class="card nascosto" id="box-carica">
+    <h2>Carica i tuoi documenti</h2>
+    <div class="corpo">
+      <label class="l">Che documento è
+        <select id="tipo"></select>
+      </label>
+      <label class="l nascosto" id="l-altro">Nome del documento
+        <input class="campo" id="altro" placeholder="es. Relazione tecnica integrata">
+      </label>
+      <button class="btn pieno" id="scegli" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> Scegli il file (PDF o foto)</button>
+      <div class="msg" id="msg-carica" role="status"></div>
+      <div class="barra nascosto" id="barra"><i></i></div>
+      <div class="nota">Il file viene rinominato da solo con il riferimento dell'immobile. Massimo 50 MB.</div>
+    </div>
+  </section>
+</main>
+<div class="piede" id="piede">I documenti restano nell'archivio privato dell'agenzia: questa pagina li mostra solo a chi ha link e codice, fino alla scadenza.</div>
+
+<script>
+(function(){
+'use strict';
+var PEZZO = 4 * 1024 * 1024;
+var I_DOC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+var I_FOTO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>';
+var I_GIU = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+var $ = function(id){ return document.getElementById(id); };
+function esc(t){ return String(t == null ? '' : t).replace(/[&<>"']/g, function(c){ return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]; }); }
+function peso(n){ return n > 1048576 ? (n / 1048576).toFixed(1).replace('.', ',') + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
+function data(ms){ var d = new Date(ms); return d.toLocaleDateString('it-IT', { day:'2-digit', month:'2-digit', year:'numeric' }); }
+
+/* il link: #s=ID-DELLO-SCRIPT&t=TOKEN */
+var H = {}; String(location.hash || '').replace(/^#/, '').split('&').forEach(function(p){ var i = p.indexOf('='); if(i > 0) H[p.slice(0, i)] = decodeURIComponent(p.slice(i + 1)); });
+var URL_S = /^[A-Za-z0-9_-]{20,}$/.test(H.s || '') ? 'https://script.google.com/macros/s/' + H.s + '/exec' : '';
+var TOKEN = /^[a-f0-9]{32}$/.test(H.t || '') ? H.t : '';
+var CODICE = '';
+var _dati = null, _occupato = false;
+
+function chiama(azione, dati){
+  var corpo = { azione:azione, token:TOKEN, codice:CODICE };
+  Object.keys(dati || {}).forEach(function(k){ corpo[k] = dati[k]; });
+  return fetch(URL_S, { method:'POST', redirect:'follow', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body:JSON.stringify(corpo) })
+    .then(function(r){ return r.text(); })
+    .then(function(t){
+      var o = null; try{ o = JSON.parse(t); }catch(e){}
+      if(!o){ var e1 = new Error('Il servizio non risponde come dovrebbe: riprova fra poco.'); throw e1; }
+      if(!o.ok){ var e2 = new Error(o.errore || 'Errore'); e2.fine = !!o.fine; e2.codice = !!o.codice; throw e2; }
+      return o;
+    }, function(){ throw new Error('Manca la connessione: controlla internet e riprova.'); });
+}
+function tenta(fn, n){
+  return fn().catch(function(e){
+    if(n <= 1 || e.fine || e.codice) throw e;
+    return new Promise(function(r){ setTimeout(r, 1500); }).then(function(){ return tenta(fn, n - 1); });
+  });
+}
+function fineLink(testo){
+  $('box-doc').classList.add('nascosto'); $('box-carica').classList.add('nascosto'); $('box-codice').classList.remove('nascosto');
+  $('f-codice').classList.add('nascosto');
+  $('msg-codice').className = 'msg ko'; $('msg-codice').textContent = testo;
+  try{ sessionStorage.removeItem('tec_' + TOKEN); }catch(e){}
+}
+
+/* ── ingresso ── */
+function apri(){
+  return chiama('pubApri').then(function(o){
+    _dati = o;
+    try{ sessionStorage.setItem('tec_' + TOKEN, CODICE); }catch(e){}
+    $('titolo').textContent = o.et || 'Documenti dell\'immobile';
+    $('sotto').textContent = [o.ref && String(o.et || '').indexOf(o.ref) < 0 ? 'Rif. ' + o.ref : '', o.agente || '', 'link valido fino al ' + data(o.scad)].filter(Boolean).join(' · ');
+    document.title = (o.et || 'Documenti') + ' — documenti per il tecnico';
+    $('box-codice').classList.add('nascosto');
+    $('box-doc').classList.remove('nascosto'); $('box-carica').classList.remove('nascosto');
+    disegnaElenco(); disegnaTipi();
+  });
+}
+$('f-codice').addEventListener('submit', function(ev){
+  ev.preventDefault();
+  var c = String($('codice').value || '').replace(/\D/g, '');
+  if(c.length !== 6){ $('msg-codice').className = 'msg ko'; $('msg-codice').textContent = 'Il codice è di 6 cifre.'; return; }
+  CODICE = c; $('entra').disabled = true; $('msg-codice').className = 'msg'; $('msg-codice').textContent = 'Controllo…';
+  apri().catch(function(e){
+    $('entra').disabled = false;
+    if(e.fine) fineLink(e.message);
+    else { $('msg-codice').className = 'msg ko'; $('msg-codice').textContent = e.message; $('codice').select(); }
+  });
+});
+$('codice').addEventListener('input', function(){ this.value = this.value.replace(/\D/g, '').slice(0, 6); });
+
+/* ── elenco e scarico ── */
+function disegnaElenco(){
+  var F = (_dati && _dati.file) || [];
+  $('n-doc').textContent = F.length ? F.length + (F.length === 1 ? ' file' : ' file') : '';
+  $('elenco').innerHTML = F.length ? F.map(function(f, i){
+    return '<div class="riga"><span class="ic">' + (/^image\//.test(f.mime) ? I_FOTO : I_DOC) + '</span>'
+      + '<span class="n"><b>' + esc(f.nome) + (f.tecnico ? '<span class="tag">caricato da te</span>' : '') + '</b><span>' + peso(f.peso || 0) + ' · ' + data(f.data) + '</span></span>'
+      + '<button class="btn" data-i="' + i + '" type="button">' + I_GIU + ' Scarica</button></div>';
+  }).join('') : '<div class="vuoto">Per ora non ci sono documenti. Quando l\'agente ne aggiunge, li trovi qui ricaricando la pagina.</div>';
+  Array.prototype.forEach.call($('elenco').querySelectorAll('button[data-i]'), function(b){
+    b.addEventListener('click', function(){ scarica(F[+b.getAttribute('data-i')], b); });
+  });
+}
+function scarica(f, b){
+  if(!f || _occupato) return;
+  _occupato = true; var prima = b.innerHTML; b.disabled = true;
+  var parti = [], da = 0;
+  function giro(){
+    return tenta(function(){ return chiama('pubPezzo', { id:f.id, da:da }); }, 3).then(function(o){
+      var s = atob(o.b64 || ''), u = new Uint8Array(s.length);
+      for(var i = 0; i < s.length; i++) u[i] = s.charCodeAt(i);
+      parti.push(u); da += u.length;
+      b.textContent = (o.tot ? Math.round(da * 100 / o.tot) : 100) + '%';
+      if(da < o.tot && u.length) return giro();
+      return o.mime;
+    });
+  }
+  giro().then(function(mime){
+    var blob = new Blob(parti, { type:mime || f.mime || 'application/octet-stream' }), url = URL.createObjectURL(blob);
+    var a = document.createElement('a'); a.href = url; a.download = f.nome; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 60000);
+  }).catch(function(e){
+    if(e.fine) fineLink(e.message); else alert('Scaricamento non riuscito: ' + e.message);
+  }).then(function(){ _occupato = false; b.disabled = false; b.innerHTML = prima; });
+}
+
+/* ── caricamento ── */
+function disegnaTipi(){
+  var T = (_dati && _dati.tipi && _dati.tipi.length) ? _dati.tipi : [{ k:'altro', n:'Altro documento' }];
+  $('tipo').innerHTML = T.map(function(t){ return '<option value="' + esc(t.k) + '">' + esc(t.n) + '</option>'; }).join('');
+  $('l-altro').classList.toggle('nascosto', $('tipo').value !== 'altro');
+}
+$('tipo').addEventListener('change', function(){ $('l-altro').classList.toggle('nascosto', this.value !== 'altro'); });
+function b64(buf){
+  var u = new Uint8Array(buf), s = '', P = 0x8000;
+  for(var i = 0; i < u.length; i += P) s += String.fromCharCode.apply(null, u.subarray(i, i + P));
+  return btoa(s);
+}
+function avanza(p){ $('barra').classList.remove('nascosto'); $('barra').firstChild.style.width = p + '%'; }
+$('scegli').addEventListener('click', function(){
+  if(_occupato) return;
+  var k = $('tipo').value, altro = String($('altro').value || '').trim();
+  if(k === 'altro' && !altro){ $('msg-carica').className = 'msg ko'; $('msg-carica').textContent = 'Scrivi il nome del documento.'; $('altro').focus(); return; }
+  var inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'application/pdf,image/*';
+  inp.onchange = function(){
+    var f = inp.files && inp.files[0]; if(!f) return;
+    var mime = f.type || (/\.pdf$/i.test(f.name) ? 'application/pdf' : '');
+    if(mime !== 'application/pdf' && !/^image\//.test(mime)){ $('msg-carica').className = 'msg ko'; $('msg-carica').textContent = 'Si caricano solo PDF e foto.'; return; }
+    if(!f.size || f.size > 50 * 1024 * 1024){ $('msg-carica').className = 'msg ko'; $('msg-carica').textContent = 'Il file deve pesare meno di 50 MB.'; return; }
+    carica(f, mime, k, altro);
+  };
+  inp.click();
+});
+function carica(f, mime, k, altro){
+  _occupato = true; $('scegli').disabled = true;
+  $('msg-carica').className = 'msg'; $('msg-carica').textContent = 'Carico «' + f.name + '»…'; avanza(0);
+  var tot = f.size, da = 0, sess = '', nome = '';
+  chiama('pubCaricaInizio', { k:k, altro:altro, mime:mime, peso:tot, nome:f.name }).then(function(o){
+    sess = o.sessione; nome = o.nome;
+    function giro(){
+      var pezzo = f.slice(da, Math.min(tot, da + PEZZO));
+      return pezzo.arrayBuffer().then(function(buf){
+        var dati = b64(buf);
+        return tenta(function(){ return chiama('pubCaricaPezzo', { sessione:sess, da:da, tot:tot, mime:mime, b64:dati, k:k }); }, 3).then(function(o2){
+          da += buf.byteLength; avanza(Math.round(da * 100 / tot));
+          if(o2.fatto) return o2;
+          if(da >= tot) throw new Error('Il caricamento non si è chiuso: riprova.');
+          return giro();
+        });
+      });
+    }
+    return giro();
+  }).then(function(o){
+    $('msg-carica').className = 'msg ok'; $('msg-carica').textContent = 'Caricato: ' + (o.nome || nome) + '. Grazie!';
+    $('altro').value = '';
+    return chiama('pubApri').then(function(x){ _dati = x; disegnaElenco(); });
+  }).catch(function(e){
+    if(e.fine) fineLink(e.message);
+    else { $('msg-carica').className = 'msg ko'; $('msg-carica').textContent = 'Non caricato: ' + e.message; }
+  }).then(function(){ _occupato = false; $('scegli').disabled = false; setTimeout(function(){ $('barra').classList.add('nascosto'); }, 1500); });
+}
+
+/* ── avvio ── */
+if(!URL_S || !TOKEN){
+  fineLink('Il link è incompleto: aprilo direttamente dal messaggio che hai ricevuto, oppure chiedi un link nuovo all\'agente.');
+} else {
+  var salvato = ''; try{ salvato = sessionStorage.getItem('tec_' + TOKEN) || ''; }catch(e){}
+  if(/^\d{6}$/.test(salvato)){ CODICE = salvato; $('codice').value = salvato; apri().catch(function(e){ if(e.fine) fineLink(e.message); else { $('msg-codice').className = 'msg ko'; $('msg-codice').textContent = e.message; } }); }
+  else $('codice').focus();
+}
+})();
+</script>
+</body>
+</html>
