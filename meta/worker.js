@@ -50,7 +50,17 @@
  *   secondo scelto (thumb_offset). Facebook: Reel della Pagina; la copertina
  *   la sceglie Facebook.
  *   Nessun permesso nuovo: bastano quelli già dati con /collega.
+ *
+ * [21 ott 2026] TIKTOK (con Metricool, tramite Claude)
+ *   POST /approva            { idea, p:'tt', quando, testo, img:[nomi] | tipo:'reel', video:nome }
+ *   Il Worker NON pubblica su TikTok: tiene solo i file (link pubblici /img/ e
+ *   /vid/) e il lavoro. Ogni lunedì Claude legge i TikTok approvati dal
+ *   connettore del gestionale e li programma su Metricool, che si copia i file
+ *   e pubblica all'ora scritta. Niente Facebook richiesto per TikTok.
+ *   La sveglia salta i lavori TikTok; la pulizia li toglie 3 giorni dopo l'ora
+ *   di uscita (con i loro file).
  */
+const VERSIONE_WORKER = '2026-10-21-tiktok';
 
 const VER_BASE = 'v23.0';
 const SCOPE = 'pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish,business_management';
@@ -92,6 +102,8 @@ function cartella(env) {
   return env.IMG;
 }
 function casuale() { const a = new Uint8Array(16); crypto.getRandomValues(a); return Array.from(a, b => b.toString(16).padStart(2, '0')).join(''); }
+/* [21 ott 2026] il social di un lavoro: Instagram, Facebook o TikTok */
+function soc(p) { return p === 'fb' ? 'fb' : (p === 'tt' ? 'tt' : 'ig'); }
 function nomeLavoro(idea, p) { return 'lavori/' + String(idea).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 80) + '__' + p + '.json'; }
 async function leggiJson(env, nome) { const o = await cartella(env).get(nome); if (!o) return null; try { return JSON.parse(await o.text()); } catch (e) { return null; } }
 async function scriviJson(env, nome, dato) { await cartella(env).put(nome, JSON.stringify(dato), { httpMetadata: { contentType: 'application/json' } }); }
@@ -256,7 +268,7 @@ function controllaQuando(q) {
 }
 async function approva(request, env) {
   const b = await request.json().catch(() => ({}));
-  const p = b.p === 'ig' || b.p === 'fb' ? b.p : '';
+  const p = b.p === 'ig' || b.p === 'fb' || b.p === 'tt' ? b.p : '';
   if (!b.idea || !p) return errore('mancano il post o il social');
   const pb = controllaQuando(b.quando); if (pb) return errore(pb);
   /* [21 ott 2026] Reel: un video al posto delle immagini */
@@ -267,10 +279,13 @@ async function approva(request, env) {
   const img = (Array.isArray(b.img) ? b.img : []).map(n => String(n).replace(/[^a-z0-9.]/g, '')).filter(n => /^[a-f0-9]{32}\.jpg$/.test(n));
   if (!reel && !img.length) return errore('mancano le immagini');
   if (img.length > 10) return errore('massimo 10 immagini');
-  const testo = String(b.testo || '').slice(0, p === 'ig' ? 2200 : 60000);
+  const testo = String(b.testo || '').slice(0, (p === 'ig' || p === 'tt') ? 2200 : 60000);
   if (p === 'ig' && (testo.match(/#[^\s#]+/g) || []).length > 30) return errore('Instagram accetta al massimo 30 hashtag');
-  const c = await config(env);
-  if (p === 'ig' && !c.igId) return errore('la Pagina collegata non ha un Instagram professionale');
+  /* [21 ott 2026] TikTok non passa da Meta: non serve la Pagina collegata */
+  if (p !== 'tt') {
+    const c = await config(env);
+    if (p === 'ig' && !c.igId) return errore('la Pagina collegata non ha un Instagram professionale');
+  }
   const nome = nomeLavoro(b.idea, p);
   const vecchio = await leggiJson(env, nome);
   if (vecchio && vecchio.stato === 'pubblicato') return errore('già pubblicato', 409, 'pubblicato');
@@ -288,7 +303,7 @@ async function approva(request, env) {
 }
 async function sposta(request, env) {
   const b = await request.json().catch(() => ({}));
-  const nome = nomeLavoro(b.idea || '', b.p === 'fb' ? 'fb' : 'ig');
+  const nome = nomeLavoro(b.idea || '', soc(b.p));
   const l = await leggiJson(env, nome); if (!l) return errore('questo post non è approvato', 404, 'manca');
   if (l.stato === 'pubblicato' || l.stato === 'in corso' || l.stato === 'preparazione') return errore('è già uscito o sta uscendo', 409, l.stato === 'preparazione' ? 'in corso' : l.stato);
   const pb = controllaQuando(b.quando); if (pb) return errore(pb);
@@ -299,7 +314,7 @@ async function sposta(request, env) {
 async function togliImmagini(env, nomi) { for (const n of (nomi || [])) { try { await cartella(env).delete('img/' + n); } catch (e) {} } }
 async function togli(request, env) {
   const b = await request.json().catch(() => ({}));
-  const nome = nomeLavoro(b.idea || '', b.p === 'fb' ? 'fb' : 'ig');
+  const nome = nomeLavoro(b.idea || '', soc(b.p));
   const l = await leggiJson(env, nome);
   if (!l) return json({ ok: true, giaTolto: true });
   if (l.stato === 'pubblicato') return errore('è già pubblicato: per toglierlo cancellalo da ' + (l.p === 'ig' ? 'Instagram' : 'Facebook'), 409, 'pubblicato');
@@ -316,14 +331,14 @@ async function esiti(env) {
     for (const o of r.objects) { const l = await leggiJson(env, o.key); if (l) out.push({ idea: l.idea, p: l.p, tipo: l.tipo || '', quando: l.quando, stato: l.stato, link: l.link || '', errore: l.errore || '', pubblicato: l.pubblicato || '' }); }
     cur = r.truncated ? r.cursor : null;
   } while (cur);
-  return json({ ok: true, lavori: out });
+  return json({ ok: true, lavori: out, versione: VERSIONE_WORKER });
 }
 async function stato(env) {
   const c = await config(env);
   const pg = await chiamaMeta(env, 'GET', c.pageId, { fields: 'name', access_token: c.token });
   let ig = null;
   if (c.igId) ig = await chiamaMeta(env, 'GET', c.igId, { fields: 'username', access_token: c.token });
-  return json({ ok: true, pagina: pg.name || c.pageName, instagram: ig ? (ig.username || c.igUser) : '', r2: true });
+  return json({ ok: true, pagina: pg.name || c.pageName, instagram: ig ? (ig.username || c.igUser) : '', r2: true, versione: VERSIONE_WORKER });
 }
 
 /* ── pubblicazione ── */
@@ -432,7 +447,14 @@ async function pulizia(env) {
     const r = await R.list({ prefix: 'lavori/', cursor: cur, limit: 500 });
     for (const o of r.objects) {
       const l = await leggiJson(env, o.key); if (!l) continue;
-      const vecchio = (l.stato === 'pubblicato' || l.stato === 'errore') && ora - new Date(l.pubblicato || l.quando).getTime() > 30 * 86400000;
+      /* [21 ott 2026] TikTok: Metricool si copia i file quando Claude lo programma;
+         3 giorni dopo l'ora di uscita il lavoro e i suoi file non servono più */
+      if (l.p === 'tt') {
+        if (ora - new Date(l.quando).getTime() > 3 * 86400000) { await R.delete(o.key); continue; }
+        (l.img || []).forEach(n => usate.add(n)); if (l.video) usate.add(l.video);
+        continue;
+      }
+      const vecchio =(l.stato === 'pubblicato' || l.stato === 'errore') && ora - new Date(l.pubblicato || l.quando).getTime() > 30 * 86400000;
       if (vecchio) { await R.delete(o.key); continue; }
       if (l.stato !== 'pubblicato' || ora - new Date(l.pubblicato).getTime() < 7 * 86400000) { (l.img || []).forEach(n => usate.add(n)); if (l.video) usate.add(l.video); }
     }
@@ -462,6 +484,8 @@ async function sveglia(env) {
     for (const o of r.objects) {
       const l = await leggiJson(env, o.key);
       if (!l) continue;
+      /* [21 ott 2026] TikTok lo pubblica Metricool (programmato da Claude): qui niente */
+      if (l.p === 'tt') continue;
       /* rimasto "in corso" da più di 15 minuti: la sveglia si è interrotta a metà. Non ripubblico
          (potrebbe essere già uscito): lo segnalo, e si controlla a mano */
       if (l.stato === 'in corso' && new Date(l.inCorsoDa || 0).getTime() < ora - 15 * 60000) {
