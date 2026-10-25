@@ -59,8 +59,19 @@
  *   e pubblica all'ora scritta. Niente Facebook richiesto per TikTok.
  *   La sveglia salta i lavori TikTok; la pulizia li toglie 3 giorni dopo l'ora
  *   di uscita (con i loro file).
+ *
+ * [25 ott 2026] ANCHE INSTAGRAM E FACEBOOK CON METRICOOL (stesso trattamento di TikTok)
+ *   Il Worker NON pubblica più in diretta su Instagram e Facebook: come per
+ *   TikTok, tiene solo i file (link pubblici /img/ e /vid/) e il lavoro
+ *   approvato. Ogni lunedì Claude legge gli Instagram/Facebook approvati dal
+ *   connettore del gestionale (strumento meta_approvati) e li programma su
+ *   Metricool, che si copia i file e pubblica all'ora scritta.
+ *   La sveglia salta anche questi lavori; la pulizia li toglie 3 giorni dopo
+ *   l'ora di uscita, come per TikTok. Le funzioni di pubblicazione diretta
+ *   (pubblicaIG/pubblicaFB/avviaReelIG/avviaReelFB) restano nel file ma non
+ *   sono più richiamate da nessuna piattaforma: il Worker è solo "magazzino".
  */
-const VERSIONE_WORKER = '2026-10-21-tiktok';
+const VERSIONE_WORKER = '2026-10-25-meta-metricool';
 
 const VER_BASE = 'v23.0';
 const SCOPE = 'pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish,business_management';
@@ -448,8 +459,11 @@ async function pulizia(env) {
     for (const o of r.objects) {
       const l = await leggiJson(env, o.key); if (!l) continue;
       /* [21 ott 2026] TikTok: Metricool si copia i file quando Claude lo programma;
-         3 giorni dopo l'ora di uscita il lavoro e i suoi file non servono più */
-      if (l.p === 'tt') {
+         3 giorni dopo l'ora di uscita il lavoro e i suoi file non servono più;
+         [25 ott 2026] anche Instagram e Facebook, stesso trattamento: qui lo
+         stato resta sempre "attesa" (il Worker non pubblica più), quindi senza
+         questo ramo il lavoro e le sue immagini non verrebbero mai tolti */
+      if (l.p === 'tt' || l.p === 'ig' || l.p === 'fb') {
         if (ora - new Date(l.quando).getTime() > 3 * 86400000) { await R.delete(o.key); continue; }
         (l.img || []).forEach(n => usate.add(n)); if (l.video) usate.add(l.video);
         continue;
@@ -484,8 +498,9 @@ async function sveglia(env) {
     for (const o of r.objects) {
       const l = await leggiJson(env, o.key);
       if (!l) continue;
-      /* [21 ott 2026] TikTok lo pubblica Metricool (programmato da Claude): qui niente */
-      if (l.p === 'tt') continue;
+      /* [21 ott 2026] TikTok lo pubblica Metricool (programmato da Claude): qui niente;
+         [25 ott 2026] anche Instagram e Facebook, stesso trattamento */
+      if (l.p === 'tt' || l.p === 'ig' || l.p === 'fb') continue;
       /* rimasto "in corso" da più di 15 minuti: la sveglia si è interrotta a metà. Non ripubblico
          (potrebbe essere già uscito): lo segnalo, e si controlla a mano */
       if (l.stato === 'in corso' && new Date(l.inCorsoDa || 0).getTime() < ora - 15 * 60000) {
