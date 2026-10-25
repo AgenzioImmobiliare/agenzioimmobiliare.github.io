@@ -3,7 +3,7 @@
    IMPORTANTE: quando esce un aggiornamento, bumpa CACHE='lecase-vN'
    per invalidare la cache HTML/JS e forzare il telefono a scaricare il nuovo codice. */
 
-var CACHE = 'lecase-v110';            /* Instagram e Facebook via Metricool, come TikTok (25/10/2026) */
+var CACHE = 'lecase-v112';            /* Carosello: sfondo per slide creato dall'AI dal testo (25/10/2026) */
 var FOTO_CACHE = 'lecase-foto-v1';
 
 self.addEventListener('install', function (e) { self.skipWaiting(); });
