@@ -27,7 +27,7 @@
 
 const PROGETTO = 'agenzioimmobiliare';
 const CHIAVE_PUBBLICA = 'AIzaSyAgljCpsbFVlpbJ1SCSEjPcfxrjBoP5dvM'; /* la stessa di index.html: è pubblica per natura */
-const VERSIONE = '2026-10-21-tiktok';
+const VERSIONE = '2026-10-25-meta-metricool';
 const FS = `https://firestore.googleapis.com/v1/projects/${PROGETTO}/databases/(default)/documents`;
 
 /* ── accesso a Firebase (token valido un'ora, tenuto in memoria) ─────── */
@@ -131,8 +131,10 @@ function avvisoRiepilogo(D) {
   return g > 2 ? `⚠ Riepilogo calcolato il ${it(D._riepilogo.calcolatoIl)} (${g} giorni fa): da allora il gestionale non è stato aperto, i contatti nuovi potrebbero mancare.\n` : '';
 }
 
-/* [21 ott 2026] un TikTok approvato nel Marketing Hub (x.meta.tt), non ancora segnato pubblicato */
-function ttApprovato(x) { const l = x && x.meta && x.meta.tt; return !!(l && typeof l === 'object' && l.stato !== 'pubblicato' && Array.isArray(l.media) && l.media.length); }
+/* [21 ott 2026] un post approvato nel Marketing Hub su una piattaforma (x.meta[p]), non ancora
+   segnato pubblicato; [25 ott 2026] generalizzato da TikTok anche a Instagram e Facebook */
+function socialApprovato(x, p) { const l = x && x.meta && x.meta[p]; return !!(l && typeof l === 'object' && l.stato !== 'pubblicato' && Array.isArray(l.media) && l.media.length); }
+function ttApprovato(x) { return socialApprovato(x, 'tt'); }
 
 /* ══ GLI STRUMENTI ════════════════════════════════════════════════════ */
 const STRUMENTI = {
@@ -240,7 +242,7 @@ const STRUMENTI = {
     }
   },
   social_settimana: {
-    descr: 'I social della settimana dal Marketing Hub: post da pubblicare con giorno e ora SOCIAL PER SOCIAL (ognuno ha la sua ora fissa), cosa è già programmato e dove, cosa è in ritardo, cosa va ancora controllato, i post nati dagli eventi degli immobili e i lavori pronti da Google Drive, i TikTok approvati (li programma Claude su Metricool: dettagli con tiktok_approvati) e il PROMEMORIA TIKTOK di quelli da fare a mano, le storie di Instagram, quanti pubblicati.',
+    descr: 'I social della settimana dal Marketing Hub: post da pubblicare con giorno e ora SOCIAL PER SOCIAL (ognuno ha la sua ora fissa), cosa è già programmato e dove, cosa è in ritardo, cosa va ancora controllato, i post nati dagli eventi degli immobili e i lavori pronti da Google Drive, i TikTok approvati (li programma Claude su Metricool: dettagli con tiktok_approvati) e il PROMEMORIA TIKTOK di quelli da fare a mano, gli Instagram/Facebook approvati (li programma Claude su Metricool: dettagli con meta_approvati), le storie di Instagram, quanti pubblicati.',
     schema: { type: 'object', properties: {} },
     async run(env) {
       const base = `users/${env.CARTELLA || 'usr_001'}`;
@@ -267,7 +269,7 @@ const STRUMENTI = {
         const dove = Array.isArray(x.dove) && x.dove.length ? x.dove : ['ig', 'fb'];
         const prog = x.prog || {}, pub = x.pubbl || {};
         const usc = dove.filter(p => !pub[p]).map(p => {
-          const tta = p === 'tt' && ttApprovato(x);   /* [21 ott 2026] lo programma Claude su Metricool */
+          const tta = socialApprovato(x, p);   /* [21 ott 2026 TikTok, 25 ott 2026 anche ig/fb] lo programma Claude su Metricool */
           const q = quandoP(x, p), st = tta ? 'approvato, lo programma Claude su Metricool' : (prog[p] ? 'programmato' : (q && q < adesso ? 'IN RITARDO' : 'da programmare'));
           return `${PIATT[p] || p} ${qIt(q)} (${st})`;
         });
@@ -298,6 +300,9 @@ const STRUMENTI = {
       /* [21 ott 2026] TikTok approvati: li programma Claude su Metricool */
       const tta = aperte.filter(x => ttApprovato(x) && !(x.pubbl || {}).tt);
       if (tta.length) out += `\nTikTok approvati nell'Hub (li programma Claude su Metricool; dettagli e link ai file con lo strumento tiktok_approvati): ${tta.length}\n`;
+      /* [25 ott 2026] Instagram/Facebook approvati: stesso trattamento, strumento meta_approvati */
+      const mta = aperte.filter(x => (socialApprovato(x, 'ig') && !(x.pubbl || {}).ig) || (socialApprovato(x, 'fb') && !(x.pubbl || {}).fb));
+      if (mta.length) out += `\nInstagram/Facebook approvati nell'Hub (li programma Claude su Metricool; dettagli e link ai file con lo strumento meta_approvati): ${mta.length}\n`;
       out += `\nPROMEMORIA TIKTOK da fare a mano (non approvati: TikTok Studio o telefono): ` + (tt.length
         ? `${tt.length}\n` + tt.map(v => `• ${qIt(v.q)}${v.q && v.q < adesso ? ' IN RITARDO' : ''} — ${v.x.titolo || '(senza titolo)'}${v.x.esterno ? ' (file su Google Drive: "Scarica i file" nell\'Hub)' : ''}`).join('\n') + '\n'
         : 'niente da fare questa settimana.\n');
@@ -348,6 +353,58 @@ COME PROGRAMMARLI (connettore Metricool):
    tiktokData: privacyOption "PUBLIC_TO_EVERYONE", disableComment false, disableDuet false, disableStitch false, commercialContentThirdParty false, commercialContentOwnBrand false, autoAddMusic false, isAigc false, photoCoverIndex 0; title obbligatorio = per i VIDEO il testo TikTok, per le FOTO il titolo (massimo 90 caratteri).
 4. Se Metricool rifiuta un file ("Failed to normalize media"), non riprovare all'infinito: segnalalo a Enzo (il file sul Worker potrebbe essere scaduto: va ri-approvato nell'Hub).
 5. Alla fine riepiloga a Enzo: programmati (giorno, ora, titolo), già presenti, in ritardo, errori. Il Marketing Hub NON viene aggiornato: resta "Approvato" finché Enzo non preme "Pubblicato".`;
+      return out;
+    }
+  },
+  /* [25 ott 2026] INSTAGRAM E FACEBOOK CON METRICOOL (stesso trattamento di TikTok, vedi
+     tiktok_approvati qui sopra). Enzo approva i post nel Marketing Hub: i file restano sul
+     Worker social-meta con un link pubblico (il Worker non li pubblica più in diretta, vedi
+     meta/worker.js). Ogni lunedì (insieme ai TikTok) Claude li legge qui e li programma su
+     Metricool con il suo connettore. */
+  meta_approvati: {
+    descr: 'I post di Instagram e Facebook approvati nel Marketing Hub da programmare su Metricool: per ognuno piattaforma, giorno e ora di uscita (ora italiana), testo, titolo, tipo (foto/carosello o video/reel) e i link pubblici dei file, divisi per piattaforma e per: da programmare nei prossimi 7 giorni, in ritardo, più avanti. In fondo le istruzioni per programmarli con il connettore Metricool. Usalo quando Enzo dice «programma Instagram e Facebook» e nel giro del lunedì (insieme a tiktok_approvati).',
+    schema: { type: 'object', properties: {} },
+    async run(env) {
+      const base = `users/${env.CARTELLA || 'usr_001'}`;
+      const d = await leggiDoc(env, `${base}/data/mktAZ_settimana`);
+      const S = d && d.valore;
+      if (!S || !Array.isArray(S.idee)) return 'Nel Marketing Hub non ci sono ancora i social (apri l\'Hub una volta).';
+      const roma = ms => new Date(ms).toLocaleString('sv-SE', { timeZone: 'Europe/Rome' }).replace(' ', 'T').slice(0, 16);
+      const adesso = roma(Date.now()), fra7 = roma(Date.now() + 7 * 86400000);
+      const quandoP = (x, p) => (x.quandoP && x.quandoP[p]) ? String(x.quandoP[p]).slice(0, 16) : (x.quando ? String(x.quando).slice(0, 16) : '');
+      const qIt = q => q ? `${gs(q.slice(0, 10))} ${q.slice(11, 16)}` : 'senza giorno';
+      const PIATT = { ig: 'Instagram', fb: 'Facebook' };
+      const scheda = (p, v, n) => {
+        const x = v.x, l = x.meta[p], video = l.tipo === 'reel' || l.media.some(u => /\/vid\//.test(u));
+        const testo = String((x.testi || {})[p] || '').trim();
+        return `${n}) ${x.formato || 'Post'} · ${video ? 'VIDEO/REEL' : 'FOTO (' + l.media.length + ')'} · esce ${qIt(v.q)}\n` +
+          `   publicationDate: {"dateTime":"${v.q}:00","timezone":"Europe/Rome"}\n` +
+          `   titolo (riferimento, non va nel testo): ${String(x.titolo || '(senza titolo)').slice(0, 90)}\n` +
+          `   approvato il ${it(new Date(Number(l.il) || 0).toISOString())}\n` +
+          `   file (in quest'ordine):\n${l.media.map(u => '     ' + u).join('\n')}\n` +
+          `   testo (${testo.length} caratteri):\n<<<\n${testo}\n>>>`;
+      };
+      let out = `Instagram e Facebook approvati nel Marketing Hub — adesso ${qIt(adesso)} (ora italiana)\n`;
+      ['ig', 'fb'].forEach(p => {
+        const L = S.idee.filter(x => x && !x.archiviata && socialApprovato(x, p) && !(x.pubbl || {})[p])
+          .map(x => ({ x, q: quandoP(x, p) })).sort((a, b) => String(a.q || '9999').localeCompare(String(b.q || '9999')));
+        const da = L.filter(v => v.q && v.q > adesso && v.q <= fra7);
+        const rit = L.filter(v => !v.q || v.q <= adesso);
+        const poi = L.filter(v => v.q && v.q > fra7);
+        out += `\n=== ${(PIATT[p] || p).toUpperCase()} ===\n`;
+        out += `DA PROGRAMMARE (escono entro 7 giorni): ${da.length}\n` + (da.map((v, i) => scheda(p, v, i + 1)).join('\n\n') || 'nessuno') + '\n';
+        if (rit.length) out += `IN RITARDO (ora già passata o senza ora: NON programmarli, dillo a Enzo che li sposti nell'Hub): ${rit.length}\n` + rit.map(v => `• ${qIt(v.q)} — ${v.x.titolo || '(senza titolo)'}`).join('\n') + '\n';
+        if (poi.length) out += `PIÙ AVANTI (oltre 7 giorni: al giro del lunedì dopo): ${poi.length}\n` + poi.map(v => `• ${qIt(v.q)} — ${v.x.titolo || '(senza titolo)'}`).join('\n') + '\n';
+      });
+      out += `
+COME PROGRAMMARLI (connettore Metricool):
+1. getBrandSettings → blogId del brand "Le case dalla A allo Zio" e fuso Europe/Rome.
+2. getScheduledPosts da adesso a 8 giorni dopo: se un post con lo stesso testo sulla stessa piattaforma c'è già, non rifarlo; se ha un'altra ora, correggila con updateScheduledPost.
+3. Per ognuno "DA PROGRAMMARE": createScheduledPost con providers [{"network":"instagram"}] oppure [{"network":"facebook"}] (una piattaforma per post: se un'idea esce su entrambe, sono due post separati, uno per provider, qui divisi già per piattaforma), autoPublish true, draft false, la publicationDate scritta sopra, text = il testo di quella piattaforma, media = i file nell'ordine scritto.
+   instagramData: {"type":"POST"} per foto o carosello, {"type":"REEL"} per i VIDEO/REEL (richiede un video).
+   facebookData: {"type":"POST"} per foto, {"type":"REEL"} per i VIDEO/REEL (richiede un video).
+4. Se Metricool rifiuta un file (es. "Failed to normalize media"), non riprovare all'infinito: segnalalo a Enzo (il file sul Worker potrebbe essere scaduto, va ri-approvato nell'Hub).
+5. Alla fine riepiloga a Enzo: programmati (piattaforma, giorno, ora, titolo), già presenti, in ritardo, errori. Il Marketing Hub NON viene aggiornato: resta "Approvato" finché Enzo non preme "Pubblicato".`;
       return out;
     }
   },
@@ -465,7 +522,7 @@ COME PROGRAMMARLI (connettore Metricool):
 };
 
 /* ══ PROTOCOLLO MCP (JSON-RPC su HTTP, senza sessione) ════════════════ */
-const ISTRUZIONI = 'Gestionale immobiliare di Enzo Carnicelli (Agropoli). Sola lettura: non si può modificare nulla da qui. Rispondi in italiano. Per il planning settimanale usa planning_settimana (contiene anche i social e la produzione della settimana scorsa); per cosa è stato fatto in una settimana o in un mese produzione; per i soli social social_settimana; per i TikTok approvati da programmare su Metricool (quando Enzo dice «programma i TikTok» e nel giro del lunedì) tiktok_approvati; per i percorsi di acquisizione (nuovi incarichi, documenti, foto) acquisizioni; per chi richiamare da_richiamare; per un cliente o un immobile preciso le schede. I dati dei clienti sono personali: usali solo per il lavoro di Enzo.';
+const ISTRUZIONI = 'Gestionale immobiliare di Enzo Carnicelli (Agropoli). Sola lettura: non si può modificare nulla da qui. Rispondi in italiano. Per il planning settimanale usa planning_settimana (contiene anche i social e la produzione della settimana scorsa); per cosa è stato fatto in una settimana o in un mese produzione; per i soli social social_settimana; per i TikTok approvati da programmare su Metricool (quando Enzo dice «programma i TikTok» e nel giro del lunedì) tiktok_approvati; per gli Instagram/Facebook approvati da programmare su Metricool (quando Enzo dice «programma Instagram e Facebook» e nel giro del lunedì, insieme ai TikTok) meta_approvati; per i percorsi di acquisizione (nuovi incarichi, documenti, foto) acquisizioni; per chi richiamare da_richiamare; per un cliente o un immobile preciso le schede. I dati dei clienti sono personali: usali solo per il lavoro di Enzo.';
 const VERSIONI_MCP = ['2025-06-18', '2025-03-26', '2024-11-05'];
 
 async function rispondi(env, m) {
