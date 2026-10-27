@@ -13217,6 +13217,9 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
           <option value="az">A → Z</option>
           <option value="valore">Valore ↓</option>
         </select>
+        <button class="apx-btn apx-piccolo" onclick="apStampaPipeline()" title="Stampa la pipeline in A4 (rispetta i filtri di sopra)" aria-label="Stampa la pipeline">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        </button>
         <button class="apx-btn apx-pieno apx-piccolo" onclick="apNuovoDeal()">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Nuovo contatto
@@ -19130,7 +19133,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.27ott-SUBALTERNI';
+var APP_VERSION = 'v.27ott-STAMPAPIPELINE';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -67354,7 +67357,7 @@ try{
   // a riscaricarlo. Usa la stessa data del badge versione, es. '20260702'.
   // [25 set 2026] Ogni index.js passa il suo ?v= ai file che carica
   // (.view/.mobile/.report): alzare _MOD_V basta per TUTTI i moduli.
-  const _MOD_V = '20261027H';
+  const _MOD_V = '20261027I';
   const moduli = [
     ['Richieste', './src/modules/richieste/index.js?v=' + _MOD_V],
     ['Clienti',   './src/modules/clienti/index.js?v=' + _MOD_V],
