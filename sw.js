@@ -3,7 +3,7 @@
    IMPORTANTE: quando esce un aggiornamento, bumpa CACHE='lecase-vN'
    per invalidare la cache HTML/JS e forzare il telefono a scaricare il nuovo codice. */
 
-var CACHE = 'lecase-v122';            /* Claude Design solo per copertina/retro del Volantino (27/10/2026) */
+var CACHE = 'lecase-v124';            /* Stampa A4 della Pipeline commerciale (27/10/2026) */
 var FOTO_CACHE = 'lecase-foto-v1';
 
 self.addEventListener('install', function (e) { self.skipWaiting(); });
