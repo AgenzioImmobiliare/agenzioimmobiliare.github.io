@@ -7079,6 +7079,9 @@ Un caro saluto,
         <button class="vai-start-btn vai-start-open" onclick="vaiProgettiPanel()" title="Apri un progetto video salvato">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg> Apri un progetto
         </button>
+        <button class="vai-start-btn vai-start-vdi" onclick="vaiApriGobbo()" title="Registra con il testo che scorre sopra l'anteprima (resta solo sullo schermo, non entra nel video): la clip registrata entra nel montaggio come le altre">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/><line x1="4" y1="9" x2="10" y2="9"/><line x1="4" y1="12" x2="10" y2="12"/></svg> Gobbo per registrare
+        </button>
         <!-- Salva ed Esci: a destra, visibili solo con un progetto aperto -->
         <div id="vai-start-right" style="margin-left:auto;display:none;gap:8px">
           <button class="vai-start-btn vai-start-save" onclick="vaiSalvaProgetto()" title="Salva questo progetto">
@@ -37852,6 +37855,234 @@ function _vdcFinestraPartenza(st){
       });
     });
   });
+}
+
+/* ═══════════ GOBBO / TELEPROMPTER [28 ott 2026] ═══════════
+   Registra dalla videocamera del dispositivo con un testo che scorre sopra
+   l'anteprima: resta SOLO sullo schermo di chi registra, non entra nel video
+   (si registra lo stream della camera, non un canvas composito). Parte da
+   un testo già scritto (un'idea del Piano Social) o libero. Il video
+   registrato diventa una clip normale in _vaiClips, come quelle caricate
+   "Dal computer": da lì si monta con gli strumenti già esistenti. */
+let _vaiGobbo=null;
+
+function _vaiGobboTestiCandidati(){
+  const s=(typeof _settData==='function') ? _settData() : null;
+  if(!s || !Array.isArray(s.idee)) return [];
+  return s.idee.filter(x=>x && !x.archiviata && x.testi && (x.testi.ig||x.testi.fb||x.testi.tt))
+    .sort((a,b)=>(b.creata||0)-(a.creata||0)).slice(0,20)
+    .map(x=>({ id:x.id, titolo:x.titolo||'(senza titolo)', testo:String(x.testi.ig||x.testi.fb||x.testi.tt||'').trim() }));
+}
+
+function vaiApriGobbo(){
+  if(_vaiGobbo){ toast('Il gobbo è già aperto','error'); return; }
+  const cand=_vaiGobboTestiCandidati();
+  const opz=cand.map(c=>'<option value="'+_settEsc(c.id)+'">'+_settEsc(c.titolo)+'</option>').join('');
+  const testoIniziale=cand.length ? cand[0].testo : '';
+  const ov=document.createElement('div');
+  ov.id='vai-gobbo';
+  ov.style.cssText='position:fixed;inset:0;z-index:100001;background:#05080C;display:flex;flex-direction:column';
+  ov.innerHTML=
+    '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#0D1B2A;border-bottom:1px solid rgba(255,255,255,.1)">'+
+      '<div style="color:#fff;font-weight:800;font-size:.95rem">🎤 Gobbo per registrare</div>'+
+      '<button id="vai-gobbo-chiudi" style="background:transparent;border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer">Chiudi</button>'+
+    '</div>'+
+    '<div style="flex:1;display:flex;flex-direction:column;min-height:0;position:relative;background:#000">'+
+      '<video id="vai-gobbo-video" autoplay muted playsinline style="flex:1;width:100%;height:100%;object-fit:cover;background:#000"></video>'+
+      '<div id="vai-gobbo-prompt" style="position:absolute;top:6%;left:5%;right:5%;max-height:46%;overflow:hidden;background:rgba(0,0,0,.45);border-radius:10px;padding:10px 14px;pointer-events:none">'+
+        '<div id="vai-gobbo-prompt-testo" style="color:#fff;font-size:19px;line-height:1.5;font-weight:600;white-space:pre-wrap"></div>'+
+      '</div>'+
+      '<div id="vai-gobbo-anteprima" style="display:none;position:absolute;inset:0;background:#000;align-items:center;justify-content:center">'+
+        '<video id="vai-gobbo-player" controls playsinline style="max-width:100%;max-height:100%"></video>'+
+      '</div>'+
+    '</div>'+
+    '<div id="vai-gobbo-pannello" style="background:#0D1B2A;border-top:1px solid rgba(255,255,255,.1);padding:12px 14px;display:flex;flex-direction:column;gap:10px;max-height:46vh;overflow:auto">'+
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
+        '<label style="color:#93A5B8;font-size:.78rem">Parti da:</label>'+
+        '<select id="vai-gobbo-scelta" style="flex:1;min-width:140px;background:#152233;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 8px">'+
+          '<option value="">— testo libero —</option>'+opz+
+        '</select>'+
+      '</div>'+
+      '<textarea id="vai-gobbo-testo" placeholder="Scrivi o incolla qui il testo da leggere…" style="width:100%;min-height:70px;background:#152233;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:8px;font-size:.92rem;resize:vertical">'+_settEsc(testoIniziale)+'</textarea>'+
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
+        '<label style="color:#93A5B8;font-size:.78rem">Velocità</label><input id="vai-gobbo-velocita" type="range" min="10" max="120" value="40" style="flex:1;min-width:80px">'+
+        '<label style="color:#93A5B8;font-size:.78rem">Dimensione testo</label><input id="vai-gobbo-dimensione" type="range" min="14" max="36" value="19" style="flex:1;min-width:80px">'+
+      '</div>'+
+      '<div id="vai-gobbo-azioni" style="display:flex;gap:8px;flex-wrap:wrap">'+
+        '<button id="vai-gobbo-avvia-cam" class="vai-start-btn vai-start-vdi">📷 Attiva la videocamera</button>'+
+      '</div>'+
+    '</div>';
+  document.body.appendChild(ov);
+  _vaiGobbo={ overlay:ov, stream:null, rec:null, chunks:[], mime:'', blob:null, scrollTimer:null, registrando:false, facing:'user' };
+  document.getElementById('vai-gobbo-chiudi').addEventListener('click', _vaiGobboChiudi);
+  document.getElementById('vai-gobbo-avvia-cam').addEventListener('click', _vaiGobboAvviaCamera);
+  document.getElementById('vai-gobbo-scelta').addEventListener('change', function(){
+    const c=cand.find(x=>x.id===this.value);
+    document.getElementById('vai-gobbo-testo').value = c ? c.testo : '';
+    _vaiGobboAggiornaPrompt();
+  });
+  document.getElementById('vai-gobbo-testo').addEventListener('input', _vaiGobboAggiornaPrompt);
+  document.getElementById('vai-gobbo-dimensione').addEventListener('input', _vaiGobboAggiornaPrompt);
+  _vaiGobboAggiornaPrompt();
+}
+
+function _vaiGobboAggiornaPrompt(){
+  if(!_vaiGobbo) return;
+  const testo=(document.getElementById('vai-gobbo-testo')||{}).value||'';
+  const dim=(document.getElementById('vai-gobbo-dimensione')||{}).value||19;
+  const el=document.getElementById('vai-gobbo-prompt-testo');
+  if(el){ el.textContent=testo; el.style.fontSize=dim+'px'; }
+}
+
+async function _vaiGobboAvviaCamera(){
+  const g=_vaiGobbo; if(!g) return;
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ toast('Questo browser non permette l\'accesso alla videocamera','error'); return; }
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({ video:{ facingMode:g.facing }, audio:true });
+    g.stream=stream;
+    const v=document.getElementById('vai-gobbo-video');
+    v.srcObject=stream;
+    v.style.transform=(g.facing==='user') ? 'scaleX(-1)' : 'none';
+    v.play().catch(()=>{});
+    _vaiGobboRenderControlli();
+  }catch(e){
+    toast('Videocamera non disponibile: '+((e&&e.message)||'permesso negato'),'error');
+  }
+}
+
+function _vaiGobboRenderControlli(){
+  const g=_vaiGobbo; if(!g) return;
+  const az=document.getElementById('vai-gobbo-azioni'); if(!az) return;
+  az.innerHTML=
+    '<button id="vai-gobbo-flip" class="vai-start-btn vai-start-vdi">🔄 Cambia camera</button>'+
+    '<button id="vai-gobbo-scroll" class="vai-start-btn vai-start-vdi">'+(g.scrollTimer?'⏸ Ferma lo scorrimento':'▶️ Fai scorrere')+'</button>'+
+    (g.registrando
+      ? '<button id="vai-gobbo-stop" class="vai-start-btn vai-start-open">⏹ Ferma la registrazione</button>'
+      : '<button id="vai-gobbo-rec" class="vai-start-btn vai-start-open">⏺ Inizia a registrare</button>');
+  const fb=document.getElementById('vai-gobbo-flip'); if(fb) fb.addEventListener('click', _vaiGobboCambiaCamera);
+  const sb=document.getElementById('vai-gobbo-scroll'); if(sb) sb.addEventListener('click', _vaiGobboToggleScroll);
+  const rb=document.getElementById('vai-gobbo-rec'); if(rb) rb.addEventListener('click', _vaiGobboInizia);
+  const stb=document.getElementById('vai-gobbo-stop'); if(stb) stb.addEventListener('click', _vaiGobboFerma);
+}
+
+function _vaiGobboCambiaCamera(){
+  const g=_vaiGobbo; if(!g || !g.stream) return;
+  g.facing=(g.facing==='user')?'environment':'user';
+  g.stream.getTracks().forEach(t=>t.stop());
+  g.stream=null;
+  _vaiGobboAvviaCamera();
+}
+
+function _vaiGobboToggleScroll(){
+  const g=_vaiGobbo; if(!g) return;
+  const box=document.getElementById('vai-gobbo-prompt');
+  const btn=document.getElementById('vai-gobbo-scroll');
+  if(g.scrollTimer){
+    clearInterval(g.scrollTimer); g.scrollTimer=null;
+    if(btn) btn.textContent='▶️ Fai scorrere';
+    return;
+  }
+  if(btn) btn.textContent='⏸ Ferma lo scorrimento';
+  g.scrollTimer=setInterval(function(){
+    const vEl=document.getElementById('vai-gobbo-velocita');
+    const v=Number((vEl&&vEl.value)||40);
+    if(box){
+      box.scrollTop+=v/10;
+      if(box.scrollTop+box.clientHeight>=box.scrollHeight){ clearInterval(g.scrollTimer); g.scrollTimer=null; if(btn) btn.textContent='▶️ Fai scorrere'; }
+    }
+  }, 100);
+}
+
+function _vaiGobboMime(){
+  if(!window.MediaRecorder || !MediaRecorder.isTypeSupported) return '';
+  const tipi=['video/mp4;codecs=h264,aac','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+  for(let i=0;i<tipi.length;i++) if(MediaRecorder.isTypeSupported(tipi[i])) return tipi[i];
+  return '';
+}
+
+function _vaiGobboInizia(){
+  const g=_vaiGobbo; if(!g || !g.stream) return;
+  if(!window.MediaRecorder){ toast('Questo browser non sa registrare video (MediaRecorder non disponibile)','error'); return; }
+  const mime=_vaiGobboMime();
+  try{
+    g.rec=mime ? new MediaRecorder(g.stream,{ mimeType:mime }) : new MediaRecorder(g.stream);
+    g.mime=mime||'video/webm';
+  }catch(e){ toast('Non riesco ad avviare la registrazione: '+((e&&e.message)||e),'error'); return; }
+  g.chunks=[];
+  g.rec.ondataavailable=function(e){ if(e.data && e.data.size) g.chunks.push(e.data); };
+  g.rec.onstop=_vaiGobboRegistrazioneFinita;
+  g.rec.start();
+  g.registrando=true;
+  if(!g.scrollTimer) _vaiGobboToggleScroll();   // fa scorrere da sola, se non era già partito
+  _vaiGobboRenderControlli();
+  toast('Registrazione avviata','success');
+}
+
+function _vaiGobboFerma(){
+  const g=_vaiGobbo; if(!g || !g.rec) return;
+  try{ g.rec.stop(); }catch(e){}
+  g.registrando=false;
+}
+
+function _vaiGobboRegistrazioneFinita(){
+  const g=_vaiGobbo; if(!g) return;
+  const blob=new Blob(g.chunks, { type:g.mime||'video/webm' });
+  g.blob=blob;
+  const url=URL.createObjectURL(blob);
+  const player=document.getElementById('vai-gobbo-player');
+  if(player) player.src=url;
+  const ant=document.getElementById('vai-gobbo-anteprima'); if(ant) ant.style.display='flex';
+  if(g.scrollTimer){ clearInterval(g.scrollTimer); g.scrollTimer=null; }
+  const az=document.getElementById('vai-gobbo-azioni');
+  if(az) az.innerHTML=
+    '<button id="vai-gobbo-usa" class="vai-start-btn vai-start-open">✅ Usa questa clip</button>'+
+    '<button id="vai-gobbo-rifai" class="vai-start-btn vai-start-vdi">↩️ Rifai</button>';
+  const ub=document.getElementById('vai-gobbo-usa'); if(ub) ub.addEventListener('click', _vaiGobboUsaClip);
+  const rb=document.getElementById('vai-gobbo-rifai'); if(rb) rb.addEventListener('click', _vaiGobboRifai);
+}
+
+function _vaiGobboRifai(){
+  const g=_vaiGobbo; if(!g) return;
+  g.blob=null; g.chunks=[];
+  const ant=document.getElementById('vai-gobbo-anteprima'); if(ant) ant.style.display='none';
+  const player=document.getElementById('vai-gobbo-player');
+  if(player){ try{ if(player.src) URL.revokeObjectURL(player.src); }catch(e){} player.removeAttribute('src'); }
+  _vaiGobboRenderControlli();
+}
+
+function _vaiGobboUsaClip(){
+  const g=_vaiGobbo; if(!g || !g.blob) return;
+  const ext=/mp4/.test(g.mime||'')?'mp4':'webm';
+  const file=new File([g.blob], 'gobbo-'+Date.now()+'.'+ext, { type:g.mime||'video/webm' });
+  const url=URL.createObjectURL(file);
+  const clip={ id:_vaiNuovoIdClip(), file, url, nome:'Gobbo '+new Date().toLocaleDateString('it-IT'), durata:0, ambiente:'', scritte:[], logo:null, logoPos:{x:0.05,y:0.04,scale:0.22}, thumb:null, parlata:false, parlataAuto:false, parlataManuale:false };
+  _vaiClips.push(clip);
+  _vaiProbaDurata(clip);
+  _vaiAccodaThumb(clip);
+  _vaiAccodaRilevaParlato(clip);
+  if(_vaiClipAttiva<0) _vaiClipAttiva=0;
+  try{ document.getElementById('vai-drop').style.display='none'; }catch(e){}
+  try{ const pc=document.getElementById('vai-project-controls'); if(pc) pc.style.display='block'; }catch(e){}
+  try{ const sr=document.getElementById('vai-start-right'); if(sr) sr.style.display='flex'; }catch(e){}
+  try{ document.getElementById('vai-player-wrap').style.display='block'; }catch(e){}
+  vaiClipsRender();
+  try{ vaiClipSelect(_vaiClips.length-1, true); }catch(e){}
+  _vaiDirty=true;
+  toast('🎤 Clip del gobbo aggiunta: ora puoi montarla come le altre','success');
+  _vaiGobboChiudi();
+}
+
+function _vaiGobboChiudi(){
+  const g=_vaiGobbo; if(!g) return;
+  try{ if(g.rec && g.registrando) g.rec.stop(); }catch(e){}
+  try{ if(g.stream) g.stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
+  if(g.scrollTimer) clearInterval(g.scrollTimer);
+  try{
+    const player=document.getElementById('vai-gobbo-player');
+    if(player && player.src) URL.revokeObjectURL(player.src);
+  }catch(e){}
+  try{ g.overlay.remove(); }catch(e){}
+  _vaiGobbo=null;
 }
 
 async function vaiVideoDalleClip(){
