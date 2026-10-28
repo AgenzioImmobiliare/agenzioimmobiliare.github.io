@@ -279,7 +279,11 @@ function controllaQuando(q) {
 }
 async function approva(request, env) {
   const b = await request.json().catch(() => ({}));
-  const p = b.p === 'ig' || b.p === 'fb' || b.p === 'tt' ? b.p : '';
+  /* [28 ott 2026] 'st' = Storia Instagram: solo tenuta con un link pubblico per
+     Metricool (autoPublish false, l'adesivo lo mette Enzo nell'app), mai
+     pubblicata in diretta da questo Worker — vedi il filtro in sveglia() e
+     pulizia() più sotto. */
+  const p = b.p === 'ig' || b.p === 'fb' || b.p === 'tt' || b.p === 'st' ? b.p : '';
   if (!b.idea || !p) return errore('mancano il post o il social');
   const pb = controllaQuando(b.quando); if (pb) return errore(pb);
   /* [21 ott 2026] Reel: un video al posto delle immagini */
@@ -290,12 +294,14 @@ async function approva(request, env) {
   const img = (Array.isArray(b.img) ? b.img : []).map(n => String(n).replace(/[^a-z0-9.]/g, '')).filter(n => /^[a-f0-9]{32}\.jpg$/.test(n));
   if (!reel && !img.length) return errore('mancano le immagini');
   if (img.length > 10) return errore('massimo 10 immagini');
-  const testo = String(b.testo || '').slice(0, (p === 'ig' || p === 'tt') ? 2200 : 60000);
+  const testo = String(b.testo || '').slice(0, (p === 'ig' || p === 'tt' || p === 'st') ? 2200 : 60000);
   if (p === 'ig' && (testo.match(/#[^\s#]+/g) || []).length > 30) return errore('Instagram accetta al massimo 30 hashtag');
-  /* [21 ott 2026] TikTok non passa da Meta: non serve la Pagina collegata */
+  /* [21 ott 2026] TikTok non passa da Meta: non serve la Pagina collegata.
+     [28 ott 2026] Storia: serve comunque l'Instagram professionale collegato
+     (è lì che Enzo la pubblica a mano), ma non pubblica nulla questo Worker. */
   if (p !== 'tt') {
     const c = await config(env);
-    if (p === 'ig' && !c.igId) return errore('la Pagina collegata non ha un Instagram professionale');
+    if ((p === 'ig' || p === 'st') && !c.igId) return errore('la Pagina collegata non ha un Instagram professionale');
   }
   const nome = nomeLavoro(b.idea, p);
   const vecchio = await leggiJson(env, nome);
@@ -462,8 +468,9 @@ async function pulizia(env) {
          3 giorni dopo l'ora di uscita il lavoro e i suoi file non servono più;
          [25 ott 2026] anche Instagram e Facebook, stesso trattamento: qui lo
          stato resta sempre "attesa" (il Worker non pubblica più), quindi senza
-         questo ramo il lavoro e le sue immagini non verrebbero mai tolti */
-      if (l.p === 'tt' || l.p === 'ig' || l.p === 'fb') {
+         questo ramo il lavoro e le sue immagini non verrebbero mai tolti;
+         [28 ott 2026] anche le Storie ('st'), stesso motivo */
+      if (l.p === 'tt' || l.p === 'ig' || l.p === 'fb' || l.p === 'st') {
         if (ora - new Date(l.quando).getTime() > 3 * 86400000) { await R.delete(o.key); continue; }
         (l.img || []).forEach(n => usate.add(n)); if (l.video) usate.add(l.video);
         continue;
@@ -499,8 +506,12 @@ async function sveglia(env) {
       const l = await leggiJson(env, o.key);
       if (!l) continue;
       /* [21 ott 2026] TikTok lo pubblica Metricool (programmato da Claude): qui niente;
-         [25 ott 2026] anche Instagram e Facebook, stesso trattamento */
-      if (l.p === 'tt' || l.p === 'ig' || l.p === 'fb') continue;
+         [25 ott 2026] anche Instagram e Facebook, stesso trattamento;
+         [28 ott 2026] anche le Storie ('st'): Metricool le manda al telefono di
+         Enzo (autoPublish false), MAI in automatico da questo Worker — una
+         storia non ha l'adesivo (sondaggio/domanda/quiz) che va messo a mano,
+         quindi non deve mai finire nel ramo pubblicaIG/pubblicaFB qui sotto. */
+      if (l.p === 'tt' || l.p === 'ig' || l.p === 'fb' || l.p === 'st') continue;
       /* rimasto "in corso" da più di 15 minuti: la sveglia si è interrotta a metà. Non ripubblico
          (potrebbe essere già uscito): lo segnalo, e si controlla a mano */
       if (l.stato === 'in corso' && new Date(l.inCorsoDa || 0).getTime() < ora - 15 * 60000) {
