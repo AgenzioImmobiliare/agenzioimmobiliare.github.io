@@ -701,10 +701,11 @@ function apRenderPipeline(){
   });
 }
 
-/* ══ STAMPA PIPELINE — A4, rispetta i filtri/l'ordine che Enzo vede a schermo [27 ott 2026] ══
+/* ══ STAMPA PIPELINE — A4 orizzontale, stesso tabellone a colonne di fase che si vede
+   a schermo (apRenderPipeline), ma in bianco e nero per la stampa [27 ott 2026].
    Stessa logica di filtro/ordine di apRenderPipeline (non la richiamo per non
-   duplicare il disegno della tabella a schermo): una tabella sola, pensata per
-   la carta, con le stesse etichette/colori di fase e priorità già in uso. */
+   duplicare il disegno della tabella a schermo) e stesso linguaggio visivo dei
+   pallini di avanzamento (attuale/completata/da fare/persa), senza i colori di fase. */
 function apStampaPipeline(){
   var deals = apGetDeals();
   var filterPrio = (document.getElementById('ap-filter-prio')||{}).value || '';
@@ -732,47 +733,89 @@ function apStampaPipeline(){
 
   if(!filtered.length){ showToast('Niente da stampare con questi filtri','','#D97706'); return; }
 
-  var prioMap = {
-    alta : { color:'#DC2626', bg:'#FEF2F2', lbl:'Alta'  },
-    media: { color:'#B45309', bg:'#FFFBEB', lbl:'Media' },
-    bassa: { color:'#15803D', bg:'#F0FDF4', lbl:'Bassa' }
-  };
+  var prioLbl = { alta:'Alta', media:'Media', bassa:'Bassa' };
   var tot = filtered.filter(function(d){ return d.fase !== 'perso'; }).length;
   var val = filtered.filter(function(d){ return d.fase !== 'perso'; })
                      .reduce(function(s,d){ return s + (parseFloat(d.valore)||0); }, 0);
   var oggi = new Date();
   var oggiTxt = oggi.toLocaleDateString('it-IT', { day:'2-digit', month:'long', year:'numeric' });
 
+  /* Stesse etichette brevi che compaiono sotto i pallini a schermo, in ordine con AP_PIPELINE_STAGES */
+  var STAGE_LBL = { 'nuovo-contatto':'Nuovo', 'da-contattare':'Da contatt.', 'contattato':'Contattato',
+    'appuntamento-fissato':'Appuntam.', 'valutazione-fatta':'Valutaz.', 'in-attesa':'In attesa',
+    'incarico-preso':'Incarico', 'perso':'Perso' };
+
+  var COLW = { cliente:210, tel:82, valore:68, stage:68 };
+  var gridCols = COLW.cliente + 'px ' + COLW.tel + 'px ' + COLW.valore + 'px ' +
+    AP_PIPELINE_STAGES.map(function(){ return COLW.stage + 'px'; }).join(' ');
+
+  var headerCells = '<div style="padding:4px 8px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6B7280">Cliente</div>'
+    + '<div style="padding:4px 6px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6B7280">Telefono</div>'
+    + '<div style="padding:4px 6px;text-align:right;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#6B7280">Valore</div>'
+    + AP_PIPELINE_STAGES.map(function(s){
+        return '<div style="padding:4px 2px;text-align:center;font-size:7.5px;font-weight:800;text-transform:uppercase;letter-spacing:.2px;color:#6B7280;border-left:1px solid #E5E7EB;line-height:1.15">' + (STAGE_LBL[s.id]||s.label) + '</div>';
+      }).join('');
+
+  /* Ogni riga/intestazione è una sua griglia (stessa tecnica del tabellone a schermo in apRenderPipeline),
+     così una riga può andare a capo pagina senza bisogno di una vera <table>. Tutto in grigio/nero: niente
+     colori di fase, solo la forma (pieno/assente/tratteggiato) a dire dove è arrivata la trattativa. */
   var righe = filtered.map(function(d){
-    var stage = AP_PIPELINE_STAGES.find(function(s){ return s.id === d.fase; }) || AP_PIPELINE_STAGES[0];
-    var pm = prioMap[d.priorita] || { color:'#64748B', bg:'#F8FAFC', lbl:'—' };
+    var stageIdx = AP_PIPELINE_STAGES.findIndex(function(s){ return s.id === d.fase; });
+    if(stageIdx < 0) stageIdx = 0;
+    var isLost = d.fase === 'perso';
+    var prioTxt = prioLbl[d.priorita] || '';
     var luogo = [d.comune, d.zona].filter(Boolean).join(' · ') || '—';
-    return '<tr>'
-      + '<td style="padding:7px 8px;border-bottom:1px solid #F1F5F9">'
-        + '<div style="font-size:11.5px;font-weight:700;color:#111827">' + (d.titolo||'—') + '</div>'
-        + '<div style="font-size:9.5px;color:#94A3B8;margin-top:1px">' + luogo + '</div>'
-      + '</td>'
-      + '<td style="padding:7px 8px;border-bottom:1px solid #F1F5F9;font-size:10.5px;color:#374151;white-space:nowrap">' + (d.telefono||'—') + '</td>'
-      + '<td style="padding:7px 8px;border-bottom:1px solid #F1F5F9">'
-        + '<span style="display:inline-block;font-size:9.5px;font-weight:700;color:' + stage.color + ';background:' + stage.bg + ';border:1px solid ' + stage.border + ';padding:2px 8px;border-radius:20px;white-space:nowrap">' + stage.label + '</span>'
-      + '</td>'
-      + '<td style="padding:7px 8px;border-bottom:1px solid #F1F5F9">'
-        + '<span style="font-size:9.5px;font-weight:700;color:' + pm.color + ';border:1px solid currentColor;padding:1px 7px;border-radius:20px;white-space:nowrap">' + pm.lbl + '</span>'
-      + '</td>'
-      + '<td style="padding:7px 8px;border-bottom:1px solid #F1F5F9;font-size:11px;font-weight:700;color:#111827;text-align:right;white-space:nowrap">' + (apFmt(d.valore)||'—') + '</td>'
-    + '</tr>';
+
+    var clienteCell = '<div style="padding:6px 8px;border-bottom:1px solid #F1F5F9">'
+      + '<div style="display:flex;align-items:baseline;gap:6px;flex-wrap:wrap">'
+        + '<span style="font-size:11px;font-weight:700;color:#111827">' + (d.titolo||'—') + '</span>'
+        + (prioTxt ? '<span style="font-size:7.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;color:#374151;border:1px solid #9CA3AF;border-radius:10px;padding:0 6px">' + prioTxt + '</span>' : '')
+      + '</div>'
+      + '<div style="font-size:9px;color:#9CA3AF;margin-top:1px">' + luogo + '</div>'
+    + '</div>';
+
+    var telCell = '<div style="padding:6px 6px;border-bottom:1px solid #F1F5F9;font-size:10px;color:#374151;white-space:nowrap;display:flex;align-items:center">' + (d.telefono||'—') + '</div>';
+
+    var valCell = '<div style="padding:6px 6px;border-bottom:1px solid #F1F5F9;font-size:10.5px;font-weight:700;color:#111827;text-align:right;white-space:nowrap;display:flex;align-items:center;justify-content:flex-end">' + (apFmt(d.valore)||'—') + '</div>';
+
+    var stageCells = AP_PIPELINE_STAGES.map(function(stage, si){
+      var isCurrent = si === stageIdx;
+      var isPast    = si < stageIdx && !isLost;
+      var dot;
+      if(isCurrent && isLost){
+        dot = '<div style="width:20px;height:20px;border-radius:50%;background:#1F2937;display:flex;align-items:center;justify-content:center">'
+          + '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'
+        + '</div>';
+      } else if(isCurrent){
+        dot = '<div style="width:20px;height:20px;border-radius:50%;background:#1F2937"></div>';
+      } else if(isPast){
+        dot = '<div style="width:15px;height:15px;border-radius:50%;background:#D1D5DB;display:flex;align-items:center;justify-content:center">'
+          + '<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+        + '</div>';
+      } else {
+        dot = '<div style="width:11px;height:11px;border-radius:50%;border:1.3px dashed #D1D5DB;background:transparent"></div>';
+      }
+      return '<div style="padding:6px 2px;border-bottom:1px solid #F1F5F9;border-left:1px solid #F1F5F9;display:flex;align-items:center;justify-content:center">' + dot + '</div>';
+    }).join('');
+
+    return '<div style="display:grid;grid-template-columns:' + gridCols + '">' + clienteCell + telCell + valCell + stageCells + '</div>';
   }).join('');
+
+  var legenda = '<div style="display:flex;gap:16px;align-items:center;font-size:8px;color:#6B7280;margin-top:4px">'
+    + '<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#1F2937"></span> Fase attuale</span>'
+    + '<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#D1D5DB"></span> Completata</span>'
+    + '<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:9px;height:9px;border-radius:50%;border:1.3px dashed #D1D5DB"></span> Da fare</span>'
+    + '<span style="display:flex;align-items:center;gap:4px"><span style="display:inline-block;width:11px;height:11px;border-radius:50%;background:#1F2937"></span> ✕ Persa</span>'
+  + '</div>';
 
   var html = '<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><title>Pipeline commerciale — ' + oggiTxt + '</title>'
     + '<style>'
     + '*{box-sizing:border-box;margin:0;padding:0}'
     + 'body{font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:12px;color:#111827;background:white}'
-    + '@page{size:A4 portrait;margin:14mm 14mm}'
-    + '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-print{display:none!important}thead{display:table-header-group}}'
-    + 'table{width:100%;border-collapse:collapse}'
-    + 'thead th{text-align:left;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#9CA3AF;padding:0 8px 6px;border-bottom:2px solid #1D4ED8}'
+    + '@page{size:A4 landscape;margin:10mm 10mm}'
+    + '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.no-print{display:none!important}}'
     + '</style></head><body>'
-    + '<div style="border-bottom:3px solid #1D4ED8;padding-bottom:10px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:flex-end">'
+    + '<div style="border-bottom:3px solid #1F2937;padding-bottom:10px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:flex-end">'
       + '<div>'
         + '<div style="font-size:9px;color:#9CA3AF;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">' + getNomeAgenzia() + '</div>'
         + '<div style="font-size:18px;font-weight:900;color:#111827">Pipeline commerciale</div>'
@@ -782,22 +825,23 @@ function apStampaPipeline(){
         + '<div style="margin-top:2px"><strong>' + tot + '</strong> attivi' + (val>0?'  ·  <strong>'+apFmt(val)+'</strong>':'') + '</div>'
       + '</div>'
     + '</div>'
-    + '<table><thead><tr><th style="width:36%">Cliente</th><th style="width:16%">Telefono</th><th style="width:22%">Fase</th><th style="width:12%">Priorità</th><th style="width:14%;text-align:right">Valore</th></tr></thead>'
-    + '<tbody>' + righe + '</tbody></table>'
-    + '<div style="margin-top:14px;padding-top:6px;border-top:1px solid #E5E7EB;display:flex;justify-content:space-between;font-size:8px;color:#9CA3AF">'
+    + '<div style="display:grid;grid-template-columns:' + gridCols + ';border-bottom:2px solid #1F2937;padding-bottom:4px;margin-bottom:2px">' + headerCells + '</div>'
+    + righe
+    + legenda
+    + '<div style="margin-top:10px;padding-top:6px;border-top:1px solid #E5E7EB;display:flex;justify-content:space-between;font-size:8px;color:#9CA3AF">'
       + '<span>' + getNomeAgenzia() + ' — ' + getNomeAgente() + '</span>'
       + '<span>' + oggiTxt + ' — DOCUMENTO RISERVATO</span>'
     + '</div>'
     + '</body></html>';
 
-  var printBar = '<div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#1D4ED8;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.3)" class="no-print">'
+  var printBar = '<div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#1F2937;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.3)" class="no-print">'
     + '<div style="display:flex;align-items:center;gap:10px">'
       + '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>'
       + '<span style="color:white;font-weight:800;font-size:14px">Anteprima Pipeline commerciale</span>'
       + '<span style="color:rgba(255,255,255,.7);font-size:12px">' + filtered.length + (filtered.length===1?' contatto':' contatti') + '</span>'
     + '</div>'
     + '<div style="display:flex;gap:8px">'
-      + '<button onclick="window.print()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 20px;background:white;border:none;border-radius:8px;color:#1D4ED8;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">'
+      + '<button onclick="window.print()" style="display:inline-flex;align-items:center;gap:6px;padding:8px 20px;background:white;border:none;border-radius:8px;color:#1F2937;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">'
         + '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>'
         + 'Stampa'
       + '</button>'
