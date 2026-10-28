@@ -5435,7 +5435,7 @@ hubTema();
     </div>
     <div>
       <div class="logo-text" id="hdr-agency">Le case dalla A allo Z.io</div>
-      <div class="logo-sub">IndexPlus · Marketing Hub <span style="background:#1A7A4A;color:#fff;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:800;margin-left:6px;letter-spacing:.5px">v.27ott-COPRETRO</span></div>
+      <div class="logo-sub">IndexPlus · Marketing Hub <span style="background:#1A7A4A;color:#fff;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:800;margin-left:6px;letter-spacing:.5px">v.28ott-FIXLINKBIO</span></div>
     </div>
   </div>
   <div class="hub-destra" style="display:flex;gap:10px;align-items:center">
@@ -7053,7 +7053,7 @@ Un caro saluto,
     <!-- ══════════════ SCRITTE VIDEO AI ══════════════ -->
     <!-- ══════════════ LIBRERIA CILENTO [24 ott 2026] ══════════════ -->
     <div id="sec-libreria" class="section-panel">
-      <div id="lib-root"></div>
+      <div id="libcil-root"></div>
     </div>
 
     <div id="sec-videoai" class="section-panel">
@@ -13354,6 +13354,50 @@ function vxClaudeDesignCopia(){
     .then(function(){ toast('Copiato ✓', 'success'); })
     .catch(function(){ el.select(); try{ document.execCommand('copy'); toast('Copiato ✓', 'success'); }catch(e){ toast('Seleziona e copia a mano', 'error'); } });
 }
+/* [27 ott 2026] "Prompt per un'altra AI": Enzo ha provato il prompt di
+   vxClaudeDesign su ChatGPT (fuori dal gestionale) e il risultato gli è
+   piaciuto — ma ha chiesto un testo pensato apposta per un'AI di immagini
+   esterna (non Claude Design), con due paletti precisi: 1) niente "aria da
+   fatto con l'AI" (foto finte, badge dorati pieni di iconcine, layout
+   sempre uguale); 2) lo STILE deve restare un pezzo a parte, facile da
+   riscrivere ogni volta — mai fisso, mai lo stesso risultato. Riusa la
+   stessa finestra/testarea/pulsante Copia di vxClaudeDesign (stesso id
+   #vx-cd-testo): qui cambia solo il testo preparato, non il meccanismo. */
+function vxPromptAltraAI(tipo){
+  var v = _vx.cur; if(!v) return;
+  tipo = tipo === 'ret' ? 'ret' : 'cop';
+  var kit = _settKit(), imms = [];
+  try{ imms = _vxImmDelVol(v); }catch(e){}
+  var scopo = tipo === 'cop'
+    ? 'È la COPERTINA di un giornalino immobiliare stampato: deve accogliere e invogliare a sfogliare.'
+    : 'È il RETRO (ultima pagina) di un giornalino immobiliare stampato: deve chiudere con i contatti ben leggibili e un invito a scrivere.';
+  var testo = 'Crea l\'immagine per ' + (tipo === 'cop' ? 'la copertina' : 'il retro') + ' di un giornalino immobiliare stampato, formato verticale (circa A5, proporzioni verticali tipo 3:4).\n\n' +
+    scopo + '\n\n' +
+    'STILE — riscrivi TU questa riga ogni volta, cambia sempre: non deve uscire due volte la stessa composizione. Esempio da sostituire:\n' +
+    '[es. "fotografico e naturale, luce calda al tramonto, poco testo" oppure "minimal ed elegante, molto spazio bianco" oppure "editoriale come una rivista di design, tipografia grande"]\n\n' +
+    'REGOLE per NON sembrare "fatta con l\'AI":\n' +
+    '- Niente foto finte o iper-sature, niente persone con sorrisi da catalogo\n' +
+    '- Niente righe di iconcine generiche (casa, stretta di mano, chiave) e niente badge dorati pieni di scritte\n' +
+    '- Una sola idea forte al centro, non tanti elementi diversi messi insieme\n' +
+    '- Composizione libera, non per forza simmetrica: lascia respirare lo spazio\n\n' +
+    'CONTENUTO DA METTERE (scrivi questi dati esatti, non inventarne altri):\n' +
+    '- Agenzia: ' + kit.agenzia + '\n' +
+    '- Agente: ' + kit.nome + (kit.tel ? ' — ' + kit.tel : '') + '\n' +
+    (tipo === 'cop' ? '- Titolo del giornalino: ' + (v.nome || '') + '\n' : '') +
+    (imms.length ? '- (Facoltativo) un richiamo tipo "' + imms.length + ' immobili in vendita", solo se ci sta bene nella composizione\n' : '') +
+    '\nNon aggiungere call-to-action o slogan inventati: se vuoi una frase, scrivila tu qui sopra o lasciala fuori.';
+  var d = document.getElementById('vx-dlg');
+  d.innerHTML = '<div class="vx-dlg-box">' +
+    '<div class="vx-dlg-t">Prompt per un\'altra AI</div>' +
+    '<div class="vx-dlg-s">Riscrivi la riga "STILE" ogni volta che lo usi (è il segreto per non avere sempre la stessa grafica), poi copia e incolla in ChatGPT, Gemini o un\'altra AI di immagini.</div>' +
+    '<textarea id="vx-cd-testo" rows="12" style="width:100%;box-sizing:border-box;font-family:inherit;font-size:.86rem;padding:10px;border-radius:8px;border:1.5px solid rgba(13,27,42,.18)">' + _volEsc(testo) + '</textarea>' +
+    '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:4px">' +
+      '<button class="vx-b" onclick="vxDlgChiudi()">Chiudi</button>' +
+      '<button class="vx-b on" onclick="vxClaudeDesignCopia()">Copia</button>' +
+    '</div>' +
+  '</div>';
+  d.hidden = false;
+}
 function vxGenSel(k, on){ if(on) _vx.gen.sel[k] = 1; else delete _vx.gen.sel[k]; _vxImmDlg(); }
 function vxGenTutti(on){ (_vx.gen.lista || []).forEach(function(k){ if(on) _vx.gen.sel[k] = 1; else delete _vx.gen.sel[k]; }); _vxImmDlg(); }
 function _vxGenScelti(){
@@ -14863,9 +14907,10 @@ function vxModelli(tipo){
       '<div class="vx-seg"><button class="' + (_vx.modDove === 'nat' ? 'on' : '') + '" onclick="_vx.modDove=\'nat\';vxModelli(\'' + tipo + '\')">' + (tipo === 'cop' ? 'Come prima pagina' : 'Come ultima pagina') + '</button>' +
         '<button class="' + (_vx.modDove === 'qui' ? 'on' : '') + '" onclick="_vx.modDove=\'qui\';vxModelli(\'' + tipo + '\')">Al posto della pagina ' + (_vx.pag + 1) + '</button></div>' +
     '</div>' +
-    '<div style="display:flex;align-items:center;gap:10px;margin:2px 0 12px;padding:10px 12px;background:#F8FAFC;border:1px solid rgba(13,27,42,.1);border-radius:10px">' +
-      '<span class="vx-nota" style="margin:0;flex:1">Oppure, invece di un modello pronto, prepara un ' + (tipo === 'cop' ? 'copertina' : 'retro') + ' su misura con Claude Design (in chat).</span>' +
-      '<button class="vx-b" onclick="vxClaudeDesign(\'' + tipo + '\')">' + _vxI('ai', 14) + ' Crea con Claude Design</button>' +
+    '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:2px 0 12px;padding:10px 12px;background:#F8FAFC;border:1px solid rgba(13,27,42,.1);border-radius:10px">' +
+      '<span class="vx-nota" style="margin:0;flex:1 1 220px">Oppure, invece di un modello pronto, prepara un ' + (tipo === 'cop' ? 'copertina' : 'retro') + ' su misura:</span>' +
+      '<button class="vx-b" onclick="vxClaudeDesign(\'' + tipo + '\')" title="La creo io qui, con Claude Design">' + _vxI('ai', 14) + ' Crea con Claude Design</button>' +
+      '<button class="vx-b" onclick="vxPromptAltraAI(\'' + tipo + '\')" title="Un testo pronto da dare a ChatGPT, Gemini o un\'altra AI di immagini">' + _vxI('ai', 14) + ' Prompt per un\'altra AI</button>' +
     '</div>' +
     '<div class="vx-lib-sc"><div class="vx-mod-gr">' + tess + '</div></div>' +
     '<div class="vx-imm-az"><span class="vx-nota" style="margin:0">Poi puoi spostare, cambiare e togliere ogni pezzo.</span><span class="vx-spazio"></span><button class="vx-b" onclick="vxDlgChiudi()">Chiudi</button></div></div>';
@@ -50199,7 +50244,7 @@ async function pubConfrontaAI(){
       });
     });
     return cat.then(libCarica).then(function(){
-      libRender(); try{ terrRender(); }catch(e){}
+      libCilRender(); try{ terrRender(); }catch(e){}
       if(!nuovi.length) return;
       var proxy=(typeof aiGetProxy==='function')?aiGetProxy():'';
       if(!proxy){ toastL(nuovi.length+' clip aggiunte. Le etichette le scrivi tu (l\'AI non è collegata)','success'); return; }
@@ -50218,7 +50263,7 @@ async function pubConfrontaAI(){
       });
     });
     return cat.then(libCarica).then(function(){
-      libRender(); try{ terrRender(); slotAggiorna(); }catch(e){}
+      libCilRender(); try{ terrRender(); slotAggiorna(); }catch(e){}
       toastL(fatte?('Etichette proposte per '+fatte+' clip: controllale e conferma'):'L\'AI non ha risposto: le etichette le puoi scrivere tu', fatte?'success':'error');
     });
   }
@@ -50234,7 +50279,7 @@ async function pubConfrontaAI(){
     if(ev) ev.stopPropagation();
     var r=_lib.find(function(x){ return x.id===id; }); if(!r) return;
     r.etichetteOk=true; try{ if(r.comune) localStorage.setItem(K_COMUNE,r.comune); }catch(e){}
-    libSalva(r).then(function(){ libRender(); toastL('Etichette confermate: la clip entra nei suggerimenti','success'); });
+    libSalva(r).then(function(){ libCilRender(); toastL('Etichette confermate: la clip entra nei suggerimenti','success'); });
   };
 
   /* ── esporta / importa: un file solo, i video dentro così come sono ──
@@ -50265,7 +50310,7 @@ async function pubConfrontaAI(){
             delete rec._off; delete rec._len; nuovi++;
             cat=cat.then(function(){ return rec.blob.arrayBuffer().then(function(b){ rec.blob=new Blob([b],{type:m.tipo||'video/mp4'}); return libSalva(rec); }); });
           });
-          return cat.then(libCarica).then(function(){ libRender(); toastL(nuovi?('Importate '+nuovi+' clip'):'Nessuna clip nuova: erano già tutte in libreria','success'); });
+          return cat.then(libCarica).then(function(){ libCilRender(); toastL(nuovi?('Importate '+nuovi+' clip'):'Nessuna clip nuova: erano già tutte in libreria','success'); });
         });
       }).catch(function(e){ toastL('Importazione non riuscita: '+(e&&e.message||e),'error'); });
     };
@@ -50402,10 +50447,10 @@ async function pubConfrontaAI(){
       +'<div class="lb-b">'+corpo+'</div></div>';
   }
   function opz(lista,val,tutti){ return '<option value="">'+tutti+'</option>'+lista.map(function(x){ return '<option'+(x===val?' selected':'')+'>'+esc(x)+'</option>'; }).join(''); }
-  function libRender(){
-    var root=document.getElementById('lib-root'); if(!root) return;
+  function libCilRender(){
+    var root=document.getElementById('libcil-root'); if(!root) return;
     libCss(); libTema();
-    if(!_libPronta){ root.innerHTML='<div class="lb-vuoto">Apro la libreria…</div>'; libCarica().then(libRender); return; }
+    if(!_libPronta){ root.innerHTML='<div class="lb-vuoto">Apro la libreria…</div>'; libCarica().then(libCilRender); return; }
     var tue=_lib.filter(function(r){ return r.fonte==='tua'; }).length, daConf=_lib.filter(function(r){ return !r.etichetteOk; }).length;
     var perCom={}; _lib.forEach(function(r){ var c=r.comune||'Senza comune'; perCom[c]=(perCom[c]||0)+1; });
     var com=Object.keys(perCom).sort(function(a,b){ return perCom[b]-perCom[a]; });
@@ -50449,14 +50494,14 @@ async function pubConfrontaAI(){
     } else h+='<div class="lb-grid">'+lista.map(card).join('')+'</div>';
     root.innerHTML=h;
   }
-  window.libRender=libRender;
-  window.libFiltro=function(k,v){ _filtri[k]=v; libRender(); };
-  window.libVista=function(v){ _vista=v; libRender(); };
+  window.libCilRender=libCilRender;
+  window.libFiltro=function(k,v){ _filtri[k]=v; libCilRender(); };
+  window.libVista=function(v){ _vista=v; libCilRender(); };
 
   /* ── scheda della clip: guarda, correggi, elimina ── */
   window.libScheda=function(id){
     var r=_lib.find(function(x){ return x.id===id; }); if(!r) return;
-    var root=document.getElementById('lib-root'); if(!root) return;
+    var root=document.getElementById('libcil-root'); if(!root) return;
     var url=URL.createObjectURL(r.blob);
     var m=document.createElement('div'); m.className='lb-modal';
     var sel=function(nome,lista,val){ return '<select name="'+nome+'">'+lista.map(function(x){ var k=Array.isArray(x)?x[0]:x, t=Array.isArray(x)?x[1]:x; return '<option value="'+esc(k)+'"'+(k===val?' selected':'')+'>'+esc(t)+'</option>'; }).join('')+'</select>'; };
@@ -50479,13 +50524,13 @@ async function pubConfrontaAI(){
     m.querySelector('[data-a=chiudi]').onclick=chiudi;
     m.querySelector('[data-a=elimina]').onclick=function(){
       if(!confirm('Eliminare questa clip dalla libreria?\nSe non hai una copia (Esporta), non si potrà recuperare.')) return;
-      libElimina(r.id).then(libCarica).then(function(){ chiudi(); libRender(); toastL('Clip eliminata','success'); });
+      libElimina(r.id).then(libCarica).then(function(){ chiudi(); libCilRender(); toastL('Clip eliminata','success'); });
     };
     m.querySelector('[data-a=salva]').onclick=function(){
       var f=m.querySelector('form');
       ['comune','zona','soggetto','stagione','fonte','autore','link','permessi'].forEach(function(k){ r[k]=String(f.elements[k].value||'').trim(); });
       r.etichetteOk=true; try{ if(r.comune) localStorage.setItem(K_COMUNE,r.comune); }catch(e){}
-      libSalva(r).then(function(){ chiudi(); libRender(); toastL('Clip salvata','success'); });
+      libSalva(r).then(function(){ chiudi(); libCilRender(); toastL('Clip salvata','success'); });
     };
     root.appendChild(m);
   };
@@ -50495,7 +50540,7 @@ async function pubConfrontaAI(){
   if(typeof _sw==='function' && !_sw._lib){
     window.switchSection=function(nome){
       var r=_sw.apply(this,arguments);
-      if(nome==='libreria'){ try{ libRender(); }catch(e){ console.warn('[Libreria] KO',e); } }
+      if(nome==='libreria'){ try{ libCilRender(); }catch(e){ console.warn('[Libreria] KO',e); } }
       return r;
     };
     window.switchSection._lib=true;
