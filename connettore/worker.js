@@ -408,6 +408,59 @@ COME PROGRAMMARLI (connettore Metricool):
       return out;
     }
   },
+  /* [28 ott 2026] STORIE INSTAGRAM CON METRICOOL (stesso trattamento di
+     meta_approvati qui sopra, ma SEMPRE autoPublish false: una storia ha un
+     adesivo — sondaggio/domanda/quiz/cursore — che Metricool non sa mettere,
+     quindi arriva pronta al telefono di Enzo via notifica, lui aggiunge
+     l'adesivo e pubblica di sua mano. Il Worker social-meta non la pubblica
+     mai in diretta, vedi meta/worker.js (lo stesso filtro di tt/ig/fb). */
+  storie_approvate: {
+    descr: 'Le Storie Instagram approvate nel Marketing Hub ("Ho controllato" premuto) e pronte sul Worker con un link pubblico: per ognuna giorno e ora di uscita (ora italiana), tipo (sondaggio/domande/quiz/cursore), il testo dell\'adesivo da ricordare a Enzo, e il link pubblico del file. Programmarle SEMPRE con autoPublish false (mai true): Metricool manda la notifica al telefono di Enzo, che mette l\'adesivo e pubblica lui. Usalo quando Enzo dice «programma le storie» e nel giro del lunedì (insieme a meta_approvati e tiktok_approvati).',
+    schema: { type: 'object', properties: {} },
+    async run(env) {
+      const base = `users/${env.CARTELLA || 'usr_001'}`;
+      const d = await leggiDoc(env, `${base}/data/mktAZ_settimana`);
+      const S = d && d.valore;
+      if (!S || !Array.isArray(S.storie)) return 'Nel Marketing Hub non ci sono ancora le storie (apri l\'Hub una volta).';
+      const roma = ms => new Date(ms).toLocaleString('sv-SE', { timeZone: 'Europe/Rome' }).replace(' ', 'T').slice(0, 16);
+      const adesso = roma(Date.now()), fra7 = roma(Date.now() + 7 * 86400000);
+      const qIt = q => q ? `${gs(q.slice(0, 10))} ${q.slice(11, 16)}` : 'senza giorno';
+      const TIPI = { sondaggio: 'Sondaggio', domande: 'Caselle di domande', quiz: 'Quiz', cursore: 'Cursore con emoji' };
+      const adesivo = st => {
+        const righe = [String(st.domanda || '').trim()];
+        if (st.tipo === 'quiz') (st.opzioni || []).forEach((o, i) => righe.push((i === (st.corretta | 0) ? '✓ ' : '  ') + String(o || '').trim()));
+        else if (st.tipo === 'sondaggio') (st.opzioni || []).forEach(o => righe.push(String(o || '').trim()));
+        else if (st.tipo === 'cursore' && st.emoji) righe.push(st.emoji);
+        return righe.filter(r => r.trim()).join(' / ');
+      };
+      const L = S.storie.filter(st => st && !st.fatta && socialApprovato(st, 'st'))
+        .map(st => ({ st, q: (st.quando ? String(st.quando).slice(0, 16) : '') })).sort((a, b) => String(a.q || '9999').localeCompare(String(b.q || '9999')));
+      const da = L.filter(v => v.q && v.q > adesso && v.q <= fra7);
+      const rit = L.filter(v => !v.q || v.q <= adesso);
+      const poi = L.filter(v => v.q && v.q > fra7);
+      const scheda = (v, n) => {
+        const st = v.st, l = st.meta.st;
+        return `${n}) ${TIPI[st.tipo] || st.tipo} · esce ${qIt(v.q)}\n` +
+          `   publicationDate: {"dateTime":"${v.q}:00","timezone":"Europe/Rome"}\n` +
+          `   frase sulla grafica: ${String(st.frase || '').replace(/\*/g, '').slice(0, 90)}\n` +
+          `   adesivo da ricordare a Enzo (${TIPI[st.tipo] || st.tipo}): ${adesivo(st) || '(vuoto)'}\n` +
+          `   approvata il ${it(new Date(Number(l.il) || 0).toISOString())}\n` +
+          `   file:\n${l.media.map(u => '     ' + u).join('\n')}`;
+      };
+      let out = `Storie Instagram approvate nel Marketing Hub — adesso ${qIt(adesso)} (ora italiana)\n`;
+      out += `\nDA PROGRAMMARE (escono entro 7 giorni): ${da.length}\n` + (da.map((v, i) => scheda(v, i + 1)).join('\n\n') || 'nessuna') + '\n';
+      if (rit.length) out += `\nIN RITARDO (ora già passata o senza ora: NON programmarle, dillo a Enzo che le sposti nell'Hub): ${rit.length}\n` + rit.map(v => `• ${qIt(v.q)} — ${String(v.st.frase || '').replace(/\*/g, '').slice(0, 60)}`).join('\n') + '\n';
+      if (poi.length) out += `\nPIÙ AVANTI (oltre 7 giorni: al giro del lunedì dopo): ${poi.length}\n` + poi.map(v => `• ${qIt(v.q)} — ${String(v.st.frase || '').replace(/\*/g, '').slice(0, 60)}`).join('\n') + '\n';
+      out += `
+COME PROGRAMMARLE (connettore Metricool):
+1. getBrandSettings → blogId del brand "Le case dalla A allo Zio" e fuso Europe/Rome.
+2. getScheduledPosts da adesso a 8 giorni dopo: se una storia con la stessa frase c'è già, non rifarla.
+3. Per ognuna "DA PROGRAMMARE": createScheduledPost con providers [{"network":"instagram"}], instagramData {"type":"STORY"}, autoPublish FALSE (sempre: Metricool manda la notifica al telefono di Enzo, che mette l'adesivo e pubblica lui), draft false, la publicationDate scritta sopra, text vuoto (le storie non hanno didascalia), media = il file scritto sopra.
+4. Se Metricool rifiuta un file, non riprovare all'infinito: segnalalo a Enzo (il file sul Worker potrebbe essere scaduto: va ri-approvata nell'Hub).
+5. Alla fine riepiloga a Enzo: programmate (giorno, ora, tipo adesivo da ricordargli), già presenti, in ritardo. Il Marketing Hub NON viene aggiornato da qui: resta "Approvata" finché Enzo non preme "Fatto, pubblicata".`;
+      return out;
+    }
+  },
   /* [13 ott 2026] Cosa è stato prodotto in un periodo. Lo calcola il
      gestionale (pagina Produzione, stesse regole degli Obiettivi) e lo scrive
      nel riepilogo: qui si sceglie solo il periodo. Niente provvigioni. */

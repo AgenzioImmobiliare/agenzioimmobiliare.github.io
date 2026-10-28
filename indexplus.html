@@ -26136,6 +26136,19 @@ function _psMetaProblema(x, p){
   if(ms < Date.now()+PS_META.anticipoMin*60000) return 'L\'ora di '+_settPiattNome(p)+' è passata o è fra meno di '+PS_META.anticipoMin+' minuti: spostala più avanti';
   return '';
 }
+/* [28 ott 2026] Storie: stesso controllo di _psMetaProblema ma più semplice
+   (una sola immagine, nessun testo per piattaforma: il "testo" di una storia
+   è l'adesivo, scritto a parte). Usato da psMetaApprovaStoria e dal bottone. */
+function _psStProblema(st){
+  if(!_psMetaPronto()) return 'Per le storie serve il Worker di Instagram e Facebook (tiene i file per Metricool): collegalo in Orari e automatico';
+  if(_settStBloccata(st)) return 'Prima controlla le cose da verificare e premi "Ho controllato"';
+  const seg=_settSegnaposti(_settStTesto(st));
+  if(seg.length) return 'Completa prima le parti tra parentesi quadre: '+seg.slice(0,3).join(', ');
+  const ms=_settDTms(st.quando);
+  if(!ms) return 'Prima scegli giorno e ora per la storia';
+  if(ms < Date.now()+PS_META.anticipoMin*60000) return 'L\'ora della storia è passata o è fra meno di '+PS_META.anticipoMin+' minuti: spostala più avanti';
+  return '';
+}
 /* ═══════════ TIKTOK, INSTAGRAM E FACEBOOK CON METRICOOL [21 ott 2026, ig/fb 25 ott 2026] ═══════════
    Scelte di Enzo (21 ott 2026, confermate per ig/fb il 25 ott 2026): Metricool col
    piano gratuito, quindi senza API; stessa cadenza settimanale per tutti e tre.
@@ -27886,6 +27899,7 @@ function _settStDettaglio(st){
       '<span class="sw-nota" style="margin:0">l\'adesivo si mette nell\'app: quando l\'hai pubblicata premi "Fatto, pubblicata"</span></div></div>')+
     '<div class="sw-azioni">'+
       '<button class="sw-btn pieno'+(blocc?' spento':'')+'" id="sw-st-salva-'+id+'" onclick="settStSalva(\''+id+'\',this)">'+SETT_ICO.grafica+' Salva la grafica</button>'+
+      _psStBtnHtml(st)+
       (st.fatta
         ? '<button class="sw-btn" onclick="settStFatta(\''+id+'\',false)">'+SETT_ICO.annulla+' Non ancora pubblicata</button>'
         : '<button class="sw-btn verde" onclick="settStFatta(\''+id+'\',true)">'+SETT_ICO.fatto+' Fatto, pubblicata</button>')+
@@ -28022,11 +28036,7 @@ function settStVerificato(id, si){
 function settStCopiaAdesivo(id){
   const st=_settStTrova(id); if(!st) return;
   if(_settStBloccata(st)){ toast('Prima controlla le cose da verificare e premi "Ho controllato"','error'); return; }
-  const righe=[String(st.domanda||'').trim()];
-  if(st.tipo==='quiz') (st.opzioni||[]).forEach((o,i)=>righe.push((i===(st.corretta|0)?'✓ ':'  ')+String(o||'').trim()));
-  else if(st.tipo==='sondaggio') (st.opzioni||[]).forEach(o=>righe.push(String(o||'').trim()));
-  else if(st.tipo==='cursore' && st.emoji) righe.push(st.emoji);
-  const t=righe.filter(r=>r.trim()).join('\n');
+  const t=_settStAdesivoTesto(st);
   if(!t){ toast('L\'adesivo è vuoto','error'); return; }
   const seg=_settSegnaposti(t);
   if(seg.length){ toast('Completa prima le parti tra parentesi quadre: '+seg.slice(0,3).join(', '),'error'); return; }
@@ -28077,6 +28087,61 @@ async function settStSalva(id, btn){
   }catch(e){ console.warn('[Storie] salvataggio', e); }
   if(btn){ btn.disabled=false; btn.innerHTML=SETT_ICO.grafica+' Salva la grafica'; }
   toast(ok?'Grafica della storia salvata':'Salvataggio non riuscito', ok?'success':'error');
+}
+/* [28 ott 2026] STORIE CON METRICOOL — stesso trattamento di psMetaApprova per
+   i post (vedi sopra, riga ~26230), ma: una sola immagine, SEMPRE
+   autoPublish false lato Metricool (l'adesivo non si programma via API),
+   nessun testo da copiare qui (quello è "Copia il testo dell'adesivo",
+   resta separato). Alternativa a "Salva la grafica": quella scarica a mano,
+   questa manda la storia a Claude/Metricool che avvisa il telefono di Enzo
+   quando è ora di metterci l'adesivo e pubblicare. */
+async function psMetaApprovaStoria(id){
+  const st=_settStTrova(id), k='st|'+id; if(!st || _psMetaInCorso[k]) return;
+  const prob=_psStProblema(st);
+  if(prob){ toast(prob,'error'); if(!_psMetaPronto()) settOrariApri(true); return; }
+  _psMetaInCorso[k]='Preparo la grafica…'; settRender();
+  try{
+    await Promise.all([_settCaricaLogo(), _settCaricaFont(), st.sfondo?_settCaricaSfondi({ sfondi:[st.sfondo] }):null]);
+    const cv=document.createElement('canvas'); cv.width=1080; cv.height=1920;
+    _settStDisegna(cv.getContext('2d'), st, false);      // senza il tratteggio, come "Salva la grafica"
+    const blob=await new Promise((ok,ko)=>{ try{ cv.toBlob(b=>b?ok(b):ko(new Error('immagine non creata')), 'image/jpeg', PS_META.qualita); }catch(e){ ko(e); } });
+    _psMetaInCorso[k]='Invio la storia…'; settRender();
+    const c=_psMetaCfg(); let r;
+    try{ r=await fetch(c.url+'/immagine', { method:'POST', headers:{ 'X-Chiave':c.chiave, 'Content-Type':'image/jpeg' }, body:blob }); }
+    catch(e){ throw new Error('il Worker di Instagram e Facebook non risponde: controlla l\'indirizzo e la connessione'); }
+    const d=await r.json().catch(()=>({ ok:false, errore:'risposta non leggibile ('+r.status+')' }));
+    if(!d.ok) throw new Error(d.errore||('errore '+r.status));
+    _psMetaInCorso[k]='Approvo…'; settRender();
+    const y=_settStTrova(id); if(!y) return;
+    const d2=await _psMetaChiama('/approva', { idea:id, p:'st', quando:new Date(_settDTms(y.quando)).toISOString(), testo:_settStAdesivoTesto(y), img:[d.nome], titolo:String(y.frase||'').replace(/\*/g,'').slice(0,120) });
+    if(!y.meta || typeof y.meta!=='object') y.meta={};
+    y.meta.st={ stato:'attesa', at:String((d2.lavoro && d2.lavoro.quando)||''), il:Date.now(), n:1 };
+    { const cu=_psMetaCfg().url; y.meta.st.media=[cu+'/img/'+d.nome]; }
+    saveData(D);
+    toast('Storia approvata · Claude la programma su Metricool: una notifica sul telefono ti avviserà di metterci l\'adesivo e pubblicarla','success');
+  }catch(e){
+    toast('Storia: '+((e && e.message)||e),'error');
+  }finally{ delete _psMetaInCorso[k]; settRender(); }
+}
+/* testo dell'adesivo da passare a Metricool/Claude come riferimento (stessa
+   costruzione di settStCopiaAdesivo, fattorizzata per non duplicarla) */
+function _settStAdesivoTesto(st){
+  const righe=[String(st.domanda||'').trim()];
+  if(st.tipo==='quiz') (st.opzioni||[]).forEach((o,i)=>righe.push((i===(st.corretta|0)?'✓ ':'  ')+String(o||'').trim()));
+  else if(st.tipo==='sondaggio') (st.opzioni||[]).forEach(o=>righe.push(String(o||'').trim()));
+  else if(st.tipo==='cursore' && st.emoji) righe.push(st.emoji);
+  return righe.filter(r=>r.trim()).join('\n');
+}
+/* bottone/stato "Approva" per la storia, da mettere vicino a "Salva la grafica" */
+function _psStBtnHtml(st){
+  const id=st.id;
+  if(st.meta && st.meta.st && st.meta.st.stato){
+    return '<span class="sw-nota" style="margin:0">Approvata · Claude la mette su Metricool, una notifica sul telefono avviserà per l\'adesivo</span>';
+  }
+  const occ=_psMetaInCorso['st|'+id];
+  if(occ) return '<button class="sw-btn" disabled>'+_settEsc(occ)+'</button>';
+  const prob=_psStProblema(st);
+  return '<button class="sw-btn'+(prob?' spento':'')+'" onclick="psMetaApprovaStoria(\''+id+'\')" title="'+_settEsc(prob||'La grafica va al Worker; Claude la programma su Metricool, che avvisa il telefono per metterci l\'adesivo')+'">'+SETT_ICO.fatto+' Approva</button>';
 }
 function settStFatta(id, si){
   const st=_settStTrova(id); if(!st) return;
