@@ -29918,6 +29918,7 @@ const VAI_AI_FUNZIONI = [
   { g:'Scrivere', t:'Scheda finale con contatti', d:'La chiusura del Reel con i tuoi recapiti.', f:'vaiSchedaFinale', need:'imm' },
   { g:'Scrivere', t:'Didascalia per il post', d:'Il testo da incollare sotto al video quando pubblichi.', f:'vaiGeneraDidascalia', need:'imm' },
   { g:'Scrivere', t:'Porta la didascalia nelle scritte', d:'Trasforma la didascalia già generata in scritte sul video.', f:'vaiDidascaliaInScritte', need:'clip', nota:'si sovrappone alle due funzioni di scritte' },
+  { g:'Scrivere', t:'Effetti sul parlato', d:'Ascolta cosa dici nel video (serve la chiave Gemini di "Foto AI") e fa comparire piccoli effetti — un\'emoji e poche parole — sui numeri, prezzi e momenti forti che nomini, come nei video TikTok/Reel.', f:'vaiEffettiParlato', need:'clip' },
 
   { g:'Montare', t:'Video dall\'immobile', d:'Dalle foto dell\'immobile al Reel con stile, musica, scritte e voce. Si ferma per farti leggere il copione.', f:'vaiVideoDaImmobile', need:'' },
   { g:'Montare', t:'Video dalle mie clip', d:'Dai video che hai girato al Reel montato: ambienti, ordine, tagli sul ritmo (parte centrale), scritte, apertura e chiusura.', f:'vaiVideoDalleClip', need:'clip' },
@@ -37006,6 +37007,79 @@ function vaiMdsApplica(){
 }
 window.vaiMontaDaSolo=vaiMontaDaSolo; window.vaiMdsRispondi=vaiMdsRispondi;
 window.vaiMdsApplica=vaiMdsApplica; window.vaiMdsChiudiDomande=vaiMdsChiudiDomande;
+
+/* ═══════════ EFFETTI SUL PARLATO [28 ott 2026] ═══════════
+   Ascolta (con Gemini, che capisce audio e video insieme — Claude via il
+   proxy non legge audio) cosa dici nella clip e propone piccoli effetti
+   grafici — un'emoji e poche parole — nei momenti in cui nomini un numero,
+   un prezzo, un luogo o dici qualcosa di forte, come nei video TikTok/Reel.
+   Riusa DI PROPOSITO la stessa forma di scritta e la stessa vaiMdsApplica()
+   di "Monta da solo" qui sopra (t/durata/testo/sotto/ruolo): eredita gratis
+   tutta la logica già rifinita lì (scritte mai sovrapposte, tempi riscalati
+   se serve, tracce dedicate, Annulla). L'unica differenza è COSA genera il
+   piano: lì i fotogrammi via Claude, qui il parlato via Gemini. */
+function _vaiFileABase64(file){
+  return new Promise(function(ok,ko){
+    const r=new FileReader();
+    r.onload=function(){ const s=String(r.result||''); const i=s.indexOf(','); ok(i>=0?s.slice(i+1):s); };
+    r.onerror=function(){ ko(new Error('file non leggibile')); };
+    r.readAsDataURL(file);
+  });
+}
+async function vaiEffettiParlato(){
+  if(!_vaiClips.length){ toast('Carica prima un video','error'); return; }
+  const chiave=(typeof _psGemChiave==='function')?_psGemChiave():'';
+  if(!chiave){ toast('Serve una chiave Google Gemini (quella di "Foto AI"): aggiungila nelle impostazioni dell\'AI','error'); return; }
+  const ci=(_vaiClipAttiva>=0 && _vaiClips[_vaiClipAttiva]) ? _vaiClipAttiva : 0;
+  const clip=_vaiClips[ci];
+  if(!clip || !clip.file){ toast('Seleziona una clip con un video caricato (non una foto)','error'); return; }
+  const durEff=function(c){ return (typeof _vaiDurataEff==='function')?(_vaiDurataEff(c)||c.durata||0):(c.durata||0); };
+  const durata=durEff(clip);
+  if(durata>90){ toast('Questa clip dura più di 90 secondi: funziona meglio su un video breve, tipo Reel o TikTok','error'); return; }
+  toast('Ascolto cosa dici nel video…','');
+  try{
+    const b64=await _vaiFileABase64(clip.file);
+    const mime=clip.file.type||'video/webm';
+    const ctxImm=(typeof _vaiImmContext==='function')?(_vaiImmContext()||''):'';
+    const sys='Guarda E ASCOLTA questo video: una persona parla in prima persona davanti alla camera (o fuori campo). '+
+      'Compito: trova i MOMENTI in cui dice qualcosa che si presta a un piccolo effetto grafico a comparsa, come quelli dei video TikTok/Reel — un\'etichetta brevissima con un\'emoji, che spunta quando pronuncia un numero, un prezzo, un luogo, una misura, una caratteristica forte o un\'affermazione netta (esempi: dice "189 mila euro" → compare "💰 189.000€"; dice "tre camere" → compare "🛏️ 3 camere"; dice "vista mare" → compare "🌊 Vista mare"). '+
+      'Usa il SECONDO ESATTO in cui lo dice (ascolta davvero l\'audio, non stimare). Testo dell\'effetto: cortissimo, massimo 4 parole, con un\'emoji scelta bene all\'inizio. Resta visibile 1.5-2.5 secondi, mai più lungo della frase in cui lo dice. '+
+      'Sii selettivo: solo sui momenti che hanno davvero impatto. Se parla a lungo senza dire nulla che si presti a un effetto, lascia quel tratto senza nulla — meglio pochi effetti precisi che tanti e confusi. Se non c\'è NESSUN momento buono, restituisci una lista vuota: non inventare.'+
+      (ctxImm?('\n\nDati reali dell\'immobile, SOLO per riconoscere un numero/dato detto a voce (non aggiungere dati che non vengono detti):\n'+ctxImm):'')+
+      '\n\nRispondi SOLO con JSON valido, senza testo attorno e SENZA blocchi markdown, in questa forma ESATTA:\n'+
+      '{"scritte":[{"t":<secondo esatto>,"durata":<secondi, 1.5-2.5>,"testo":"<emoji e massimo 4 parole>","sotto":"","ruolo":"dato"}]}';
+    const modello='gemini-2.5-flash';   // serve capire audio+video insieme: il modello immagine (Nano Banana) non li legge
+    const r=await fetch(PS_GEM.base+'/models/'+encodeURIComponent(modello)+':generateContent', {
+      method:'POST', headers:{ 'Content-Type':'application/json', 'x-goog-api-key':chiave },
+      body:JSON.stringify({ contents:[{ role:'user', parts:[ { inlineData:{ mimeType:mime, data:b64 } }, { text:sys } ] }] })
+    });
+    const data=await _psGemRisposta(r);
+    const cand=(data.candidates||[])[0];
+    const txt=(cand && cand.content && Array.isArray(cand.content.parts) ? cand.content.parts.map(function(p){ return p.text||''; }).join('') : '').trim();
+    if(!txt) throw new Error('Gemini non ha risposto nulla (video troppo lungo o formato non capito)');
+    const piano=(typeof faiParseJSON==='function'?faiParseJSON(txt):null) || (typeof _descParseJSON==='function'?_descParseJSON(txt):null);
+    if(!piano || !Array.isArray(piano.scritte)) throw new Error('risposta non interpretabile (vedi console per il testo)');
+    if(!piano.scritte.length){ toast('Non ho trovato momenti giusti per un effetto in questo video','warn'); return; }
+
+    // il tempo di Gemini è relativo all'inizio di QUESTA clip sola: lo sposto avanti di
+    // quanto dura tutto ciò che viene prima nel progetto, così vaiMdsApplica() (che lavora
+    // su tempi globali, come già fa "Monta da solo") lo colloca sulla clip giusta
+    let offset=0;
+    for(let i=0;i<ci;i++) offset+=durEff(_vaiClips[i]);
+    piano.scritte.forEach(function(s){ s.t=(Number(s.t)||0)+offset; if(!s.durata || s.durata<=0) s.durata=2; });
+
+    let durataTot=0;
+    _vaiClips.forEach(function(c){ durataTot+=durEff(c); });
+
+    _vaiMdsStato={ piano:piano, durataTot:durataTot, offsets:[] };
+    vaiMdsApplica();
+    toast(piano.scritte.length+(piano.scritte.length===1?' effetto aggiunto':' effetti aggiunti')+' sul parlato','success');
+  }catch(e){
+    console.error('[Effetti sul parlato] errore:', e);
+    toast('Non riuscito: '+((e&&e.message)||e),'error');
+  }
+}
+window.vaiEffettiParlato=vaiEffettiParlato;
 
 /* ═══════════════════════════════════════════════════════════════════
    REEL COMPLETO — un pulsante che porta dall'immobile al video finito.
