@@ -29927,6 +29927,7 @@ const VAI_AI_FUNZIONI = [
   { g:'Pianificare', t:'Controllo prima di pubblicare', d:'Valuta un titolo o un argomento prima che tu lo pubblichi: giudizio editoriale dell\'AI, non dati reali di YouTube (non ci ho accesso).', f:'vaiControlloTitolo', need:'' },
   { g:'Pianificare', t:'3 idee dal tuo portafoglio', d:'Guarda i tuoi immobili VERI in portafoglio e propone 3 idee video (cosa/quando/come), scegliendo da solo le novità e i ribassi più raccontabili.', f:'vaiPianoYoutube', need:'' },
 
+  { g:'Montare', t:'Controllo ritmo e struttura', d:'Analizza la TUA timeline reale (durata, aggancio nei primi 3s, call-to-action finale, numero di tagli) confrontandola con quello che funziona nei reel immobiliari brevi. Niente dati inventati.', f:'vaiControlloMontaggio', need:'clip' },
   { g:'Montare', t:'Video dall\'immobile', d:'Dalle foto dell\'immobile al Reel con stile, musica, scritte e voce. Si ferma per farti leggere il copione.', f:'vaiVideoDaImmobile', need:'' },
   { g:'Montare', t:'Video dalle mie clip', d:'Dai video che hai girato al Reel montato: ambienti, ordine, tagli sul ritmo (parte centrale), scritte, apertura e chiusura.', f:'vaiVideoDalleClip', need:'clip' },
   { g:'Montare', t:'Monta da solo', d:'Guarda i fotogrammi e scrive le scritte del video (posto, zona, casa, ambienti, chiusura) più la didascalia. Non cambia ordine né tagli.', f:'vaiMontaDaSolo', need:'clip' },
@@ -31179,6 +31180,49 @@ function vaiControlloTitolo(){
   });
 }
 window.vaiControlloTitolo=vaiControlloTitolo;
+
+/* ═══════════ CONTROLLO RITMO E STRUTTURA [29 ott 2026] ═══════════
+   Niente IA e niente dati inventati: legge SOLO la timeline vera di questo
+   montaggio (durata totale, dove cadono le scritte) e la confronta con quello
+   che funziona di solito nei reel immobiliari brevi — una ricerca editoriale,
+   non una misura sui risultati reali dei post di Enzo, da verificare nel tempo. */
+function vaiControlloMontaggio(){
+  if(!_vaiClips || !_vaiClips.length){ toast('Carica prima un video','error'); return; }
+  const durTot=(typeof _vaiDurataTot==='function')?_vaiDurataTot():0;
+  const tutte=[];
+  _vaiClips.forEach((c,ci)=>{
+    const off=(typeof _vaiOffsetClip==='function')?_vaiOffsetClip(ci):0;
+    (c.scritte||[]).forEach(s=>{
+      const localRaw=Math.max(0,(s.t||0)-(c.taglioInizio||0));
+      const localOut=(typeof _vaiRawToOutput==='function')?_vaiRawToOutput(c, localRaw):localRaw;
+      tutte.push({ s, tGlob: off+localOut });
+    });
+  });
+  const haGancio=tutte.some(x=>x.tGlob<3);
+  const ctaRe=/link|contattami|scrivimi|chiamami|whatsapp|\binfo\b|contatt/i;
+  const haCTA=tutte.some(x=> durTot>0 && x.tGlob>durTot*0.8 && (ctaRe.test(x.s.testo||'')||ctaRe.test(x.s.sotto||'')||x.s.tipo==='cta'||x.s.tipo==='contatto'));
+  const nTagli=_vaiClips.length;
+  const ritmoMedio=nTagli>1 ? durTot/nTagli : durTot;
+
+  const righe=[];
+  if(durTot>0){
+    righe.push((durTot>=18&&durTot<=50)
+      ? {ok:true, t:'Durata '+durTot.toFixed(0)+'s — nel range consigliato (circa 20-45s) per un reel che si guarda fino alla fine.'}
+      : {ok:false, t:'Durata '+durTot.toFixed(0)+'s — '+(durTot<18?'un po\' corto: rischi di non dire abbastanza.':'un po\' lungo: oltre i 45-50s cala chi guarda fino in fondo.')});
+  }
+  righe.push({ok:haGancio, t:haGancio?'C\'è una scritta nei primi 3 secondi — buon aggancio immediato.':'Non c\'è nessuna scritta nei primi 3 secondi: chi scorre decide lì se fermarsi. Aggiungi un dato forte, una domanda o un "wow" subito.'});
+  righe.push({ok:haCTA, t:haCTA?'C\'è una call-to-action verso la fine — ottimo.':'Non vedo una call-to-action chiara nell\'ultimo 20% del video: aggiungi un invito a contattarti o al link in descrizione.'});
+  righe.push({ok:nTagli>=3, t:'Il montaggio ha '+nTagli+' clip'+(nTagli>1?(' (taglio medio ogni '+ritmoMedio.toFixed(1)+'s)'):'')+(nTagli<3?' — con più tagli (ogni 1,5-3s) il ritmo tiene meglio l\'attenzione.':' — ritmo nella norma.')});
+
+  const html='<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:4px">'+(typeof _vaiIc==='function'?_vaiIc('cerca'):'')+' Controllo ritmo e struttura</div>'+
+    '<div style="color:#93A5B8;font-size:.76rem;margin-bottom:12px">Analisi sulla tua timeline reale (nessun dato inventato), confrontata con le tendenze dei reel immobiliari brevi.</div>'+
+    righe.map(r=>'<div style="display:flex;gap:9px;align-items:flex-start;margin-bottom:10px">'+
+      '<span style="flex:none;font-size:1rem;line-height:1.4">'+(r.ok?'✅':'⚠️')+'</span>'+
+      '<span style="color:#E8EDF2;font-size:.84rem;line-height:1.4">'+_vaiEsc(r.t)+'</span></div>').join('')+
+    '<div style="color:#6B7E92;font-size:.68rem;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.1)">Promemoria: se esporti lo stesso video per TikTok e Instagram, usa la copia SENZA watermark TikTok su Instagram — i social penalizzano i contenuti "riciclati" con watermark altrui.</div>';
+  _vaiMiniModal(html);
+}
+window.vaiControlloMontaggio=vaiControlloMontaggio;
 
 /* ═══════════ PIANIFICAZIONE YOUTUBE (COSA/QUANDO/COME) [29 ott 2026] ═══════════
    Propone 3 idee video per YouTube partendo dagli immobili VERI in portafoglio
