@@ -5494,6 +5494,12 @@ hubTema();
           <span>Video Social</span>
           <span class="nav-badge" style="background:#7C3AED;color:white">HUB</span>
         </div>
+        <!-- [29 ott 2026] Pacchetto YouTube: titolo/descrizione/tag/capitoli pronti, a partire dalla trascrizione -->
+        <div class="nav-item" onclick="switchSection('ytpack')" title="Titolo, descrizione, tag e capitoli pronti per il tuo canale YouTube, a partire dalla trascrizione del video">
+          <div class="ni-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="4"/><polygon points="10,9 16,12 10,15" fill="currentColor" stroke="none"/></svg></div>
+          <span>Pacchetto YouTube</span>
+          <span class="nav-badge" style="background:#0EA5E9;color:white">AI</span>
+        </div>
         <!-- [24 ott 2026] Libreria Cilento: clip del territorio per aperture e chiusure dei video -->
         <div class="nav-item" onclick="switchSection('libreria')" title="Le tue clip del territorio e il repertorio, da usare in apertura e chiusura dei video">
           <div class="ni-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
@@ -7054,6 +7060,62 @@ Un caro saluto,
     <!-- ══════════════ LIBRERIA CILENTO [24 ott 2026] ══════════════ -->
     <div id="sec-libreria" class="section-panel">
       <div id="libcil-root"></div>
+    </div>
+
+    <!-- ══════════════ PACCHETTO YOUTUBE [29 ott 2026] ══════════════ -->
+    <div id="sec-ytpack" class="section-panel">
+      <div class="page-title-row">
+        <div>
+          <div class="page-title">Pacchetto <span>YouTube</span></div>
+          <div class="page-subtitle">Dalla trascrizione del video a titolo, descrizione, tag e capitoli pronti per il tuo canale. Non pubblica nulla: prepara i testi, tu copi e carichi quando vuoi.</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-body">
+          <div class="frow" style="margin-bottom:14px">
+            <label class="flabel" style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10"/></svg> Immobile di riferimento (facoltativo)</label>
+            <select class="fselect" id="yt-imm-select" onchange="ytPickImmobile()">
+              <option value="">— Nessuno / video generico —</option>
+            </select>
+          </div>
+
+          <div class="frow" style="margin-bottom:14px">
+            <label class="flabel" style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="4"/><polygon points="10,9 16,12 10,15" fill="currentColor" stroke="none"/></svg> Tipo di video</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button type="button" class="desc-tono-btn active" data-tipo="lungo" onclick="ytSetTipo(this)">Video lungo (tour dedicato)</button>
+              <button type="button" class="desc-tono-btn" data-tipo="breve" onclick="ytSetTipo(this)">Short / Reel riadattato</button>
+            </div>
+          </div>
+
+          <div class="frow" style="margin-bottom:14px">
+            <label class="flabel" style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg> Trascrizione o testo del video</label>
+            <textarea class="finput" id="yt-trascrizione" rows="7" style="resize:vertical;font-family:inherit" placeholder="Incolla qui la trascrizione. Va bene anche con i tempi (sottotitoli SRT/VTT, es. 00:00:12,400 --> 00:00:15,900) — con i tempi propongo anche i capitoli. Senza tempi preparo comunque titolo, descrizione e tag."></textarea>
+          </div>
+
+          <div class="frow" style="margin-bottom:14px">
+            <label class="flabel" style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2.2"/></svg> Testo che metterai in copertina/miniatura (facoltativo)</label>
+            <input class="finput" id="yt-thumb" placeholder="es. 70MQ A 45.000€ — massimo 2-3 parole">
+          </div>
+
+          <div class="frow" style="margin-bottom:4px">
+            <label class="flabel" style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18M3 12h18M3 19h12"/></svg> Note extra per l'AI (facoltativo)</label>
+            <input class="finput" id="yt-note" placeholder="es. punta sulla vista mare, è un affare da investimento, zona tranquilla…">
+          </div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+            <button class="btn btn-primary" id="yt-gen-btn" onclick="ytGenera()"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2z"/></svg> Genera pacchetto YouTube</button>
+            <button class="btn btn-outline" id="yt-copyall-btn" onclick="ytCopiaTutto()" style="display:none"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copia tutto</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="yt-output" style="display:none"></div>
+
+      <div id="yt-empty" style="text-align:center;padding:30px 20px;color:var(--text3)">
+        <div style="font-weight:700;font-size:.9rem;color:var(--text2)">Il pacchetto YouTube apparirà qui</div>
+        <div style="font-size:.78rem;margin-top:6px">Titoli con punteggio, descrizione, tag e capitoli — pronti da copiare. La pubblicazione resta sempre tua.</div>
+      </div>
     </div>
 
     <div id="sec-videoai" class="section-panel">
@@ -10389,6 +10451,7 @@ function switchSection(name){
   if(name === 'log') _safe(window.logRender,'log');
   if(name === 'fotoai') _safe(window.faiRender,'fotoai');
   if(name === 'descai') _safe(window.descInit,'descai');
+  if(name === 'ytpack') _safe(window.ytInit,'ytpack');
   if(name === 'stagai'){ /* nessun render iniziale: la sezione è statica finché non si carica una foto */ }
   if(name === 'kit'){ _safe(window.kitFillSelect,'kit.select'); _safe(window.kitRender_show,'kit'); }
   if(name === 'overview') { _safe(window.ovKpi,'overview.kpi'); _safe(window.ovLogRecent,'overview.log'); _safe(window.ovAgendaRender,'overview.agenda'); }
@@ -10436,7 +10499,7 @@ const SECTION_LABEL = {
   overview:'Overview', pipeline:'Pipeline', perf:'Performance', social:'Studio Social',
   pubblicazioni:'Pubblicazioni', kit:'Kit di Lancio', volantino:'Volantino',
   fotoai:'Analisi Foto AI', videoai:'Video Social', campagna:'Campagna WhatsApp',
-  descai:'Descrizioni AI', stagai:'Home Staging AI',
+  descai:'Descrizioni AI', stagai:'Home Staging AI', ytpack:'Pacchetto YouTube',
   compleanni:'Compleanni', recensioni:'Recensioni Google', templates:'Template Messaggi',
   settimana:'Piano Social', linkinbio:'Link in Bio', timeline:'Timeline Contatti', regali:'Liste regali',
   ai:'Genera con AI', log:'Log Attività'
@@ -16671,6 +16734,277 @@ function _descClip(text){
 }
 
 /* ════════════════════════════════════════════════════════════════
+   PACCHETTO YOUTUBE  [29 ott 2026]
+   Dalla trascrizione (con o senza tempi) a titolo, descrizione, tag
+   e capitoli pronti per YouTube. Non pubblica nulla: prepara e
+   controlla contro le regole reali di YouTube — Enzo decide e carica.
+════════════════════════════════════════════════════════════════ */
+let _ytImm = null;
+let _ytTipo = 'lungo';
+let _ytRis = null;
+
+const YT_VAGHE = ['incredibile','pazzesco','assurdo','unico','straordinario','fantastico','imperdibile',
+  'spettacolare','clamoroso','rivoluzionario','top','bellissimo','mitico','esagerato'];
+
+function ytFillImmSelect(){
+  const sel = document.getElementById('yt-imm-select');
+  if(!sel) return;
+  const cur = sel.value;
+  const opts = ['<option value="">— Nessuno / video generico —</option>'];
+  (D.immobili||[]).forEach((im,idx)=>{
+    const label = [(im.tipo||'Immobile'), im.comune, im.zona, im.prezzo?fmtE(im.prezzo):''].filter(Boolean).join(' · ');
+    opts.push('<option value="'+idx+'">'+_descEsc(label)+'</option>');
+  });
+  sel.innerHTML = opts.join('');
+  if(cur) sel.value = cur;
+}
+
+function ytPickImmobile(){
+  const sel = document.getElementById('yt-imm-select');
+  const idx = sel ? sel.value : '';
+  _ytImm = (idx!=='' && (D.immobili||[])[idx]) ? (D.immobili||[])[idx] : null;
+}
+
+function ytSetTipo(btn){
+  const box = btn.parentElement;
+  box.querySelectorAll('.desc-tono-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  _ytTipo = btn.getAttribute('data-tipo')||'lungo';
+}
+
+function ytInit(){
+  ytFillImmSelect();
+}
+
+/* Riconosce sottotitoli con tempi (SRT o VTT) dentro il testo incollato.
+   Senza tempi riconoscibili tratta tutto come un unico blocco di parlato,
+   e più sotto si rinuncia ai capitoli invece di inventare dei tempi. */
+function ytParseTrascrizione(testo){
+  const righe = String(testo||'').split(/\r?\n/);
+  const cues = [];
+  let cur = null;
+  const tsRe = /(\d{1,2}:)?\d{1,2}:\d{2}[.,]\d{1,3}\s*-->\s*(\d{1,2}:)?\d{1,2}:\d{2}[.,]\d{1,3}/;
+  function aSec(s){
+    s = s.trim().replace(',', '.');
+    const p = s.split(':').map(Number);
+    return p.length===3 ? p[0]*3600+p[1]*60+p[2] : p[0]*60+p[1];
+  }
+  righe.forEach(r=>{
+    const m = r.match(tsRe);
+    if(m){
+      const parti = m[0].split('-->');
+      cur = { inizio: aSec(parti[0]), fine: aSec(parti[1]), testo: '' };
+      cues.push(cur);
+    } else if(cur && r.trim() && !/^\d+$/.test(r.trim())){
+      cur.testo = (cur.testo ? cur.testo+' ' : '') + r.trim();
+    }
+  });
+  if(cues.length) return { cues, durata: cues[cues.length-1].fine, conTempi:true };
+  const piano = String(testo||'').trim();
+  return { cues: piano?[{inizio:0,fine:null,testo:piano}]:[], durata:null, conTempi:false };
+}
+
+/* Controlla una lista di capitoli contro le regole reali di YouTube: deve
+   iniziare a 00:00, almeno 3 voci, ciascuna di almeno 10 secondi. Un elenco
+   che non le rispetta non diventa capitoli, resta testo morto in descrizione
+   — quindi qui si pulisce prima di consegnarlo, non dopo che ha fallito. */
+function ytValidaCapitoli(capitoli, durata){
+  const MIN = 10;
+  const grezzi = (capitoli||[]).map(c=>({ inizio: Math.max(0, Math.round(Number(c.inizio_sec||c.inizio||0))), titolo: String(c.titolo||'').trim() }))
+    .filter(c=>c.titolo)
+    .sort((a,b)=>a.inizio-b.inizio);
+  const pulita = [];
+  grezzi.forEach(c=>{
+    if(!pulita.length){ pulita.push({ inizio:0, titolo:c.titolo }); return; }
+    if(c.inizio - pulita[pulita.length-1].inizio >= MIN) pulita.push(c);
+  });
+  const fine = durata || (pulita.length ? pulita[pulita.length-1].inizio + MIN : 0);
+  const risultato = pulita.map((c,i)=>{
+    const prossimo = (i+1 < pulita.length) ? pulita[i+1].inizio : fine;
+    return { inizio: c.inizio, titolo: c.titolo, durata_sec: Math.round(prossimo - c.inizio) };
+  });
+  const valida = risultato.length>=3 && risultato[0].inizio===0 && risultato.every(c=>c.durata_sec>=MIN);
+  return { capitoli: risultato, valida };
+}
+
+function ytMMSS(s){
+  s = Math.max(0, Math.round(s||0));
+  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=s%60;
+  return (h?h+':':'')+(h?String(m).padStart(2,'0'):m)+':'+String(ss).padStart(2,'0');
+}
+
+/* Controlla la coppia titolo+miniatura contro i limiti reali di YouTube:
+   troncamento desktop/mobile, parole vaghe, maiuscole, duplicazione con
+   la miniatura, presenza di un numero. Un titolo non è "consigliato"
+   solo perché l'AI lo ha scritto: qui si verifica, come per gli annunci. */
+function ytLintTitolo(titolo, thumb){
+  const t = String(titolo||'').trim();
+  const n = t.length;
+  const problemi = [];
+  if(n > 100) problemi.push('troppo lungo ('+n+' caratteri, il limite assoluto è 100)');
+  else if(n > 60) problemi.push(n+' caratteri: la ricerca da desktop lo tronca intorno a 60');
+  if(n > 40) problemi.push('su un feed da smartphone si vede solo fino a circa il carattere 40');
+  const paroleBasse = t.toLowerCase().split(/[^a-zàèéìòù0-9]+/).filter(Boolean);
+  const vaghe = paroleBasse.filter(w=>YT_VAGHE.includes(w));
+  if(vaghe.length) problemi.push('parola vaga ('+vaghe.join(', ')+'): meglio un numero, un luogo o un dettaglio vero');
+  const maiuscole = t.split(/\s+/).filter(w=>w.length>2 && w===w.toUpperCase() && /[A-ZÀÈÉÌÒÙ]/.test(w));
+  if(maiuscole.length > 2) problemi.push(maiuscole.length+' parole tutte maiuscole: oltre due sembra spam');
+  const haNumero = /\d/.test(t);
+  if(!haNumero) problemi.push('nessun numero (mq, prezzo, data…): è la correzione più efficace da sola');
+  if(thumb){
+    const paroleThumb = new Set(String(thumb).toLowerCase().split(/[^a-zàèéìòù0-9]+/).filter(w=>w.length>2));
+    const condivise = paroleBasse.filter(w=>w.length>2 && paroleThumb.has(w));
+    if(condivise.length) problemi.push('ripete la miniatura su: "'+condivise.join(', ')+'" — titolo e copertina devono dire cose diverse');
+  }
+  const punteggio = Math.max(0, Math.min(100, 100 - 16*problemi.length + (haNumero?6:0)));
+  return { testo:t, caratteri:n, punteggio, problemi };
+}
+
+async function ytGenera(){
+  const proxyUrl = aiGetProxy();
+  if(!proxyUrl){ toast('Configura prima il proxy AI in "Genera con AI"','error'); if(typeof vaiAvvisaProxy==='function') vaiAvvisaProxy(); return; }
+  const grezzo = (document.getElementById('yt-trascrizione').value||'').trim();
+  if(!grezzo){ toast('Incolla prima la trascrizione o il testo del video','warn'); return; }
+  const thumb = (document.getElementById('yt-thumb').value||'').trim();
+  const note = (document.getElementById('yt-note').value||'').trim();
+  const parsed = ytParseTrascrizione(grezzo);
+  const dati = (_ytImm && typeof vaiImmobileJSON==='function') ? vaiImmobileJSON(_ytImm) : _ytImm;
+
+  const btn = document.getElementById('yt-gen-btn');
+  const orig = btn ? btn.innerHTML : '';
+  if(btn){ btn.disabled=true; btn.innerHTML='✨ Preparo il pacchetto…'; }
+
+  const capInstr = (_ytTipo==='breve') ? 'È un Short/Reel: non servono capitoli, lascia la lista "capitoli" vuota.' :
+    (parsed.conTempi ? 'Il testo ha i tempi dei sottotitoli: proponi anche dei capitoli, solo se il video ha davvero sezioni distinte (altrimenti lascia la lista vuota).' : 'Il testo non ha tempi riconoscibili: lascia la lista "capitoli" vuota.');
+
+  const sys = 'Sei lo stratega YouTube del canale "Vincenzo Carnicelli" dell\'agenzia immobiliare "Le case dalla A allo Z.io" di Agropoli (Cilento, Salerno). '+
+    'Scrivi in italiano, concreto e veritiero: usa SOLO le informazioni nel testo e nei dati forniti, non inventare metrature, prezzi o dettagli assenti. '+capInstr+'\n'+
+    'Rispondi SOLO con un JSON valido, senza backtick né testo attorno, con questa struttura ESATTA:\n'+
+    '{"titoli":[{"testo":"<titolo 1, max 60 caratteri, con un numero o un dettaglio concreto>","perche":"<una riga: perché questo titolo funziona>"},{"testo":"<titolo 2, taglio diverso dal primo>","perche":"..."},{"testo":"<titolo 3, taglio diverso>","perche":"..."}],'+
+    '"thumbnail_testo":"<massimo 3 parole per la miniatura, diverse dalle parole del titolo migliore>",'+
+    '"descrizione_prime_righe":"<1-2 righe: quello che si vede prima del pulsante \\"...altro\\", nelle parole che una persona cercherebbe>",'+
+    '"descrizione_corpo":"<80-150 parole: cosa mostra il video, zona, ambienti, invito a contattare l\'agenzia>",'+
+    '"tag":["<10-15 tag: zona, tipologia, parole chiave reali, niente tag slegati>"],'+
+    '"capitoli":[{"inizio_sec":0,"titolo":"<3-5 parole>"}]}';
+
+  const user = 'Tipo di video: '+(_ytTipo==='breve'?'Short/Reel riadattato per YouTube':'video lungo dedicato')+
+    (parsed.durata ? ('\nDurata: circa '+ytMMSS(parsed.durata)) : '')+
+    '\n\nTrascrizione/testo del video:\n'+grezzo.slice(0,8000)+
+    (dati ? ('\n\nDati immobile (JSON, usa solo questi numeri):\n'+JSON.stringify(dati)) : '')+
+    (thumb ? ('\n\nTesto già previsto in miniatura: "'+thumb+'" — scegli parole diverse per il titolo') : '')+
+    (note ? ('\n\nIndicazioni extra dell\'agente (rispettale): '+note) : '')+
+    '\n\nGenera il pacchetto nel JSON richiesto.';
+
+  try{
+    const resp = await aiFetch(proxyUrl,{ method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:(typeof aiModel==='function'?aiModel():'claude-sonnet-4-6'), max_tokens:2200,
+        system:sys, messages:[{role:'user',content:user}] }) }, 60000);
+    const data = await resp.json();
+    if(data.error||data.type==='error'){ throw new Error((data.error&&(data.error.message||data.error))||'Errore API'); }
+    const txt = (data.content||[]).map(b=>b.text||'').join('').trim();
+    const aiRis = _descParseJSON(txt);
+    if(!aiRis) throw new Error('risposta non interpretabile');
+
+    const thumbFinale = thumb || aiRis.thumbnail_testo || '';
+    const titoliControllati = (aiRis.titoli||[]).map(t=>({ testo:t.testo, perche:t.perche, lint: ytLintTitolo(t.testo, thumbFinale) }))
+      .sort((a,b)=>b.lint.punteggio - a.lint.punteggio);
+    const capValidati = (_ytTipo==='breve') ? {capitoli:[],valida:false} : ytValidaCapitoli(aiRis.capitoli||[], parsed.durata);
+
+    _ytRis = {
+      titoli: titoliControllati,
+      thumbnail_testo: thumbFinale,
+      descrizione_prime_righe: aiRis.descrizione_prime_righe||'',
+      descrizione_corpo: aiRis.descrizione_corpo||'',
+      tag: (aiRis.tag||[]).slice(0,15),
+      capitoli: capValidati,
+      conTempi: parsed.conTempi
+    };
+    ytRenderOutput();
+    if(typeof logAdd==='function') logAdd('▶️','Pacchetto YouTube', titoliControllati[0]?titoliControllati[0].testo:'');
+  }catch(e){
+    toast('Errore generazione: '+e.message,'error');
+  }finally{
+    if(btn){ btn.disabled=false; btn.innerHTML=orig; }
+  }
+}
+
+function ytRenderOutput(){
+  const out = document.getElementById('yt-output');
+  const empty = document.getElementById('yt-empty');
+  const copyAll = document.getElementById('yt-copyall-btn');
+  if(!out || !_ytRis) return;
+  const r = _ytRis;
+
+  const titoliHtml = r.titoli.map((t,i)=>{
+    const colore = t.lint.punteggio>=75 ? '#16A34A' : t.lint.punteggio>=55 ? '#D97706' : '#DC2626';
+    const problemi = t.lint.problemi.length ? '<div style="margin-top:6px;font-size:.74rem;color:var(--text2)">'+t.lint.problemi.map(p=>'⚠ '+_descEsc(p)).join('<br>')+'</div>' : '<div style="margin-top:6px;font-size:.74rem;color:#16A34A">✓ nessun problema rilevato</div>';
+    return '<div class="desc-card">'+
+      '<div class="desc-card-head"><span class="desc-ch-ico" style="background:'+colore+'22;color:'+colore+'">'+(i+1)+'</span>'+
+      _descEsc(t.testo)+' <span style="font-weight:400;font-size:.72rem;color:var(--text3)">('+t.lint.caratteri+' caratteri · punteggio '+t.lint.punteggio+'/100)</span></div>'+
+      '<div class="desc-card-body">'+_descEsc(t.perche||'')+problemi+'</div>'+
+      '<div class="desc-card-foot"><button class="desc-copy-btn" onclick="ytCopiaTitolo('+i+',this)">Copia questo titolo</button></div>'+
+      '</div>';
+  }).join('');
+
+  const capHtml = r.capitoli.capitoli.length ?
+    ('<div class="desc-card"><div class="desc-card-head">Capitoli'+(r.capitoli.valida?' <span style="color:#16A34A;font-size:.74rem;font-weight:600">✓ validi per YouTube</span>':' <span style="color:#DC2626;font-size:.74rem;font-weight:600">⚠ non bastano ancora (minimo 3, 10s ciascuno, il primo a 00:00)</span>')+'</div>'+
+    '<div class="desc-card-body" id="yt-capitoli">'+r.capitoli.capitoli.map(c=>ytMMSS(c.inizio)+'  '+_descEsc(c.titolo)).join('<br>')+'</div>'+
+    '<div class="desc-card-foot"><button class="desc-copy-btn" onclick="ytCopiaId(\'yt-capitoli\',this)">Copia capitoli</button></div></div>')
+    : (r.conTempi && _ytTipo!=='breve' ? '<div class="desc-card"><div class="desc-card-head">Capitoli</div><div class="desc-card-body" style="color:var(--text3)">Nessuna sezione netta individuata in questo video — non tutti i video hanno bisogno di capitoli.</div></div>' : '');
+
+  const descTesto = r.descrizione_prime_righe + '\n\n' + r.descrizione_corpo +
+    (r.capitoli.capitoli.length ? ('\n\n' + r.capitoli.capitoli.map(c=>ytMMSS(c.inizio)+' '+c.titolo).join('\n')) : '') +
+    (r.tag.length ? ('\n\n' + r.tag.map(t=>'#'+t.replace(/\s+/g,'')).join(' ')) : '');
+
+  const descHtml = '<div class="desc-card">'+
+    '<div class="desc-card-head">Descrizione</div>'+
+    '<div class="desc-card-body" id="yt-descrizione" style="white-space:pre-wrap">'+_descEsc(descTesto)+'</div>'+
+    '<div class="desc-card-foot"><button class="desc-copy-btn" onclick="ytCopiaId(\'yt-descrizione\',this)">Copia descrizione</button></div></div>';
+
+  const tagHtml = '<div class="desc-card"><div class="desc-card-head">Tag ('+r.tag.length+')</div>'+
+    '<div class="desc-card-body" id="yt-tag">'+_descEsc(r.tag.join(', '))+'</div>'+
+    '<div class="desc-card-foot"><button class="desc-copy-btn" onclick="ytCopiaId(\'yt-tag\',this)">Copia tag</button></div></div>';
+
+  const thumbHtml = '<div class="desc-card"><div class="desc-card-head">Testo miniatura consigliato</div>'+
+    '<div class="desc-card-body">'+_descEsc(r.thumbnail_testo||'—')+'</div></div>';
+
+  out.innerHTML = '<div class="desc-grid">'+titoliHtml+thumbHtml+capHtml+descHtml+tagHtml+'</div>'+
+    '<div style="margin-top:14px;padding:12px 14px;background:var(--cream);border-radius:10px;font-size:.8rem;color:var(--text2)">'+
+    '📌 Niente di tutto questo viene pubblicato da qui. Copia quello che ti convince e caricalo tu su YouTube Studio quando sei pronto.</div>';
+  out.style.display='';
+  if(empty) empty.style.display='none';
+  if(copyAll) copyAll.style.display='';
+}
+
+function ytCopiaId(id, btn){
+  const el = document.getElementById(id);
+  if(!el) return;
+  _descClip(el.textContent).then(()=>{
+    if(btn){ const o=btn.innerHTML; btn.classList.add('done'); btn.innerHTML='Copiato ✓'; setTimeout(()=>{ btn.classList.remove('done'); btn.innerHTML=o; },1600); }
+  }).catch(()=>toast('Copia non riuscita','error'));
+}
+
+function ytCopiaTitolo(i, btn){
+  if(!_ytRis || !_ytRis.titoli[i]) return;
+  _descClip(_ytRis.titoli[i].testo).then(()=>{
+    if(btn){ const o=btn.innerHTML; btn.classList.add('done'); btn.innerHTML='Copiato ✓'; setTimeout(()=>{ btn.classList.remove('done'); btn.innerHTML=o; },1600); }
+  }).catch(()=>toast('Copia non riuscita','error'));
+}
+
+function ytCopiaTutto(){
+  if(!_ytRis) return;
+  const r = _ytRis;
+  const blocchi = [
+    '━━━ TITOLI ━━━\n'+r.titoli.map((t,i)=>(i+1)+'. '+t.testo+' ('+t.lint.punteggio+'/100)').join('\n'),
+    '━━━ MINIATURA ━━━\n'+(r.thumbnail_testo||''),
+    r.capitoli.capitoli.length ? ('━━━ CAPITOLI ━━━\n'+r.capitoli.capitoli.map(c=>ytMMSS(c.inizio)+' '+c.titolo).join('\n')) : '',
+    '━━━ DESCRIZIONE ━━━\n'+r.descrizione_prime_righe+'\n\n'+r.descrizione_corpo,
+    '━━━ TAG ━━━\n'+r.tag.join(', ')
+  ].filter(Boolean).join('\n\n\n');
+  _descClip(blocchi).then(()=>toast('Pacchetto copiato ✓','success')).catch(()=>toast('Copia non riuscita','error'));
+}
+
+/* ════════════════════════════════════════════════════════════════
    HOME STAGING AI  (#4 — modalità A: piano + prompt)
    Carica foto stanza → l'AI analizza e prepara un piano di staging
    e un prompt pronto per un generatore di immagini esterno.
@@ -16813,6 +17147,8 @@ function stagCopiaPrompt(lang, btn){
    leggendo una API key/URL salvati in localStorage. Lasciato come hook. */
 function stagTrasformaImg(){ toast('La trasformazione automatica dell\'immagine non è ancora attiva: usa il prompt copiato in un generatore esterno.','warn'); }
 
+window.ytInit=ytInit; window.ytPickImmobile=ytPickImmobile; window.ytSetTipo=ytSetTipo;
+window.ytGenera=ytGenera; window.ytCopiaId=ytCopiaId; window.ytCopiaTitolo=ytCopiaTitolo; window.ytCopiaTutto=ytCopiaTutto;
 window.descInit=descInit; window.descPickImmobile=descPickImmobile; window.descSetTono=descSetTono;
 window.descGenera=descGenera; window.descCopia=descCopia; window.descCopiaTutto=descCopiaTutto;
 window.stagAddFile=stagAddFile; window.stagDragOver=stagDragOver; window.stagDragLeave=stagDragLeave;
