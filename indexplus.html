@@ -32770,10 +32770,84 @@ function _vaiProssimaContigua(){
    mentre entrambe suonano, come farà FFmpeg (xfade) nell'export. */
 let _vaiTransInCorso = false;
 
+/* ═══ CATALOGO TRANSIZIONI [29 ott 2026] ═══
+   Prima la scelta (quale transizione sta tra due clip, e il pulsante per impostarla)
+   viveva in un file esterno "desktop-export.js" mai distribuito insieme a
+   indexplus.html: le transizioni non si potevano più impostare da nessuna parte,
+   anche se il motore che le disegna (qui sotto, _vaiAvviaTransizionePreview) c'era
+   già, completo. Ora la scelta vive direttamente sulla clip (c.transizione,
+   c.durataTrans), viaggia col progetto come tutto il resto, e funziona anche sulla
+   versione pubblicata online, senza bisogno di nessun file sul computer di Enzo. */
+const VAI_TRANS_TIPI = [
+  { k:'nessuna',     l:'Nessuna',              ic:'✂' },
+  { k:'fade',        l:'Dissolvenza',          ic:'◐' },
+  { k:'fadeblack',   l:'Dissolvenza a nero',   ic:'●' },
+  { k:'fadewhite',   l:'Dissolvenza a bianco', ic:'○' },
+  { k:'slideleft',   l:'Scorri a sinistra',    ic:'◀' },
+  { k:'slideright',  l:'Scorri a destra',      ic:'▶' },
+  { k:'slideup',     l:'Scorri in su',         ic:'▲' },
+  { k:'slidedown',   l:'Scorri in giù',        ic:'▼' },
+  { k:'smoothleft',  l:'Morbida a sinistra',   ic:'◁' },
+  { k:'smoothup',    l:'Morbida in su',        ic:'△' },
+  { k:'circleopen',  l:'Cerchio che si apre',  ic:'◯' },
+  { k:'circleclose', l:'Cerchio che si chiude',ic:'◉' },
+  { k:'wipeup',      l:'Tendina dal basso',    ic:'▭' },
+  { k:'pixelize',    l:'Sfocatura',            ic:'▦' }
+];
+function _vaiTransLabel(tipo){ const t=VAI_TRANS_TIPI.find(x=>x.k===tipo); return t?t.l.split(' ')[0]:tipo; }
+
+/* Apre il selettore di transizione tra la clip i e la clip i+1 */
+function vaiTransizionePicker(i){
+  const c=_vaiClips[i]; if(!c || i>=_vaiClips.length-1) return;
+  const cur=c.transizione||'nessuna';
+  const durCur=(c.durataTrans&&c.durataTrans>0)?c.durataTrans:0.6;
+  const ov=_vaiMiniModal(
+    '<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:4px">Transizione</div>'+
+    '<div style="color:#93A5B8;font-size:.76rem;margin-bottom:12px">Tra la clip '+(i+1)+' e la clip '+(i+2)+'.</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px">'+
+      VAI_TRANS_TIPI.map(t=>'<button class="vai-trp-opt" data-t="'+t.k+'" style="padding:10px 8px;border-radius:9px;border:1px solid '+(t.k===cur?'#C9A84C':'rgba(255,255,255,.14)')+';background:'+(t.k===cur?'rgba(201,168,76,.18)':'#13263B')+';color:#fff;cursor:pointer;font-size:.78rem;text-align:left;display:flex;align-items:center;gap:8px"><span style="font-size:1rem">'+t.ic+'</span>'+t.l+'</button>').join('')+
+    '</div>'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px" id="vtp-dur-lbl">Durata: '+durCur.toFixed(2)+'s</div>'+
+    '<input type="range" id="vtp-dur" min="0.2" max="1.5" step="0.05" value="'+durCur+'" style="width:100%;accent-color:#C9A84C;margin-bottom:14px">'+
+    '<button id="vtp-ok" style="width:100%;padding:11px;border-radius:10px;border:none;background:#C9A84C;color:#1A1205;font-weight:800;cursor:pointer">Fatto</button>'
+  );
+  let scelto=cur;
+  ov.querySelectorAll('.vai-trp-opt').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      scelto=b.getAttribute('data-t');
+      ov.querySelectorAll('.vai-trp-opt').forEach(x=>{
+        const on=(x===b);
+        x.style.borderColor=on?'#C9A84C':'rgba(255,255,255,.14)';
+        x.style.background=on?'rgba(201,168,76,.18)':'#13263B';
+      });
+    });
+  });
+  const durInput=ov.querySelector('#vtp-dur');
+  const durLbl=ov.querySelector('#vtp-dur-lbl');
+  if(durInput) durInput.addEventListener('input', ()=>{ durLbl.textContent='Durata: '+parseFloat(durInput.value).toFixed(2)+'s'; });
+  const ok=ov.querySelector('#vtp-ok');
+  if(ok) ok.addEventListener('click', ()=>{
+    c.transizione=scelto;
+    c.durataTrans=parseFloat(durInput.value)||0.6;
+    _vaiDirty=true;
+    vaiClipsRender();
+    ov.remove();
+  });
+}
+window.vaiTransizionePicker=vaiTransizionePicker;
+
+/* Imposta la stessa transizione su TUTTE le giunzioni — usata dai template (VAI_TEMPLATES) */
+window._vaiSetTransTutte=function(tipo, durata, count){
+  const n=Math.min(count||_vaiClips.length, _vaiClips.length);
+  for(let i=0;i<n-1;i++){ _vaiClips[i].transizione=tipo||'nessuna'; _vaiClips[i].durataTrans=durata||0.6; }
+  try{ vaiClipsRender(); }catch(e){}
+};
+
 function _vaiTransPerGiunzione(i){
-  try{
-    if (typeof window._vaiTransGiunzione === 'function') return window._vaiTransGiunzione(i);
-  }catch(e){}
+  const c=_vaiClips && _vaiClips[i];
+  if(c && c.transizione && c.transizione!=='nessuna'){
+    return { tipo:c.transizione, durata:(c.durataTrans&&c.durataTrans>0)?c.durataTrans:0.6 };
+  }
   return { tipo:'nessuna', durata:0.6 };
 }
 
@@ -33451,12 +33525,24 @@ function vaiClipsRender(){
     const sel = i===_vaiClipAttiva;
     const dur = c.durata ? _vaiFmtT(c.durata) : '';
     const amb = c.ambiente ? _vaiEsc(c.ambiente.substring(0,14)) : (c.nome?_vaiEsc(c.nome.substring(0,14)):'Clip '+(i+1));
+    const hasNext = i < _vaiClips.length-1;
+    const tr = hasNext ? (c.transizione||'nessuna') : null;
+    // connettore tra questa clip e la successiva: apre il selettore di transizione.
+    // Nessuna = taglio netto (un piccolo simbolo di forbici); con una transizione scelta
+    // mostra la sua etichetta breve, così si vede a colpo d'occhio dov'è impostata.
+    // In basso a destra della miniatura: è l'unico angolo ancora libero (sopra ci sono già
+    // la durata e la X per eliminare, in basso a sinistra il microfono).
+    const connettore = hasNext
+      ? ('<button onclick="event.stopPropagation();vaiTransizionePicker('+i+')" title="Transizione verso la clip successiva" style="position:absolute;right:4px;bottom:4px;min-width:20px;height:20px;padding:0 4px;border-radius:10px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;line-height:1;background:'+(tr!=='nessuna'?'#C9A84C':'rgba(0,0,0,.55)')+';color:'+(tr!=='nessuna'?'#1A1205':'#fff')+';z-index:2">'+
+          (tr!=='nessuna' ? _vaiEsc(_vaiTransLabel(tr)) : '✂') +
+         '</button>')
+      : '';
     return '<div class="vai-clip'+(sel?' sel':'')+'" draggable="true" data-idx="'+i+'" '+
       'onclick="vaiClipSelect('+i+')" '+
       'ondragstart="vaiClipDragStart(event,'+i+')" ondragover="event.preventDefault()" ondrop="vaiClipDrop(event,'+i+')">'+
       '<div class="vai-clip-thumb">'+(c.thumb?'<img class="vai-clip-img" src="'+c.thumb+'" alt="">':'<span class="vai-clip-ph"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></span>')+'<span class="vai-clip-num">'+(i+1)+'</span>'+(dur?'<span class="vai-clip-dur">'+dur+'</span>':'')+
         '<button class="vai-clip-del" onclick="event.stopPropagation();vaiClipDel('+i+')" title="Rimuovi">×</button>'+
-        '<button onclick="event.stopPropagation();vaiClipToggleParlata('+i+')" title="'+(c.parlata?'Voce inclusa nell\'export — clicca per togliere':'Clip muta — clicca se qui parli')+'" style="position:absolute;left:4px;bottom:4px;width:20px;height:20px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1;padding:0;background:'+(c.parlata?'#C9A24A':'rgba(0,0,0,.55)')+';color:#fff;z-index:2">'+_vaiIc('microfono')+'</button></div>'+
+        '<button onclick="event.stopPropagation();vaiClipToggleParlata('+i+')" title="'+(c.parlata?'Voce inclusa nell\'export — clicca per togliere':'Clip muta — clicca se qui parli')+'" style="position:absolute;left:4px;bottom:4px;width:20px;height:20px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1;padding:0;background:'+(c.parlata?'#C9A24A':'rgba(0,0,0,.55)')+';color:#fff;z-index:2">'+_vaiIc('microfono')+'</button>'+connettore+'</div>'+
       '<div class="vai-clip-lbl">'+amb+'</div>'+
       '</div>';
   }).join('');
@@ -42941,7 +43027,7 @@ function _vaiCostruisciRecordProgetto(nome){
     velocita:c.velocita||1, rampaOn:!!c.rampaOn, rampaDa:c.rampaDa||1, rampaA:c.rampaA||1,
     taglioInizio:c.taglioInizio||0, taglioDurata:c.taglioDurata||null,
     // effetti e transizioni della clip (si perdevano alla riapertura)
-    zoomcine:c.zoomcine||null, kbTipo:c.kbTipo||null, transizione:c.transizione||null,
+    zoomcine:c.zoomcine||null, kbTipo:c.kbTipo||null, transizione:c.transizione||null, durataTrans:c.durataTrans||null,
     specchia:!!c.specchia, rot:c.rot||0,
     /* FERMO IMMAGINE: salvo anche il fotogramma originale, così riaprendo il
        progetto l'export continua ad animare l'IMMAGINE invece di ricodificare il
@@ -42986,7 +43072,6 @@ function _vaiCostruisciRecordProgetto(nome){
     /* l'allineamento (tempi di pronuncia carattere per carattere) viaggia col progetto:
        senza, riaprendolo le scritte tornerebbero a essere stimate sulla lunghezza */
     voce:(_vaiElUltimoBlob && _vaiVoceDur>0) ? { blob:_vaiElUltimoBlob, start:_vaiVoceStart, durata:_vaiVoceDur, vol:_vaiVoceVol, off:!!_vaiVoceOff, nome:_vaiVoceNome||'', allineamento:(window._vaiVoceAllineamento||null) } : null,
-    trans:(typeof window._vaiTransSnapshot==='function') ? window._vaiTransSnapshot() : null,
     beatFx:(typeof _vaiBeatFxTipo!=='undefined') ? _vaiBeatFxTipo : 'nessuno'
   };
 }
@@ -43094,7 +43179,7 @@ async function vaiCaricaProgetto(id){
       const url=file?URL.createObjectURL(file):null;
       const clip={ id:c.id||_vaiNuovoIdClip(), file:file||null, url, nome:c.nome, durata:c.durata||0, ambiente:c.ambiente||'', fit:c.fit||'contain', inqY:(typeof c.inqY==='number')?c.inqY:0.5, inqX:(typeof c.inqX==='number')?c.inqX:0.5, scritte:JSON.parse(JSON.stringify(c.scritte||[])), logo:null, logoPos:c.logoPos||{x:0.05,y:0.04,scale:0.22}, logoPosOwn:!!c.logoPosOwn,
         gridSplit:(typeof c.gridSplit==='number')?c.gridSplit:0.5, gridAudio:c.gridAudio||'sx', gridDir:c.gridDir||'auto',
-        gridB:(c.gridBlob&&c.gridB)?{ file:c.gridBlob, url:URL.createObjectURL(c.gridBlob), nome:c.gridB.nome||'', durata:c.gridB.durata||0, taglioInizio:c.gridB.taglioInizio||0, inqX:(typeof c.gridB.inqX==='number')?c.gridB.inqX:0.5, inqY:(typeof c.gridB.inqY==='number')?c.gridB.inqY:0.5 }:null, thumb:null, parlata:!!c.parlata, parlataAuto:false, parlataManuale:!!c.parlataManuale, velocita:c.velocita||1, rampaOn:!!c.rampaOn, rampaDa:c.rampaDa||1, rampaA:c.rampaA||1, taglioInizio:c.taglioInizio||0, taglioDurata:c.taglioDurata||null, zoomcine:c.zoomcine||null, kbTipo:c.kbTipo||null, transizione:c.transizione||null, effetto:c.effetto||null, grading:c.grading||null, lightLeak:c.lightLeak||null, daFoto:!!c.daFoto, _fermoImmagine:!!c.fermoImmagine, fotoSrc:c.fotoSrc||null, specchia:!!c.specchia, rot:c.rot||0, kbStatico:!!c.kbStatico };
+        gridB:(c.gridBlob&&c.gridB)?{ file:c.gridBlob, url:URL.createObjectURL(c.gridBlob), nome:c.gridB.nome||'', durata:c.gridB.durata||0, taglioInizio:c.gridB.taglioInizio||0, inqX:(typeof c.gridB.inqX==='number')?c.gridB.inqX:0.5, inqY:(typeof c.gridB.inqY==='number')?c.gridB.inqY:0.5 }:null, thumb:null, parlata:!!c.parlata, parlataAuto:false, parlataManuale:!!c.parlataManuale, velocita:c.velocita||1, rampaOn:!!c.rampaOn, rampaDa:c.rampaDa||1, rampaA:c.rampaA||1, taglioInizio:c.taglioInizio||0, taglioDurata:c.taglioDurata||null, zoomcine:c.zoomcine||null, kbTipo:c.kbTipo||null, transizione:c.transizione||null, durataTrans:c.durataTrans||null, effetto:c.effetto||null, grading:c.grading||null, lightLeak:c.lightLeak||null, daFoto:!!c.daFoto, _fermoImmagine:!!c.fermoImmagine, fotoSrc:c.fotoSrc||null, specchia:!!c.specchia, rot:c.rot||0, kbStatico:!!c.kbStatico };
       _vaiClips.push(clip);
       if(url) _vaiAccodaThumb(clip);
     });
@@ -43174,10 +43259,8 @@ async function vaiCaricaProgetto(id){
         _vaiElUltimoBlob=null; _vaiElUltimoUrl=null; _vaiVoceStart=0; _vaiVoceDur=0;
       }
     }catch(e){}
-    // ripristino transizioni/effetti per giunzione (vivono in desktop-export.js)
-    try{
-      if(rec.trans && typeof window._vaiTransRestore==='function') window._vaiTransRestore(rec.trans);
-    }catch(e){}
+    // (le transizioni tra le clip tornano da sole: viaggiano su ogni clip —
+    // c.transizione/c.durataTrans — già ricostruite poco sopra)
     // ripristino l'effetto beat globale
     try{
       if(rec.beatFx && typeof _vaiBeatFxTipo!=='undefined'){
@@ -45184,13 +45267,21 @@ async function vaiMontaTutto(){
     const durataTot = _vaiClips.reduce((s,c)=> s + (c.durata && c.durata>0 ? c.durata : 3), 0);
     const infoCards = _vaiBuildInfoOverlays(durataTot);
 
-    // riproduco ogni clip in sequenza sullo stesso canvas
-    let tOffset=0;
+    // riproduco ogni clip in sequenza sullo stesso canvas — se una giunzione ha una
+    // transizione, le due clip si sovrappongono e si fondono invece del taglio secco;
+    // "startAt" porta avanti quanto della clip successiva è già stato mostrato durante
+    // la fusione, così non si rivede due volte lo stesso pezzetto.
+    let tOffset=0, startAt=0;
     for(let i=0;i<_vaiClips.length;i++){
       const clip=_vaiClips[i];
-      setS('Monto clip '+(i+1)+'/'+_vaiClips.length+'…');
-      await _vaiRenderClipSuCanvas(clip, ctx, cv.width, cv.height, infoCards, tOffset);
-      tOffset += (clip.durata && clip.durata>0 ? clip.durata : 3);
+      const prossima=(i<_vaiClips.length-1)?_vaiClips[i+1]:null;
+      const tr=(prossima && typeof _vaiTransPerGiunzione==='function')?_vaiTransPerGiunzione(i):null;
+      const transOut=(tr && tr.tipo!=='nessuna')?tr:null;
+      setS('Monto clip '+(i+1)+'/'+_vaiClips.length+'…'+(transOut?' (fusione con la successiva)':''));
+      const esito=await _vaiRenderClipSuCanvas(clip, ctx, cv.width, cv.height, infoCards, tOffset, startAt, transOut, prossima);
+      const durataClipEff=(clip.durata && clip.durata>0 ? clip.durata : 3) - startAt;
+      tOffset += durataClipEff;
+      startAt = (esito && esito.consumatoProssima) ? esito.consumatoProssima : 0;
     }
 
     if(rec.state!=='inactive') rec.stop();
@@ -45217,18 +45308,29 @@ async function vaiMontaTutto(){
 }
 
 /* Riproduce UNA clip su un canvas condiviso (per il montaggio unico),
-   imprimendo scritte, logo e schede info immobile (tempo globale = tOffset+tempo clip). */
-function _vaiRenderClipSuCanvas(clip, ctx, W, H, infoCards, tOffset){
-  infoCards = infoCards||[]; tOffset = tOffset||0;
+   imprimendo scritte, logo e schede info immobile (tempo globale = tOffset+tempo clip).
+   startAt: secondi da cui partire nel file di questa clip (>0 quando la clip precedente
+   l'ha già fatta vedere in parte durante una fusione). transOut+nextClip: se presenti,
+   gli ultimi transOut.durata secondi di QUESTA clip si fondono con l'inizio della
+   PROSSIMA invece di tagliare di netto — risolve "zhi.consumatoProssima" quanti secondi
+   della prossima sono già stati mostrati, così il chiamante non li ripete. */
+function _vaiRenderClipSuCanvas(clip, ctx, W, H, infoCards, tOffset, startAt, transOut, nextClip){
+  infoCards = infoCards||[]; tOffset = tOffset||0; startAt = startAt||0;
   return new Promise(async (resolve, reject)=>{
     const tv=document.createElement('video');
     tv.muted=true; tv.playsInline=true; tv.preload='auto'; tv.src=clip.url;
     const scritte=clip.scritte||[];
     const logo=clip.logo||null, logoPos=_vaiLogoPosDi(clip);
-    const onErr=(e)=>{ try{tv.remove();}catch(x){} resolve(); /* salto la clip ma non blocco il montaggio */ };
+    const onErr=(e)=>{ try{tv.remove();}catch(x){} resolve({}); /* salto la clip ma non blocco il montaggio */ };
     tv.onerror=onErr;
     tv.onloadedmetadata=async ()=>{
       try{
+        const durataClip=(isFinite(tv.duration)&&tv.duration>0)?tv.duration:(clip.durata||3);
+        const haTrans=!!(transOut && transOut.tipo && transOut.tipo!=='nessuna' && nextClip);
+        // la transizione "costa" secondi di coda a QUESTA clip: mi fermo prima, il resto
+        // lo disegna la fusione qui sotto. Mai più dei secondi che restano davvero.
+        const transDur=haTrans ? Math.min(transOut.durata||0.6, Math.max(0.15, durataClip-startAt-0.15)) : 0;
+        const fineNormale=durataClip-transDur;
         let raf;
         const draw=()=>{
           // cover-fit del frame video sul canvas
@@ -45239,28 +45341,118 @@ function _vaiRenderClipSuCanvas(clip, ctx, W, H, infoCards, tOffset){
           ctx.fillStyle='#0D1B2A'; ctx.fillRect(0,0,W,H);
           try{ ctx.drawImage(tv,dx,dy,dw,dh); }catch(e){}
           const t=tv.currentTime;
-          const tGlob=tOffset+t; // tempo globale nel montaggio
+          const tGlob=tOffset+(t-startAt); // tempo globale nel montaggio
           // schede info immobile, ordinate sull'intera durata
           infoCards.forEach(c=> _vaiDrawInfoCard(ctx, W, H, c, tGlob));
           const attive=scritte.filter(x=> !x.hidden && t>=x.t && t<=(x.t+(x.durata||3)) );
           attive.forEach(s=> _vaiDrawScrittaSuCanvas(ctx, W, H, s, t) );
           try{ _vaiDrawLogoContattiClip(ctx, W, H, logo, logoPos); }catch(e){ try{_vaiDrawLogoContatti(ctx,W,H);}catch(x){} }
-          if(!tv.paused && !tv.ended) raf=requestAnimationFrame(draw);
+          if(!tv.paused && !tv.ended && tv.currentTime<fineNormale) raf=requestAnimationFrame(draw);
         };
-        tv.currentTime=0;
-        await _vaiSeekAndWait(tv,0);
+        tv.currentTime=startAt;
+        await _vaiSeekAndWait(tv,startAt);
         await tv.play();
         draw();
         await new Promise(res=>{
           let done=false; const fine=()=>{ if(done)return; done=true; res(); };
           tv.onended=fine;
-          setTimeout(fine, ((isFinite(tv.duration)&&tv.duration>0?tv.duration:(clip.durata||3))*1000)+1200);
+          setTimeout(fine, Math.max(0,(fineNormale-startAt))*1000+1200);
+          // ontimeupdate/raf non garantiscono di fermarsi ESATTAMENTE a fineNormale: un
+          // controllo leggero e frequente fa partire la fusione al punto giusto
+          const chk=setInterval(()=>{ if(tv.currentTime>=fineNormale-0.02 || tv.paused || tv.ended){ clearInterval(chk); fine(); } }, 30);
         });
         cancelAnimationFrame(raf);
+        let consumatoProssima=0;
+        if(transDur>0){
+          consumatoProssima=await _vaiRenderTransizioneSuCanvas(
+            tv, scritte, logo, logoPos, tOffset, startAt, nextClip, ctx, W, H, infoCards, transOut.tipo, transDur
+          );
+        }
         try{ tv.pause(); tv.remove(); }catch(e){}
-        resolve();
+        resolve({ consumatoProssima });
       }catch(e){ onErr(e); }
     };
+  });
+}
+
+/* Disegna la FUSIONE tra la clip che sta finendo (tvA, già in riproduzione, fermata al
+   suo punto di uscita) e l'inizio della prossima clip: per "durata" secondi entrambe
+   suonano e si disegnano insieme, mescolate secondo "tipo" — lo stesso linguaggio
+   visivo dell'anteprima dal vivo (_vaiAvviaTransizionePreview), qui ricalcolato
+   fotogramma per fotogramma così finisce DENTRO il file esportato, non solo a schermo.
+   Torna quanti secondi della prossima clip sono già stati mostrati qui. */
+function _vaiRenderTransizioneSuCanvas(tvA, scritteA, logoA, logoPosA, tOffsetA, startAtA, clipB, ctx, W, H, infoCards, tipo, durata){
+  return new Promise(async (resolve)=>{
+    const tvB=document.createElement('video');
+    tvB.muted=true; tvB.playsInline=true; tvB.preload='auto'; tvB.src=clipB.url;
+    await new Promise(res=>{ tvB.onloadedmetadata=res; tvB.onerror=res; });
+    try{ tvB.currentTime=0; await _vaiSeekAndWait(tvB,0); await tvB.play(); }catch(e){}
+    const scritteB=clipB.scritte||[];
+    const disegnaUno=(tv,ox,oy,alpha)=>{
+      const vw=tv.videoWidth||W, vh=tv.videoHeight||H;
+      if(!vw||!vh) return;
+      const ar=vw/vh, tr=W/H; let dw,dh,dx,dy;
+      if(ar>tr){ dh=H; dw=dh*ar; dx=(W-dw)/2; dy=0; } else { dw=W; dh=dw/ar; dx=0; dy=(H-dh)/2; }
+      ctx.globalAlpha=(alpha!=null)?Math.max(0,Math.min(1,alpha)):1;
+      try{ ctx.drawImage(tv,dx+(ox||0),dy+(oy||0),dw,dh); }catch(e){}
+      ctx.globalAlpha=1;
+    };
+    let raf, finito=false;
+    const fine=()=>{
+      if(finito) return; finito=true;
+      try{ cancelAnimationFrame(raf); }catch(e){}
+      try{ tvB.pause(); }catch(e){}
+      resolve(Math.min(durata, tvB.currentTime||durata));
+    };
+    const draw=()=>{
+      const p=Math.min(1, durata>0 ? (tvB.currentTime/durata) : 1);
+      ctx.fillStyle='#0D1B2A'; ctx.fillRect(0,0,W,H);
+      if(tipo==='fadeblack'||tipo==='fadewhite'){
+        const colore=(tipo==='fadewhite')?'#fff':'#000';
+        if(p<0.5){ disegnaUno(tvA); ctx.globalAlpha=p/0.5; ctx.fillStyle=colore; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1; }
+        else{ disegnaUno(tvB); ctx.globalAlpha=1-((p-0.5)/0.5); ctx.fillStyle=colore; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1; }
+      } else if(/^slide|^smooth/.test(tipo)){
+        disegnaUno(tvA);
+        const morbida=(tipo==='smoothleft'||tipo==='smoothup');
+        const pp=morbida?(1-Math.pow(1-p,3)):p;
+        let ox=0, oy=0;
+        if(tipo==='slideleft'||tipo==='smoothleft') ox=W*(1-pp);
+        else if(tipo==='slideright') ox=-W*(1-pp);
+        else if(tipo==='slideup'||tipo==='smoothup') oy=H*(1-pp);
+        else if(tipo==='slidedown') oy=-H*(1-pp);
+        disegnaUno(tvB, ox, oy, morbida?Math.min(1,0.55+0.45*pp):1);
+      } else if(tipo==='circleopen'||tipo==='circleclose'){
+        disegnaUno(tipo==='circleopen'?tvA:tvB);
+        const rr=(tipo==='circleopen'?p:1-p)*0.75*Math.hypot(W,H)/2;
+        ctx.save(); ctx.beginPath(); ctx.arc(W/2,H/2,Math.max(1,rr),0,Math.PI*2); ctx.clip();
+        disegnaUno(tipo==='circleopen'?tvB:tvA);
+        ctx.restore();
+      } else if(tipo==='wipeup'){
+        disegnaUno(tvA);
+        const h=H*p;
+        ctx.save(); ctx.beginPath(); ctx.rect(0,H-h,W,h); ctx.clip();
+        disegnaUno(tvB);
+        ctx.restore();
+      } else if(tipo==='pixelize'){
+        disegnaUno(tvA);
+        ctx.save(); try{ ctx.filter='blur('+(14*(1-p)).toFixed(1)+'px)'; }catch(e){}
+        disegnaUno(tvB,0,0,p);
+        ctx.restore(); try{ ctx.filter='none'; }catch(e){}
+      } else {
+        // fade, dissolve e qualunque tipo non mappato: dissolvenza incrociata
+        disegnaUno(tvA);
+        disegnaUno(tvB,0,0,p);
+      }
+      const tA=tvA.currentTime, tB=tvB.currentTime;
+      const tGlobA=tOffsetA+(tA-startAtA);
+      infoCards.forEach(c=> _vaiDrawInfoCard(ctx, W, H, c, tGlobA));
+      (scritteA||[]).filter(x=>!x.hidden && tA>=x.t && tA<=(x.t+(x.durata||3))).forEach(s=> _vaiDrawScrittaSuCanvas(ctx, W, H, s, tA));
+      (scritteB||[]).filter(x=>!x.hidden && tB>=x.t && tB<=(x.t+(x.durata||3))).forEach(s=> _vaiDrawScrittaSuCanvas(ctx, W, H, s, tB));
+      try{ _vaiDrawLogoContattiClip(ctx, W, H, logoA, logoPosA); }catch(e){}
+      if(p<1 && !finito) raf=requestAnimationFrame(draw); else fine();
+    };
+    draw();
+    setTimeout(fine, durata*1000+500);
   });
 }
 
