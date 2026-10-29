@@ -29919,6 +29919,10 @@ const VAI_AI_FUNZIONI = [
   { g:'Scrivere', t:'Didascalia per il post', d:'Il testo da incollare sotto al video quando pubblichi.', f:'vaiGeneraDidascalia', need:'imm' },
   { g:'Scrivere', t:'Porta la didascalia nelle scritte', d:'Trasforma la didascalia già generata in scritte sul video.', f:'vaiDidascaliaInScritte', need:'clip', nota:'si sovrappone alle due funzioni di scritte' },
   { g:'Scrivere', t:'Effetti sul parlato', d:'Ascolta cosa dici nel video (serve la chiave Gemini di "Foto AI") e fa comparire piccoli effetti — un\'emoji e poche parole — sui numeri, prezzi e momenti forti che nomini, come nei video TikTok/Reel.', f:'vaiEffettiParlato', need:'clip' },
+  { g:'Scrivere', t:'Script YouTube con formule di gancio', d:'Scrive gancio, intro, sviluppo e finale di un video intero, scegliendo fra 8 formule di apertura note (il superlativo, la domanda, il prima e dopo...).', f:'vaiScriptYoutube', need:'imm' },
+
+  { g:'Pianificare', t:'Controllo prima di pubblicare', d:'Valuta un titolo o un argomento prima che tu lo pubblichi: giudizio editoriale dell\'AI, non dati reali di YouTube (non ci ho accesso).', f:'vaiControlloTitolo', need:'' },
+  { g:'Pianificare', t:'3 idee dal tuo portafoglio', d:'Guarda i tuoi immobili VERI in portafoglio e propone 3 idee video (cosa/quando/come), scegliendo da solo le novità e i ribassi più raccontabili.', f:'vaiPianoYoutube', need:'' },
 
   { g:'Montare', t:'Video dall\'immobile', d:'Dalle foto dell\'immobile al Reel con stile, musica, scritte e voce. Si ferma per farti leggere il copione.', f:'vaiVideoDaImmobile', need:'' },
   { g:'Montare', t:'Video dalle mie clip', d:'Dai video che hai girato al Reel montato: ambienti, ordine, tagli sul ritmo (parte centrale), scritte, apertura e chiusura.', f:'vaiVideoDalleClip', need:'clip' },
@@ -31054,6 +31058,188 @@ function vaiSchedaFinale(){
 }
 window.vaiHookIniziale=vaiHookIniziale;
 window.vaiSchedaFinale=vaiSchedaFinale;
+
+/* ═══════════ SCRIPT YOUTUBE CON FORMULE DI GANCIO [29 ott 2026] ═══════════
+   Script completo (gancio/intro/sviluppo/finale) scegliendo fra 8 formule di
+   apertura note nel copywriting video. Diverso da "Hook iniziale" (che fa
+   solo la frase dei primi 2 secondi, senza AI, con proposte istantanee dai
+   dati) e da "Video lungo per YouTube" (che fa la scaletta a capitoli di un
+   video di 5-10 minuti): questo scrive le PAROLE di un copione completo,
+   corto o lungo che sia, con la formula dichiarata e il perché della scelta. */
+const VAI_GANCI_FORMULE=[
+  { nome:'Il superlativo', spiega:'il più/il meno/il primo — una cosa estrema e vera sui dati' },
+  { nome:'Il conto alla rovescia', spiega:'un elenco numerato (es. "3 motivi per cui...")' },
+  { nome:'L\'ho provato', spiega:'il racconto in prima persona di una visita o di un\'esperienza reale' },
+  { nome:'La domanda', spiega:'una domanda diretta che chi guarda si sta già facendo' },
+  { nome:'Il prima e dopo', spiega:'un contrasto netto fra due stati (es. prezzo prima/dopo, casa vecchia/ristrutturata)' },
+  { nome:'Lo smontaggio', spiega:'si confuta un\'idea comune o un pregiudizio sulla zona/il mercato' },
+  { nome:'Lo stack', spiega:'si accumulano in fretta più vantaggi/numeri, uno via l\'altro' },
+  { nome:'L\'avvertimento', spiega:'si avverte di un errore comune da evitare' }
+];
+async function vaiScriptYoutube(){
+  const j=(typeof vaiImmobileJSON==='function')?vaiImmobileJSON(_vaiImm):null;
+  if(!j){ toast('Seleziona prima un immobile','error'); return; }
+  const proxyUrl=(typeof aiGetProxy==='function')?aiGetProxy():'';
+  if(!proxyUrl){ if(typeof vaiAvvisaProxy==='function') vaiAvvisaProxy(); else toast('Collega prima l\'assistente AI','error'); return; }
+  const btn=document.getElementById('vai-ai-b-vaiScriptYoutube')||null;
+  toast('Scrivo lo script…','');
+  try{
+    const sys='Sei un copywriter esperto di video per agenti immobiliari (Reel, Short, video YouTube). '+
+      'Scrivi lo script COMPLETO di un video su questo immobile, in italiano, prima persona, tono caldo e diretto, come se Enzo parlasse davanti alla telecamera. '+
+      'Per l\'apertura devi scegliere UNA delle seguenti formule di gancio, quella più adatta ai dati che hai (non inventarne altre):\n'+
+      VAI_GANCI_FORMULE.map((f,i)=>(i+1)+'. '+f.nome+' — '+f.spiega).join('\n')+
+      '\n\nStruttura da restituire: GANCIO (1-2 frasi, le prime che si sentono, devono fermare chi scorre), INTRO (perché continuare a guardare, 1-2 frasi), SVILUPPO (il corpo del racconto con i dati veri, 4-8 frasi), FINALE (chiusura naturale + invito a scrivere/contattare, 1-2 frasi). '+
+      'Usa SOLO i dati forniti, non inventare numeri o caratteristiche che non ci sono. '+
+      '\n\nDATI DELL\'IMMOBILE:\n'+JSON.stringify(j)+
+      '\n\nRispondi SOLO con JSON valido, senza testo attorno e senza blocchi markdown, in questa forma ESATTA:\n'+
+      '{"formula":"<uno dei nomi esatti sopra>","perche":"<una frase sul perché questa formula si adatta a questi dati>","gancio":"...","intro":"...","sviluppo":"...","finale":"..."}';
+    const resp=await aiFetch(proxyUrl,{ method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ model:(typeof aiModel==='function'?aiModel():'claude-sonnet-4-6'), max_tokens:2200,
+        messages:[{role:'user', content:sys}] }) }, 90000);
+    const data=await resp.json();
+    if(data.error||data.type==='error'){ throw new Error((data.error&&(data.error.message||data.error))||'Errore API'); }
+    const txt=(data.content||[]).map(b=>b.text||'').join('').trim();
+    const piano=(typeof faiParseJSON==='function'?faiParseJSON(txt):null) || (typeof _descParseJSON==='function'?_descParseJSON(txt):null);
+    if(!piano || !piano.gancio){ throw new Error('risposta non interpretabile (vedi console per il testo)'); }
+    const testoCompleto=[piano.gancio, piano.intro, piano.sviluppo, piano.finale].filter(Boolean).join('\n\n');
+    const ov=_vaiMiniModal(
+      '<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:2px">'+(typeof _vaiIc==='function'?_vaiIc('ciak'):'')+' Script pronto</div>'+
+      '<div style="color:#C9A84C;font-size:.8rem;font-weight:700;margin-bottom:2px">Formula: '+_vaiEsc(piano.formula||'')+'</div>'+
+      '<div style="color:#93A5B8;font-size:.76rem;margin-bottom:12px">'+_vaiEsc(piano.perche||'')+'</div>'+
+      ['gancio','intro','sviluppo','finale'].map(k=>piano[k]?(
+        '<div style="margin-bottom:10px"><div style="color:#93A5B8;font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px">'+k+'</div>'+
+        '<div style="color:#fff;font-size:.88rem;line-height:1.45;background:#13263B;border-radius:8px;padding:9px 11px">'+_vaiEsc(piano[k])+'</div></div>'
+      ):'').join('')+
+      '<button id="vai-script-yt-copia" style="width:100%;padding:11px;border-radius:10px;border:none;background:#C9A84C;color:#1A1205;font-weight:800;cursor:pointer;margin-top:4px">Copia tutto lo script</button>'
+    );
+    ov.querySelector('#vai-script-yt-copia').addEventListener('click', ()=>{
+      (typeof _settCopiaTesto==='function'?_settCopiaTesto(testoCompleto):navigator.clipboard.writeText(testoCompleto))
+        .then(()=>toast('Script copiato','success')).catch(()=>toast('Copia non riuscita: seleziona il testo','error'));
+    });
+  }catch(e){
+    console.error('[Script YouTube] errore:', e);
+    toast('Non riuscito: '+((e&&e.message)||e),'error');
+  }
+}
+window.vaiScriptYoutube=vaiScriptYoutube;
+
+/* ═══════════ CONTROLLO PRIMA DI PUBBLICARE [29 ott 2026] ═══════════
+   Valuta un titolo/argomento di video prima di pubblicarlo: un giudizio
+   editoriale dell'AI su quanto il gancio sia forte, con alternative — NON
+   un confronto con dati reali di YouTube (nessun accesso a statistiche vere
+   da qui): lo dichiara sempre, per non far credere che sia analytics vera. */
+function vaiControlloTitolo(){
+  const ov=_vaiMiniModal(
+    '<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:4px">'+(typeof _vaiIc==='function'?_vaiIc('cerca'):'')+' Controllo prima di pubblicare</div>'+
+    '<div style="color:#93A5B8;font-size:.78rem;margin-bottom:12px">Scrivi il titolo o l\'argomento che hai in mente: un giudizio editoriale sul gancio, non un confronto con dati reali di YouTube (non ci ho accesso da qui).</div>'+
+    '<textarea id="vai-ctrl-titolo" placeholder="Es. Appartamento in centro storico ad Agropoli con vista mare" style="width:100%;min-height:70px;margin-bottom:10px;padding:9px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:#13263B;color:#fff;font-size:.88rem"></textarea>'+
+    '<button id="vai-ctrl-ok" style="width:100%;padding:11px;border-radius:10px;border:none;background:#C9A84C;color:#1A1205;font-weight:800;cursor:pointer">Valuta</button>'
+  );
+  ov.querySelector('#vai-ctrl-ok').addEventListener('click', async ()=>{
+    const titolo=(ov.querySelector('#vai-ctrl-titolo').value||'').trim();
+    if(!titolo){ toast('Scrivi prima un titolo o un argomento','error'); return; }
+    const proxyUrl=(typeof aiGetProxy==='function')?aiGetProxy():'';
+    if(!proxyUrl){ ov.remove(); if(typeof vaiAvvisaProxy==='function') vaiAvvisaProxy(); else toast('Collega prima l\'assistente AI','error'); return; }
+    const okBtn=ov.querySelector('#vai-ctrl-ok'); okBtn.disabled=true; okBtn.textContent='Valuto…';
+    try{
+      const sys='Sei un esperto di copywriting e crescita su YouTube/Instagram per contenuti immobiliari locali in Italia (zona Cilento/Agropoli). '+
+        'NON hai accesso a dati reali di YouTube (nessuna vista, nessuna statistica vera): dai solo un giudizio editoriale onesto, basato su cosa funziona di solito in questo genere di contenuti. '+
+        'Valuta questo titolo/argomento: "'+titolo.replace(/"/g,'\'')+'". '+
+        'Dai un verdetto breve (una parola: debole, nella media, o forte) con il motivo in una frase (onesto, anche critico se serve). '+
+        'Poi proponi 3 titoli alternativi più efficaci (massimo 60 caratteri ciascuno), usando formule di gancio diverse (superlativo, conto alla rovescia, domanda, prima/dopo, smontaggio di un\'idea comune, avvertimento). '+
+        'Poi un suggerimento breve per la miniatura (una frase su cosa mostrare/scrivere). '+
+        '\n\nRispondi SOLO con JSON valido, senza testo attorno e senza blocchi markdown, in questa forma ESATTA:\n'+
+        '{"verdetto":"<debole|nella media|forte>","motivo":"...","alternative":["...","...","..."],"miniatura":"..."}';
+      const resp=await aiFetch(proxyUrl,{ method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ model:(typeof aiModel==='function'?aiModel():'claude-sonnet-4-6'), max_tokens:1200,
+          messages:[{role:'user', content:sys}] }) }, 60000);
+      const data=await resp.json();
+      if(data.error||data.type==='error'){ throw new Error((data.error&&(data.error.message||data.error))||'Errore API'); }
+      const txt=(data.content||[]).map(b=>b.text||'').join('').trim();
+      const r=(typeof faiParseJSON==='function'?faiParseJSON(txt):null) || (typeof _descParseJSON==='function'?_descParseJSON(txt):null);
+      if(!r || !r.verdetto){ throw new Error('risposta non interpretabile'); }
+      const colVer={debole:'#C0392B','nella media':'#C9A84C',forte:'#2E8B57'}[String(r.verdetto).toLowerCase()]||'#C9A84C';
+      ov.innerHTML=
+        '<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:10px">Giudizio editoriale (non statistiche vere)</div>'+
+        '<div style="display:inline-block;padding:4px 12px;border-radius:999px;background:'+colVer+';color:#1A1205;font-weight:800;font-size:.8rem;text-transform:uppercase;margin-bottom:8px">'+_vaiEsc(r.verdetto)+'</div>'+
+        '<div style="color:#93A5B8;font-size:.84rem;margin-bottom:14px">'+_vaiEsc(r.motivo||'')+'</div>'+
+        '<div style="color:#93A5B8;font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Titoli alternativi</div>'+
+        (Array.isArray(r.alternative)?r.alternative.map(t=>'<div style="color:#fff;font-size:.88rem;background:#13263B;border-radius:8px;padding:9px 11px;margin-bottom:6px">'+_vaiEsc(t)+'</div>').join(''):'')+
+        (r.miniatura?('<div style="color:#93A5B8;font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;margin:10px 0 4px">Per la miniatura</div><div style="color:#fff;font-size:.86rem">'+_vaiEsc(r.miniatura)+'</div>'):'')+
+        '<button id="vai-ctrl-chiudi" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#fff;font-weight:700;cursor:pointer;margin-top:14px">Chiudi</button>';
+      ov.querySelector('#vai-ctrl-chiudi').addEventListener('click', ()=>ov.remove());
+    }catch(e){
+      console.error('[Controllo titolo] errore:', e);
+      toast('Non riuscito: '+((e&&e.message)||e),'error');
+      okBtn.disabled=false; okBtn.textContent='Valuta';
+    }
+  });
+}
+window.vaiControlloTitolo=vaiControlloTitolo;
+
+/* ═══════════ PIANIFICAZIONE YOUTUBE (COSA/QUANDO/COME) [29 ott 2026] ═══════════
+   Propone 3 idee video per YouTube partendo dagli immobili VERI in portafoglio
+   (non idee generiche): sceglie da soli i più "raccontabili" (novità, ribasso
+   recente, dati forti) fra quelli attivi. */
+async function vaiPianoYoutube(){
+  const proxyUrl=(typeof aiGetProxy==='function')?aiGetProxy():'';
+  if(!proxyUrl){ if(typeof vaiAvvisaProxy==='function') vaiAvvisaProxy(); else toast('Collega prima l\'assistente AI','error'); return; }
+  const tutti=(Array.isArray(D.immobili)?D.immobili:[]).filter(im=>im && !im.archiviato && !im.eliminato && String(im.stato||'').toLowerCase()!=='venduto');
+  if(!tutti.length){ toast('Non ci sono immobili attivi nel gestionale','error'); return; }
+  // i più "raccontabili": creati di recente, o con uno storico prezzo (quindi un ribasso), prima gli altri per data di modifica
+  const punteggio=im=>{
+    let p=0;
+    const creato=Number(im.creato||im.dataCreazione||0), modif=Number(im.modificato||im._modificata||0);
+    if(Date.now()-creato<30*86400000) p+=3;
+    if(Array.isArray(im.prezzoStorico) && im.prezzoStorico.length>1) p+=2;
+    if(im.descrizione && String(im.descrizione).length>80) p+=1;
+    p+=Math.min(2, (modif||creato)/1e13); // leggero ordine per recenza, ininfluente sul resto
+    return p;
+  };
+  const scelti=tutti.slice().sort((a,b)=>punteggio(b)-punteggio(a)).slice(0,6)
+    .map(im=>({ titolo:[(im.tipo||'Immobile'), im.comune, im.zona].filter(Boolean).join(' · '),
+      prezzo:im.prezzo||null, mq:im.mq||im.superficie||null, camere:im.camere||null,
+      novita: (Date.now()-Number(im.creato||im.dataCreazione||0))<30*86400000,
+      ribassato: Array.isArray(im.prezzoStorico) && im.prezzoStorico.length>1,
+      descrizione:String(im.descrizione||'').slice(0,250) }));
+  toast('Scelgo le idee migliori dal portafoglio…','');
+  try{
+    const sys='Sei un consulente di contenuti YouTube per un\'agenzia immobiliare locale (Agropoli/Cilento) che pubblica poco e vuole ripartire con pochi video ma buoni. '+
+      'Da questa lista di immobili VERI in portafoglio, scegli i 3 più "raccontabili" per un video (novità, ribasso recente, caratteristiche forti o particolari) e per ciascuno proponi: '+
+      'COSA (l\'argomento preciso del video, non generico), QUANDO (un suggerimento pratico, es. "questa settimana" o "prima del weekend", non una data vera perché non hai un calendario), '+
+      'COME (Short breve o Video lungo orizzontale, e quale formula di gancio useresti fra: superlativo, conto alla rovescia, l\'ho provato, la domanda, il prima e dopo, lo smontaggio, lo stack, l\'avvertimento). '+
+      'Usa SOLO i dati forniti, non inventare nulla sugli immobili.'+
+      '\n\nIMMOBILI:\n'+JSON.stringify(scelti)+
+      '\n\nRispondi SOLO con JSON valido, senza testo attorno e senza blocchi markdown, in questa forma ESATTA:\n'+
+      '{"idee":[{"cosa":"...","quando":"...","come":"...","formula":"...","titolo_immobile":"<il campo titolo scelto, esattamente come scritto sopra>"}]}';
+    const resp=await aiFetch(proxyUrl,{ method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ model:(typeof aiModel==='function'?aiModel():'claude-sonnet-4-6'), max_tokens:1800,
+        messages:[{role:'user', content:sys}] }) }, 90000);
+    const data=await resp.json();
+    if(data.error||data.type==='error'){ throw new Error((data.error&&(data.error.message||data.error))||'Errore API'); }
+    const txt=(data.content||[]).map(b=>b.text||'').join('').trim();
+    const piano=(typeof faiParseJSON==='function'?faiParseJSON(txt):null) || (typeof _descParseJSON==='function'?_descParseJSON(txt):null);
+    if(!piano || !Array.isArray(piano.idee) || !piano.idee.length){ throw new Error('risposta non interpretabile'); }
+    const ov=_vaiMiniModal(
+      '<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:2px">'+(typeof _vaiIc==='function'?_vaiIc('calendario'):'')+' 3 idee dal tuo portafoglio vero</div>'+
+      '<div style="color:#93A5B8;font-size:.76rem;margin-bottom:12px">"Quando" è un suggerimento pratico, non un calendario reale.</div>'+
+      piano.idee.map((x,i)=>
+        '<div style="margin-bottom:12px;background:#13263B;border-radius:10px;padding:11px 13px">'+
+          '<div style="color:#C9A84C;font-weight:800;font-size:.8rem;margin-bottom:4px">'+(i+1)+'. '+_vaiEsc(x.titolo_immobile||'')+'</div>'+
+          '<div style="color:#fff;font-size:.86rem;margin-bottom:5px"><b>Cosa:</b> '+_vaiEsc(x.cosa||'')+'</div>'+
+          '<div style="color:#93A5B8;font-size:.8rem;margin-bottom:3px"><b>Quando:</b> '+_vaiEsc(x.quando||'')+'</div>'+
+          '<div style="color:#93A5B8;font-size:.8rem"><b>Come:</b> '+_vaiEsc(x.come||'')+(x.formula?(' · formula: '+_vaiEsc(x.formula)):'')+'</div>'+
+        '</div>'
+      ).join('')+
+      '<button id="vai-piano-chiudi" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#fff;font-weight:700;cursor:pointer;margin-top:4px">Chiudi</button>'
+    );
+    ov.querySelector('#vai-piano-chiudi').addEventListener('click', ()=>ov.remove());
+  }catch(e){
+    console.error('[Piano YouTube] errore:', e);
+    toast('Non riuscito: '+((e&&e.message)||e),'error');
+  }
+}
+window.vaiPianoYoutube=vaiPianoYoutube;
 
 /* Regia AI rimossa su richiesta: il suo ruolo è assorbito da "Monta con AI" (vaiMontaDaSolo), potenziato con struttura narrativa, anti-ripetizione e didascalia integrata. */
 
