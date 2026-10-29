@@ -35309,9 +35309,9 @@ async function vaiSincronizzaBeat(){
     '<div style="color:#93A5B8;font-size:.78rem;margin-bottom:12px">Musica a ~'+bpm+' BPM. Ogni cambio clip cadrà esattamente su un colpo. Scegli ogni quanti colpi cambiare scena:</div>'+
     '<label style="display:block;color:#93A5B8;font-size:.72rem;margin-bottom:5px">RITMO DEI CAMBI</label>'+
     '<div style="display:flex;gap:7px;margin-bottom:13px">'+
-      [{v:4,l:''+_vaiIc('fulmine')+' Serrato',d:'4 colpi'},{v:8,l:''+_vaiIc('musica')+' Medio',d:'8 colpi'},{v:16,l:''+_vaiIc('onda')+' Lento',d:'16 colpi'}].map((o,i)=>
+      [{v:1,l:''+_vaiIc('fulmine')+' Ogni colpo',d:'1 colpo'},{v:4,l:''+_vaiIc('fulmine')+' Serrato',d:'4 colpi'},{v:8,l:''+_vaiIc('musica')+' Medio',d:'8 colpi'},{v:16,l:''+_vaiIc('onda')+' Lento',d:'16 colpi'}].map((o,i)=>
         '<button class="vai-beat-rit" data-v="'+o.v+'" style="flex:1;padding:9px 4px;border-radius:9px;border:2px solid '+(o.v===8?'#C9A84C':'rgba(255,255,255,.14)')+';background:#13263B;color:#fff;cursor:pointer;text-align:center">'+
-        '<div style="font-weight:800;font-size:.82rem">'+o.l+'</div><div style="color:#93A5B8;font-size:.66rem">'+o.d+' (~'+secPer(o.v)+'s)</div></button>').join('')+
+        '<div style="font-weight:800;font-size:.78rem">'+o.l+'</div><div style="color:#93A5B8;font-size:.64rem">'+o.d+' (~'+secPer(o.v)+'s)</div></button>').join('')+
     '</div>'+
     '<label style="display:block;color:#93A5B8;font-size:.72rem;margin-bottom:5px">COME ADATTARE LE CLIP</label>'+
     '<button class="vai-beat-modo" data-m="taglia" style="display:block;width:100%;text-align:left;margin-bottom:7px;padding:10px 12px;border-radius:9px;border:2px solid #C9A84C;background:#13263B;color:#fff;cursor:pointer">'+
@@ -35320,6 +35320,10 @@ async function vaiSincronizzaBeat(){
     '<button class="vai-beat-modo" data-m="velocita" style="display:block;width:100%;text-align:left;margin-bottom:13px;padding:10px 12px;border-radius:9px;border:2px solid rgba(255,255,255,.14);background:#13263B;color:#fff;cursor:pointer">'+
       '<div style="font-weight:800;font-size:.85rem">'+_vaiIc('avanti')+' Adatta la velocità</div>'+
       '<div style="color:#93A5B8;font-size:.7rem">Usa tutto il girato di ogni clip, accelerando o rallentando per riempire il tempo</div></button>'+
+    '<label class="vai-musica-check" style="margin-bottom:4px;cursor:pointer">'+
+      '<input type="checkbox" id="vai-beat-raffica"> Aggiungi raffiche stile VN (tratti di tagli fulminei alternati a tratti più lenti)'+
+    '</label>'+
+    '<div style="color:#8FA3B8;font-size:.7rem;margin-bottom:13px">Serve almeno 6 clip. I tagli sul ritmo sono sempre netti, senza dissolvenza: è la dissolvenza a smorzare il colpo e a far perdere la precisione sul beat.</div>'+
     '<button id="vai-beat-ok" style="width:100%;padding:11px;border-radius:10px;border:none;background:#C9A84C;color:#1A1205;font-weight:800;cursor:pointer">Applica il montaggio sul ritmo</button>'
   );
   let ritmo=8, modo='taglia';
@@ -35335,12 +35339,18 @@ async function vaiSincronizzaBeat(){
     ov.remove();
     vaiSnapshot('montaggio sul ritmo');
     const B=ritmo;
+    const raffica = !!(ov.querySelector('#vai-beat-raffica') && ov.querySelector('#vai-beat-raffica').checked) && _vaiClips.length>=6;
     // durata di UN colpo dal BPM reale (non dalla griglia di beat che può essere troppo fitta)
     const durColpo = periodo;               // periodo = 60/bpm, calcolato sopra
-    const targetBeat = durColpo * B;        // durata desiderata di ogni clip (B colpi)
-    let applicate=0, accelerate=0;
+    let applicate=0, accelerate=0, raffiche=0;
     _vaiClips.forEach((c,i)=>{
-      const target = targetBeat;
+      // RAFFICA: su gruppi di 5 clip, le ultime 2 diventano una raffica di 1 colpo (stile VN:
+      // tratti lunghi che tengono la scena, poi una serie di tagli fulminei). Senza raffica,
+      // ogni clip prende lo stesso numero di colpi scelto sopra.
+      const inRaffica = raffica && (i % 5 >= 3);
+      const colpiClip = inRaffica ? 1 : B;
+      if(inRaffica) raffiche++;
+      const target = durColpo * colpiClip;
       const cIn = c.taglioInizio || 0;
       // girato grezzo realmente disponibile in questa clip (dal punto di taglio alla fine)
       const dispRaw = (c.durata && c.durata>0) ? Math.max(0.2, c.durata - cIn) : 3;
@@ -35364,6 +35374,10 @@ async function vaiSincronizzaBeat(){
         c.velocita = vv;
         c.taglioDurata = dispRaw;
       }
+      // Un montaggio sul ritmo vuole tagli netti: la dissolvenza sposta il taglio reale prima
+      // del punto calcolato (si "mangia" un pezzo della clip per sfumare) e ammorbidisce il
+      // colpo visivo che deve cadere esattamente sul beat. Tolgo qualunque transizione qui.
+      c.transizione = 'nessuna';
       applicate++;
     });
     try{ if(typeof _vaiRicalcolaGruppiEstesi==='function') _vaiRicalcolaGruppiEstesi(); }catch(e){}
@@ -35371,7 +35385,8 @@ async function vaiSincronizzaBeat(){
     try{ if(typeof vaiClipsRender==='function') vaiClipsRender(); }catch(e){}
     try{ _vaiDirty=true; }catch(e){}
     const extra = (modo==='taglia' && accelerate>0) ? ' ('+accelerate+' troppo corte: adattata la velocità)' : '';
-    toast('Montaggio sul ritmo: '+applicate+' clip agganciate al beat ('+B+' colpi)'+extra,'success');
+    const extraRaf = raffiche>0 ? ' · '+raffiche+' in raffica' : '';
+    toast('Montaggio sul ritmo: '+applicate+' clip agganciate al beat, tagli netti'+extraRaf+extra,'success');
   });
 }
 window.vaiSincronizzaBeat=vaiSincronizzaBeat;
