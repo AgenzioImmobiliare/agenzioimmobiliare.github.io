@@ -5500,6 +5500,12 @@ hubTema();
           <span>Pacchetto YouTube</span>
           <span class="nav-badge" style="background:#0EA5E9;color:white">AI</span>
         </div>
+        <!-- [29 ott 2026] Performance YouTube: retention/hook leak/cliffs dall'export di Studio -->
+        <div class="nav-item" onclick="switchSection('ytperf')" title="Incolla l'export retention di YouTube Studio: dove si perdono gli spettatori e cosa dicevi in quel momento">
+          <div class="ni-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M19 9l-5 5-4-4-3 3"/><circle cx="19" cy="9" r="1.4" fill="currentColor" stroke="none"/></svg></div>
+          <span>Performance YouTube</span>
+          <span class="nav-badge" style="background:#0EA5E9;color:white">AI</span>
+        </div>
         <!-- [24 ott 2026] Libreria Cilento: clip del territorio per aperture e chiusure dei video -->
         <div class="nav-item" onclick="switchSection('libreria')" title="Le tue clip del territorio e il repertorio, da usare in apertura e chiusura dei video">
           <div class="ni-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
@@ -7115,6 +7121,51 @@ Un caro saluto,
       <div id="yt-empty" style="text-align:center;padding:30px 20px;color:var(--text3)">
         <div style="font-weight:700;font-size:.9rem;color:var(--text2)">Il pacchetto YouTube apparirà qui</div>
         <div style="font-size:.78rem;margin-top:6px">Titoli con punteggio, descrizione, tag e capitoli — pronti da copiare. La pubblicazione resta sempre tua.</div>
+      </div>
+    </div>
+
+    <!-- ══════════════ PERFORMANCE YOUTUBE [29 ott 2026] ══════════════ -->
+    <div id="sec-ytperf" class="section-panel">
+      <div class="page-title-row">
+        <div>
+          <div class="page-title">Performance <span>YouTube</span></div>
+          <div class="page-subtitle">Incolla l'export della retention da YouTube Studio: dove esattamente si perdono gli spettatori, e perché — non solo quanti restano.</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-body">
+          <div class="frow" style="margin-bottom:4px">
+            <label class="flabel" style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M19 9l-5 5-4-4-3 3"/></svg> Come prendere il file</label>
+            <div style="font-size:.78rem;color:var(--text2);margin-bottom:10px">YouTube Studio → il video → Analytics → Coinvolgimento → il grafico "Retention del pubblico" → l'icona di download → "Retention del pubblico". Apri il CSV e incolla qui le due colonne (posizione e percentuale).</div>
+          </div>
+
+          <div class="frow" style="margin-bottom:14px">
+            <label class="flabel" style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg> Dati retention (CSV incollato)</label>
+            <textarea class="finput" id="ytp-csv" rows="8" style="resize:vertical;font-family:ui-monospace,monospace;font-size:.78rem" placeholder="Incolla qui il contenuto del CSV, es.:&#10;0,100&#10;5,92&#10;10,85&#10;...&#10;(va bene anche con il simbolo % o con punto e virgola)"></textarea>
+          </div>
+
+          <div class="frow" style="margin-bottom:14px">
+            <label class="flabel" style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg> Durata del video in secondi (facoltativo, utile se l'asse è in %)</label>
+            <input class="finput" id="ytp-durata" type="number" min="1" placeholder="es. 180">
+          </div>
+
+          <div class="frow" style="margin-bottom:4px">
+            <label class="flabel" style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg> Trascrizione con i tempi (facoltativa, per sapere cosa dicevi nei punti di calo)</label>
+            <textarea class="finput" id="ytp-trascrizione" rows="5" style="resize:vertical;font-family:inherit" placeholder="Sottotitoli SRT/VTT con i tempi, es. 00:00:12,400 --> 00:00:15,900 — serve solo per mostrare cosa dicevi in quel momento"></textarea>
+          </div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+            <button class="btn btn-primary" id="ytp-gen-btn" onclick="ytpAnalizza()"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M19 9l-5 5-4-4-3 3"/></svg> Analizza retention</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="ytp-output" style="display:none"></div>
+
+      <div id="ytp-empty" style="text-align:center;padding:30px 20px;color:var(--text3)">
+        <div style="font-weight:700;font-size:.9rem;color:var(--text2)">L'analisi apparirà qui</div>
+        <div style="font-size:.78rem;margin-top:6px">Quanto perdi nell'apertura, i momenti esatti di calo, e la tendenza nel resto del video.</div>
       </div>
     </div>
 
@@ -10452,6 +10503,7 @@ function switchSection(name){
   if(name === 'fotoai') _safe(window.faiRender,'fotoai');
   if(name === 'descai') _safe(window.descInit,'descai');
   if(name === 'ytpack') _safe(window.ytInit,'ytpack');
+  if(name === 'ytperf') { /* nessun render iniziale: la sezione è statica finché non si incolla il CSV */ }
   if(name === 'stagai'){ /* nessun render iniziale: la sezione è statica finché non si carica una foto */ }
   if(name === 'kit'){ _safe(window.kitFillSelect,'kit.select'); _safe(window.kitRender_show,'kit'); }
   if(name === 'overview') { _safe(window.ovKpi,'overview.kpi'); _safe(window.ovLogRecent,'overview.log'); _safe(window.ovAgendaRender,'overview.agenda'); }
@@ -10499,7 +10551,7 @@ const SECTION_LABEL = {
   overview:'Overview', pipeline:'Pipeline', perf:'Performance', social:'Studio Social',
   pubblicazioni:'Pubblicazioni', kit:'Kit di Lancio', volantino:'Volantino',
   fotoai:'Analisi Foto AI', videoai:'Video Social', campagna:'Campagna WhatsApp',
-  descai:'Descrizioni AI', stagai:'Home Staging AI', ytpack:'Pacchetto YouTube',
+  descai:'Descrizioni AI', stagai:'Home Staging AI', ytpack:'Pacchetto YouTube', ytperf:'Performance YouTube',
   compleanni:'Compleanni', recensioni:'Recensioni Google', templates:'Template Messaggi',
   settimana:'Piano Social', linkinbio:'Link in Bio', timeline:'Timeline Contatti', regali:'Liste regali',
   ai:'Genera con AI', log:'Log Attività'
@@ -17005,6 +17057,123 @@ function ytCopiaTutto(){
 }
 
 /* ════════════════════════════════════════════════════════════════
+   PERFORMANCE YOUTUBE  [29 ott 2026]
+   Legge l'export retention di YouTube Studio e trova dove si perde
+   davvero il pubblico: non solo quanti restano, ma in che momento
+   e — se c'è la trascrizione — cosa stavi dicendo in quel punto.
+   Puro calcolo, nessuna chiamata AI: i numeri parlano da soli.
+════════════════════════════════════════════════════════════════ */
+let _ytpRis = null;
+
+function ytpParseCSV(testo){
+  const righe = String(testo||'').split(/\r?\n/);
+  const out = [];
+  righe.forEach(r=>{
+    if(!r.trim()) return;
+    const celle = r.split(/[,;\t]/).map(c=>c.trim().replace('%',''));
+    const numeri = celle.map(c=>parseFloat(c)).filter(n=>!isNaN(n));
+    if(numeri.length>=2) out.push([numeri[0], numeri[1]]);
+  });
+  return out;
+}
+
+function ytpAnalizzaDati(righe, durataInput){
+  if(righe.length < 8) return null;
+  const xs = righe.map(r=>r[0]), ys = righe.map(r=>r[1]);
+  const assePercentuale = Math.max.apply(null, xs) <= 100.5;
+  const durata = durataInput || null;
+  const aSecondi = x => (assePercentuale && durata) ? (x/100*durata) : x;
+
+  const partenza = ys[0] || 100;
+  const sogliaHook = !assePercentuale ? 30 : (durata ? (30/durata*100) : 10);
+  const puntiHook = righe.filter(r=>r[0] <= sogliaHook).map(r=>r[1]);
+  const fineHook = puntiHook.length ? Math.min.apply(null, puntiHook) : partenza;
+  const hookLeak = partenza - fineHook;
+
+  const cali = [];
+  for(let i=1; i<righe.length; i++){
+    const persi = ys[i-1] - ys[i];
+    const span = (xs[i] - xs[i-1]) || 1;
+    cali.push({ ritmo: persi/span, da: xs[i-1], a: xs[i], persi: persi });
+  }
+  const picchi = cali.filter(c=>c.persi > 0.8).sort((a,b)=>b.ritmo - a.ritmo).slice(0,5)
+    .map(c=>({ da:c.da, a:c.a, persi:c.persi, secondi: (!assePercentuale || durata) ? aSecondi(c.da) : null }));
+  const centrali = cali.filter(c=>c.da > sogliaHook);
+  const slide = centrali.length ? centrali.reduce((s,c)=>s+c.ritmo,0)/centrali.length : 0;
+
+  return { punti: righe.length, partenza, fine: ys[ys.length-1], hookLeak, picchi, slide, assePercentuale, durata };
+}
+
+function ytpVerdictoHook(hookLeak){
+  if(hookLeak < 25) return { testo:'sano', colore:'#16A34A' };
+  if(hookLeak < 40) return { testo:'in perdita', colore:'#D97706' };
+  return { testo:'grave', colore:'#DC2626' };
+}
+
+function ytpCosaDicevi(cues, secondi){
+  if(secondi==null || !cues || !cues.length) return '';
+  const vicine = cues.filter(c=> c.inizio <= secondi+4 && (c.fine==null || c.fine >= secondi-4));
+  return vicine.map(c=>c.testo).join(' ').slice(0,160);
+}
+
+function ytpMMSS(s){
+  if(s==null) return '';
+  s = Math.max(0, Math.round(s));
+  const m = Math.floor(s/60), ss = s%60;
+  return m+':'+String(ss).padStart(2,'0');
+}
+
+function ytpAnalizza(){
+  const grezzo = (document.getElementById('ytp-csv').value||'').trim();
+  if(!grezzo){ toast('Incolla prima il CSV della retention','warn'); return; }
+  const durataInput = parseFloat(document.getElementById('ytp-durata').value) || null;
+  const trascrizioneGrezza = (document.getElementById('ytp-trascrizione').value||'').trim();
+
+  const righe = ytpParseCSV(grezzo);
+  if(righe.length < 8){ toast('Non riesco a leggere almeno 8 punti dati da questo CSV','error'); return; }
+  const r = ytpAnalizzaDati(righe, durataInput);
+  if(!r){ toast('Dati insufficienti per l\'analisi','error'); return; }
+
+  const cues = trascrizioneGrezza ? ytParseTrascrizione(trascrizioneGrezza).cues : [];
+  r.picchi.forEach(p=>{ p.detto = ytpCosaDicevi(cues, p.secondi); });
+
+  _ytpRis = r;
+  ytpRenderOutput();
+  if(typeof logAdd==='function') logAdd('📈','Performance YouTube', 'hook leak '+r.hookLeak.toFixed(1)+'%');
+}
+
+function ytpRenderOutput(){
+  const out = document.getElementById('ytp-output');
+  const empty = document.getElementById('ytp-empty');
+  if(!out || !_ytpRis) return;
+  const r = _ytpRis;
+  const v = ytpVerdictoHook(r.hookLeak);
+
+  const hookHtml = '<div class="desc-card">'+
+    '<div class="desc-card-head">Hook leak — perso nei primi 30 secondi <span style="color:'+v.colore+';font-size:.74rem;font-weight:600">['+v.testo+']</span></div>'+
+    '<div class="desc-card-body">Parti dal '+r.partenza.toFixed(1)+'% e dopo l\'apertura sei al '+(r.partenza-r.hookLeak).toFixed(1)+'% — hai perso <b>'+r.hookLeak.toFixed(1)+'%</b> degli spettatori.'+
+    '<div style="margin-top:6px;font-size:.78rem;color:var(--text2)">Sotto il 25% è sano per questa durata. '+(r.hookLeak>=25?'Il primo problema da risolvere è la prima riga del video, non il montaggio.':'L\'apertura regge bene: se il video perde pubblico, il problema è più avanti.')+'</div></div></div>';
+
+  const cliffsHtml = r.picchi.length ?
+    ('<div class="desc-card"><div class="desc-card-head">Cliffs — i momenti esatti in cui le persone se ne sono andate</div>'+
+     '<div class="desc-card-body">'+r.picchi.map(p=>{
+       const dove = (p.secondi!=null) ? ytpMMSS(p.secondi) : (p.da.toFixed(1)+(r.assePercentuale?'%':'s'));
+       return '-'+p.persi.toFixed(1)+'%  al '+dove + (p.detto ? ('  — "'+_descEsc(p.detto)+'"') : '');
+     }).join('<br>')+'</div></div>')
+    : '<div class="desc-card"><div class="desc-card-head">Cliffs</div><div class="desc-card-body" style="color:var(--text3)">Nessun calo improvviso sopra lo 0,8%: quello che perdi lo perdi gradualmente, non in un punto preciso.</div></div>';
+
+  const slideHtml = '<div class="desc-card"><div class="desc-card-head">Slide — la perdita costante nella parte centrale</div>'+
+    '<div class="desc-card-body">'+r.slide.toFixed(3)+'% per unità nel corpo del video.'+
+    '<div style="margin-top:6px;font-size:.78rem;color:var(--text2)">Una perdita costante è un problema di ritmo: si risolve tagliando, non riscrivendo il contenuto.</div></div></div>';
+
+  out.innerHTML = '<div class="desc-grid">'+hookHtml+cliffsHtml+slideHtml+'</div>'+
+    '<div style="margin-top:14px;padding:12px 14px;background:var(--cream);border-radius:10px;font-size:.8rem;color:var(--text2)">'+
+    '📌 Punto da risolvere per primo: '+(r.hookLeak>=25 ? 'la prima riga del video (hook leak '+v.testo+').' : (r.picchi.length ? ('il calo più netto, al '+(r.picchi[0].secondi!=null?ytpMMSS(r.picchi[0].secondi):r.picchi[0].da)+'.') : 'il ritmo della parte centrale, con tagli.'))+'</div>';
+  out.style.display='';
+  if(empty) empty.style.display='none';
+}
+
+/* ════════════════════════════════════════════════════════════════
    HOME STAGING AI  (#4 — modalità A: piano + prompt)
    Carica foto stanza → l'AI analizza e prepara un piano di staging
    e un prompt pronto per un generatore di immagini esterno.
@@ -17149,6 +17318,7 @@ function stagTrasformaImg(){ toast('La trasformazione automatica dell\'immagine 
 
 window.ytInit=ytInit; window.ytPickImmobile=ytPickImmobile; window.ytSetTipo=ytSetTipo;
 window.ytGenera=ytGenera; window.ytCopiaId=ytCopiaId; window.ytCopiaTitolo=ytCopiaTitolo; window.ytCopiaTutto=ytCopiaTutto;
+window.ytpAnalizza=ytpAnalizza;
 window.descInit=descInit; window.descPickImmobile=descPickImmobile; window.descSetTono=descSetTono;
 window.descGenera=descGenera; window.descCopia=descCopia; window.descCopiaTutto=descCopiaTutto;
 window.stagAddFile=stagAddFile; window.stagDragOver=stagDragOver; window.stagDragLeave=stagDragLeave;
