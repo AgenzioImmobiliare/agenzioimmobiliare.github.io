@@ -52285,6 +52285,108 @@ async function pubConfrontaAI(){
     _vaiTlRenderPigro = function(){ if(inCorso) return; return _orig.apply(this, arguments); };
   }
 })();
+/* ═══════════ RILEVAZIONE AUTOMATICA DI MQ/PREZZO/AMBIENTI DAL PARLATO [29 ott 2026] ═══════════
+   Nessuna IA, nessun dato inventato: legge SOLO le parole davvero riconosciute (con i
+   loro tempi) dal riconoscimento vocale locale e cerca schemi noti in italiano (numero +
+   "mq", "euro" + numero, "camere", "bagni", "terrazzo"...). Un numero scritto a parole
+   (es. "settanta", "centotrentadue", "quarantacinquemila") viene convertito in cifre. */
+function _vaiNumeroItaliano(parola){
+  var pulita=String(parola||'').trim().toLowerCase();
+  var cifre=pulita.replace(/[.\s]/g,'');
+  if(/^\d+$/.test(cifre)) return parseInt(cifre,10);
+  var UNITA={zero:0,uno:1,un:1,una:1,due:2,tre:3,quattro:4,cinque:5,sei:6,sette:7,otto:8,nove:9,
+    dieci:10,undici:11,dodici:12,tredici:13,quattordici:14,quindici:15,sedici:16,
+    diciassette:17,diciotto:18,diciannove:19};
+  var DECINE={venti:20,trenta:30,quaranta:40,cinquanta:50,sessanta:60,settanta:70,ottanta:80,novanta:90};
+  var w=pulita.replace(/[^a-zàèéìòù]/g,'');
+  if(!w) return null;
+  if(UNITA.hasOwnProperty(w)) return UNITA[w];
+  if(DECINE.hasOwnProperty(w)) return DECINE[w];
+  function sottoMille(s){
+    if(!s) return 0;
+    if(UNITA.hasOwnProperty(s)) return UNITA[s];
+    if(DECINE.hasOwnProperty(s)) return DECINE[s];
+    for(var d in DECINE){
+      if(s.indexOf(d)===0){ var r=s.slice(d.length); if(!r) return DECINE[d]; if(UNITA.hasOwnProperty(r)) return DECINE[d]+UNITA[r]; }
+      var base=d.slice(0,-1);
+      if(s.indexOf(base)===0){ var r2=s.slice(base.length); if(UNITA.hasOwnProperty(r2) && /^[uo]/.test(r2)) return DECINE[d]+UNITA[r2]; }
+    }
+    if(s.indexOf('cento')===0){ var r3=s.slice(5); var sub=sottoMille(r3); return sub==null?null:100+sub; }
+    for(var u2 in UNITA){
+      if(u2==='zero'||u2==='un'||u2==='uno'||u2==='una') continue;
+      var pre=u2+'cento';
+      if(s.indexOf(pre)===0){ var r4=s.slice(pre.length); var sub2=sottoMille(r4); return sub2==null?null:UNITA[u2]*100+sub2; }
+    }
+    return null;
+  }
+  if(w==='mille') return 1000;
+  if(/mila$/.test(w)){
+    var pre3=w.slice(0,-4);
+    var n3=pre3?sottoMille(pre3):1;
+    return n3==null?null:n3*1000;
+  }
+  return sottoMille(w);
+}
+
+/* Cerca nelle parole riconosciute i fatti dell'immobile (mq, prezzo, camere, bagni,
+   terrazzo, giardino, posto auto, ascensore, vista mare) e torna un elenco pronto da
+   trasformare in badge, un fatto per tipo (il primo che trova), con il tempo (secondi,
+   stesso riferimento delle parole di "parole") a cui comparire. */
+function _vaiRilevaFattiImmobiliari(parole){
+  var out=[], trovati={};
+  var pul=(parole||[]).map(function(p){ return { w:String(p.w||'').toLowerCase().replace(/[^\wàèéìòù]/g,''), da:Number(p.da)||0 }; });
+  function aggiungi(tipo, testo, t, svg, bg, color){
+    if(trovati[tipo]) return;
+    trovati[tipo]=true;
+    out.push({ tipo:tipo, testo:testo, t:Math.round(t*10)/10, svg:svg, bg:bg||'#1A2330', color:color||'#E8EDF2' });
+  }
+  for(var i=0;i<pul.length;i++){
+    var w=pul[i].w; if(!w) continue;
+    var nxt=pul[i+1]?pul[i+1].w:'';
+    var num=_vaiNumeroItaliano(w);
+    if(num!=null){
+      if(nxt==='mq'||nxt==='metri'){ aggiungi('mq', num+' mq', pul[i].da, 'mq'); continue; }
+      if(nxt==='euro'){ aggiungi('euro', '€ '+num.toLocaleString('it-IT'), pul[i].da, 'euro', '#F59E0B', '#0D1B2A'); continue; }
+      if(nxt==='camere'||nxt==='camera'){ aggiungi('camere', num+' camer'+(num===1?'a':'e'), pul[i].da, 'letto'); continue; }
+      if(nxt==='bagni'||nxt==='bagno'){ aggiungi('bagni', num+' bagn'+(num===1?'o':'i'), pul[i].da, 'bagno'); continue; }
+    }
+    if(w==='euro' && pul[i+1]){
+      var num2=_vaiNumeroItaliano(nxt);
+      if(num2!=null){ aggiungi('euro', '€ '+num2.toLocaleString('it-IT'), pul[i].da, 'euro', '#F59E0B', '#0D1B2A'); continue; }
+    }
+    if(w==='terrazzo'||w==='terrazzino'){ aggiungi('terrazzo', 'Terrazzo', pul[i].da, 'terrazzo'); continue; }
+    if(w==='giardino'){ aggiungi('giardino', 'Giardino', pul[i].da, 'giardino', '#10B981', '#fff'); continue; }
+    if((w==='garage'||w==='box') || (w==='posto'&&nxt==='auto')){ aggiungi('auto', 'Posto auto', pul[i].da, 'auto'); continue; }
+    if(w==='ascensore'){ aggiungi('ascensore', 'Ascensore', pul[i].da, 'ascensore'); continue; }
+    if(w==='mare' && (nxt==='vista'||(pul[i-1]&&pul[i-1].w==='vista'))){ aggiungi('mare', 'Vista mare', pul[i].da, 'mare', '#0EA5E9', '#fff'); continue; }
+  }
+  return out;
+}
+
+/* Trasforma i fatti rilevati in badge veri, con lo stesso aspetto dei badge del
+   pannello Grafiche, inseriti nella clip al tempo esatto in cui vengono detti. */
+function _vaiInserisciFattiComeBadge(clip, fatti){
+  if(!fatti || !fatti.length) return 0;
+  var tr=(typeof _vaiTracciaAutomazione==='function')?_vaiTracciaAutomazione():1;
+  var inserite=0;
+  fatti.forEach(function(f){
+    var durataMax=Math.max(1, (clip.durata||3)-f.t-0.2);
+    var nuova=_vaiScrittaAI({
+      t:f.t, durata:Math.min(2.8, durataMax),
+      testo:f.testo, tipo:'badge',
+      bg:'', bgSuggerito:f.bg, svgIco:f.svg, color:f.color,
+      traccia:tr, y:0.12, size:1, anim:'', animOut:''
+    });
+    clip.scritte=clip.scritte||[];
+    clip.scritte.push(nuova);
+    inserite++;
+  });
+  if(typeof _vaiClipAttiva!=='undefined' && _vaiClipAttiva>=0 && _vaiClips[_vaiClipAttiva] && _vaiClips[_vaiClipAttiva].id===clip.id) _vaiScritte=clip.scritte;
+  try{ vaiTlRender(); }catch(e){}
+  try{ vaiOverlayUpdate(); }catch(e){}
+  return inserite;
+}
+
 /* ═══════════ VIDEO SOCIAL: «Sottotitoli dalla voce» (24 ott 2026) ═══════════
    Riconosce le parole che dici nelle clip (programma sul tuo PC, nessun servizio esterno: il video non esce dal
    computer) e crea i sottotitoli con lo stesso motore di quelli della voce narrante: gruppetti di parole, e la
@@ -52294,7 +52396,7 @@ async function pubConfrontaAI(){
 (function(){
   if(window._svSottotitoli) return;
   window._svSottotitoli = true;
-  var S = { srv: null, ctrl: null, timer: null, voci: [], inLavoro: false, sel: {} };
+  var S = { srv: null, ctrl: null, timer: null, voci: [], inLavoro: false, sel: {}, rileva: true };
 
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -52337,7 +52439,9 @@ async function pubConfrontaAI(){
       + '<button type="button" class="sv-x" data-s="chiudi" title="Chiudi">' + ic(IC_X, 18) + '</button></div>'
       + '<div class="sv-srv" id="sv-srv">Controllo la Fabbrica grafiche…</div>'
       + '<div class="sv-c"><div class="sv-sez">In quali clip parli</div><div id="sv-clip"></div>'
-      + '<div class="sv-nota" id="sv-opz"></div><div id="sv-err"></div></div>'
+      + '<div class="sv-nota" id="sv-opz"></div>'
+      + '<label class="sv-riga" style="cursor:pointer"><input type="checkbox" id="sv-fatti" checked><span class="t"><b>Rileva anche mq, prezzo e ambienti</b><small>Aggiunge in automatico i badge (mq, € prezzo, camere, bagni, terrazzo…) nel punto esatto in cui li dici — letti solo dalle parole riconosciute, niente inventato.</small></span></label>'
+      + '<div id="sv-err"></div></div>'
       + '<div class="sv-pie"><span class="sv-nota" id="sv-info"></span><button type="button" class="sv-b pieno" id="sv-crea" data-s="crea">' + ic(IC_MIC, 15) + 'Crea i sottotitoli</button></div></div>';
     d.addEventListener('click', function(e){
       if(e.target === d && !S.inLavoro){ chiudi(); return; }
@@ -52345,7 +52449,7 @@ async function pubConfrontaAI(){
       var a = b.getAttribute('data-s');
       if(a === 'chiudi') chiudi(); else if(a === 'crea') crea(); else if(a === 'riprova') controllaServer();
     });
-    d.addEventListener('change', function(e){ var t = e.target; if(t.matches('[data-clip]')){ S.sel[t.getAttribute('data-clip')] = t.checked; aggiornaStato(); } });
+    d.addEventListener('change', function(e){ var t = e.target; if(t.matches('[data-clip]')){ S.sel[t.getAttribute('data-clip')] = t.checked; aggiornaStato(); } else if(t.id === 'sv-fatti'){ S.rileva = t.checked; } });
     d.addEventListener('keydown', function(e){ if(e.key === 'Escape' && !S.inLavoro) chiudi(); });
     document.body.appendChild(d);
     return d;
@@ -52422,14 +52526,20 @@ async function pubConfrontaAI(){
     if(!scelte.length || S.inLavoro) return;
     S.inLavoro = true; S.voci = scelte.map(function(x){ return { id: x.c.id, stato: 'attesa', pc: 0, fase: 'In coda', n: 0, errore: '' }; });
     $('sv-err').innerHTML = ''; disegna();
-    var coda = scelte.slice(), fatte = 0, parole = 0;
+    var coda = scelte.slice(), fatte = 0, parole = 0, badge = 0;
     (function prossima(){
       var x = coda.shift();
-      if(!x){ finito(fatte, parole); return; }
+      if(!x){ finito(fatte, parole, badge); return; }
       var v = S.voci.filter(function(q){ return q.id === x.c.id; })[0];
       v.stato = 'lavoro'; v.fase = 'Invio il video…'; disegna();
       trascrivi(x.c, v).then(function(listaParole){
         var n = applica(x.c, listaParole);
+        if(S.rileva && typeof _vaiRilevaFattiImmobiliari === 'function'){
+          try{
+            var fatti = _vaiRilevaFattiImmobiliari(listaParole);
+            badge += _vaiInserisciFattiComeBadge(x.c, fatti);
+          }catch(e){ console.warn('[VAI] rilevazione fatti KO', e); }
+        }
         v.stato = 'fatto'; v.n = n; v.pc = 100; fatte++; parole += listaParole.length; disegna(); prossima();
       }).catch(function(e){ v.stato = 'errore'; v.errore = e && e.message ? e.message : 'non riuscita'; disegna(); prossima(); });
     })();
@@ -52450,12 +52560,14 @@ async function pubConfrontaAI(){
       });
     });
   }
-  function finito(fatte, parole){
+  function finito(fatte, parole, badge){
     S.inLavoro = false; aggiornaStato();
     var errori = S.voci.filter(function(v){ return v.stato === 'errore'; });
     if(errori.length) $('sv-err').innerHTML = '<div class="sv-err">' + (fatte ? 'Alcune clip non sono riuscite. ' : 'Non è riuscito. ')
       + 'Se il video non ha audio o la voce è molto bassa, il riconoscimento può non trovare parole.</div>';
-    if(typeof toast === 'function') toast(fatte ? ('Sottotitoli creati: ' + parole + ' parole in ' + fatte + (fatte === 1 ? ' clip' : ' clip')) : 'Nessun sottotitolo creato', fatte ? 'success' : 'error');
+    var msg = fatte ? ('Sottotitoli creati: ' + parole + ' parole in ' + fatte + (fatte === 1 ? ' clip' : ' clip')) : 'Nessun sottotitolo creato';
+    if(fatte && badge) msg += ' · ' + badge + (badge === 1 ? ' badge rilevato' : ' badge rilevati');
+    if(typeof toast === 'function') toast(msg, fatte ? 'success' : 'error');
     if(fatte && !errori.length) setTimeout(chiudi, 900);
   }
 
