@@ -40220,8 +40220,11 @@ function vaiOverlayUpdate(){
           '<span class="vai-ov-ch vai-ov-ch-br" title="Dimensione" onmousedown="vaiScrittaResizeStart(event,\''+s.id+'\',\'size\')" ontouchstart="vaiScrittaResizeStart(event,\''+s.id+'\',\'size\')"></span>'
         : '';
       html += '<div class="vai-ov-box vai-ov-graf'+(editUI?' sel':'')+'" data-id="'+s.id+'" '+
-        'style="left:'+anchorLeft+'%;top:'+(s.y*100)+'%;transform:'+tx+';width:'+((s.w||0.5)*100)+'%" '+handlers+' '+
-        (editUI?('ondblclick="vaiGraficaModifica(event,\''+s.id+'\')"'):'')+'>'+
+        'style="left:'+anchorLeft+'%;top:'+(s.y*100)+'%;transform:'+tx+';width:'+((s.w||0.5)*100)+'%" '+
+        /* l'ondblclick specifico va PRIMA di handlers: un elemento con due attributi
+           ondblclick tiene solo il primo (il browser scarta i duplicati in silenzio),
+           quindi se restava dopo "vaiGraficaModifica" non partiva mai al doppio clic. */
+        (editUI?('ondblclick="vaiGraficaModifica(event,\''+s.id+'\')" '):'')+handlers+'>'+
         '<span class="vov-pill" style="background:'+bgCss+';color:'+(s.color||'#fff')+';font-size:'+grafFs+'cqw;padding:'+pad+';border-radius:'+radius+'">'+ico+_vaiEsc(s.testo||'')+'</span>'+
         grafH+
         '</div>';
@@ -40295,8 +40298,8 @@ function vaiOverlayUpdate(){
         figSpan='<span class="vov-linea" style="background:'+(s.color||'#fff')+';height:'+(2+((s.spessore||3)-3))+'px"></span>';
       }
       html += '<div class="vai-ov-box'+(editUI?' sel':'')+'" data-id="'+s.id+'" '+
-        'style="left:'+anchorLeft+'%;top:'+(s.y*100)+'%;transform:'+tx+';width:'+(s.w*100)+'%" '+handlers+' '+
-        (editUI?('ondblclick="vaiFiguraModifica(event,\''+s.id+'\')"'):'')+'>'+
+        'style="left:'+anchorLeft+'%;top:'+(s.y*100)+'%;transform:'+tx+';width:'+(s.w*100)+'%" '+
+        (editUI?('ondblclick="vaiFiguraModifica(event,\''+s.id+'\')" '):'')+handlers+'>'+
         figSpan+figHandles+
         '</div>';
     } else if(tipo==='forma'){
@@ -40324,7 +40327,8 @@ function vaiOverlayUpdate(){
         ? '<circle cx="50" cy="50" r="48.5" fill="none" stroke="'+colF+'" stroke-width="3" stroke-dasharray="'+perim+'" stroke-dashoffset="'+dashOff+'" transform="rotate(-90 50 50)"/>'
         : '<rect x="1.5" y="1.5" width="97" height="'+(vh-3)+'" fill="none" stroke="'+colF+'" stroke-width="3" stroke-dasharray="'+perim+'" stroke-dashoffset="'+dashOff+'"/>';
       html += '<div class="vai-ov-box'+(editUI?' sel':'')+'" data-id="'+s.id+'" '+
-        'style="left:'+anchorLeft+'%;top:'+(s.y*100)+'%;transform:'+tx+';width:'+(s.w*100)+'%" '+handlers+'>'+
+        'style="left:'+anchorLeft+'%;top:'+(s.y*100)+'%;transform:'+tx+';width:'+(s.w*100)+'%" '+
+        (editUI?('ondblclick="vaiFormaModifica(event,\''+s.id+'\')" '):'')+handlers+'>'+
         '<svg viewBox="0 0 100 '+vh+'" style="width:100%;display:block;overflow:visible">'+formaSvg+'</svg>'+
         (s.etichetta?('<span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:'+colF+';font:900 1.1cqw DM Sans, sans-serif;text-shadow:0 2px 8px rgba(0,0,0,.6);opacity:'+progEt.toFixed(2)+';white-space:nowrap;pointer-events:none">'+_vaiEsc(s.etichetta)+'</span>'):'')+
         figHandles+
@@ -40973,6 +40977,51 @@ function vaiFiguraModifica(e, id){
   if(rp) rp.addEventListener('input', function(){ s.rapporto=parseFloat(this.value); const l=ov.querySelector('#vfm-rp-v'); if(l)l.textContent=s.rapporto.toFixed(2); _vaiDirty=true; vaiOverlayUpdate(); });
 }
 window.vaiFiguraModifica=vaiFiguraModifica;
+
+/* Doppio click su una FORMA generata dall'AI = finestra di modifica (tipo di
+   forma, etichetta, colore) — altrimenti, una volta creata, l'unico modo per
+   cambiarla era cancellarla e rigenerarla da capo. */
+function vaiFormaModifica(e, id){
+  if(e){ e.preventDefault(); e.stopPropagation(); }
+  const s=_vaiScritte.find(x=>x.id===id); if(!s) return;
+  _vaiSelScritta=id; _vaiSel={type:'scritta', id};
+  const v=document.getElementById('vai-video'); if(v) v.pause();
+  const COLORI=['#ffffff','#C9A84C','#2E9B8F','#E14D4D','#3B82F6','#0D1B2A'];
+  const FORME=[['rettangolo','▭ Rettangolo'],['quadrato','◻ Quadrato'],['cerchio','◯ Cerchio']];
+  const ov=_vaiMiniModal(
+    '<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:10px">Modifica forma</div>'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Forma:</div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:14px">'+
+      FORME.map(f=>'<button class="vfo-forma" data-f="'+f[0]+'" style="flex:1;padding:9px 0;border-radius:8px;cursor:pointer;font-size:.8rem;font-weight:700;background:'+((s.forma||'rettangolo')===f[0]?'#C9A84C':'#13263B')+';color:'+((s.forma||'rettangolo')===f[0]?'#1A1205':'#fff')+';border:1px solid rgba(255,255,255,.14)">'+f[1]+'</button>').join('')+
+    '</div>'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Etichetta:</div>'+
+    '<input id="vfo-et" value="'+_vaiEsc(s.etichetta||'')+'" maxlength="24" style="width:100%;box-sizing:border-box;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:.86rem;margin-bottom:14px">'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Colore:</div>'+
+    '<div style="display:flex;gap:8px">'+
+      COLORI.map(c=>'<button class="vfo-col" data-c="'+c+'" style="width:28px;height:28px;border-radius:50%;cursor:pointer;background:'+c+';border:2px solid '+((s.color||'#ffffff')===c?'#fff':'rgba(255,255,255,.2)')+'"></button>').join('')+
+    '</div>'
+  );
+  ov.querySelectorAll('.vfo-forma').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      s.forma=b.getAttribute('data-f');
+      ov.querySelectorAll('.vfo-forma').forEach(x=>{
+        const on=x===b;
+        x.style.background=on?'#C9A84C':'#13263B'; x.style.color=on?'#1A1205':'#fff';
+      });
+      _vaiDirty=true; vaiOverlayUpdate();
+    });
+  });
+  const et=ov.querySelector('#vfo-et');
+  if(et) et.addEventListener('input', function(){ s.etichetta=this.value; _vaiDirty=true; vaiOverlayUpdate(); });
+  ov.querySelectorAll('.vfo-col').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      s.color=b.getAttribute('data-c');
+      ov.querySelectorAll('.vfo-col').forEach(x=>x.style.borderColor=(x===b)?'#fff':'rgba(255,255,255,.2)');
+      _vaiDirty=true; vaiOverlayUpdate();
+    });
+  });
+}
+window.vaiFormaModifica=vaiFormaModifica;
 
 /* Doppio click su una scritta = editing inline diretto (stile Canva) */
 function vaiScrittaEditTesto(e, id, campo){
@@ -42524,9 +42573,13 @@ function vaiInspectorRender(){
   } else if(_vaiSel.type==='scritta'){
     const s=_vaiScritte.find(x=>x.id===_vaiSel.id); if(!s){ insp.style.display='none'; return; }
     const startMs=Math.round(s.t*1000), endMs=Math.round((s.t+(s.durata||3))*1000);
+    const _formaSel=(s.tipo==='forma');
     insp.innerHTML=
-      '<div class="vai-insp-h"><span class="vai-insp-tag vai-insp-tag-text">TESTO</span> '+_vaiEsc((s.testo||'Scritta').substring(0,22))+'</div>'+
-      '<div class="vai-insp-row"><span class="vai-insp-l">Testo</span><input class="vai-insp-in" value="'+_vaiEsc(s.testo||'')+'" oninput="vaiScrittaEdit(\''+s.id+'\',\'testo\',this.value);vaiInspectorRefreshLive()"></div>'+
+      (_formaSel
+        ? ('<div class="vai-insp-h"><span class="vai-insp-tag vai-insp-tag-text">FORMA</span> '+_vaiEsc((s.forma||'rettangolo'))+'</div>'+
+           '<div class="vai-insp-row"><span class="vai-insp-l">Etichetta</span><input class="vai-insp-in" value="'+_vaiEsc(s.etichetta||'')+'" oninput="vaiScrittaEdit(\''+s.id+'\',\'etichetta\',this.value);vaiInspectorRefreshLive()"></div>')
+        : ('<div class="vai-insp-h"><span class="vai-insp-tag vai-insp-tag-text">TESTO</span> '+_vaiEsc((s.testo||'Scritta').substring(0,22))+'</div>'+
+           '<div class="vai-insp-row"><span class="vai-insp-l">Testo</span><input class="vai-insp-in" value="'+_vaiEsc(s.testo||'')+'" oninput="vaiScrittaEdit(\''+s.id+'\',\'testo\',this.value);vaiInspectorRefreshLive()"></div>'))+
       '<div class="vai-insp-row"><span class="vai-insp-l">Inizio</span><span class="vai-insp-val">'+_vaiFmtMs(startMs)+'</span><span class="vai-insp-l" style="margin-left:8px">Fine</span><span class="vai-insp-val">'+_vaiFmtMs(endMs)+'</span></div>'+
       '<div class="vai-insp-row"><span class="vai-insp-l">Durata</span>'+
         '<input class="vai-insp-num" type="number" min="1" max="20" step="0.5" value="'+(s.durata||3)+'" oninput="vaiScrittaEdit(\''+s.id+'\',\'durata\',this.value)"><span class="vai-insp-unit">s</span></div>'+
