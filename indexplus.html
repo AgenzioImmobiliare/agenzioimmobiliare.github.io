@@ -41165,6 +41165,17 @@ function vaiOverlayUpdate(){
       const formaSvg = formaTipo==='cerchio'
         ? '<circle cx="50" cy="50" r="48.5" fill="none" stroke="'+colF+'" stroke-width="'+(3*stileF.lw).toFixed(2)+'" stroke-dasharray="'+perim+'" stroke-dashoffset="'+dashOff+'" transform="rotate(-90 50 50)"/>'
         : '<rect x="1.5" y="1.5" width="97" height="'+(vh-3)+'" fill="none" stroke="'+colF+'" stroke-width="'+(3*stileF.lw).toFixed(2)+'" stroke-dasharray="'+perim+'" stroke-dashoffset="'+dashOff+'"/>';
+      // ANGOLI A MIRINO (solo rettangolo/quadrato), stessa idea del canvas: compaiono con
+      // un pop quando il tracciamento è quasi finito, danno un tocco "professionale"
+      // invece di una cornice nuda ("ancora molto scarna", segnalato da Enzo).
+      const popA = formaTipo!=='cerchio' ? Math.max(0, Math.min(1, (progTr-0.75)/0.25)) : 0;
+      const bracketsSvg = popA>0 ? (function(){
+        const bl=Math.min(100,vh)*0.16, pad=3;
+        const x0=-pad, y0=-pad, x1=100+pad, y1=vh+pad;
+        const seg=function(cx,cy,sx,sy){ return 'M'+(cx+sx*bl)+' '+cy+' L'+cx+' '+cy+' L'+cx+' '+(cy+sy*bl); };
+        return '<g stroke="'+colF+'" stroke-width="'+(2.2*stileF.lw).toFixed(2)+'" fill="none" stroke-linecap="round" opacity="'+popA.toFixed(2)+'">'
+          +'<path d="'+seg(x0,y0,1,1)+'"/><path d="'+seg(x1,y0,-1,1)+'"/><path d="'+seg(x1,y1,-1,-1)+'"/><path d="'+seg(x0,y1,1,-1)+'"/></g>';
+      })() : '';
       // Auto-rimpicciolisco l'etichetta per lunghezze maggiori (stessa logica dell'export:
       // un'etichetta lunga, es. un nome, non deve uscire dal riquadro tracciato).
       const etLen=(s.etichetta||'').length;
@@ -41173,11 +41184,16 @@ function vaiOverlayUpdate(){
       // che avanza progEt — stessa idea della dissolvenza di prima, ma sembra scritto sul
       // momento invece di comparire di colpo. Coerente con l'export (vedi sopra).
       const etClip='inset(0 '+((1-progEt)*100).toFixed(1)+'% 0 0)';
+      // PILLOLA DI SFONDO dietro l'etichetta, stesso motivo del canvas: leggibile su
+      // qualunque sfondo, meno "nuda". Pop d'ingresso rapido all'inizio della fase etichetta.
+      const popPill=Math.max(0, Math.min(1, progEt/0.18));
       html += '<div class="vai-ov-box'+(editUI?' sel':'')+'" data-id="'+s.id+'" '+
         'style="left:'+anchorLeft+'%;top:'+(s.y*100)+'%;transform:'+tx+';width:'+(s.w*100)+'%" '+
         (editUI?('ondblclick="vaiFormaModifica(event,\''+s.id+'\')" '):'')+handlers+'>'+
-        '<svg viewBox="0 0 100 '+vh+'" style="width:100%;display:block;overflow:visible'+glowSvg+'">'+formaSvg+'</svg>'+
-        (s.etichetta?('<span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:'+colF+';font:'+(stileF.italic?'italic ':'')+stileF.weight+' '+etCqw.toFixed(2)+'cqw '+stileF.font+';text-shadow:0 2px 8px rgba(0,0,0,.6);clip-path:'+etClip+';white-space:nowrap;pointer-events:none'+glowTxt+'">'+_vaiEsc(s.etichetta)+'</span>'):'')+
+        '<svg viewBox="0 0 100 '+vh+'" style="width:100%;display:block;overflow:visible'+glowSvg+'">'+formaSvg+bracketsSvg+'</svg>'+
+        (s.etichetta && popPill>0?('<div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale('+(0.7+0.3*popPill).toFixed(2)+');opacity:'+popPill.toFixed(2)+';background:rgba(10,14,20,.6);border-radius:999px;padding:.32em .7em;pointer-events:none">'+
+          '<span style="display:inline-block;color:'+colF+';font:'+(stileF.italic?'italic ':'')+stileF.weight+' '+etCqw.toFixed(2)+'cqw '+stileF.font+';text-shadow:0 2px 8px rgba(0,0,0,.6);clip-path:'+etClip+';white-space:nowrap'+glowTxt+'">'+_vaiEsc(s.etichetta)+'</span>'+
+        '</div>'):'')+
         figHandles+
         '</div>';
     } else if(tipo==='emoji'){
@@ -47274,6 +47290,25 @@ function _vaiDrawScrittaSuCanvas(ctx, W, H, s, t){
     }
     try{ ctx.setLineDash([]); }catch(e){}
     ctx.shadowBlur=0;
+    // ANGOLI A MIRINO (solo rettangolo/quadrato): tocco da "schermata professionale" invece
+    // di una cornice nuda — Enzo l'ha descritta "ancora molto scarna". Compaiono con un
+    // piccolo pop quando il tracciamento è quasi finito.
+    if(formaTipo!=='cerchio'){
+      const popA=Math.max(0, Math.min(1, (progTraccia-0.75)/0.25));
+      if(popA>0){
+        const x0=ax-bw/2, y0=ay-bh/2, x1=ax+bw/2, y1=ay+bh/2;
+        const bl=Math.min(bw,bh)*0.16, pad=Math.max(4, W*0.008);
+        ctx.save();
+        ctx.globalAlpha=popA;
+        ctx.strokeStyle=colF; ctx.lineWidth=Math.max(2.4, W*0.0075)*stileF.lw; ctx.lineCap='round';
+        [[x0-pad,y0-pad,1,1],[x1+pad,y0-pad,-1,1],[x1+pad,y1+pad,-1,-1],[x0-pad,y1+pad,1,-1]].forEach(c=>{
+          ctx.beginPath();
+          ctx.moveTo(c[0]+c[2]*bl, c[1]); ctx.lineTo(c[0], c[1]); ctx.lineTo(c[0], c[1]+c[3]*bl);
+          ctx.stroke();
+        });
+        ctx.restore();
+      }
+    }
     if(s.etichetta && progEtichetta>0){
       let fsEt=Math.round(W*0.065);
       ctx.font=(stileF.italic?'italic ':'')+stileF.weight+' '+fsEt+'px '+stileF.font;
@@ -47286,6 +47321,22 @@ function _vaiDrawScrittaSuCanvas(ctx, W, H, s, t){
         fsEt=Math.max(Math.round(W*0.028), Math.floor(fsEt*maxW/tw));
         ctx.font=(stileF.italic?'italic ':'')+stileF.weight+' '+fsEt+'px '+stileF.font;
         tw=ctx.measureText(s.etichetta).width;
+      }
+      // PILLOLA DI SFONDO dietro il testo: prima la scritta galleggiava nuda sopra il
+      // video — leggibile su qualunque sfondo, e meno "scarna" con un piccolo pop
+      // d'ingresso prima che il testo inizi a scriversi.
+      const padX=fsEt*0.55, padY=fsEt*0.38;
+      const pillW=tw+padX*2, pillH=fsEt+padY*2;
+      const popPill=Math.max(0, Math.min(1, progEtichetta/0.18));
+      if(popPill>0){
+        ctx.save();
+        ctx.globalAlpha=popPill;
+        ctx.translate(ax, ay);
+        const sc=0.7+0.3*popPill; ctx.scale(sc, sc);
+        ctx.fillStyle='rgba(10,14,20,.6)';
+        if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(-pillW/2,-pillH/2,pillW,pillH,pillH*0.28); ctx.fill(); }
+        else ctx.fillRect(-pillW/2,-pillH/2,pillW,pillH);
+        ctx.restore();
       }
       ctx.textAlign='left'; ctx.textBaseline='middle';
       ctx.fillStyle=colF;
