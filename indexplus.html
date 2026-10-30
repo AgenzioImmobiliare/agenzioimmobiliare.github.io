@@ -3438,7 +3438,12 @@ input[type=range].vai-ms-rng-mini{max-width:78px}
    fotogramma stirato: si capisce a colpo d'occhio cosa succede nella clip, non solo
    il suo punto medio. */
 .vai-tl-filmstrip{position:absolute;inset:0;display:flex}
-.vai-tl-filmstrip img{flex:1 1 0;width:auto;height:100%;object-fit:cover;display:block;opacity:.85;min-width:0}
+/* LARGHEZZA ESPLICITA, non flex-grow: su un'immagine (elemento "replaced") flex-grow con
+   width:auto è inaffidabile — alcuni motori rendering mantengono la larghezza naturale del
+   file (i 64px generati) invece di farla crescere, e il filmstrip si ripete a mattonelle
+   piccolissime invece di stendersi su tutta la clip. La percentuale è calcolata e scritta
+   inline (100/n%), zero ambiguità. */
+.vai-tl-filmstrip img{height:100%;object-fit:cover;display:block;opacity:.85;flex:none}
 .vai-tl-vclip.sel{border-color:#fff;box-shadow:0 0 0 1px #fff}
 .vai-tl-vclip-lock{cursor:not-allowed;opacity:.7}
 .vai-tl-vclip-n{position:absolute;top:2px;left:3px;font-size:.6rem;font-weight:700;color:#fff;background:rgba(0,0,0,.5);border-radius:3px;padding:0 4px}
@@ -42522,7 +42527,7 @@ function vaiTlRender(){
         const left=(acc/durTot)*100, w=(d/durTot)*100; acc+=d;
         const sel=(_vaiSel && _vaiSel.type==='clip' && _vaiSel.idx===i)?' sel':'';
         const thumb = (c.filmstrip && c.filmstrip.length)
-          ? ('<div class="vai-tl-filmstrip">'+c.filmstrip.map(f=>'<img src="'+f+'" alt="">').join('')+'</div>')
+          ? ('<div class="vai-tl-filmstrip">'+c.filmstrip.map(f=>'<img src="'+f+'" style="width:'+(100/c.filmstrip.length).toFixed(4)+'%" alt="">').join('')+'</div>')
           : (c.thumb?('<img src="'+c.thumb+'" alt="">'):'');
         // sulla clip ATTIVA metto un canvas "vivo": rispecchia in tempo reale il fotogramma
         // che si vede a video, alla stessa velocità (rampa compresa) — non un'immagine ferma.
