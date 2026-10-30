@@ -36154,14 +36154,67 @@ window.vaiTrasfMenuChiudi=vaiTrasfMenuChiudi;
 window.vaiTrasfScegli=vaiTrasfScegli;
 window._vaiTrasfAggiornaAnteprima=_vaiTrasfAggiornaAnteprima;
 
-/* Inverti: NON è come le altre. L'anteprima non sa riprodurre un video al
-   contrario, e FFmpeg per invertire deve tenere in memoria tutti i fotogrammi
-   della clip. Lo dico invece di far finta che sia un interruttore come gli altri. */
+/* Inverti [30 ott 2026] — non è un interruttore come gli altri (specchia/ruota), perché
+   un elemento <video> non sa riprodursi all'indietro (playbackRate negativo non esiste)
+   e inseguire il tempo con tanti piccoli "seek" durante l'esportazione vera è lento e
+   impreciso (ogni seek può costare decine di millisecondi).
+   La soluzione: all'esportazione, PRIMA si cattura la clip intera avanti, un fotogramma
+   alla volta, in un elenco in memoria (_vaiCatturaFrameInvertiti) — i seek costosi si
+   fanno una volta sola, fuori dal tempo reale. Poi, durante l'esportazione vera, quei
+   fotogrammi si rigiocano dalla fine all'inizio, leggendoli dalla memoria: niente altri
+   seek, quindi niente scatti. Il segno dell'inversione lo decide solo questo interruttore
+   sulla clip (clip.inverti); il resto (_vaiRenderClipSuCanvas) lo legge all'esportazione. */
 function vaiInvertiClip(){
-  toast('«Inverti» non è ancora pronto: richiede di generare una copia rovesciata della clip. Ne parliamo se ti serve.','info');
-  console.log('[Trasforma] Inverti richiede: generazione di un file rovesciato via FFmpeg (filtro reverse, tutta la clip in memoria) + sostituzione della sorgente in anteprima. Non è un semplice interruttore.');
+  if(_vaiClipAttiva<0 || !_vaiClips[_vaiClipAttiva]){ toast('Seleziona prima una clip','error'); return; }
+  const c=_vaiClips[_vaiClipAttiva];
+  vaiSnapshot('inverti clip');
+  c.inverti=!c.inverti;
+  _vaiDirty=true;
+  try{ vaiClipsRender(); }catch(e){}
+  try{ vaiTlRender(); }catch(e){}
+  toast(c.inverti ? 'Clip invertita: nell\'export scorrerà al contrario (l\'anteprima qui resta avanti)' : 'Clip riportata al verso normale', 'success');
 }
 window.vaiInvertiClip=vaiInvertiClip;
+
+/* Cattura in memoria i fotogrammi della finestra [startAt, fineNormale] di un video,
+   avanti, a un passo fisso — serve solo per poterli rigiocare al contrario senza altri
+   seek durante l'esportazione vera (vedi commento sopra a vaiInvertiClip). */
+/* Cattura l'INTERA clip (0 → fine del file), non solo la finestra che serve in quel
+   momento: così la cattura si fa una volta sola per clip, PRIMA che il registratore
+   dell'esportazione parta (vedi vaiMontaTutto), e il risultato si riusa per qualunque
+   finestra [startAt,fineNormale] serva davvero. Se la cattura succedesse DURANTE la
+   registrazione vera, il canvas resterebbe fermo per tutto il tempo reale che i seek
+   impiegano — e captureStream(30) registra comunque quei secondi, come fotogrammi
+   fermi, allungando il video esportato molto oltre la durata vera della clip. */
+function _vaiCatturaFrameInvertiti(url){
+  return new Promise((resolve)=>{
+    const v=document.createElement('video');
+    v.muted=true; v.playsInline=true; v.preload='auto'; v.src=url;
+    const frames=[]; const FW=480; const FPS=12;
+    const killer=setTimeout(()=>{ try{ v.pause(); v.remove(); }catch(e){} resolve({frames, durata:0}); }, 30000);
+    v.onloadedmetadata=async ()=>{
+      let durata=0;
+      try{
+        durata=(isFinite(v.duration)&&v.duration>0)?v.duration:0;
+        const FH=Math.max(1, Math.round(FW*((v.videoHeight||16)/(v.videoWidth||9))));
+        const nPassi=Math.max(1, Math.round(durata*FPS));
+        for(let i=0;i<=nPassi;i++){
+          const tt=Math.min(durata, i*(durata/nPassi));
+          await _vaiSeekAndWait(v, tt);
+          const cv=document.createElement('canvas'); cv.width=FW; cv.height=FH;
+          try{ cv.getContext('2d').drawImage(v,0,0,FW,FH); }catch(e){}
+          let img=cv; try{ img=await createImageBitmap(cv); }catch(e){}
+          frames.push({ img, w:FW, h:FH });
+        }
+      }catch(e){}
+      clearTimeout(killer);
+      try{ v.pause(); v.remove(); }catch(e){}
+      resolve({frames, durata});
+    };
+    v.onerror=()=>{ clearTimeout(killer); resolve({frames, durata:0}); };
+  });
+}
+window._vaiCatturaFrameInvertiti=_vaiCatturaFrameInvertiti;
 
 /* ══════════ DIVIDI LA CLIP NEL PUNTO DEL CURSORE (agosto 2026) ══════════
    Mancava: si poteva accorciare una clip dai bordi, ma non spezzarla in due nel
@@ -42587,6 +42640,7 @@ function vaiTlRender(){
         const lockCls=_vaiVideoLock?' vai-tl-vclip-lock':'';
         return '<div class="vai-tl-vclip'+sel+lockCls+'" data-idx="'+i+'" style="left:'+left+'%;width:'+w+'%" '+(_vaiVideoLock?'':'onmousedown="vaiClipDragReorder(event,'+i+')" ontouchstart="vaiClipDragReorder(event,'+i+')"')+' title="'+_vaiEsc(c.nome||('Clip '+(i+1)))+'">'+
           thumb+liveCanvas+'<span class="vai-tl-vclip-n">'+(i+1)+'</span>'+
+          (c.inverti?'<span class="vai-tl-vclip-n" style="left:auto;right:3px;background:rgba(201,168,76,.9);color:#1A1205" title="Invertita: scorre al contrario nell\'export">⟲</span>':'')+
           (_vaiVideoLock?'':(
             '<span class="vai-tl-vclip-h vai-tl-vclip-hl" onmousedown="event.stopPropagation();vaiClipTrimStart(event,'+i+',\'left\')" ontouchstart="event.stopPropagation();vaiClipTrimStart(event,'+i+',\'left\')"></span>'+
             '<span class="vai-tl-vclip-h vai-tl-vclip-hr" onmousedown="event.stopPropagation();vaiClipTrimStart(event,'+i+',\'right\')" ontouchstart="event.stopPropagation();vaiClipTrimStart(event,'+i+',\'right\')"></span>'
@@ -45991,6 +46045,21 @@ async function vaiMontaTutto(){
     const mime = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4'
                : MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9'
                : 'video/webm';
+
+    // CLIP INVERTITE: catturo i loro fotogrammi ORA, prima che il registratore parta.
+    // captureStream(30) registra in tempo reale, fotogramma fermo compreso: se la
+    // cattura (tanti "seek" in sequenza, lenti) succedesse a registrazione già avviata,
+    // tutto quel tempo reale finirebbe nel video come immagine ferma, allungandolo
+    // di molto oltre la durata vera. Fuori dalla registrazione, invece, non costa nulla.
+    const clipsInvertite=_vaiClips.filter(c=>c.inverti && !c._frameInvCache);
+    if(clipsInvertite.length){
+      for(let i=0;i<clipsInvertite.length;i++){
+        setS('Preparo la clip invertita '+(i+1)+'/'+clipsInvertite.length+'…');
+        try{ clipsInvertite[i]._frameInvCache = await _vaiCatturaFrameInvertiti(clipsInvertite[i].url); }
+        catch(e){ clipsInvertite[i]._frameInvCache = { frames:[], durata:0 }; }
+      }
+    }
+
     const rec=new MediaRecorder(stream,{ mimeType:mime, videoBitsPerSecond:10000000 });
     const chunks=[];
     rec.ondataavailable=e=>{ if(e.data&&e.data.size) chunks.push(e.data); };
@@ -46065,6 +46134,49 @@ function _vaiRenderClipSuCanvas(clip, ctx, W, H, infoCards, tOffset, startAt, tr
         // lo disegna la fusione qui sotto. Mai più dei secondi che restano davvero.
         const transDur=haTrans ? Math.min(transOut.durata||0.6, Math.max(0.15, durataClip-startAt-0.15)) : 0;
         const fineNormale=durataClip-transDur;
+
+        if(clip.inverti){
+          // CLIP INVERTITA — vedi il commento su vaiInvertiClip: i fotogrammi sono già
+          // in clip._frameInvCache, catturati PRIMA che il registratore partisse (in
+          // vaiMontaTutto). Qui non si fa più nessun seek: solo letture dalla memoria,
+          // a tempo scandito — zero rischio di "rubare" secondi veri alla registrazione.
+          const cache = clip._frameInvCache || { frames:[], durata:durataClip };
+          const frames = cache.frames;
+          const durataSegmento=Math.max(0.05, fineNormale-startAt);
+          const nF=frames.length;
+          const durataCache=Math.max(0.05, cache.durata||durataClip);
+          if(nF>0){
+            const passoT=durataCache/Math.max(1,nF-1);
+            await new Promise(res=>{
+              const t0=performance.now();
+              const step=()=>{
+                const elapsed=(performance.now()-t0)/1000;
+                if(elapsed>=durataSegmento){ res(); return; }
+                const target=fineNormale-elapsed;   // il tempo "vero" nel file scende
+                const idx=Math.max(0, Math.min(nF-1, Math.round(target/passoT)));
+                const fr=frames[idx];
+                const vw=fr.w||W, vh=fr.h||H;
+                const ar=vw/vh, tr=W/H; let dw,dh,dx,dy;
+                if(ar>tr){ dh=H; dw=dh*ar; dx=(W-dw)/2; dy=0; } else { dw=W; dh=dw/ar; dx=0; dy=(H-dh)/2; }
+                ctx.fillStyle='#0D1B2A'; ctx.fillRect(0,0,W,H);
+                try{ ctx.drawImage(fr.img,dx,dy,dw,dh); }catch(e){}
+                const tGlob=tOffset+elapsed;
+                infoCards.forEach(c=> _vaiDrawInfoCard(ctx, W, H, c, tGlob));
+                const attive=scritte.filter(x=> !x.hidden && target>=x.t && target<=(x.t+(x.durata||3)) );
+                attive.forEach(s=> _vaiDrawScrittaSuCanvas(ctx, W, H, s, target) );
+                try{ _vaiDrawLogoContattiClip(ctx, W, H, logo, logoPos); }catch(e){ try{_vaiDrawLogoContatti(ctx,W,H);}catch(x){} }
+                requestAnimationFrame(step);
+              };
+              requestAnimationFrame(step);
+            });
+          }
+          // Niente transizione in uscita su una clip invertita in questa prima versione:
+          // l'ultimo fotogramma mostrato (il più indietro nel file) resta fermo un istante.
+          try{ tv.remove(); }catch(e){}
+          resolve({ consumatoProssima:0 });
+          return;
+        }
+
         let raf;
         const draw=()=>{
           // cover-fit del frame video sul canvas
