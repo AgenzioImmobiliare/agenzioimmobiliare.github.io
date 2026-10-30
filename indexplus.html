@@ -7479,11 +7479,13 @@ Un caro saluto,
           <input type="range" id="vai-seek" class="vai-seek" min="0" max="1000" value="0" step="1" oninput="vaiSeek(this.value)">
           <span id="vai-time" class="vai-time">0:00 / 0:00</span>
           <button class="vai-ctrl-btn" id="vai-fmt-btn" onclick="vaiFormatoCicla()" title="Cambia il formato dell'anteprima: 9:16 verticale → 1:1 quadrato → 16:9 orizzontale. Il riquadro prende la forma e imposta l'export." style="width:auto;padding:0 8px;font-size:.68rem;font-weight:800">9:16</button>
-          <button class="vai-ctrl-btn vai-analizza-punto" onclick="vaiAnalizzaPunto()" id="vai-analizza-punto-btn" title="Analizza l'ambiente in questo punto e proponi scritte da inserire">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8a2 2 0 001.3 1.3L21 12l-5.8 1.9a2 2 0 00-1.3 1.3L12 21l-1.9-5.8a2 2 0 00-1.3-1.3L3 12l5.8-1.9a2 2 0 001.3-1.3L12 3z"/></svg>
+          <button class="vai-ctrl-btn vai-analizza-punto" onclick="vaiAnalizzaPunto()" id="vai-analizza-punto-btn" title="Analizza l'ambiente in questo punto e proponi scritte da inserire" style="width:auto;padding:0 9px;gap:5px;font-size:.66rem;font-weight:800">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8a2 2 0 001.3 1.3L21 12l-5.8 1.9a2 2 0 00-1.3 1.3L12 21l-1.9-5.8a2 2 0 00-1.3-1.3L3 12l5.8-1.9a2 2 0 001.3-1.3L12 3z"/></svg>
+            <span>Analizza</span>
           </button>
-          <button class="vai-ctrl-btn vai-crea-anim" onclick="vaiCreaAnimazionePersonalizzata()" id="vai-crea-anim-btn" title="Ferma qui e descrivi all'AI un'animazione su misura (es. una forma che traccia i metri quadrati)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="2" stroke-dasharray="3.5 3"/></svg>
+          <button class="vai-ctrl-btn vai-crea-anim" onclick="vaiCreaAnimazionePersonalizzata()" id="vai-crea-anim-btn" title="Ferma qui e descrivi all'AI un'animazione su misura (es. una forma che traccia i metri quadrati)" style="width:auto;padding:0 9px;gap:5px;font-size:.66rem;font-weight:800;background:#C9A84C;color:#1A1205;border-color:#C9A84C">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="2" stroke-dasharray="3.5 3"/></svg>
+            <span>Crea animazione</span>
           </button>
           <button class="vai-ctrl-btn vai-sz-btn" onclick="vaiToggleSafeZone()" id="vai-sz-btn" title="Mostra le zone coperte da Instagram/TikTok">▦</button>
           <button class="vai-ctrl-btn vai-fs-btn" onclick="vaiFullscreen()" title="Ingrandisci a tutto schermo"><svg class="vai-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 00-2 2v3M21 8V5a2 2 0 00-2-2h-3M3 16v3a2 2 0 002 2h3M16 21h3a2 2 0 002-2v-3"/></svg></button>
