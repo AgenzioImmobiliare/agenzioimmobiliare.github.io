@@ -5439,6 +5439,35 @@ function hubBuio(){
 window.addEventListener('storage', function(e){ if(e && (e.key==='darkMode' || e.key==='_cfg_admin')) hubTema(); });
 document.addEventListener('DOMContentLoaded', hubTema);
 hubTema();
+
+/* [30 ott 2026] Schermo intero all'apertura (come F11) per tutto il gestionale —
+   Overview, Marketing, Video Social, Studio Social compresi. I browser NON permettono
+   di chiedere lo schermo intero da soli al caricamento della pagina: serve un vero
+   gesto dell'utente (clic, tasto, tocco), altrimenti il browser rifiuta la richiesta
+   in silenzio. Quindi lo chiediamo al PRIMO clic/tasto/tocco dopo l'apertura — in
+   pratica arriva quasi subito — invece che al caricamento, dove fallirebbe sempre.
+   Essendo attaccato al documento intero (non a una sezione), vale per qualunque
+   pagina si apra per prima e resta attivo passando da una sezione all'altra. */
+(function(){
+  let chiesto=false;
+  function vaiEntraSchermoIntero(){
+    if(chiesto) return; chiesto=true;
+    document.removeEventListener('click', vaiEntraSchermoIntero);
+    document.removeEventListener('keydown', vaiEntraSchermoIntero);
+    document.removeEventListener('touchstart', vaiEntraSchermoIntero);
+    if(document.fullscreenElement || document.webkitFullscreenElement) return;
+    const el=document.documentElement;
+    try{
+      const p = el.requestFullscreen ? el.requestFullscreen()
+              : el.webkitRequestFullscreen ? el.webkitRequestFullscreen()
+              : null;
+      if(p && p.catch) p.catch(()=>{});
+    }catch(e){}
+  }
+  document.addEventListener('click', vaiEntraSchermoIntero);
+  document.addEventListener('keydown', vaiEntraSchermoIntero);
+  document.addEventListener('touchstart', vaiEntraSchermoIntero);
+})();
 </script>
 
 <!-- ═════════════════════════════════════
