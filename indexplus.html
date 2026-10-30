@@ -45063,7 +45063,9 @@ const VAI_SVG_ICONE = {
   vista:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>',
   sole:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>',
   chiave:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5"/><path d="M11.5 11.5L21 21M17 17l2-2M15 15l1.5-1.5"/></svg>',
-  riscaldamento:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2c1 2-1 3-1 5s2 2 1 5"/><path d="M15 2c1 2-1 3-1 5s2 2 1 5"/><path d="M5 14h14a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1v-5a1 1 0 011-1z"/></svg>'
+  riscaldamento:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2c1 2-1 3-1 5s2 2 1 5"/><path d="M15 2c1 2-1 3-1 5s2 2 1 5"/><path d="M5 14h14a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1v-5a1 1 0 011-1z"/></svg>',
+  clima:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>',
+  divano:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12V7a2 2 0 012-2h12a2 2 0 012 2v5"/><path d="M2 12h20v5a2 2 0 01-2 2H4a2 2 0 01-2-2z"/><line x1="4" y1="19" x2="4" y2="22"/><line x1="20" y1="19" x2="20" y2="22"/></svg>'
 };
 function _vaiSvgIco(key){ return VAI_SVG_ICONE[key]||''; }
 
@@ -45084,45 +45086,51 @@ function _vaiSvgComeImg(key, colore){
 
 const VAI_GRAFICHE = {
   badge: [
-    {label:'VENDESI', testo:'VENDESI', bg:'#E11D2A', color:'#ffffff', svg:'home'},
-    {label:'VENDUTO', testo:'VENDUTO', bg:'#DC2626', color:'#ffffff', svg:'check'},
-    {label:'NUOVO', testo:'NUOVO', bg:'#7C3AED', color:'#ffffff', svg:'star'},
-    {label:'IN VENDITA', testo:'IN VENDITA', bg:'#0D1B2A', color:'#ffffff', svg:'home'},
-    {label:'RIBASSATO', testo:'RIBASSATO', bg:'#F59E0B', color:'#0D1B2A', svg:'euro'},
-    {label:'AFFARE', testo:'AFFARE', bg:'#10B981', color:'#ffffff', svg:'fire'},
-    {label:'ESCLUSIVA', testo:'ESCLUSIVA', bg:'#C9A84C', color:'#0D1B2A', svg:'star'}
+    {label:'VENDESI', testo:'VENDESI', bg:'#E11D2A', color:'#ffffff', svg:'home', anim:'pop', animOut:'fade'},
+    {label:'VENDUTO', testo:'VENDUTO', bg:'#DC2626', color:'#ffffff', svg:'check', anim:'bounce', animOut:'fade'},
+    {label:'NUOVO', testo:'NUOVO', bg:'#7C3AED', color:'#ffffff', svg:'star', anim:'spin', animOut:'fade'},
+    {label:'IN VENDITA', testo:'IN VENDITA', bg:'#0D1B2A', color:'#ffffff', svg:'home', anim:'pop', animOut:'fade'},
+    {label:'RIBASSATO', testo:'RIBASSATO', bg:'#F59E0B', color:'#0D1B2A', svg:'euro', anim:'bounce', animOut:'fade'},
+    {label:'AFFARE', testo:'AFFARE', bg:'#10B981', color:'#ffffff', svg:'fire', anim:'pop', animOut:'fade'},
+    {label:'ESCLUSIVA', testo:'ESCLUSIVA', bg:'#C9A84C', color:'#0D1B2A', svg:'star', anim:'zoom', animOut:'fade'},
+    {label:'TRATTATIVA RISERVATA', testo:'TRATTATIVA RISERVATA', bg:'#0D1B2A', color:'#ffffff', svg:'chiave', anim:'slideL', animOut:'fade'},
+    {label:'OPEN HOUSE', testo:'OPEN HOUSE', bg:'#EC4899', color:'#ffffff', svg:'pin', anim:'bounce', animOut:'fade'},
+    {label:'PRONTA CONSEGNA', testo:'PRONTA CONSEGNA', bg:'#10B981', color:'#ffffff', svg:'check', anim:'pop', animOut:'fade'},
+    {label:'RISTRUTTURATO', testo:'RISTRUTTURATO', bg:'#0EA5E9', color:'#ffffff', svg:'star', anim:'zoom', animOut:'fade'}
   ],
   caratteristiche: [
-    {label:'Mq', testo:'mq', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'mq'},
-    {label:'Camere', testo:'camere', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'letto'},
-    {label:'Bagni', testo:'bagni', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'bagno'},
-    {label:'Piantina', testo:'Planimetria', tipo:'badge', bg:'#0D1B2A', color:'#fff', svg:'piantina'},
-    {label:'Vista mare', testo:'Vista mare', tipo:'badge', bg:'#0EA5E9', color:'#fff', svg:'mare'},
-    {label:'Terrazzo', testo:'Terrazzo', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'terrazzo'},
-    {label:'Giardino', testo:'Giardino', tipo:'badge', bg:'#10B981', color:'#fff', svg:'giardino'},
-    {label:'Posto auto', testo:'Posto auto', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'auto'},
-    {label:'Ascensore', testo:'Ascensore', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'ascensore'},
-    {label:'Vista', testo:'Panoramica', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'vista'},
-    {label:'Luminoso', testo:'Luminoso', tipo:'badge', bg:'#F59E0B', color:'#0D1B2A', svg:'sole'},
-    {label:'Pronto', testo:'Chiavi in mano', tipo:'badge', bg:'#C9A84C', color:'#0D1B2A', svg:'chiave'}
+    {label:'Mq', testo:'mq', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'mq', anim:'slideUp', animOut:'fade'},
+    {label:'Camere', testo:'camere', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'letto', anim:'slideUp', animOut:'fade'},
+    {label:'Bagni', testo:'bagni', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'bagno', anim:'slideUp', animOut:'fade'},
+    {label:'Piantina', testo:'Planimetria', tipo:'badge', bg:'#0D1B2A', color:'#fff', svg:'piantina', anim:'zoom', animOut:'fade'},
+    {label:'Vista mare', testo:'Vista mare', tipo:'badge', bg:'#0EA5E9', color:'#fff', svg:'mare', anim:'slideL', animOut:'fade'},
+    {label:'Terrazzo', testo:'Terrazzo', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'terrazzo', anim:'slideUp', animOut:'fade'},
+    {label:'Giardino', testo:'Giardino', tipo:'badge', bg:'#10B981', color:'#fff', svg:'giardino', anim:'slideUp', animOut:'fade'},
+    {label:'Posto auto', testo:'Posto auto', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'auto', anim:'slideUp', animOut:'fade'},
+    {label:'Ascensore', testo:'Ascensore', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'ascensore', anim:'slideUp', animOut:'fade'},
+    {label:'Vista', testo:'Panoramica', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'vista', anim:'slideL', animOut:'fade'},
+    {label:'Luminoso', testo:'Luminoso', tipo:'badge', bg:'#F59E0B', color:'#0D1B2A', svg:'sole', anim:'pop', animOut:'fade'},
+    {label:'Pronto', testo:'Chiavi in mano', tipo:'badge', bg:'#C9A84C', color:'#0D1B2A', svg:'chiave', anim:'pop', animOut:'fade'},
+    {label:'Climatizzato', testo:'Climatizzato', tipo:'badge', bg:'#0EA5E9', color:'#fff', svg:'clima', anim:'slideUp', animOut:'fade'},
+    {label:'Arredato', testo:'Arredato', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'divano', anim:'slideUp', animOut:'fade'}
   ],
   cta: [
-    {label:'Seguici', testo:'Seguici', svg:'plus', bg:'#EC4899', color:'#ffffff'},
-    {label:'Link in bio', testo:'Link in bio', svg:'link', bg:'#0D1B2A', color:'#ffffff'},
-    {label:'Scrivi INFO', testo:'Scrivi INFO nei commenti', svg:'chat', bg:'#7C3AED', color:'#ffffff'},
-    {label:'Swipe up', testo:'Scorri su', svg:'up', bg:'rgba(13,27,42,.78)', color:'#ffffff'},
-    {label:'Salva', testo:'Salva il post', svg:'bookmark', bg:'#0EA5E9', color:'#ffffff'}
+    {label:'Seguici', testo:'Seguici', svg:'plus', bg:'#EC4899', color:'#ffffff', anim:'pop', animOut:'fade'},
+    {label:'Link in bio', testo:'Link in bio', svg:'link', bg:'#0D1B2A', color:'#ffffff', anim:'bounce', animOut:'fade'},
+    {label:'Scrivi INFO', testo:'Scrivi INFO nei commenti', svg:'chat', bg:'#7C3AED', color:'#ffffff', anim:'pop', animOut:'fade'},
+    {label:'Swipe up', testo:'Scorri su', svg:'up', bg:'rgba(13,27,42,.78)', color:'#ffffff', anim:'slideUp', animOut:'fade'},
+    {label:'Salva', testo:'Salva il post', svg:'bookmark', bg:'#0EA5E9', color:'#ffffff', anim:'pop', animOut:'fade'}
   ],
   contatto: [
-    {label:'WhatsApp', testo:'', svg:'whatsapp', bg:'#25D366', color:'#ffffff', campo:'tel'},
-    {label:'Telefono', testo:'', svg:'phone', bg:'#0D1B2A', color:'#ffffff', campo:'tel'},
-    {label:'Sito', testo:'', svg:'globe', bg:'#C9A84C', color:'#0D1B2A', campo:'sito'}
+    {label:'WhatsApp', testo:'', svg:'whatsapp', bg:'#25D366', color:'#ffffff', campo:'tel', anim:'pop', animOut:'fade'},
+    {label:'Telefono', testo:'', svg:'phone', bg:'#0D1B2A', color:'#ffffff', campo:'tel', anim:'pop', animOut:'fade'},
+    {label:'Sito', testo:'', svg:'globe', bg:'#C9A84C', color:'#0D1B2A', campo:'sito', anim:'slideUp', animOut:'fade'}
   ],
   deco: [
-    {label:'Freccia su', testo:'⬆', tipo:'freccia', color:'#ffffff', size:1.6},
-    {label:'Freccia giù', testo:'⬇', tipo:'freccia', color:'#ffffff', size:1.6},
-    {label:'Evidenzia', testo:'', tipo:'cornice', color:'#C9A84C'},
-    {label:'Linea', testo:'', tipo:'linea', color:'#ffffff'}
+    {label:'Freccia su', testo:'⬆', tipo:'freccia', color:'#ffffff', size:1.6, anim:'bounce', animOut:'fade'},
+    {label:'Freccia giù', testo:'⬇', tipo:'freccia', color:'#ffffff', size:1.6, anim:'bounce', animOut:'fade'},
+    {label:'Evidenzia', testo:'', tipo:'cornice', color:'#C9A84C', anim:'zoom', animOut:'fade'},
+    {label:'Linea', testo:'', tipo:'linea', color:'#ffffff', anim:'fade', animOut:'fade'}
   ],
   adesivi: [
     {label:'Cuore', testo:'❤️', size:2.2, anim:'pop', animOut:'fade'},
