@@ -39720,10 +39720,29 @@ async function vaiCreaAnimazionePersonalizzata(){
   const ov=_vaiMiniModal(
     '<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:4px">'+_vaiIc('scintilla')+' Crea un\'animazione qui</div>'+
     '<div style="color:#93A5B8;font-size:.76rem;margin-bottom:10px">Al secondo '+_vaiFmtT(tempo)+' del video. Descrivi cosa vuoi vedere apparire sopra il filmato — es. «traccia un rettangolo che misura 130 mq» o «un cerchio che evidenzia il balcone».</div>'+
-    '<textarea id="vai-can-prompt" rows="3" placeholder="Es.: crea un\'animazione con sfondo trasparente mentre traccia la forma di un rettangolo che misura 130 mq" style="width:100%;box-sizing:border-box;background:#080B0F;color:#E8EDF2;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:9px 11px;font-family:inherit;font-size:.84rem;resize:vertical;margin-bottom:10px"></textarea>'+
+    '<textarea id="vai-can-prompt" rows="3" placeholder="Es.: crea un\'animazione con sfondo trasparente mentre traccia la forma di un rettangolo che misura 130 mq" style="width:100%;box-sizing:border-box;background:#080B0F;color:#E8EDF2;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:9px 11px;font-family:inherit;font-size:.84rem;resize:vertical;margin-bottom:12px"></textarea>'+
+    '<div style="color:#8FA3B8;font-size:.72rem;margin-bottom:6px">STILE DEL TRATTO</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px">'+
+      Object.keys(VAI_STILE_FORMA).map(k=>{
+        const st=VAI_STILE_FORMA[k];
+        return '<button type="button" class="vai-can-stile" data-s="'+k+'" style="padding:8px 4px;border-radius:8px;cursor:pointer;font-size:.72rem;font-weight:700;text-align:center;background:'+(k==='classico'?'#C9A84C':'#13263B')+';color:'+(k==='classico'?'#1A1205':st.defColor)+';border:1px solid rgba(255,255,255,.14)">'+st.label+'</button>';
+      }).join('')+
+    '</div>'+
     '<div style="color:#6B7E92;font-size:.68rem;margin-bottom:12px">Per ora funziona solo con forme che si tracciano (rettangolo, quadrato, cerchio) più un\'etichetta — niente sfondo pieno, resta trasparente sopra il video. Non genera filmati o persone che si muovono.</div>'+
     '<button id="vai-can-ok" class="vai-start-btn vai-start-open" style="width:100%;justify-content:center">✨ Genera l\'animazione</button>'
   );
+  let stileScelto='classico';
+  ov.querySelectorAll('.vai-can-stile').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      stileScelto=b.getAttribute('data-s');
+      const st=VAI_STILE_FORMA[stileScelto];
+      ov.querySelectorAll('.vai-can-stile').forEach(x=>{
+        const on=(x===b);
+        x.style.background=on?'#C9A84C':'#13263B';
+        x.style.color=on?'#1A1205':(VAI_STILE_FORMA[x.getAttribute('data-s')].defColor);
+      });
+    });
+  });
   const ta=ov.querySelector('#vai-can-prompt'); if(ta) setTimeout(()=>{ try{ ta.focus(); }catch(e){} },50);
   const btn=ov.querySelector('#vai-can-ok');
   if(btn) btn.addEventListener('click', async ()=>{
@@ -39731,7 +39750,7 @@ async function vaiCreaAnimazionePersonalizzata(){
     if(!richiesta){ toast('Scrivi prima cosa vuoi creare','error'); return; }
     btn.disabled=true; btn.textContent='⏳ Sto generando…';
     try{
-      await _vaiGeneraFormaAI(richiesta, tempo);
+      await _vaiGeneraFormaAI(richiesta, tempo, stileScelto);
       ov.remove();
     }catch(e){
       console.warn('[VAI] crea animazione KO', e);
@@ -39743,7 +39762,8 @@ async function vaiCreaAnimazionePersonalizzata(){
 window.vaiCreaAnimazionePersonalizzata=vaiCreaAnimazionePersonalizzata;
 
 /* Interpreta la richiesta libera e inserisce la scritta tipo 'forma' nel punto giusto */
-async function _vaiGeneraFormaAI(richiesta, tempo){
+async function _vaiGeneraFormaAI(richiesta, tempo, stileScelto){
+  const stileKey = VAI_STILE_FORMA[stileScelto] ? stileScelto : 'classico';
   const proxyUrl=aiGetProxy();
   const ctxImm=(typeof _vaiImmContext==='function')?_vaiImmContext():'';
   const sys='Un utente sta montando un video immobiliare e ha fermato il video per chiedere una piccola animazione grafica da sovrapporre, a sfondo trasparente, sopra il filmato in questo punto. '+
@@ -39760,8 +39780,9 @@ async function _vaiGeneraFormaAI(richiesta, tempo){
   let txt=''; try{ txt=(data.content||[]).map(b=>b.text||'').join('').trim(); }catch(e){}
   let j=null; try{ j=JSON.parse(txt); }catch(e){ const m=txt.match(/\{[\s\S]*\}/); if(m){ try{ j=JSON.parse(m[0]); }catch(_){} } }
   const formeValide=['rettangolo','quadrato','cerchio'];
+  const colDefStile = VAI_STILE_FORMA[stileKey].defColor;
   if(!j || !formeValide.includes(j.forma)){
-    j=Object.assign({forma:'rettangolo', etichetta:richiesta.slice(0,24), colore:'#ffffff', durata:3}, j||{});
+    j=Object.assign({forma:'rettangolo', etichetta:richiesta.slice(0,24), colore:colDefStile, durata:3}, j||{});
     if(!formeValide.includes(j.forma)) j.forma='rettangolo';
   }
   if(!_vaiClips || !_vaiClips.length){ toast('Carica prima un video','error'); return; }
@@ -39776,7 +39797,8 @@ async function _vaiGeneraFormaAI(richiesta, tempo){
   const posto=(typeof _vaiTrovaPostoLibero==='function')?_vaiTrovaPostoLibero(0, tGlob, durataScelta):{traccia:0};
   const nuova=_vaiPushScrittaGlobale(tGlob, {
     tipo:'forma', forma:j.forma, etichetta:(j.etichetta||'').toString().slice(0,24),
-    color:(/^#[0-9a-f]{6}$/i.test(j.colore||'')?j.colore:'#ffffff'),
+    color:(/^#[0-9a-f]{6}$/i.test(j.colore||'')?j.colore:colDefStile),
+    stileForma:stileKey,
     durata:durataScelta, traccia:posto.traccia, x:0.5, y:0.5, w:0.5,
     anim:'', animOut:''   // niente effetto generico: l'animazione è il tracciamento stesso
   });
@@ -40929,15 +40951,22 @@ function vaiOverlayUpdate(){
       const progTr = Math.max(0, Math.min(1, faseTraccia>0 ? tRel/faseTraccia : 1));
       const progEt = Math.max(0, Math.min(1, (tRel-faseTraccia)/Math.max(0.3, durataTot-faseTraccia)));
       const dashOff = perim*(1-progTr);
-      const colF = s.color||'#ffffff';
+      const stileF = _vaiStileForma(s.stileForma);
+      const colF = s.color||stileF.defColor;
+      // L'anteprima non riproduce il tratteggio decorativo (es. Blueprint): il dasharray
+      // qui serve già a rivelare il tracciamento progressivo e i due usi non si possono
+      // sommare in SVG. Colore, bagliore e carattere dell'etichetta restano identici
+      // all'export — solo la "trama" della linea è un'approssimazione in anteprima.
+      const glowSvg = stileF.glow>0 ? (';filter:drop-shadow(0 0 '+(stileF.glow*3).toFixed(1)+'px '+(stileF.glowCol||colF)+')') : '';
+      const glowTxt = stileF.glow>0 ? (';filter:drop-shadow(0 0 '+(stileF.glow*2).toFixed(1)+'px '+(stileF.glowCol||colF)+')') : '';
       const formaSvg = formaTipo==='cerchio'
-        ? '<circle cx="50" cy="50" r="48.5" fill="none" stroke="'+colF+'" stroke-width="3" stroke-dasharray="'+perim+'" stroke-dashoffset="'+dashOff+'" transform="rotate(-90 50 50)"/>'
-        : '<rect x="1.5" y="1.5" width="97" height="'+(vh-3)+'" fill="none" stroke="'+colF+'" stroke-width="3" stroke-dasharray="'+perim+'" stroke-dashoffset="'+dashOff+'"/>';
+        ? '<circle cx="50" cy="50" r="48.5" fill="none" stroke="'+colF+'" stroke-width="'+(3*stileF.lw).toFixed(2)+'" stroke-dasharray="'+perim+'" stroke-dashoffset="'+dashOff+'" transform="rotate(-90 50 50)"/>'
+        : '<rect x="1.5" y="1.5" width="97" height="'+(vh-3)+'" fill="none" stroke="'+colF+'" stroke-width="'+(3*stileF.lw).toFixed(2)+'" stroke-dasharray="'+perim+'" stroke-dashoffset="'+dashOff+'"/>';
       html += '<div class="vai-ov-box'+(editUI?' sel':'')+'" data-id="'+s.id+'" '+
         'style="left:'+anchorLeft+'%;top:'+(s.y*100)+'%;transform:'+tx+';width:'+(s.w*100)+'%" '+
         (editUI?('ondblclick="vaiFormaModifica(event,\''+s.id+'\')" '):'')+handlers+'>'+
-        '<svg viewBox="0 0 100 '+vh+'" style="width:100%;display:block;overflow:visible">'+formaSvg+'</svg>'+
-        (s.etichetta?('<span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:'+colF+';font:900 1.1cqw DM Sans, sans-serif;text-shadow:0 2px 8px rgba(0,0,0,.6);opacity:'+progEt.toFixed(2)+';white-space:nowrap;pointer-events:none">'+_vaiEsc(s.etichetta)+'</span>'):'')+
+        '<svg viewBox="0 0 100 '+vh+'" style="width:100%;display:block;overflow:visible'+glowSvg+'">'+formaSvg+'</svg>'+
+        (s.etichetta?('<span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:'+colF+';font:'+(stileF.italic?'italic ':'')+stileF.weight+' 1.1cqw '+stileF.font+';text-shadow:0 2px 8px rgba(0,0,0,.6);opacity:'+progEt.toFixed(2)+';white-space:nowrap;pointer-events:none'+glowTxt+'">'+_vaiEsc(s.etichetta)+'</span>'):'')+
         figHandles+
         '</div>';
     } else if(tipo==='emoji'){
@@ -41619,8 +41648,15 @@ function vaiFormaModifica(e, id){
     '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Etichetta:</div>'+
     '<input id="vfo-et" value="'+_vaiEsc(s.etichetta||'')+'" maxlength="24" style="width:100%;box-sizing:border-box;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:.86rem;margin-bottom:14px">'+
     '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Colore:</div>'+
-    '<div style="display:flex;gap:8px">'+
+    '<div style="display:flex;gap:8px;margin-bottom:14px">'+
       COLORI.map(c=>'<button class="vfo-col" data-c="'+c+'" style="width:28px;height:28px;border-radius:50%;cursor:pointer;background:'+c+';border:2px solid '+((s.color||'#ffffff')===c?'#fff':'rgba(255,255,255,.2)')+'"></button>').join('')+
+    '</div>'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Stile del tratto:</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">'+
+      Object.keys(VAI_STILE_FORMA).map(k=>{
+        const st=VAI_STILE_FORMA[k]; const on=(s.stileForma||'classico')===k;
+        return '<button class="vfo-stile" data-s="'+k+'" style="padding:8px 4px;border-radius:8px;cursor:pointer;font-size:.72rem;font-weight:700;text-align:center;background:'+(on?'#C9A84C':'#13263B')+';color:'+(on?'#1A1205':st.defColor)+';border:1px solid rgba(255,255,255,.14)">'+st.label+'</button>';
+      }).join('')+
     '</div>'
   );
   ov.querySelectorAll('.vfo-forma').forEach(b=>{
@@ -41639,6 +41675,17 @@ function vaiFormaModifica(e, id){
     b.addEventListener('click', ()=>{
       s.color=b.getAttribute('data-c');
       ov.querySelectorAll('.vfo-col').forEach(x=>x.style.borderColor=(x===b)?'#fff':'rgba(255,255,255,.2)');
+      _vaiDirty=true; vaiOverlayUpdate();
+    });
+  });
+  ov.querySelectorAll('.vfo-stile').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      s.stileForma=b.getAttribute('data-s');
+      ov.querySelectorAll('.vfo-stile').forEach(x=>{
+        const on=(x===b);
+        x.style.background=on?'#C9A84C':'#13263B';
+        x.style.color=on?'#1A1205':(VAI_STILE_FORMA[x.getAttribute('data-s')].defColor);
+      });
       _vaiDirty=true; vaiOverlayUpdate();
     });
   });
@@ -45152,6 +45199,21 @@ const VAI_GRAFICHE = {
   ]
 };
 
+/* ═══════════ ATLANTE STILI PER "CREA ANIMAZIONE QUI" [30 ott 2026] ═══════════
+   La forma tracciata (rettangolo/quadrato/cerchio + etichetta) resta la stessa
+   per sicurezza — niente codice generato dall'AI eseguito nel browser — ma il
+   TRATTO con cui si disegna cambia look: dash, bagliore, colore di base e
+   carattere dell'etichetta. "glowCol:null" per il neon vuol dire "usa il colore
+   scelto per la forma anche per il bagliore", come un vero bagliore al neon. */
+const VAI_STILE_FORMA = {
+  classico:     { label:'Classico',     dash:null,     lw:1,    glow:0.5, glowCol:'rgba(0,0,0,.5)',       font:'DM Sans, sans-serif',                  weight:900, italic:false, defColor:'#ffffff' },
+  blueprint:    { label:'Blueprint',    dash:[9,7],    lw:0.6,  glow:0.9, glowCol:'rgba(80,170,255,.6)',  font:'"JetBrains Mono", monospace',          weight:700, italic:false, defColor:'#8ECBFF' },
+  neon:         { label:'Neon anni 80', dash:null,     lw:1.3,  glow:2.4, glowCol:null,                    font:'DM Sans, sans-serif',                  weight:900, italic:false, defColor:'#FF2FD6' },
+  pergamena:    { label:'Pergamena',    dash:null,     lw:1.5,  glow:1.1, glowCol:'rgba(120,70,20,.55)',  font:'"DM Serif Display", Georgia, serif',   weight:700, italic:true,  defColor:'#C9A050' },
+  documentario: { label:'Documentario', dash:null,     lw:0.55, glow:0,   glowCol:'transparent',          font:'DM Sans, sans-serif',                  weight:600, italic:false, defColor:'#ffffff' }
+};
+function _vaiStileForma(key){ return VAI_STILE_FORMA[key] || VAI_STILE_FORMA.classico; }
+
 /* UN CLICK: la scritta copre TUTTO il video, dalla prima all'ultima clip.
    Porta la scritta all'inizio della prima clip e la estende su tutte le successive
    (riusando il meccanismo delle copie collegate) — senza dover trascinare a mano la
@@ -46898,14 +46960,16 @@ function _vaiDrawScrittaSuCanvas(ctx, W, H, s, t){
     const bw=(s.w||0.5)*W;
     const rap = formaTipo==='quadrato' ? 1 : (formaTipo==='cerchio' ? 1 : 0.68);
     const bh = formaTipo==='cerchio' ? bw : bw*rap;
-    const colF = s.color||'#ffffff';
+    const stileF = _vaiStileForma(s.stileForma);
+    const colF = s.color||stileF.defColor;
     const durataTot=Math.max(0.3, s.durata||3);
     const faseTraccia=durataTot*0.62;
     const tRel=(t!=null) ? Math.max(0, Math.min(durataTot, t-s.t)) : durataTot;
     const progTraccia=Math.max(0, Math.min(1, faseTraccia>0 ? tRel/faseTraccia : 1));
     const progEtichetta=Math.max(0, Math.min(1, (tRel-faseTraccia)/Math.max(0.3, durataTot-faseTraccia)));
-    ctx.strokeStyle=colF; ctx.lineWidth=Math.max(2, W*0.006); ctx.lineCap='round'; ctx.lineJoin='round';
-    ctx.shadowColor='rgba(0,0,0,.5)'; ctx.shadowBlur=W*0.01;
+    ctx.strokeStyle=colF; ctx.lineWidth=Math.max(2, W*0.006)*stileF.lw; ctx.lineCap='round'; ctx.lineJoin='round';
+    try{ ctx.setLineDash(stileF.dash||[]); }catch(e){}
+    ctx.shadowColor=stileF.glowCol||colF; ctx.shadowBlur=W*0.01*stileF.glow;
     if(formaTipo==='cerchio'){
       ctx.beginPath();
       ctx.arc(ax, ay, bw/2, -Math.PI/2, -Math.PI/2 + progTraccia*Math.PI*2);
@@ -46927,14 +46991,16 @@ function _vaiDrawScrittaSuCanvas(ctx, W, H, s, t){
       }
       ctx.stroke();
     }
+    try{ ctx.setLineDash([]); }catch(e){}
     ctx.shadowBlur=0;
     if(s.etichetta && progEtichetta>0){
       const fsEt=Math.round(W*0.065);
-      ctx.font='900 '+fsEt+'px DM Sans, sans-serif';
+      ctx.font=(stileF.italic?'italic ':'')+stileF.weight+' '+fsEt+'px '+stileF.font;
       ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.globalAlpha=Math.min(1, progEtichetta*1.6);
       ctx.fillStyle=colF;
-      ctx.shadowColor='rgba(0,0,0,.6)'; ctx.shadowBlur=W*0.012;
+      ctx.shadowColor = stileF.glow>0 ? (stileF.glowCol||colF) : 'rgba(0,0,0,.6)';
+      ctx.shadowBlur = stileF.glow>0 ? W*0.012*stileF.glow : W*0.012;
       ctx.fillText(s.etichetta, ax, ay);
       ctx.globalAlpha=1; ctx.shadowBlur=0;
     }
