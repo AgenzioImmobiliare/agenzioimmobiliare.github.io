@@ -41165,11 +41165,19 @@ function vaiOverlayUpdate(){
       const formaSvg = formaTipo==='cerchio'
         ? '<circle cx="50" cy="50" r="48.5" fill="none" stroke="'+colF+'" stroke-width="'+(3*stileF.lw).toFixed(2)+'" stroke-dasharray="'+perim+'" stroke-dashoffset="'+dashOff+'" transform="rotate(-90 50 50)"/>'
         : '<rect x="1.5" y="1.5" width="97" height="'+(vh-3)+'" fill="none" stroke="'+colF+'" stroke-width="'+(3*stileF.lw).toFixed(2)+'" stroke-dasharray="'+perim+'" stroke-dashoffset="'+dashOff+'"/>';
+      // Auto-rimpicciolisco l'etichetta per lunghezze maggiori (stessa logica dell'export:
+      // un'etichetta lunga, es. un nome, non deve uscire dal riquadro tracciato).
+      const etLen=(s.etichetta||'').length;
+      const etCqw=etLen>14 ? Math.max(0.78, 1.1*14/etLen) : 1.1;
+      // RIVELAZIONE "a mano": clip-path che scopre il testo da sinistra a destra via via
+      // che avanza progEt — stessa idea della dissolvenza di prima, ma sembra scritto sul
+      // momento invece di comparire di colpo. Coerente con l'export (vedi sopra).
+      const etClip='inset(0 '+((1-progEt)*100).toFixed(1)+'% 0 0)';
       html += '<div class="vai-ov-box'+(editUI?' sel':'')+'" data-id="'+s.id+'" '+
         'style="left:'+anchorLeft+'%;top:'+(s.y*100)+'%;transform:'+tx+';width:'+(s.w*100)+'%" '+
         (editUI?('ondblclick="vaiFormaModifica(event,\''+s.id+'\')" '):'')+handlers+'>'+
         '<svg viewBox="0 0 100 '+vh+'" style="width:100%;display:block;overflow:visible'+glowSvg+'">'+formaSvg+'</svg>'+
-        (s.etichetta?('<span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:'+colF+';font:'+(stileF.italic?'italic ':'')+stileF.weight+' 1.1cqw '+stileF.font+';text-shadow:0 2px 8px rgba(0,0,0,.6);opacity:'+progEt.toFixed(2)+';white-space:nowrap;pointer-events:none'+glowTxt+'">'+_vaiEsc(s.etichetta)+'</span>'):'')+
+        (s.etichetta?('<span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:'+colF+';font:'+(stileF.italic?'italic ':'')+stileF.weight+' '+etCqw.toFixed(2)+'cqw '+stileF.font+';text-shadow:0 2px 8px rgba(0,0,0,.6);clip-path:'+etClip+';white-space:nowrap;pointer-events:none'+glowTxt+'">'+_vaiEsc(s.etichetta)+'</span>'):'')+
         figHandles+
         '</div>';
     } else if(tipo==='emoji'){
@@ -47267,15 +47275,34 @@ function _vaiDrawScrittaSuCanvas(ctx, W, H, s, t){
     try{ ctx.setLineDash([]); }catch(e){}
     ctx.shadowBlur=0;
     if(s.etichetta && progEtichetta>0){
-      const fsEt=Math.round(W*0.065);
+      let fsEt=Math.round(W*0.065);
       ctx.font=(stileF.italic?'italic ':'')+stileF.weight+' '+fsEt+'px '+stileF.font;
-      ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.globalAlpha=Math.min(1, progEtichetta*1.6);
+      // Auto-rimpicciolisco se il testo è più largo della forma tracciata (es. un nome):
+      // non deve uscire dal riquadro, come lamentato — prima usciva sempre alla stessa
+      // dimensione qualunque fosse la lunghezza dell'etichetta.
+      const maxW=bw*0.92;
+      let tw=ctx.measureText(s.etichetta).width;
+      if(tw>maxW && tw>0){
+        fsEt=Math.max(Math.round(W*0.028), Math.floor(fsEt*maxW/tw));
+        ctx.font=(stileF.italic?'italic ':'')+stileF.weight+' '+fsEt+'px '+stileF.font;
+        tw=ctx.measureText(s.etichetta).width;
+      }
+      ctx.textAlign='left'; ctx.textBaseline='middle';
       ctx.fillStyle=colF;
       ctx.shadowColor = stileF.glow>0 ? (stileF.glowCol||colF) : 'rgba(0,0,0,.6)';
       ctx.shadowBlur = stileF.glow>0 ? W*0.012*stileF.glow : W*0.012;
-      ctx.fillText(s.etichetta, ax, ay);
-      ctx.globalAlpha=1; ctx.shadowBlur=0;
+      // RIVELAZIONE "a mano": il testo compare da sinistra a destra, come se si stesse
+      // scrivendo in quel momento — non una dissolvenza, che Enzo giustamente descrive
+      // come "una scritta classica che potevo mettere tranquillamente io". Coerente con
+      // la forma che si traccia, non solo appare.
+      const x0=ax-tw/2;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x0, ay-fsEt, tw*Math.min(1,progEtichetta), fsEt*2);
+      ctx.clip();
+      ctx.fillText(s.etichetta, x0, ay);
+      ctx.restore();
+      ctx.shadowBlur=0;
     }
     ctx.textAlign='left'; ctx.textBaseline='alphabetic';
     _finish(); return;
