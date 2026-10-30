@@ -2918,7 +2918,12 @@ body.hub-buio .ov-ag-pill.ok,body.hub-buio .ov-us-st.ok{background:rgba(52,211,1
   border:1px solid rgba(255,255,255,.055);border-radius:12px;
 }
 .vai-capcut.vai-side-off .vai-cc-video{ height:var(--vai-pan-h,600px); }
-.vai-cc-topbar{display:flex;justify-content:space-between;gap:6px;margin-bottom:6px}
+.vai-cc-topbar{display:flex;justify-content:space-between;gap:6px;margin-bottom:6px;position:relative}
+/* Titolo "Video Social" centrato nella barra, indipendentemente da quanti pulsanti ci
+   sono a sinistra o a destra: posizione assoluta al centro invece di seguire il flusso
+   flex, altrimenti si sposta ogni volta che cambia il numero di pulsanti attorno. */
+.vai-cc-topbar .vcc-tit{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);pointer-events:none}
+.vai-cc-topbar .vcc-tit *{pointer-events:auto}
 /* ── MODALITÀ FOCUS: Video Social a tutto schermo, senza menu ── */
 body.vai-focus-mode .app-body{grid-template-columns:1fr!important}
 /* TRE RIQUADRI SIMMETRICI E COMPATTI: in schermo intero i tre pannelli in alto
@@ -3276,7 +3281,11 @@ input[type=range].vai-ms-rng-mini{max-width:78px}
 .vai-txt-seg{display:flex;gap:5px;flex-wrap:wrap}
 .vai-txt-sb{min-width:34px;height:32px;padding:0 8px;background:#0E1014;border:1px solid rgba(255,255,255,.07);border-radius:7px;color:#C7D0DB;font-size:.9rem;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center}
 .vai-txt-sb:hover{border-color:#3A414D}
-.vai-txt-sb.on{background:var(--vai-accent);border-color:var(--vai-accent);color:#1A1205}
+/* [30 ott 2026] Attivo meno marcato: prima era un riquadro pieno (tutto teal), pesante
+   su una fila intera di pulsanti sempre tutti vicini (B/I/U, maiuscole, allineamento,
+   posizione...). Ora solo un bordo colorato e un tenue sfondo trasparente: si vede
+   benissimo cos'è acceso, senza un blocco di colore ogni due centimetri. */
+.vai-txt-sb.on{background:rgba(46,155,143,.16);border-color:var(--vai-accent);color:#5FD1C2}
 .vai-txt-colors{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
 .vai-txt-cpick{position:relative;overflow:hidden;background:conic-gradient(from 0deg,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)!important;display:flex;align-items:center;justify-content:center}
 .vai-txt-cpick input[type=color]{position:absolute;inset:-4px;width:calc(100% + 8px);height:calc(100% + 8px);border:none;padding:0;cursor:pointer;opacity:0}
@@ -3434,6 +3443,16 @@ input[type=range].vai-ms-rng-mini{max-width:78px}
 .vai-tl-vclip-hr{right:1px;border-radius:0 5px 5px 0}
 .vai-tl-live-canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .vai-tl-vclip img{width:100%;height:100%;object-fit:cover;display:block;opacity:.85}
+/* FILMSTRIP — più fotogrammi in fila dentro la clip, come CapCut, invece di un solo
+   fotogramma stirato: si capisce a colpo d'occhio cosa succede nella clip, non solo
+   il suo punto medio. */
+.vai-tl-filmstrip{position:absolute;inset:0;display:flex}
+/* LARGHEZZA ESPLICITA, non flex-grow: su un'immagine (elemento "replaced") flex-grow con
+   width:auto è inaffidabile — alcuni motori rendering mantengono la larghezza naturale del
+   file (i 64px generati) invece di farla crescere, e il filmstrip si ripete a mattonelle
+   piccolissime invece di stendersi su tutta la clip. La percentuale è calcolata e scritta
+   inline (100/n%), zero ambiguità. */
+.vai-tl-filmstrip img{height:100%;object-fit:cover;display:block;opacity:.85;flex:none}
 .vai-tl-vclip.sel{border-color:#fff;box-shadow:0 0 0 1px #fff}
 .vai-tl-vclip-lock{cursor:not-allowed;opacity:.7}
 .vai-tl-vclip-n{position:absolute;top:2px;left:3px;font-size:.6rem;font-weight:700;color:#fff;background:rgba(0,0,0,.5);border-radius:3px;padding:0 4px}
@@ -5420,6 +5439,35 @@ function hubBuio(){
 window.addEventListener('storage', function(e){ if(e && (e.key==='darkMode' || e.key==='_cfg_admin')) hubTema(); });
 document.addEventListener('DOMContentLoaded', hubTema);
 hubTema();
+
+/* [30 ott 2026] Schermo intero all'apertura (come F11) per tutto il gestionale —
+   Overview, Marketing, Video Social, Studio Social compresi. I browser NON permettono
+   di chiedere lo schermo intero da soli al caricamento della pagina: serve un vero
+   gesto dell'utente (clic, tasto, tocco), altrimenti il browser rifiuta la richiesta
+   in silenzio. Quindi lo chiediamo al PRIMO clic/tasto/tocco dopo l'apertura — in
+   pratica arriva quasi subito — invece che al caricamento, dove fallirebbe sempre.
+   Essendo attaccato al documento intero (non a una sezione), vale per qualunque
+   pagina si apra per prima e resta attivo passando da una sezione all'altra. */
+(function(){
+  let chiesto=false;
+  function vaiEntraSchermoIntero(){
+    if(chiesto) return; chiesto=true;
+    document.removeEventListener('click', vaiEntraSchermoIntero);
+    document.removeEventListener('keydown', vaiEntraSchermoIntero);
+    document.removeEventListener('touchstart', vaiEntraSchermoIntero);
+    if(document.fullscreenElement || document.webkitFullscreenElement) return;
+    const el=document.documentElement;
+    try{
+      const p = el.requestFullscreen ? el.requestFullscreen()
+              : el.webkitRequestFullscreen ? el.webkitRequestFullscreen()
+              : null;
+      if(p && p.catch) p.catch(()=>{});
+    }catch(e){}
+  }
+  document.addEventListener('click', vaiEntraSchermoIntero);
+  document.addEventListener('keydown', vaiEntraSchermoIntero);
+  document.addEventListener('touchstart', vaiEntraSchermoIntero);
+})();
 </script>
 
 <!-- ═════════════════════════════════════
@@ -5493,6 +5541,18 @@ hubTema();
           <div class="ni-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h14a2 2 0 012 2v10a2 2 0 01-2 2H3a2 2 0 01-2-2V7a2 2 0 012-2z"/><path d="M21 7l-4 3 4 3z" transform="translate(0 1.5)"/><circle cx="8" cy="12" r="1.6" fill="currentColor" stroke="none"/></svg></div>
           <span>Video Social</span>
           <span class="nav-badge" style="background:#7C3AED;color:white">HUB</span>
+        </div>
+        <!-- [29 ott 2026] Pacchetto YouTube: titolo/descrizione/tag/capitoli pronti, a partire dalla trascrizione -->
+        <div class="nav-item" onclick="switchSection('ytpack')" title="Titolo, descrizione, tag e capitoli pronti per il tuo canale YouTube, a partire dalla trascrizione del video">
+          <div class="ni-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="4"/><polygon points="10,9 16,12 10,15" fill="currentColor" stroke="none"/></svg></div>
+          <span>Pacchetto YouTube</span>
+          <span class="nav-badge" style="background:#0EA5E9;color:white">AI</span>
+        </div>
+        <!-- [29 ott 2026] Performance YouTube: retention/hook leak/cliffs dall'export di Studio -->
+        <div class="nav-item" onclick="switchSection('ytperf')" title="Incolla l'export retention di YouTube Studio: dove si perdono gli spettatori e cosa dicevi in quel momento">
+          <div class="ni-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M19 9l-5 5-4-4-3 3"/><circle cx="19" cy="9" r="1.4" fill="currentColor" stroke="none"/></svg></div>
+          <span>Performance YouTube</span>
+          <span class="nav-badge" style="background:#0EA5E9;color:white">AI</span>
         </div>
         <!-- [24 ott 2026] Libreria Cilento: clip del territorio per aperture e chiusure dei video -->
         <div class="nav-item" onclick="switchSection('libreria')" title="Le tue clip del territorio e il repertorio, da usare in apertura e chiusura dei video">
@@ -7056,6 +7116,107 @@ Un caro saluto,
       <div id="libcil-root"></div>
     </div>
 
+    <!-- ══════════════ PACCHETTO YOUTUBE [29 ott 2026] ══════════════ -->
+    <div id="sec-ytpack" class="section-panel">
+      <div class="page-title-row">
+        <div>
+          <div class="page-title">Pacchetto <span>YouTube</span></div>
+          <div class="page-subtitle">Dalla trascrizione del video a titolo, descrizione, tag e capitoli pronti per il tuo canale. Non pubblica nulla: prepara i testi, tu copi e carichi quando vuoi.</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-body">
+          <div class="frow" style="margin-bottom:14px">
+            <label class="flabel" style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10"/></svg> Immobile di riferimento (facoltativo)</label>
+            <select class="fselect" id="yt-imm-select" onchange="ytPickImmobile()">
+              <option value="">— Nessuno / video generico —</option>
+            </select>
+          </div>
+
+          <div class="frow" style="margin-bottom:14px">
+            <label class="flabel" style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="4"/><polygon points="10,9 16,12 10,15" fill="currentColor" stroke="none"/></svg> Tipo di video</label>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button type="button" class="desc-tono-btn active" data-tipo="lungo" onclick="ytSetTipo(this)">Video lungo (tour dedicato)</button>
+              <button type="button" class="desc-tono-btn" data-tipo="breve" onclick="ytSetTipo(this)">Short / Reel riadattato</button>
+            </div>
+          </div>
+
+          <div class="frow" style="margin-bottom:14px">
+            <label class="flabel" style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg> Trascrizione o testo del video</label>
+            <textarea class="finput" id="yt-trascrizione" rows="7" style="resize:vertical;font-family:inherit" placeholder="Incolla qui la trascrizione. Va bene anche con i tempi (sottotitoli SRT/VTT, es. 00:00:12,400 --> 00:00:15,900) — con i tempi propongo anche i capitoli. Senza tempi preparo comunque titolo, descrizione e tag."></textarea>
+          </div>
+
+          <div class="frow" style="margin-bottom:14px">
+            <label class="flabel" style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2.2"/></svg> Testo che metterai in copertina/miniatura (facoltativo)</label>
+            <input class="finput" id="yt-thumb" placeholder="es. 70MQ A 45.000€ — massimo 2-3 parole">
+          </div>
+
+          <div class="frow" style="margin-bottom:4px">
+            <label class="flabel" style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18M3 12h18M3 19h12"/></svg> Note extra per l'AI (facoltativo)</label>
+            <input class="finput" id="yt-note" placeholder="es. punta sulla vista mare, è un affare da investimento, zona tranquilla…">
+          </div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+            <button class="btn btn-primary" id="yt-gen-btn" onclick="ytGenera()"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8L20 11l-6.1 2.2L12 19l-1.9-5.8L4 11l6.1-2.2z"/></svg> Genera pacchetto YouTube</button>
+            <button class="btn btn-outline" id="yt-copyall-btn" onclick="ytCopiaTutto()" style="display:none"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copia tutto</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="yt-output" style="display:none"></div>
+
+      <div id="yt-empty" style="text-align:center;padding:30px 20px;color:var(--text3)">
+        <div style="font-weight:700;font-size:.9rem;color:var(--text2)">Il pacchetto YouTube apparirà qui</div>
+        <div style="font-size:.78rem;margin-top:6px">Titoli con punteggio, descrizione, tag e capitoli — pronti da copiare. La pubblicazione resta sempre tua.</div>
+      </div>
+    </div>
+
+    <!-- ══════════════ PERFORMANCE YOUTUBE [29 ott 2026] ══════════════ -->
+    <div id="sec-ytperf" class="section-panel">
+      <div class="page-title-row">
+        <div>
+          <div class="page-title">Performance <span>YouTube</span></div>
+          <div class="page-subtitle">Incolla l'export della retention da YouTube Studio: dove esattamente si perdono gli spettatori, e perché — non solo quanti restano.</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-body">
+          <div class="frow" style="margin-bottom:4px">
+            <label class="flabel" style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M19 9l-5 5-4-4-3 3"/></svg> Come prendere il file</label>
+            <div style="font-size:.78rem;color:var(--text2);margin-bottom:10px">YouTube Studio → il video → Analytics → Coinvolgimento → il grafico "Retention del pubblico" → l'icona di download → "Retention del pubblico". Apri il CSV e incolla qui le due colonne (posizione e percentuale).</div>
+          </div>
+
+          <div class="frow" style="margin-bottom:14px">
+            <label class="flabel" style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg> Dati retention (CSV incollato)</label>
+            <textarea class="finput" id="ytp-csv" rows="8" style="resize:vertical;font-family:ui-monospace,monospace;font-size:.78rem" placeholder="Incolla qui il contenuto del CSV, es.:&#10;0,100&#10;5,92&#10;10,85&#10;...&#10;(va bene anche con il simbolo % o con punto e virgola)"></textarea>
+          </div>
+
+          <div class="frow" style="margin-bottom:14px">
+            <label class="flabel" style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg> Durata del video in secondi (facoltativo, utile se l'asse è in %)</label>
+            <input class="finput" id="ytp-durata" type="number" min="1" placeholder="es. 180">
+          </div>
+
+          <div class="frow" style="margin-bottom:4px">
+            <label class="flabel" style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg> Trascrizione con i tempi (facoltativa, per sapere cosa dicevi nei punti di calo)</label>
+            <textarea class="finput" id="ytp-trascrizione" rows="5" style="resize:vertical;font-family:inherit" placeholder="Sottotitoli SRT/VTT con i tempi, es. 00:00:12,400 --> 00:00:15,900 — serve solo per mostrare cosa dicevi in quel momento"></textarea>
+          </div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+            <button class="btn btn-primary" id="ytp-gen-btn" onclick="ytpAnalizza()"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M19 9l-5 5-4-4-3 3"/></svg> Analizza retention</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="ytp-output" style="display:none"></div>
+
+      <div id="ytp-empty" style="text-align:center;padding:30px 20px;color:var(--text3)">
+        <div style="font-weight:700;font-size:.9rem;color:var(--text2)">L'analisi apparirà qui</div>
+        <div style="font-size:.78rem;margin-top:6px">Quanto perdi nell'apertura, i momenti esatti di calo, e la tendenza nel resto del video.</div>
+      </div>
+    </div>
+
     <div id="sec-videoai" class="section-panel">
       <div class="page-title-row">
         <div>
@@ -7078,6 +7239,9 @@ Un caro saluto,
         </button>
         <button class="vai-start-btn vai-start-open" onclick="vaiProgettiPanel()" title="Apri un progetto video salvato">
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg> Apri un progetto
+        </button>
+        <button class="vai-start-btn vai-start-vdi" onclick="vaiApriGobbo()" title="Registra con il testo che scorre sopra l'anteprima (resta solo sullo schermo, non entra nel video): la clip registrata entra nel montaggio come le altre">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/><line x1="4" y1="9" x2="10" y2="9"/><line x1="4" y1="12" x2="10" y2="12"/></svg> Gobbo per registrare
         </button>
         <!-- Salva ed Esci: a destra, visibili solo con un progetto aperto -->
         <div id="vai-start-right" style="margin-left:auto;display:none;gap:8px">
@@ -7353,8 +7517,13 @@ Un caro saluto,
           <input type="range" id="vai-seek" class="vai-seek" min="0" max="1000" value="0" step="1" oninput="vaiSeek(this.value)">
           <span id="vai-time" class="vai-time">0:00 / 0:00</span>
           <button class="vai-ctrl-btn" id="vai-fmt-btn" onclick="vaiFormatoCicla()" title="Cambia il formato dell'anteprima: 9:16 verticale → 1:1 quadrato → 16:9 orizzontale. Il riquadro prende la forma e imposta l'export." style="width:auto;padding:0 8px;font-size:.68rem;font-weight:800">9:16</button>
-          <button class="vai-ctrl-btn vai-analizza-punto" onclick="vaiAnalizzaPunto()" id="vai-analizza-punto-btn" title="Analizza l'ambiente in questo punto e proponi scritte da inserire">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8a2 2 0 001.3 1.3L21 12l-5.8 1.9a2 2 0 00-1.3 1.3L12 21l-1.9-5.8a2 2 0 00-1.3-1.3L3 12l5.8-1.9a2 2 0 001.3-1.3L12 3z"/></svg>
+          <button class="vai-ctrl-btn vai-analizza-punto" onclick="vaiAnalizzaPunto()" id="vai-analizza-punto-btn" title="Analizza l'ambiente in questo punto e proponi scritte da inserire" style="width:auto;padding:0 9px;gap:5px;font-size:.66rem;font-weight:800">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.8a2 2 0 001.3 1.3L21 12l-5.8 1.9a2 2 0 00-1.3 1.3L12 21l-1.9-5.8a2 2 0 00-1.3-1.3L3 12l5.8-1.9a2 2 0 001.3-1.3L12 3z"/></svg>
+            <span>Analizza</span>
+          </button>
+          <button class="vai-ctrl-btn vai-crea-anim" onclick="vaiCreaAnimazionePersonalizzata()" id="vai-crea-anim-btn" title="Ferma qui e descrivi all'AI un'animazione su misura (es. una forma che traccia i metri quadrati)" style="width:auto;padding:0 9px;gap:5px;font-size:.66rem;font-weight:800;background:#C9A84C;color:#1A1205;border-color:#C9A84C">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="2" stroke-dasharray="3.5 3"/></svg>
+            <span>Crea animazione</span>
           </button>
           <button class="vai-ctrl-btn vai-sz-btn" onclick="vaiToggleSafeZone()" id="vai-sz-btn" title="Mostra le zone coperte da Instagram/TikTok">▦</button>
           <button class="vai-ctrl-btn vai-fs-btn" onclick="vaiFullscreen()" title="Ingrandisci a tutto schermo"><svg class="vai-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 00-2 2v3M21 8V5a2 2 0 00-2-2h-3M3 16v3a2 2 0 002 2h3M16 21h3a2 2 0 002-2v-3"/></svg></button>
@@ -7749,7 +7918,7 @@ Un caro saluto,
               <div id="vai-catalogo" class="vai-catalogo"></div>
             </div>
           </div>
-          <div id="vai-tl-track" class="vai-tl-track" title="Clicca una traccia per lavorarci sopra"></div>
+          <div id="vai-tl-track" class="vai-tl-track" title="Clicca una traccia per lavorarci sopra" onwheel="_vaiTlWheelZoom(event)"></div>
           <div class="vai-tl-zoombar">
             <button class="vai-tl-zbtn" onclick="vaiTrackHSet(_vaiTrackH-10)" title="Abbassa l'altezza delle tracce">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10l5 5 5-5"/><path d="M7 4l5 5 5-5" opacity=".4"/></svg>
@@ -10311,14 +10480,59 @@ function navSyncGroups(name){
   });
 }
 
+/* Avviso "progetto non salvato": prima usava il confirm() nativo del browser — grigio,
+   non centrato, impossibile da intonare al resto dell'app. Ora è un dialogo nostro
+   (_vaiConfermaModal, sotto), al centro dello schermo. Siccome il dialogo nostro è
+   asincrono (aspetta il clic) e confirm() era sincrono, la funzione si è divisa in due:
+   questo è solo il CANCELLO — decide se serve chiedere conferma — il lavoro vero di
+   switchSection è in _vaiSwitchSectionCore, invariato, chiamato o subito o dopo il sì. */
 function switchSection(name){
-  // avviso se sto uscendo dal Video Social con un progetto non salvato
   if(currentSection==='videoai' && name!=='videoai' && typeof vaiHasProgettoAperto==='function' && vaiHasProgettoAperto()){
-    if(!confirm('Hai un progetto video con modifiche non salvate.\nSe esci, il video verrà svuotato e dovrai ricaricarlo.\nVuoi uscire comunque? (Salva prima con «Salva» se non vuoi perderlo)')) return;
-    // confermato: svuoto il progetto video dalla memoria
-    try{ if(typeof vaiReset==='function') vaiReset(); }catch(e){}
-    _vaiDirty=false; _vaiProgettoId=null; _vaiProgettoNome='';
+    _vaiConfermaModal({
+      titolo:'Progetto non salvato',
+      corpo:'Hai un progetto video con modifiche non salvate. Se esci, il video verrà svuotato e dovrai ricaricarlo.',
+      nota:'Salva prima con «Salva» qui sopra, se non vuoi perderlo.',
+      okTesto:'Esci comunque', annullaTesto:'Annulla', pericoloso:true
+    }).then(ok=>{
+      if(!ok) return;
+      try{ if(typeof vaiReset==='function') vaiReset(); }catch(e){}
+      _vaiDirty=false; _vaiProgettoId=null; _vaiProgettoNome='';
+      _vaiSwitchSectionCore(name);
+    });
+    return;
   }
+  _vaiSwitchSectionCore(name);
+}
+/* Dialogo di conferma centrato, al posto di confirm()/alert() del browser. Torna una
+   Promise<boolean>: true se l'utente conferma, false se annulla o chiude. */
+function _vaiConfermaModal(opt){
+  return new Promise(resolve=>{
+    const pericoloso = !!opt.pericoloso;
+    const ov=document.createElement('div');
+    ov.style.cssText='position:fixed;inset:0;z-index:100001;background:rgba(5,8,12,.68);display:flex;align-items:center;justify-content:center;padding:20px';
+    ov.innerHTML=
+      '<div style="width:100%;max-width:420px;background:#141B24;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:22px 22px 18px;box-shadow:0 20px 60px rgba(0,0,0,.5)">'+
+        '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'+
+          '<span style="width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:'+(pericoloso?'rgba(220,38,38,.16)':'rgba(201,168,76,.16)')+';color:'+(pericoloso?'#F87171':'#C9A84C')+'">'+
+            '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9L1.8 18a2 2 0 001.7 3h17a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z"/></svg>'+
+          '</span>'+
+          '<div style="color:#fff;font-weight:800;font-size:1.02rem">'+_vaiEsc(opt.titolo||'Conferma')+'</div>'+
+        '</div>'+
+        '<div style="color:#C7D0DB;font-size:.86rem;line-height:1.5;margin-bottom:6px">'+_vaiEsc(opt.corpo||'')+'</div>'+
+        (opt.nota?('<div style="color:#8FA3B8;font-size:.78rem;line-height:1.4;margin-bottom:18px">'+_vaiEsc(opt.nota)+'</div>'):'<div style="margin-bottom:12px"></div>')+
+        '<div style="display:flex;gap:8px;justify-content:flex-end">'+
+          '<button id="vai-conf-no" style="padding:9px 16px;border-radius:9px;border:1px solid rgba(255,255,255,.14);background:#1A2330;color:#fff;font-weight:700;font-size:.84rem;cursor:pointer">'+_vaiEsc(opt.annullaTesto||'Annulla')+'</button>'+
+          '<button id="vai-conf-si" style="padding:9px 18px;border-radius:9px;border:none;background:'+(pericoloso?'#DC2626':'#C9A84C')+';color:'+(pericoloso?'#fff':'#1A1205')+';font-weight:800;font-size:.84rem;cursor:pointer">'+_vaiEsc(opt.okTesto||'Ok')+'</button>'+
+        '</div>'+
+      '</div>';
+    document.body.appendChild(ov);
+    const chiudi=(val)=>{ try{ ov.remove(); }catch(e){} resolve(val); };
+    ov.querySelector('#vai-conf-si').addEventListener('click', ()=>chiudi(true));
+    ov.querySelector('#vai-conf-no').addEventListener('click', ()=>chiudi(false));
+    ov.addEventListener('click', (e)=>{ if(e.target===ov) chiudi(false); });
+  });
+}
+function _vaiSwitchSectionCore(name){
   document.querySelectorAll('.section-panel').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
   const panel = document.getElementById('sec-' + name);
@@ -10383,6 +10597,8 @@ function switchSection(name){
   if(name === 'log') _safe(window.logRender,'log');
   if(name === 'fotoai') _safe(window.faiRender,'fotoai');
   if(name === 'descai') _safe(window.descInit,'descai');
+  if(name === 'ytpack') _safe(window.ytInit,'ytpack');
+  if(name === 'ytperf') { /* nessun render iniziale: la sezione è statica finché non si incolla il CSV */ }
   if(name === 'stagai'){ /* nessun render iniziale: la sezione è statica finché non si carica una foto */ }
   if(name === 'kit'){ _safe(window.kitFillSelect,'kit.select'); _safe(window.kitRender_show,'kit'); }
   if(name === 'overview') { _safe(window.ovKpi,'overview.kpi'); _safe(window.ovLogRecent,'overview.log'); _safe(window.ovAgendaRender,'overview.agenda'); }
@@ -10430,7 +10646,7 @@ const SECTION_LABEL = {
   overview:'Overview', pipeline:'Pipeline', perf:'Performance', social:'Studio Social',
   pubblicazioni:'Pubblicazioni', kit:'Kit di Lancio', volantino:'Volantino',
   fotoai:'Analisi Foto AI', videoai:'Video Social', campagna:'Campagna WhatsApp',
-  descai:'Descrizioni AI', stagai:'Home Staging AI',
+  descai:'Descrizioni AI', stagai:'Home Staging AI', ytpack:'Pacchetto YouTube', ytperf:'Performance YouTube',
   compleanni:'Compleanni', recensioni:'Recensioni Google', templates:'Template Messaggi',
   settimana:'Piano Social', linkinbio:'Link in Bio', timeline:'Timeline Contatti', regali:'Liste regali',
   ai:'Genera con AI', log:'Log Attività'
@@ -16665,6 +16881,394 @@ function _descClip(text){
 }
 
 /* ════════════════════════════════════════════════════════════════
+   PACCHETTO YOUTUBE  [29 ott 2026]
+   Dalla trascrizione (con o senza tempi) a titolo, descrizione, tag
+   e capitoli pronti per YouTube. Non pubblica nulla: prepara e
+   controlla contro le regole reali di YouTube — Enzo decide e carica.
+════════════════════════════════════════════════════════════════ */
+let _ytImm = null;
+let _ytTipo = 'lungo';
+let _ytRis = null;
+
+const YT_VAGHE = ['incredibile','pazzesco','assurdo','unico','straordinario','fantastico','imperdibile',
+  'spettacolare','clamoroso','rivoluzionario','top','bellissimo','mitico','esagerato'];
+
+function ytFillImmSelect(){
+  const sel = document.getElementById('yt-imm-select');
+  if(!sel) return;
+  const cur = sel.value;
+  const opts = ['<option value="">— Nessuno / video generico —</option>'];
+  (D.immobili||[]).forEach((im,idx)=>{
+    const label = [(im.tipo||'Immobile'), im.comune, im.zona, im.prezzo?fmtE(im.prezzo):''].filter(Boolean).join(' · ');
+    opts.push('<option value="'+idx+'">'+_descEsc(label)+'</option>');
+  });
+  sel.innerHTML = opts.join('');
+  if(cur) sel.value = cur;
+}
+
+function ytPickImmobile(){
+  const sel = document.getElementById('yt-imm-select');
+  const idx = sel ? sel.value : '';
+  _ytImm = (idx!=='' && (D.immobili||[])[idx]) ? (D.immobili||[])[idx] : null;
+}
+
+function ytSetTipo(btn){
+  const box = btn.parentElement;
+  box.querySelectorAll('.desc-tono-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  _ytTipo = btn.getAttribute('data-tipo')||'lungo';
+}
+
+function ytInit(){
+  ytFillImmSelect();
+}
+
+/* Riconosce sottotitoli con tempi (SRT o VTT) dentro il testo incollato.
+   Senza tempi riconoscibili tratta tutto come un unico blocco di parlato,
+   e più sotto si rinuncia ai capitoli invece di inventare dei tempi. */
+function ytParseTrascrizione(testo){
+  const righe = String(testo||'').split(/\r?\n/);
+  const cues = [];
+  let cur = null;
+  const tsRe = /(\d{1,2}:)?\d{1,2}:\d{2}[.,]\d{1,3}\s*-->\s*(\d{1,2}:)?\d{1,2}:\d{2}[.,]\d{1,3}/;
+  function aSec(s){
+    s = s.trim().replace(',', '.');
+    const p = s.split(':').map(Number);
+    return p.length===3 ? p[0]*3600+p[1]*60+p[2] : p[0]*60+p[1];
+  }
+  righe.forEach(r=>{
+    const m = r.match(tsRe);
+    if(m){
+      const parti = m[0].split('-->');
+      cur = { inizio: aSec(parti[0]), fine: aSec(parti[1]), testo: '' };
+      cues.push(cur);
+    } else if(cur && r.trim() && !/^\d+$/.test(r.trim())){
+      cur.testo = (cur.testo ? cur.testo+' ' : '') + r.trim();
+    }
+  });
+  if(cues.length) return { cues, durata: cues[cues.length-1].fine, conTempi:true };
+  const piano = String(testo||'').trim();
+  return { cues: piano?[{inizio:0,fine:null,testo:piano}]:[], durata:null, conTempi:false };
+}
+
+/* Controlla una lista di capitoli contro le regole reali di YouTube: deve
+   iniziare a 00:00, almeno 3 voci, ciascuna di almeno 10 secondi. Un elenco
+   che non le rispetta non diventa capitoli, resta testo morto in descrizione
+   — quindi qui si pulisce prima di consegnarlo, non dopo che ha fallito. */
+function ytValidaCapitoli(capitoli, durata){
+  const MIN = 10;
+  const grezzi = (capitoli||[]).map(c=>({ inizio: Math.max(0, Math.round(Number(c.inizio_sec||c.inizio||0))), titolo: String(c.titolo||'').trim() }))
+    .filter(c=>c.titolo)
+    .sort((a,b)=>a.inizio-b.inizio);
+  const pulita = [];
+  grezzi.forEach(c=>{
+    if(!pulita.length){ pulita.push({ inizio:0, titolo:c.titolo }); return; }
+    if(c.inizio - pulita[pulita.length-1].inizio >= MIN) pulita.push(c);
+  });
+  const fine = durata || (pulita.length ? pulita[pulita.length-1].inizio + MIN : 0);
+  const risultato = pulita.map((c,i)=>{
+    const prossimo = (i+1 < pulita.length) ? pulita[i+1].inizio : fine;
+    return { inizio: c.inizio, titolo: c.titolo, durata_sec: Math.round(prossimo - c.inizio) };
+  });
+  const valida = risultato.length>=3 && risultato[0].inizio===0 && risultato.every(c=>c.durata_sec>=MIN);
+  return { capitoli: risultato, valida };
+}
+
+function ytMMSS(s){
+  s = Math.max(0, Math.round(s||0));
+  const h=Math.floor(s/3600), m=Math.floor((s%3600)/60), ss=s%60;
+  return (h?h+':':'')+(h?String(m).padStart(2,'0'):m)+':'+String(ss).padStart(2,'0');
+}
+
+/* Controlla la coppia titolo+miniatura contro i limiti reali di YouTube:
+   troncamento desktop/mobile, parole vaghe, maiuscole, duplicazione con
+   la miniatura, presenza di un numero. Un titolo non è "consigliato"
+   solo perché l'AI lo ha scritto: qui si verifica, come per gli annunci. */
+function ytLintTitolo(titolo, thumb){
+  const t = String(titolo||'').trim();
+  const n = t.length;
+  const problemi = [];
+  if(n > 100) problemi.push('troppo lungo ('+n+' caratteri, il limite assoluto è 100)');
+  else if(n > 60) problemi.push(n+' caratteri: la ricerca da desktop lo tronca intorno a 60');
+  if(n > 40) problemi.push('su un feed da smartphone si vede solo fino a circa il carattere 40');
+  const paroleBasse = t.toLowerCase().split(/[^a-zàèéìòù0-9]+/).filter(Boolean);
+  const vaghe = paroleBasse.filter(w=>YT_VAGHE.includes(w));
+  if(vaghe.length) problemi.push('parola vaga ('+vaghe.join(', ')+'): meglio un numero, un luogo o un dettaglio vero');
+  const maiuscole = t.split(/\s+/).filter(w=>w.length>2 && w===w.toUpperCase() && /[A-ZÀÈÉÌÒÙ]/.test(w));
+  if(maiuscole.length > 2) problemi.push(maiuscole.length+' parole tutte maiuscole: oltre due sembra spam');
+  const haNumero = /\d/.test(t);
+  if(!haNumero) problemi.push('nessun numero (mq, prezzo, data…): è la correzione più efficace da sola');
+  if(thumb){
+    const paroleThumb = new Set(String(thumb).toLowerCase().split(/[^a-zàèéìòù0-9]+/).filter(w=>w.length>2));
+    const condivise = paroleBasse.filter(w=>w.length>2 && paroleThumb.has(w));
+    if(condivise.length) problemi.push('ripete la miniatura su: "'+condivise.join(', ')+'" — titolo e copertina devono dire cose diverse');
+  }
+  const punteggio = Math.max(0, Math.min(100, 100 - 16*problemi.length + (haNumero?6:0)));
+  return { testo:t, caratteri:n, punteggio, problemi };
+}
+
+async function ytGenera(){
+  const proxyUrl = aiGetProxy();
+  if(!proxyUrl){ toast('Configura prima il proxy AI in "Genera con AI"','error'); if(typeof vaiAvvisaProxy==='function') vaiAvvisaProxy(); return; }
+  const grezzo = (document.getElementById('yt-trascrizione').value||'').trim();
+  if(!grezzo){ toast('Incolla prima la trascrizione o il testo del video','warn'); return; }
+  const thumb = (document.getElementById('yt-thumb').value||'').trim();
+  const note = (document.getElementById('yt-note').value||'').trim();
+  const parsed = ytParseTrascrizione(grezzo);
+  const dati = (_ytImm && typeof vaiImmobileJSON==='function') ? vaiImmobileJSON(_ytImm) : _ytImm;
+
+  const btn = document.getElementById('yt-gen-btn');
+  const orig = btn ? btn.innerHTML : '';
+  if(btn){ btn.disabled=true; btn.innerHTML='✨ Preparo il pacchetto…'; }
+
+  const capInstr = (_ytTipo==='breve') ? 'È un Short/Reel: non servono capitoli, lascia la lista "capitoli" vuota.' :
+    (parsed.conTempi ? 'Il testo ha i tempi dei sottotitoli: proponi anche dei capitoli, solo se il video ha davvero sezioni distinte (altrimenti lascia la lista vuota).' : 'Il testo non ha tempi riconoscibili: lascia la lista "capitoli" vuota.');
+
+  const sys = 'Sei lo stratega YouTube del canale "Vincenzo Carnicelli" dell\'agenzia immobiliare "Le case dalla A allo Z.io" di Agropoli (Cilento, Salerno). '+
+    'Scrivi in italiano, concreto e veritiero: usa SOLO le informazioni nel testo e nei dati forniti, non inventare metrature, prezzi o dettagli assenti. '+capInstr+'\n'+
+    'Rispondi SOLO con un JSON valido, senza backtick né testo attorno, con questa struttura ESATTA:\n'+
+    '{"titoli":[{"testo":"<titolo 1, max 60 caratteri, con un numero o un dettaglio concreto>","perche":"<una riga: perché questo titolo funziona>"},{"testo":"<titolo 2, taglio diverso dal primo>","perche":"..."},{"testo":"<titolo 3, taglio diverso>","perche":"..."}],'+
+    '"thumbnail_testo":"<massimo 3 parole per la miniatura, diverse dalle parole del titolo migliore>",'+
+    '"descrizione_prime_righe":"<1-2 righe: quello che si vede prima del pulsante \\"...altro\\", nelle parole che una persona cercherebbe>",'+
+    '"descrizione_corpo":"<80-150 parole: cosa mostra il video, zona, ambienti, invito a contattare l\'agenzia>",'+
+    '"tag":["<10-15 tag: zona, tipologia, parole chiave reali, niente tag slegati>"],'+
+    '"capitoli":[{"inizio_sec":0,"titolo":"<3-5 parole>"}]}';
+
+  const user = 'Tipo di video: '+(_ytTipo==='breve'?'Short/Reel riadattato per YouTube':'video lungo dedicato')+
+    (parsed.durata ? ('\nDurata: circa '+ytMMSS(parsed.durata)) : '')+
+    '\n\nTrascrizione/testo del video:\n'+grezzo.slice(0,8000)+
+    (dati ? ('\n\nDati immobile (JSON, usa solo questi numeri):\n'+JSON.stringify(dati)) : '')+
+    (thumb ? ('\n\nTesto già previsto in miniatura: "'+thumb+'" — scegli parole diverse per il titolo') : '')+
+    (note ? ('\n\nIndicazioni extra dell\'agente (rispettale): '+note) : '')+
+    '\n\nGenera il pacchetto nel JSON richiesto.';
+
+  try{
+    const resp = await aiFetch(proxyUrl,{ method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:(typeof aiModel==='function'?aiModel():'claude-sonnet-4-6'), max_tokens:2200,
+        system:sys, messages:[{role:'user',content:user}] }) }, 60000);
+    const data = await resp.json();
+    if(data.error||data.type==='error'){ throw new Error((data.error&&(data.error.message||data.error))||'Errore API'); }
+    const txt = (data.content||[]).map(b=>b.text||'').join('').trim();
+    const aiRis = _descParseJSON(txt);
+    if(!aiRis) throw new Error('risposta non interpretabile');
+
+    const thumbFinale = thumb || aiRis.thumbnail_testo || '';
+    const titoliControllati = (aiRis.titoli||[]).map(t=>({ testo:t.testo, perche:t.perche, lint: ytLintTitolo(t.testo, thumbFinale) }))
+      .sort((a,b)=>b.lint.punteggio - a.lint.punteggio);
+    const capValidati = (_ytTipo==='breve') ? {capitoli:[],valida:false} : ytValidaCapitoli(aiRis.capitoli||[], parsed.durata);
+
+    _ytRis = {
+      titoli: titoliControllati,
+      thumbnail_testo: thumbFinale,
+      descrizione_prime_righe: aiRis.descrizione_prime_righe||'',
+      descrizione_corpo: aiRis.descrizione_corpo||'',
+      tag: (aiRis.tag||[]).slice(0,15),
+      capitoli: capValidati,
+      conTempi: parsed.conTempi
+    };
+    ytRenderOutput();
+    if(typeof logAdd==='function') logAdd('▶️','Pacchetto YouTube', titoliControllati[0]?titoliControllati[0].testo:'');
+  }catch(e){
+    toast('Errore generazione: '+e.message,'error');
+  }finally{
+    if(btn){ btn.disabled=false; btn.innerHTML=orig; }
+  }
+}
+
+function ytRenderOutput(){
+  const out = document.getElementById('yt-output');
+  const empty = document.getElementById('yt-empty');
+  const copyAll = document.getElementById('yt-copyall-btn');
+  if(!out || !_ytRis) return;
+  const r = _ytRis;
+
+  const titoliHtml = r.titoli.map((t,i)=>{
+    const colore = t.lint.punteggio>=75 ? '#16A34A' : t.lint.punteggio>=55 ? '#D97706' : '#DC2626';
+    const problemi = t.lint.problemi.length ? '<div style="margin-top:6px;font-size:.74rem;color:var(--text2)">'+t.lint.problemi.map(p=>'⚠ '+_descEsc(p)).join('<br>')+'</div>' : '<div style="margin-top:6px;font-size:.74rem;color:#16A34A">✓ nessun problema rilevato</div>';
+    return '<div class="desc-card">'+
+      '<div class="desc-card-head"><span class="desc-ch-ico" style="background:'+colore+'22;color:'+colore+'">'+(i+1)+'</span>'+
+      _descEsc(t.testo)+' <span style="font-weight:400;font-size:.72rem;color:var(--text3)">('+t.lint.caratteri+' caratteri · punteggio '+t.lint.punteggio+'/100)</span></div>'+
+      '<div class="desc-card-body">'+_descEsc(t.perche||'')+problemi+'</div>'+
+      '<div class="desc-card-foot"><button class="desc-copy-btn" onclick="ytCopiaTitolo('+i+',this)">Copia questo titolo</button></div>'+
+      '</div>';
+  }).join('');
+
+  const capHtml = r.capitoli.capitoli.length ?
+    ('<div class="desc-card"><div class="desc-card-head">Capitoli'+(r.capitoli.valida?' <span style="color:#16A34A;font-size:.74rem;font-weight:600">✓ validi per YouTube</span>':' <span style="color:#DC2626;font-size:.74rem;font-weight:600">⚠ non bastano ancora (minimo 3, 10s ciascuno, il primo a 00:00)</span>')+'</div>'+
+    '<div class="desc-card-body" id="yt-capitoli">'+r.capitoli.capitoli.map(c=>ytMMSS(c.inizio)+'  '+_descEsc(c.titolo)).join('<br>')+'</div>'+
+    '<div class="desc-card-foot"><button class="desc-copy-btn" onclick="ytCopiaId(\'yt-capitoli\',this)">Copia capitoli</button></div></div>')
+    : (r.conTempi && _ytTipo!=='breve' ? '<div class="desc-card"><div class="desc-card-head">Capitoli</div><div class="desc-card-body" style="color:var(--text3)">Nessuna sezione netta individuata in questo video — non tutti i video hanno bisogno di capitoli.</div></div>' : '');
+
+  const descTesto = r.descrizione_prime_righe + '\n\n' + r.descrizione_corpo +
+    (r.capitoli.capitoli.length ? ('\n\n' + r.capitoli.capitoli.map(c=>ytMMSS(c.inizio)+' '+c.titolo).join('\n')) : '') +
+    (r.tag.length ? ('\n\n' + r.tag.map(t=>'#'+t.replace(/\s+/g,'')).join(' ')) : '');
+
+  const descHtml = '<div class="desc-card">'+
+    '<div class="desc-card-head">Descrizione</div>'+
+    '<div class="desc-card-body" id="yt-descrizione" style="white-space:pre-wrap">'+_descEsc(descTesto)+'</div>'+
+    '<div class="desc-card-foot"><button class="desc-copy-btn" onclick="ytCopiaId(\'yt-descrizione\',this)">Copia descrizione</button></div></div>';
+
+  const tagHtml = '<div class="desc-card"><div class="desc-card-head">Tag ('+r.tag.length+')</div>'+
+    '<div class="desc-card-body" id="yt-tag">'+_descEsc(r.tag.join(', '))+'</div>'+
+    '<div class="desc-card-foot"><button class="desc-copy-btn" onclick="ytCopiaId(\'yt-tag\',this)">Copia tag</button></div></div>';
+
+  const thumbHtml = '<div class="desc-card"><div class="desc-card-head">Testo miniatura consigliato</div>'+
+    '<div class="desc-card-body">'+_descEsc(r.thumbnail_testo||'—')+'</div></div>';
+
+  out.innerHTML = '<div class="desc-grid">'+titoliHtml+thumbHtml+capHtml+descHtml+tagHtml+'</div>'+
+    '<div style="margin-top:14px;padding:12px 14px;background:var(--cream);border-radius:10px;font-size:.8rem;color:var(--text2)">'+
+    '📌 Niente di tutto questo viene pubblicato da qui. Copia quello che ti convince e caricalo tu su YouTube Studio quando sei pronto.</div>';
+  out.style.display='';
+  if(empty) empty.style.display='none';
+  if(copyAll) copyAll.style.display='';
+}
+
+function ytCopiaId(id, btn){
+  const el = document.getElementById(id);
+  if(!el) return;
+  _descClip(el.textContent).then(()=>{
+    if(btn){ const o=btn.innerHTML; btn.classList.add('done'); btn.innerHTML='Copiato ✓'; setTimeout(()=>{ btn.classList.remove('done'); btn.innerHTML=o; },1600); }
+  }).catch(()=>toast('Copia non riuscita','error'));
+}
+
+function ytCopiaTitolo(i, btn){
+  if(!_ytRis || !_ytRis.titoli[i]) return;
+  _descClip(_ytRis.titoli[i].testo).then(()=>{
+    if(btn){ const o=btn.innerHTML; btn.classList.add('done'); btn.innerHTML='Copiato ✓'; setTimeout(()=>{ btn.classList.remove('done'); btn.innerHTML=o; },1600); }
+  }).catch(()=>toast('Copia non riuscita','error'));
+}
+
+function ytCopiaTutto(){
+  if(!_ytRis) return;
+  const r = _ytRis;
+  const blocchi = [
+    '━━━ TITOLI ━━━\n'+r.titoli.map((t,i)=>(i+1)+'. '+t.testo+' ('+t.lint.punteggio+'/100)').join('\n'),
+    '━━━ MINIATURA ━━━\n'+(r.thumbnail_testo||''),
+    r.capitoli.capitoli.length ? ('━━━ CAPITOLI ━━━\n'+r.capitoli.capitoli.map(c=>ytMMSS(c.inizio)+' '+c.titolo).join('\n')) : '',
+    '━━━ DESCRIZIONE ━━━\n'+r.descrizione_prime_righe+'\n\n'+r.descrizione_corpo,
+    '━━━ TAG ━━━\n'+r.tag.join(', ')
+  ].filter(Boolean).join('\n\n\n');
+  _descClip(blocchi).then(()=>toast('Pacchetto copiato ✓','success')).catch(()=>toast('Copia non riuscita','error'));
+}
+
+/* ════════════════════════════════════════════════════════════════
+   PERFORMANCE YOUTUBE  [29 ott 2026]
+   Legge l'export retention di YouTube Studio e trova dove si perde
+   davvero il pubblico: non solo quanti restano, ma in che momento
+   e — se c'è la trascrizione — cosa stavi dicendo in quel punto.
+   Puro calcolo, nessuna chiamata AI: i numeri parlano da soli.
+════════════════════════════════════════════════════════════════ */
+let _ytpRis = null;
+
+function ytpParseCSV(testo){
+  const righe = String(testo||'').split(/\r?\n/);
+  const out = [];
+  righe.forEach(r=>{
+    if(!r.trim()) return;
+    const celle = r.split(/[,;\t]/).map(c=>c.trim().replace('%',''));
+    const numeri = celle.map(c=>parseFloat(c)).filter(n=>!isNaN(n));
+    if(numeri.length>=2) out.push([numeri[0], numeri[1]]);
+  });
+  return out;
+}
+
+function ytpAnalizzaDati(righe, durataInput){
+  if(righe.length < 8) return null;
+  const xs = righe.map(r=>r[0]), ys = righe.map(r=>r[1]);
+  const assePercentuale = Math.max.apply(null, xs) <= 100.5;
+  const durata = durataInput || null;
+  const aSecondi = x => (assePercentuale && durata) ? (x/100*durata) : x;
+
+  const partenza = ys[0] || 100;
+  const sogliaHook = !assePercentuale ? 30 : (durata ? (30/durata*100) : 10);
+  const puntiHook = righe.filter(r=>r[0] <= sogliaHook).map(r=>r[1]);
+  const fineHook = puntiHook.length ? Math.min.apply(null, puntiHook) : partenza;
+  const hookLeak = partenza - fineHook;
+
+  const cali = [];
+  for(let i=1; i<righe.length; i++){
+    const persi = ys[i-1] - ys[i];
+    const span = (xs[i] - xs[i-1]) || 1;
+    cali.push({ ritmo: persi/span, da: xs[i-1], a: xs[i], persi: persi });
+  }
+  const picchi = cali.filter(c=>c.persi > 0.8).sort((a,b)=>b.ritmo - a.ritmo).slice(0,5)
+    .map(c=>({ da:c.da, a:c.a, persi:c.persi, secondi: (!assePercentuale || durata) ? aSecondi(c.da) : null }));
+  const centrali = cali.filter(c=>c.da > sogliaHook);
+  const slide = centrali.length ? centrali.reduce((s,c)=>s+c.ritmo,0)/centrali.length : 0;
+
+  return { punti: righe.length, partenza, fine: ys[ys.length-1], hookLeak, picchi, slide, assePercentuale, durata };
+}
+
+function ytpVerdictoHook(hookLeak){
+  if(hookLeak < 25) return { testo:'sano', colore:'#16A34A' };
+  if(hookLeak < 40) return { testo:'in perdita', colore:'#D97706' };
+  return { testo:'grave', colore:'#DC2626' };
+}
+
+function ytpCosaDicevi(cues, secondi){
+  if(secondi==null || !cues || !cues.length) return '';
+  const vicine = cues.filter(c=> c.inizio <= secondi+4 && (c.fine==null || c.fine >= secondi-4));
+  return vicine.map(c=>c.testo).join(' ').slice(0,160);
+}
+
+function ytpMMSS(s){
+  if(s==null) return '';
+  s = Math.max(0, Math.round(s));
+  const m = Math.floor(s/60), ss = s%60;
+  return m+':'+String(ss).padStart(2,'0');
+}
+
+function ytpAnalizza(){
+  const grezzo = (document.getElementById('ytp-csv').value||'').trim();
+  if(!grezzo){ toast('Incolla prima il CSV della retention','warn'); return; }
+  const durataInput = parseFloat(document.getElementById('ytp-durata').value) || null;
+  const trascrizioneGrezza = (document.getElementById('ytp-trascrizione').value||'').trim();
+
+  const righe = ytpParseCSV(grezzo);
+  if(righe.length < 8){ toast('Non riesco a leggere almeno 8 punti dati da questo CSV','error'); return; }
+  const r = ytpAnalizzaDati(righe, durataInput);
+  if(!r){ toast('Dati insufficienti per l\'analisi','error'); return; }
+
+  const cues = trascrizioneGrezza ? ytParseTrascrizione(trascrizioneGrezza).cues : [];
+  r.picchi.forEach(p=>{ p.detto = ytpCosaDicevi(cues, p.secondi); });
+
+  _ytpRis = r;
+  ytpRenderOutput();
+  if(typeof logAdd==='function') logAdd('📈','Performance YouTube', 'hook leak '+r.hookLeak.toFixed(1)+'%');
+}
+
+function ytpRenderOutput(){
+  const out = document.getElementById('ytp-output');
+  const empty = document.getElementById('ytp-empty');
+  if(!out || !_ytpRis) return;
+  const r = _ytpRis;
+  const v = ytpVerdictoHook(r.hookLeak);
+
+  const hookHtml = '<div class="desc-card">'+
+    '<div class="desc-card-head">Hook leak — perso nei primi 30 secondi <span style="color:'+v.colore+';font-size:.74rem;font-weight:600">['+v.testo+']</span></div>'+
+    '<div class="desc-card-body">Parti dal '+r.partenza.toFixed(1)+'% e dopo l\'apertura sei al '+(r.partenza-r.hookLeak).toFixed(1)+'% — hai perso <b>'+r.hookLeak.toFixed(1)+'%</b> degli spettatori.'+
+    '<div style="margin-top:6px;font-size:.78rem;color:var(--text2)">Sotto il 25% è sano per questa durata. '+(r.hookLeak>=25?'Il primo problema da risolvere è la prima riga del video, non il montaggio.':'L\'apertura regge bene: se il video perde pubblico, il problema è più avanti.')+'</div></div></div>';
+
+  const cliffsHtml = r.picchi.length ?
+    ('<div class="desc-card"><div class="desc-card-head">Cliffs — i momenti esatti in cui le persone se ne sono andate</div>'+
+     '<div class="desc-card-body">'+r.picchi.map(p=>{
+       const dove = (p.secondi!=null) ? ytpMMSS(p.secondi) : (p.da.toFixed(1)+(r.assePercentuale?'%':'s'));
+       return '-'+p.persi.toFixed(1)+'%  al '+dove + (p.detto ? ('  — "'+_descEsc(p.detto)+'"') : '');
+     }).join('<br>')+'</div></div>')
+    : '<div class="desc-card"><div class="desc-card-head">Cliffs</div><div class="desc-card-body" style="color:var(--text3)">Nessun calo improvviso sopra lo 0,8%: quello che perdi lo perdi gradualmente, non in un punto preciso.</div></div>';
+
+  const slideHtml = '<div class="desc-card"><div class="desc-card-head">Slide — la perdita costante nella parte centrale</div>'+
+    '<div class="desc-card-body">'+r.slide.toFixed(3)+'% per unità nel corpo del video.'+
+    '<div style="margin-top:6px;font-size:.78rem;color:var(--text2)">Una perdita costante è un problema di ritmo: si risolve tagliando, non riscrivendo il contenuto.</div></div></div>';
+
+  out.innerHTML = '<div class="desc-grid">'+hookHtml+cliffsHtml+slideHtml+'</div>'+
+    '<div style="margin-top:14px;padding:12px 14px;background:var(--cream);border-radius:10px;font-size:.8rem;color:var(--text2)">'+
+    '📌 Punto da risolvere per primo: '+(r.hookLeak>=25 ? 'la prima riga del video (hook leak '+v.testo+').' : (r.picchi.length ? ('il calo più netto, al '+(r.picchi[0].secondi!=null?ytpMMSS(r.picchi[0].secondi):r.picchi[0].da)+'.') : 'il ritmo della parte centrale, con tagli.'))+'</div>';
+  out.style.display='';
+  if(empty) empty.style.display='none';
+}
+
+/* ════════════════════════════════════════════════════════════════
    HOME STAGING AI  (#4 — modalità A: piano + prompt)
    Carica foto stanza → l'AI analizza e prepara un piano di staging
    e un prompt pronto per un generatore di immagini esterno.
@@ -16807,6 +17411,9 @@ function stagCopiaPrompt(lang, btn){
    leggendo una API key/URL salvati in localStorage. Lasciato come hook. */
 function stagTrasformaImg(){ toast('La trasformazione automatica dell\'immagine non è ancora attiva: usa il prompt copiato in un generatore esterno.','warn'); }
 
+window.ytInit=ytInit; window.ytPickImmobile=ytPickImmobile; window.ytSetTipo=ytSetTipo;
+window.ytGenera=ytGenera; window.ytCopiaId=ytCopiaId; window.ytCopiaTitolo=ytCopiaTitolo; window.ytCopiaTutto=ytCopiaTutto;
+window.ytpAnalizza=ytpAnalizza;
 window.descInit=descInit; window.descPickImmobile=descPickImmobile; window.descSetTono=descSetTono;
 window.descGenera=descGenera; window.descCopia=descCopia; window.descCopiaTutto=descCopiaTutto;
 window.stagAddFile=stagAddFile; window.stagDragOver=stagDragOver; window.stagDragLeave=stagDragLeave;
@@ -29915,7 +30522,13 @@ const VAI_AI_FUNZIONI = [
   { g:'Scrivere', t:'Scheda finale con contatti', d:'La chiusura del Reel con i tuoi recapiti.', f:'vaiSchedaFinale', need:'imm' },
   { g:'Scrivere', t:'Didascalia per il post', d:'Il testo da incollare sotto al video quando pubblichi.', f:'vaiGeneraDidascalia', need:'imm' },
   { g:'Scrivere', t:'Porta la didascalia nelle scritte', d:'Trasforma la didascalia già generata in scritte sul video.', f:'vaiDidascaliaInScritte', need:'clip', nota:'si sovrappone alle due funzioni di scritte' },
+  { g:'Scrivere', t:'Effetti sul parlato', d:'Ascolta cosa dici nel video (serve la chiave Gemini di "Foto AI") e fa comparire piccoli effetti — un\'emoji e poche parole — sui numeri, prezzi e momenti forti che nomini, come nei video TikTok/Reel.', f:'vaiEffettiParlato', need:'clip' },
+  { g:'Scrivere', t:'Script YouTube con formule di gancio', d:'Scrive gancio, intro, sviluppo e finale di un video intero, scegliendo fra 8 formule di apertura note (il superlativo, la domanda, il prima e dopo...).', f:'vaiScriptYoutube', need:'imm' },
 
+  { g:'Pianificare', t:'Controllo prima di pubblicare', d:'Valuta un titolo o un argomento prima che tu lo pubblichi: giudizio editoriale dell\'AI, non dati reali di YouTube (non ci ho accesso).', f:'vaiControlloTitolo', need:'' },
+  { g:'Pianificare', t:'3 idee dal tuo portafoglio', d:'Guarda i tuoi immobili VERI in portafoglio e propone 3 idee video (cosa/quando/come), scegliendo da solo le novità e i ribassi più raccontabili.', f:'vaiPianoYoutube', need:'' },
+
+  { g:'Montare', t:'Controllo ritmo e struttura', d:'Analizza la TUA timeline reale (durata, aggancio nei primi 3s, call-to-action finale, numero di tagli) confrontandola con quello che funziona nei reel immobiliari brevi. Niente dati inventati.', f:'vaiControlloMontaggio', need:'clip' },
   { g:'Montare', t:'Video dall\'immobile', d:'Dalle foto dell\'immobile al Reel con stile, musica, scritte e voce. Si ferma per farti leggere il copione.', f:'vaiVideoDaImmobile', need:'' },
   { g:'Montare', t:'Video dalle mie clip', d:'Dai video che hai girato al Reel montato: ambienti, ordine, tagli sul ritmo (parte centrale), scritte, apertura e chiusura.', f:'vaiVideoDalleClip', need:'clip' },
   { g:'Montare', t:'Monta da solo', d:'Guarda i fotogrammi e scrive le scritte del video (posto, zona, casa, ambienti, chiusura) più la didascalia. Non cambia ordine né tagli.', f:'vaiMontaDaSolo', need:'clip' },
@@ -31050,6 +31663,231 @@ function vaiSchedaFinale(){
 }
 window.vaiHookIniziale=vaiHookIniziale;
 window.vaiSchedaFinale=vaiSchedaFinale;
+
+/* ═══════════ SCRIPT YOUTUBE CON FORMULE DI GANCIO [29 ott 2026] ═══════════
+   Script completo (gancio/intro/sviluppo/finale) scegliendo fra 8 formule di
+   apertura note nel copywriting video. Diverso da "Hook iniziale" (che fa
+   solo la frase dei primi 2 secondi, senza AI, con proposte istantanee dai
+   dati) e da "Video lungo per YouTube" (che fa la scaletta a capitoli di un
+   video di 5-10 minuti): questo scrive le PAROLE di un copione completo,
+   corto o lungo che sia, con la formula dichiarata e il perché della scelta. */
+const VAI_GANCI_FORMULE=[
+  { nome:'Il superlativo', spiega:'il più/il meno/il primo — una cosa estrema e vera sui dati' },
+  { nome:'Il conto alla rovescia', spiega:'un elenco numerato (es. "3 motivi per cui...")' },
+  { nome:'L\'ho provato', spiega:'il racconto in prima persona di una visita o di un\'esperienza reale' },
+  { nome:'La domanda', spiega:'una domanda diretta che chi guarda si sta già facendo' },
+  { nome:'Il prima e dopo', spiega:'un contrasto netto fra due stati (es. prezzo prima/dopo, casa vecchia/ristrutturata)' },
+  { nome:'Lo smontaggio', spiega:'si confuta un\'idea comune o un pregiudizio sulla zona/il mercato' },
+  { nome:'Lo stack', spiega:'si accumulano in fretta più vantaggi/numeri, uno via l\'altro' },
+  { nome:'L\'avvertimento', spiega:'si avverte di un errore comune da evitare' }
+];
+async function vaiScriptYoutube(){
+  const j=(typeof vaiImmobileJSON==='function')?vaiImmobileJSON(_vaiImm):null;
+  if(!j){ toast('Seleziona prima un immobile','error'); return; }
+  const proxyUrl=(typeof aiGetProxy==='function')?aiGetProxy():'';
+  if(!proxyUrl){ if(typeof vaiAvvisaProxy==='function') vaiAvvisaProxy(); else toast('Collega prima l\'assistente AI','error'); return; }
+  const btn=document.getElementById('vai-ai-b-vaiScriptYoutube')||null;
+  toast('Scrivo lo script…','');
+  try{
+    const sys='Sei un copywriter esperto di video per agenti immobiliari (Reel, Short, video YouTube). '+
+      'Scrivi lo script COMPLETO di un video su questo immobile, in italiano, prima persona, tono caldo e diretto, come se Enzo parlasse davanti alla telecamera. '+
+      'Per l\'apertura devi scegliere UNA delle seguenti formule di gancio, quella più adatta ai dati che hai (non inventarne altre):\n'+
+      VAI_GANCI_FORMULE.map((f,i)=>(i+1)+'. '+f.nome+' — '+f.spiega).join('\n')+
+      '\n\nStruttura da restituire: GANCIO (1-2 frasi, le prime che si sentono, devono fermare chi scorre), INTRO (perché continuare a guardare, 1-2 frasi), SVILUPPO (il corpo del racconto con i dati veri, 4-8 frasi), FINALE (chiusura naturale + invito a scrivere/contattare, 1-2 frasi). '+
+      'Usa SOLO i dati forniti, non inventare numeri o caratteristiche che non ci sono. '+
+      '\n\nDATI DELL\'IMMOBILE:\n'+JSON.stringify(j)+
+      '\n\nRispondi SOLO con JSON valido, senza testo attorno e senza blocchi markdown, in questa forma ESATTA:\n'+
+      '{"formula":"<uno dei nomi esatti sopra>","perche":"<una frase sul perché questa formula si adatta a questi dati>","gancio":"...","intro":"...","sviluppo":"...","finale":"..."}';
+    const resp=await aiFetch(proxyUrl,{ method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ model:(typeof aiModel==='function'?aiModel():'claude-sonnet-4-6'), max_tokens:2200,
+        messages:[{role:'user', content:sys}] }) }, 90000);
+    const data=await resp.json();
+    if(data.error||data.type==='error'){ throw new Error((data.error&&(data.error.message||data.error))||'Errore API'); }
+    const txt=(data.content||[]).map(b=>b.text||'').join('').trim();
+    const piano=(typeof faiParseJSON==='function'?faiParseJSON(txt):null) || (typeof _descParseJSON==='function'?_descParseJSON(txt):null);
+    if(!piano || !piano.gancio){ throw new Error('risposta non interpretabile (vedi console per il testo)'); }
+    const testoCompleto=[piano.gancio, piano.intro, piano.sviluppo, piano.finale].filter(Boolean).join('\n\n');
+    const ov=_vaiMiniModal(
+      '<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:2px">'+(typeof _vaiIc==='function'?_vaiIc('ciak'):'')+' Script pronto</div>'+
+      '<div style="color:#C9A84C;font-size:.8rem;font-weight:700;margin-bottom:2px">Formula: '+_vaiEsc(piano.formula||'')+'</div>'+
+      '<div style="color:#93A5B8;font-size:.76rem;margin-bottom:12px">'+_vaiEsc(piano.perche||'')+'</div>'+
+      ['gancio','intro','sviluppo','finale'].map(k=>piano[k]?(
+        '<div style="margin-bottom:10px"><div style="color:#93A5B8;font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px">'+k+'</div>'+
+        '<div style="color:#fff;font-size:.88rem;line-height:1.45;background:#13263B;border-radius:8px;padding:9px 11px">'+_vaiEsc(piano[k])+'</div></div>'
+      ):'').join('')+
+      '<button id="vai-script-yt-copia" style="width:100%;padding:11px;border-radius:10px;border:none;background:#C9A84C;color:#1A1205;font-weight:800;cursor:pointer;margin-top:4px">Copia tutto lo script</button>'
+    );
+    ov.querySelector('#vai-script-yt-copia').addEventListener('click', ()=>{
+      (typeof _settCopiaTesto==='function'?_settCopiaTesto(testoCompleto):navigator.clipboard.writeText(testoCompleto))
+        .then(()=>toast('Script copiato','success')).catch(()=>toast('Copia non riuscita: seleziona il testo','error'));
+    });
+  }catch(e){
+    console.error('[Script YouTube] errore:', e);
+    toast('Non riuscito: '+((e&&e.message)||e),'error');
+  }
+}
+window.vaiScriptYoutube=vaiScriptYoutube;
+
+/* ═══════════ CONTROLLO PRIMA DI PUBBLICARE [29 ott 2026] ═══════════
+   Valuta un titolo/argomento di video prima di pubblicarlo: un giudizio
+   editoriale dell'AI su quanto il gancio sia forte, con alternative — NON
+   un confronto con dati reali di YouTube (nessun accesso a statistiche vere
+   da qui): lo dichiara sempre, per non far credere che sia analytics vera. */
+function vaiControlloTitolo(){
+  const ov=_vaiMiniModal(
+    '<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:4px">'+(typeof _vaiIc==='function'?_vaiIc('cerca'):'')+' Controllo prima di pubblicare</div>'+
+    '<div style="color:#93A5B8;font-size:.78rem;margin-bottom:12px">Scrivi il titolo o l\'argomento che hai in mente: un giudizio editoriale sul gancio, non un confronto con dati reali di YouTube (non ci ho accesso da qui).</div>'+
+    '<textarea id="vai-ctrl-titolo" placeholder="Es. Appartamento in centro storico ad Agropoli con vista mare" style="width:100%;min-height:70px;margin-bottom:10px;padding:9px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.14);background:#13263B;color:#fff;font-size:.88rem"></textarea>'+
+    '<button id="vai-ctrl-ok" style="width:100%;padding:11px;border-radius:10px;border:none;background:#C9A84C;color:#1A1205;font-weight:800;cursor:pointer">Valuta</button>'
+  );
+  ov.querySelector('#vai-ctrl-ok').addEventListener('click', async ()=>{
+    const titolo=(ov.querySelector('#vai-ctrl-titolo').value||'').trim();
+    if(!titolo){ toast('Scrivi prima un titolo o un argomento','error'); return; }
+    const proxyUrl=(typeof aiGetProxy==='function')?aiGetProxy():'';
+    if(!proxyUrl){ ov.remove(); if(typeof vaiAvvisaProxy==='function') vaiAvvisaProxy(); else toast('Collega prima l\'assistente AI','error'); return; }
+    const okBtn=ov.querySelector('#vai-ctrl-ok'); okBtn.disabled=true; okBtn.textContent='Valuto…';
+    try{
+      const sys='Sei un esperto di copywriting e crescita su YouTube/Instagram per contenuti immobiliari locali in Italia (zona Cilento/Agropoli). '+
+        'NON hai accesso a dati reali di YouTube (nessuna vista, nessuna statistica vera): dai solo un giudizio editoriale onesto, basato su cosa funziona di solito in questo genere di contenuti. '+
+        'Valuta questo titolo/argomento: "'+titolo.replace(/"/g,'\'')+'". '+
+        'Dai un verdetto breve (una parola: debole, nella media, o forte) con il motivo in una frase (onesto, anche critico se serve). '+
+        'Poi proponi 3 titoli alternativi più efficaci (massimo 60 caratteri ciascuno), usando formule di gancio diverse (superlativo, conto alla rovescia, domanda, prima/dopo, smontaggio di un\'idea comune, avvertimento). '+
+        'Poi un suggerimento breve per la miniatura (una frase su cosa mostrare/scrivere). '+
+        '\n\nRispondi SOLO con JSON valido, senza testo attorno e senza blocchi markdown, in questa forma ESATTA:\n'+
+        '{"verdetto":"<debole|nella media|forte>","motivo":"...","alternative":["...","...","..."],"miniatura":"..."}';
+      const resp=await aiFetch(proxyUrl,{ method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ model:(typeof aiModel==='function'?aiModel():'claude-sonnet-4-6'), max_tokens:1200,
+          messages:[{role:'user', content:sys}] }) }, 60000);
+      const data=await resp.json();
+      if(data.error||data.type==='error'){ throw new Error((data.error&&(data.error.message||data.error))||'Errore API'); }
+      const txt=(data.content||[]).map(b=>b.text||'').join('').trim();
+      const r=(typeof faiParseJSON==='function'?faiParseJSON(txt):null) || (typeof _descParseJSON==='function'?_descParseJSON(txt):null);
+      if(!r || !r.verdetto){ throw new Error('risposta non interpretabile'); }
+      const colVer={debole:'#C0392B','nella media':'#C9A84C',forte:'#2E8B57'}[String(r.verdetto).toLowerCase()]||'#C9A84C';
+      ov.innerHTML=
+        '<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:10px">Giudizio editoriale (non statistiche vere)</div>'+
+        '<div style="display:inline-block;padding:4px 12px;border-radius:999px;background:'+colVer+';color:#1A1205;font-weight:800;font-size:.8rem;text-transform:uppercase;margin-bottom:8px">'+_vaiEsc(r.verdetto)+'</div>'+
+        '<div style="color:#93A5B8;font-size:.84rem;margin-bottom:14px">'+_vaiEsc(r.motivo||'')+'</div>'+
+        '<div style="color:#93A5B8;font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px">Titoli alternativi</div>'+
+        (Array.isArray(r.alternative)?r.alternative.map(t=>'<div style="color:#fff;font-size:.88rem;background:#13263B;border-radius:8px;padding:9px 11px;margin-bottom:6px">'+_vaiEsc(t)+'</div>').join(''):'')+
+        (r.miniatura?('<div style="color:#93A5B8;font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;margin:10px 0 4px">Per la miniatura</div><div style="color:#fff;font-size:.86rem">'+_vaiEsc(r.miniatura)+'</div>'):'')+
+        '<button id="vai-ctrl-chiudi" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#fff;font-weight:700;cursor:pointer;margin-top:14px">Chiudi</button>';
+      ov.querySelector('#vai-ctrl-chiudi').addEventListener('click', ()=>ov.remove());
+    }catch(e){
+      console.error('[Controllo titolo] errore:', e);
+      toast('Non riuscito: '+((e&&e.message)||e),'error');
+      okBtn.disabled=false; okBtn.textContent='Valuta';
+    }
+  });
+}
+window.vaiControlloTitolo=vaiControlloTitolo;
+
+/* ═══════════ CONTROLLO RITMO E STRUTTURA [29 ott 2026] ═══════════
+   Niente IA e niente dati inventati: legge SOLO la timeline vera di questo
+   montaggio (durata totale, dove cadono le scritte) e la confronta con quello
+   che funziona di solito nei reel immobiliari brevi — una ricerca editoriale,
+   non una misura sui risultati reali dei post di Enzo, da verificare nel tempo. */
+function vaiControlloMontaggio(){
+  if(!_vaiClips || !_vaiClips.length){ toast('Carica prima un video','error'); return; }
+  const durTot=(typeof _vaiDurataTot==='function')?_vaiDurataTot():0;
+  const tutte=[];
+  _vaiClips.forEach((c,ci)=>{
+    const off=(typeof _vaiOffsetClip==='function')?_vaiOffsetClip(ci):0;
+    (c.scritte||[]).forEach(s=>{
+      const localRaw=Math.max(0,(s.t||0)-(c.taglioInizio||0));
+      const localOut=(typeof _vaiRawToOutput==='function')?_vaiRawToOutput(c, localRaw):localRaw;
+      tutte.push({ s, tGlob: off+localOut });
+    });
+  });
+  const haGancio=tutte.some(x=>x.tGlob<3);
+  const ctaRe=/link|contattami|scrivimi|chiamami|whatsapp|\binfo\b|contatt/i;
+  const haCTA=tutte.some(x=> durTot>0 && x.tGlob>durTot*0.8 && (ctaRe.test(x.s.testo||'')||ctaRe.test(x.s.sotto||'')||x.s.tipo==='cta'||x.s.tipo==='contatto'));
+  const nTagli=_vaiClips.length;
+  const ritmoMedio=nTagli>1 ? durTot/nTagli : durTot;
+
+  const righe=[];
+  if(durTot>0){
+    righe.push((durTot>=18&&durTot<=50)
+      ? {ok:true, t:'Durata '+durTot.toFixed(0)+'s — nel range consigliato (circa 20-45s) per un reel che si guarda fino alla fine.'}
+      : {ok:false, t:'Durata '+durTot.toFixed(0)+'s — '+(durTot<18?'un po\' corto: rischi di non dire abbastanza.':'un po\' lungo: oltre i 45-50s cala chi guarda fino in fondo.')});
+  }
+  righe.push({ok:haGancio, t:haGancio?'C\'è una scritta nei primi 3 secondi — buon aggancio immediato.':'Non c\'è nessuna scritta nei primi 3 secondi: chi scorre decide lì se fermarsi. Aggiungi un dato forte, una domanda o un "wow" subito.'});
+  righe.push({ok:haCTA, t:haCTA?'C\'è una call-to-action verso la fine — ottimo.':'Non vedo una call-to-action chiara nell\'ultimo 20% del video: aggiungi un invito a contattarti o al link in descrizione.'});
+  righe.push({ok:nTagli>=3, t:'Il montaggio ha '+nTagli+' clip'+(nTagli>1?(' (taglio medio ogni '+ritmoMedio.toFixed(1)+'s)'):'')+(nTagli<3?' — con più tagli (ogni 1,5-3s) il ritmo tiene meglio l\'attenzione.':' — ritmo nella norma.')});
+
+  const html='<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:4px">'+(typeof _vaiIc==='function'?_vaiIc('cerca'):'')+' Controllo ritmo e struttura</div>'+
+    '<div style="color:#93A5B8;font-size:.76rem;margin-bottom:12px">Analisi sulla tua timeline reale (nessun dato inventato), confrontata con le tendenze dei reel immobiliari brevi.</div>'+
+    righe.map(r=>'<div style="display:flex;gap:9px;align-items:flex-start;margin-bottom:10px">'+
+      '<span style="flex:none;font-size:1rem;line-height:1.4">'+(r.ok?'✅':'⚠️')+'</span>'+
+      '<span style="color:#E8EDF2;font-size:.84rem;line-height:1.4">'+_vaiEsc(r.t)+'</span></div>').join('')+
+    '<div style="color:#6B7E92;font-size:.68rem;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.1)">Promemoria: se esporti lo stesso video per TikTok e Instagram, usa la copia SENZA watermark TikTok su Instagram — i social penalizzano i contenuti "riciclati" con watermark altrui.</div>';
+  _vaiMiniModal(html);
+}
+window.vaiControlloMontaggio=vaiControlloMontaggio;
+
+/* ═══════════ PIANIFICAZIONE YOUTUBE (COSA/QUANDO/COME) [29 ott 2026] ═══════════
+   Propone 3 idee video per YouTube partendo dagli immobili VERI in portafoglio
+   (non idee generiche): sceglie da soli i più "raccontabili" (novità, ribasso
+   recente, dati forti) fra quelli attivi. */
+async function vaiPianoYoutube(){
+  const proxyUrl=(typeof aiGetProxy==='function')?aiGetProxy():'';
+  if(!proxyUrl){ if(typeof vaiAvvisaProxy==='function') vaiAvvisaProxy(); else toast('Collega prima l\'assistente AI','error'); return; }
+  const tutti=(Array.isArray(D.immobili)?D.immobili:[]).filter(im=>im && !im.archiviato && !im.eliminato && String(im.stato||'').toLowerCase()!=='venduto');
+  if(!tutti.length){ toast('Non ci sono immobili attivi nel gestionale','error'); return; }
+  // i più "raccontabili": creati di recente, o con uno storico prezzo (quindi un ribasso), prima gli altri per data di modifica
+  const punteggio=im=>{
+    let p=0;
+    const creato=Number(im.creato||im.dataCreazione||0), modif=Number(im.modificato||im._modificata||0);
+    if(Date.now()-creato<30*86400000) p+=3;
+    if(Array.isArray(im.prezzoStorico) && im.prezzoStorico.length>1) p+=2;
+    if(im.descrizione && String(im.descrizione).length>80) p+=1;
+    p+=Math.min(2, (modif||creato)/1e13); // leggero ordine per recenza, ininfluente sul resto
+    return p;
+  };
+  const scelti=tutti.slice().sort((a,b)=>punteggio(b)-punteggio(a)).slice(0,6)
+    .map(im=>({ titolo:[(im.tipo||'Immobile'), im.comune, im.zona].filter(Boolean).join(' · '),
+      prezzo:im.prezzo||null, mq:im.mq||im.superficie||null, camere:im.camere||null,
+      novita: (Date.now()-Number(im.creato||im.dataCreazione||0))<30*86400000,
+      ribassato: Array.isArray(im.prezzoStorico) && im.prezzoStorico.length>1,
+      descrizione:String(im.descrizione||'').slice(0,250) }));
+  toast('Scelgo le idee migliori dal portafoglio…','');
+  try{
+    const sys='Sei un consulente di contenuti YouTube per un\'agenzia immobiliare locale (Agropoli/Cilento) che pubblica poco e vuole ripartire con pochi video ma buoni. '+
+      'Da questa lista di immobili VERI in portafoglio, scegli i 3 più "raccontabili" per un video (novità, ribasso recente, caratteristiche forti o particolari) e per ciascuno proponi: '+
+      'COSA (l\'argomento preciso del video, non generico), QUANDO (un suggerimento pratico, es. "questa settimana" o "prima del weekend", non una data vera perché non hai un calendario), '+
+      'COME (Short breve o Video lungo orizzontale, e quale formula di gancio useresti fra: superlativo, conto alla rovescia, l\'ho provato, la domanda, il prima e dopo, lo smontaggio, lo stack, l\'avvertimento). '+
+      'Usa SOLO i dati forniti, non inventare nulla sugli immobili.'+
+      '\n\nIMMOBILI:\n'+JSON.stringify(scelti)+
+      '\n\nRispondi SOLO con JSON valido, senza testo attorno e senza blocchi markdown, in questa forma ESATTA:\n'+
+      '{"idee":[{"cosa":"...","quando":"...","come":"...","formula":"...","titolo_immobile":"<il campo titolo scelto, esattamente come scritto sopra>"}]}';
+    const resp=await aiFetch(proxyUrl,{ method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ model:(typeof aiModel==='function'?aiModel():'claude-sonnet-4-6'), max_tokens:1800,
+        messages:[{role:'user', content:sys}] }) }, 90000);
+    const data=await resp.json();
+    if(data.error||data.type==='error'){ throw new Error((data.error&&(data.error.message||data.error))||'Errore API'); }
+    const txt=(data.content||[]).map(b=>b.text||'').join('').trim();
+    const piano=(typeof faiParseJSON==='function'?faiParseJSON(txt):null) || (typeof _descParseJSON==='function'?_descParseJSON(txt):null);
+    if(!piano || !Array.isArray(piano.idee) || !piano.idee.length){ throw new Error('risposta non interpretabile'); }
+    const ov=_vaiMiniModal(
+      '<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:2px">'+(typeof _vaiIc==='function'?_vaiIc('calendario'):'')+' 3 idee dal tuo portafoglio vero</div>'+
+      '<div style="color:#93A5B8;font-size:.76rem;margin-bottom:12px">"Quando" è un suggerimento pratico, non un calendario reale.</div>'+
+      piano.idee.map((x,i)=>
+        '<div style="margin-bottom:12px;background:#13263B;border-radius:10px;padding:11px 13px">'+
+          '<div style="color:#C9A84C;font-weight:800;font-size:.8rem;margin-bottom:4px">'+(i+1)+'. '+_vaiEsc(x.titolo_immobile||'')+'</div>'+
+          '<div style="color:#fff;font-size:.86rem;margin-bottom:5px"><b>Cosa:</b> '+_vaiEsc(x.cosa||'')+'</div>'+
+          '<div style="color:#93A5B8;font-size:.8rem;margin-bottom:3px"><b>Quando:</b> '+_vaiEsc(x.quando||'')+'</div>'+
+          '<div style="color:#93A5B8;font-size:.8rem"><b>Come:</b> '+_vaiEsc(x.come||'')+(x.formula?(' · formula: '+_vaiEsc(x.formula)):'')+'</div>'+
+        '</div>'
+      ).join('')+
+      '<button id="vai-piano-chiudi" style="width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#fff;font-weight:700;cursor:pointer;margin-top:4px">Chiudi</button>'
+    );
+    ov.querySelector('#vai-piano-chiudi').addEventListener('click', ()=>ov.remove());
+  }catch(e){
+    console.error('[Piano YouTube] errore:', e);
+    toast('Non riuscito: '+((e&&e.message)||e),'error');
+  }
+}
+window.vaiPianoYoutube=vaiPianoYoutube;
 
 /* Regia AI rimossa su richiesta: il suo ruolo è assorbito da "Monta con AI" (vaiMontaDaSolo), potenziato con struttura narrativa, anti-ripetizione e didascalia integrata. */
 
@@ -32533,10 +33371,84 @@ function _vaiProssimaContigua(){
    mentre entrambe suonano, come farà FFmpeg (xfade) nell'export. */
 let _vaiTransInCorso = false;
 
+/* ═══ CATALOGO TRANSIZIONI [29 ott 2026] ═══
+   Prima la scelta (quale transizione sta tra due clip, e il pulsante per impostarla)
+   viveva in un file esterno "desktop-export.js" mai distribuito insieme a
+   indexplus.html: le transizioni non si potevano più impostare da nessuna parte,
+   anche se il motore che le disegna (qui sotto, _vaiAvviaTransizionePreview) c'era
+   già, completo. Ora la scelta vive direttamente sulla clip (c.transizione,
+   c.durataTrans), viaggia col progetto come tutto il resto, e funziona anche sulla
+   versione pubblicata online, senza bisogno di nessun file sul computer di Enzo. */
+const VAI_TRANS_TIPI = [
+  { k:'nessuna',     l:'Nessuna',              ic:'✂' },
+  { k:'fade',        l:'Dissolvenza',          ic:'◐' },
+  { k:'fadeblack',   l:'Dissolvenza a nero',   ic:'●' },
+  { k:'fadewhite',   l:'Dissolvenza a bianco', ic:'○' },
+  { k:'slideleft',   l:'Scorri a sinistra',    ic:'◀' },
+  { k:'slideright',  l:'Scorri a destra',      ic:'▶' },
+  { k:'slideup',     l:'Scorri in su',         ic:'▲' },
+  { k:'slidedown',   l:'Scorri in giù',        ic:'▼' },
+  { k:'smoothleft',  l:'Morbida a sinistra',   ic:'◁' },
+  { k:'smoothup',    l:'Morbida in su',        ic:'△' },
+  { k:'circleopen',  l:'Cerchio che si apre',  ic:'◯' },
+  { k:'circleclose', l:'Cerchio che si chiude',ic:'◉' },
+  { k:'wipeup',      l:'Tendina dal basso',    ic:'▭' },
+  { k:'pixelize',    l:'Sfocatura',            ic:'▦' }
+];
+function _vaiTransLabel(tipo){ const t=VAI_TRANS_TIPI.find(x=>x.k===tipo); return t?t.l.split(' ')[0]:tipo; }
+
+/* Apre il selettore di transizione tra la clip i e la clip i+1 */
+function vaiTransizionePicker(i){
+  const c=_vaiClips[i]; if(!c || i>=_vaiClips.length-1) return;
+  const cur=c.transizione||'nessuna';
+  const durCur=(c.durataTrans&&c.durataTrans>0)?c.durataTrans:0.6;
+  const ov=_vaiMiniModal(
+    '<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:4px">Transizione</div>'+
+    '<div style="color:#93A5B8;font-size:.76rem;margin-bottom:12px">Tra la clip '+(i+1)+' e la clip '+(i+2)+'.</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px">'+
+      VAI_TRANS_TIPI.map(t=>'<button class="vai-trp-opt" data-t="'+t.k+'" style="padding:10px 8px;border-radius:9px;border:1px solid '+(t.k===cur?'#C9A84C':'rgba(255,255,255,.14)')+';background:'+(t.k===cur?'rgba(201,168,76,.18)':'#13263B')+';color:#fff;cursor:pointer;font-size:.78rem;text-align:left;display:flex;align-items:center;gap:8px"><span style="font-size:1rem">'+t.ic+'</span>'+t.l+'</button>').join('')+
+    '</div>'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px" id="vtp-dur-lbl">Durata: '+durCur.toFixed(2)+'s</div>'+
+    '<input type="range" id="vtp-dur" min="0.2" max="1.5" step="0.05" value="'+durCur+'" style="width:100%;accent-color:#C9A84C;margin-bottom:14px">'+
+    '<button id="vtp-ok" style="width:100%;padding:11px;border-radius:10px;border:none;background:#C9A84C;color:#1A1205;font-weight:800;cursor:pointer">Fatto</button>'
+  );
+  let scelto=cur;
+  ov.querySelectorAll('.vai-trp-opt').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      scelto=b.getAttribute('data-t');
+      ov.querySelectorAll('.vai-trp-opt').forEach(x=>{
+        const on=(x===b);
+        x.style.borderColor=on?'#C9A84C':'rgba(255,255,255,.14)';
+        x.style.background=on?'rgba(201,168,76,.18)':'#13263B';
+      });
+    });
+  });
+  const durInput=ov.querySelector('#vtp-dur');
+  const durLbl=ov.querySelector('#vtp-dur-lbl');
+  if(durInput) durInput.addEventListener('input', ()=>{ durLbl.textContent='Durata: '+parseFloat(durInput.value).toFixed(2)+'s'; });
+  const ok=ov.querySelector('#vtp-ok');
+  if(ok) ok.addEventListener('click', ()=>{
+    c.transizione=scelto;
+    c.durataTrans=parseFloat(durInput.value)||0.6;
+    _vaiDirty=true;
+    vaiClipsRender();
+    ov.remove();
+  });
+}
+window.vaiTransizionePicker=vaiTransizionePicker;
+
+/* Imposta la stessa transizione su TUTTE le giunzioni — usata dai template (VAI_TEMPLATES) */
+window._vaiSetTransTutte=function(tipo, durata, count){
+  const n=Math.min(count||_vaiClips.length, _vaiClips.length);
+  for(let i=0;i<n-1;i++){ _vaiClips[i].transizione=tipo||'nessuna'; _vaiClips[i].durataTrans=durata||0.6; }
+  try{ vaiClipsRender(); }catch(e){}
+};
+
 function _vaiTransPerGiunzione(i){
-  try{
-    if (typeof window._vaiTransGiunzione === 'function') return window._vaiTransGiunzione(i);
-  }catch(e){}
+  const c=_vaiClips && _vaiClips[i];
+  if(c && c.transizione && c.transizione!=='nessuna'){
+    return { tipo:c.transizione, durata:(c.durataTrans&&c.durataTrans>0)?c.durataTrans:0.6 };
+  }
   return { tipo:'nessuna', durata:0.6 };
 }
 
@@ -33178,8 +34090,63 @@ async function _vaiRilevaParlato(clip){
 
 /* Coda sequenziale: genera le miniature una alla volta (niente decoder saturati) */
 let _vaiThumbQueue=Promise.resolve();
+/* FILMSTRIP della clip per la timeline — stile CapCut: diversi fotogrammi in fila invece
+   di un fotogramma solo stirato su tutta la larghezza. Nessun controllo "frame nero" qui
+   (a differenza di _vaiGenThumbClip): su 6-8 fotogrammi un nero isolato non si nota e
+   rallenterebbe solo la generazione. */
+function _vaiGenFilmstripClip(clip, n){
+  n = n || 7;
+  return new Promise((resolve)=>{
+    let done=false, v; const frames=[];
+    const finish=()=>{
+      if(done) return; done=true;
+      try{ v.pause(); v.removeAttribute('src'); v.load(); }catch(e){}
+      clip.filmstrip=frames;
+      try{ if(typeof _vaiTlRenderPigro==='function') _vaiTlRenderPigro(); else vaiTlRender(); }catch(e){}
+      resolve();
+    };
+    const cattura=()=>{
+      try{
+        if(!v.videoWidth) return;
+        const cv=document.createElement('canvas');
+        const w=64, h=Math.round(64*(v.videoHeight||16)/(v.videoWidth||9));
+        cv.width=w; cv.height=h;
+        cv.getContext('2d').drawImage(v,0,0,w,h);
+        frames.push(cv.toDataURL('image/jpeg',0.5));
+      }catch(e){}
+    };
+    let tempi=[], idx=0;
+    const prossimo=()=>{
+      if(done) return;
+      if(idx>=tempi.length){ finish(); return; }
+      const t=tempi[idx++];
+      try{ v.currentTime=Math.min(t,(v.duration||t)-0.03); }catch(e){ finish(); }
+    };
+    try{
+      v=document.createElement('video');
+      v.muted=true; v.defaultMuted=true; v.playsInline=true; v.preload='auto'; v.src=clip.url;
+      const killer=setTimeout(finish, 15000);
+      v.onloadeddata=()=>{
+        const inizio=clip.taglioInizio||0;
+        const durUsabile=(clip.taglioDurata&&clip.taglioDurata>0)?clip.taglioDurata:Math.max(0.3,(v.duration||3)-inizio);
+        tempi=[];
+        for(let i=0;i<n;i++) tempi.push(inizio+durUsabile*((i+0.5)/n));
+        prossimo();
+      };
+      v.onseeked=()=>{
+        setTimeout(()=>{
+          if(done) return;
+          cattura();
+          if(idx>=tempi.length){ clearTimeout(killer); finish(); } else prossimo();
+        }, 80);
+      };
+      v.onerror=()=>{ clearTimeout(killer); finish(); };
+    }catch(e){ resolve(); }
+  });
+}
+
 function _vaiAccodaThumb(clip){
-  _vaiThumbQueue = _vaiThumbQueue.then(()=>_vaiGenThumbClip(clip)).catch(()=>{});
+  _vaiThumbQueue = _vaiThumbQueue.then(()=>_vaiGenThumbClip(clip)).then(()=>_vaiGenFilmstripClip(clip)).catch(()=>{});
   return _vaiThumbQueue;
 }
 
@@ -33214,12 +34181,24 @@ function vaiClipsRender(){
     const sel = i===_vaiClipAttiva;
     const dur = c.durata ? _vaiFmtT(c.durata) : '';
     const amb = c.ambiente ? _vaiEsc(c.ambiente.substring(0,14)) : (c.nome?_vaiEsc(c.nome.substring(0,14)):'Clip '+(i+1));
+    const hasNext = i < _vaiClips.length-1;
+    const tr = hasNext ? (c.transizione||'nessuna') : null;
+    // connettore tra questa clip e la successiva: apre il selettore di transizione.
+    // Nessuna = taglio netto (un piccolo simbolo di forbici); con una transizione scelta
+    // mostra la sua etichetta breve, così si vede a colpo d'occhio dov'è impostata.
+    // In basso a destra della miniatura: è l'unico angolo ancora libero (sopra ci sono già
+    // la durata e la X per eliminare, in basso a sinistra il microfono).
+    const connettore = hasNext
+      ? ('<button onclick="event.stopPropagation();vaiTransizionePicker('+i+')" title="Transizione verso la clip successiva" style="position:absolute;right:4px;bottom:4px;min-width:20px;height:20px;padding:0 4px;border-radius:10px;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;line-height:1;background:'+(tr!=='nessuna'?'#C9A84C':'rgba(0,0,0,.55)')+';color:'+(tr!=='nessuna'?'#1A1205':'#fff')+';z-index:2">'+
+          (tr!=='nessuna' ? _vaiEsc(_vaiTransLabel(tr)) : '✂') +
+         '</button>')
+      : '';
     return '<div class="vai-clip'+(sel?' sel':'')+'" draggable="true" data-idx="'+i+'" '+
       'onclick="vaiClipSelect('+i+')" '+
       'ondragstart="vaiClipDragStart(event,'+i+')" ondragover="event.preventDefault()" ondrop="vaiClipDrop(event,'+i+')">'+
       '<div class="vai-clip-thumb">'+(c.thumb?'<img class="vai-clip-img" src="'+c.thumb+'" alt="">':'<span class="vai-clip-ph"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></span>')+'<span class="vai-clip-num">'+(i+1)+'</span>'+(dur?'<span class="vai-clip-dur">'+dur+'</span>':'')+
         '<button class="vai-clip-del" onclick="event.stopPropagation();vaiClipDel('+i+')" title="Rimuovi">×</button>'+
-        '<button onclick="event.stopPropagation();vaiClipToggleParlata('+i+')" title="'+(c.parlata?'Voce inclusa nell\'export — clicca per togliere':'Clip muta — clicca se qui parli')+'" style="position:absolute;left:4px;bottom:4px;width:20px;height:20px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1;padding:0;background:'+(c.parlata?'#C9A24A':'rgba(0,0,0,.55)')+';color:#fff;z-index:2">'+_vaiIc('microfono')+'</button></div>'+
+        '<button onclick="event.stopPropagation();vaiClipToggleParlata('+i+')" title="'+(c.parlata?'Voce inclusa nell\'export — clicca per togliere':'Clip muta — clicca se qui parli')+'" style="position:absolute;left:4px;bottom:4px;width:20px;height:20px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1;padding:0;background:'+(c.parlata?'#C9A24A':'rgba(0,0,0,.55)')+';color:#fff;z-index:2">'+_vaiIc('microfono')+'</button>'+connettore+'</div>'+
       '<div class="vai-clip-lbl">'+amb+'</div>'+
       '</div>';
   }).join('');
@@ -34480,9 +35459,9 @@ async function vaiSincronizzaBeat(){
     '<div style="color:#93A5B8;font-size:.78rem;margin-bottom:12px">Musica a ~'+bpm+' BPM. Ogni cambio clip cadrà esattamente su un colpo. Scegli ogni quanti colpi cambiare scena:</div>'+
     '<label style="display:block;color:#93A5B8;font-size:.72rem;margin-bottom:5px">RITMO DEI CAMBI</label>'+
     '<div style="display:flex;gap:7px;margin-bottom:13px">'+
-      [{v:4,l:''+_vaiIc('fulmine')+' Serrato',d:'4 colpi'},{v:8,l:''+_vaiIc('musica')+' Medio',d:'8 colpi'},{v:16,l:''+_vaiIc('onda')+' Lento',d:'16 colpi'}].map((o,i)=>
+      [{v:1,l:''+_vaiIc('fulmine')+' Ogni colpo',d:'1 colpo'},{v:4,l:''+_vaiIc('fulmine')+' Serrato',d:'4 colpi'},{v:8,l:''+_vaiIc('musica')+' Medio',d:'8 colpi'},{v:16,l:''+_vaiIc('onda')+' Lento',d:'16 colpi'}].map((o,i)=>
         '<button class="vai-beat-rit" data-v="'+o.v+'" style="flex:1;padding:9px 4px;border-radius:9px;border:2px solid '+(o.v===8?'#C9A84C':'rgba(255,255,255,.14)')+';background:#13263B;color:#fff;cursor:pointer;text-align:center">'+
-        '<div style="font-weight:800;font-size:.82rem">'+o.l+'</div><div style="color:#93A5B8;font-size:.66rem">'+o.d+' (~'+secPer(o.v)+'s)</div></button>').join('')+
+        '<div style="font-weight:800;font-size:.78rem">'+o.l+'</div><div style="color:#93A5B8;font-size:.64rem">'+o.d+' (~'+secPer(o.v)+'s)</div></button>').join('')+
     '</div>'+
     '<label style="display:block;color:#93A5B8;font-size:.72rem;margin-bottom:5px">COME ADATTARE LE CLIP</label>'+
     '<button class="vai-beat-modo" data-m="taglia" style="display:block;width:100%;text-align:left;margin-bottom:7px;padding:10px 12px;border-radius:9px;border:2px solid #C9A84C;background:#13263B;color:#fff;cursor:pointer">'+
@@ -34491,6 +35470,10 @@ async function vaiSincronizzaBeat(){
     '<button class="vai-beat-modo" data-m="velocita" style="display:block;width:100%;text-align:left;margin-bottom:13px;padding:10px 12px;border-radius:9px;border:2px solid rgba(255,255,255,.14);background:#13263B;color:#fff;cursor:pointer">'+
       '<div style="font-weight:800;font-size:.85rem">'+_vaiIc('avanti')+' Adatta la velocità</div>'+
       '<div style="color:#93A5B8;font-size:.7rem">Usa tutto il girato di ogni clip, accelerando o rallentando per riempire il tempo</div></button>'+
+    '<label class="vai-musica-check" style="margin-bottom:4px;cursor:pointer">'+
+      '<input type="checkbox" id="vai-beat-raffica"> Aggiungi raffiche stile VN (tratti di tagli fulminei alternati a tratti più lenti)'+
+    '</label>'+
+    '<div style="color:#8FA3B8;font-size:.7rem;margin-bottom:13px">Serve almeno 6 clip. I tagli sul ritmo sono sempre netti, senza dissolvenza: è la dissolvenza a smorzare il colpo e a far perdere la precisione sul beat.</div>'+
     '<button id="vai-beat-ok" style="width:100%;padding:11px;border-radius:10px;border:none;background:#C9A84C;color:#1A1205;font-weight:800;cursor:pointer">Applica il montaggio sul ritmo</button>'
   );
   let ritmo=8, modo='taglia';
@@ -34506,12 +35489,18 @@ async function vaiSincronizzaBeat(){
     ov.remove();
     vaiSnapshot('montaggio sul ritmo');
     const B=ritmo;
+    const raffica = !!(ov.querySelector('#vai-beat-raffica') && ov.querySelector('#vai-beat-raffica').checked) && _vaiClips.length>=6;
     // durata di UN colpo dal BPM reale (non dalla griglia di beat che può essere troppo fitta)
     const durColpo = periodo;               // periodo = 60/bpm, calcolato sopra
-    const targetBeat = durColpo * B;        // durata desiderata di ogni clip (B colpi)
-    let applicate=0, accelerate=0;
+    let applicate=0, accelerate=0, raffiche=0;
     _vaiClips.forEach((c,i)=>{
-      const target = targetBeat;
+      // RAFFICA: su gruppi di 5 clip, le ultime 2 diventano una raffica di 1 colpo (stile VN:
+      // tratti lunghi che tengono la scena, poi una serie di tagli fulminei). Senza raffica,
+      // ogni clip prende lo stesso numero di colpi scelto sopra.
+      const inRaffica = raffica && (i % 5 >= 3);
+      const colpiClip = inRaffica ? 1 : B;
+      if(inRaffica) raffiche++;
+      const target = durColpo * colpiClip;
       const cIn = c.taglioInizio || 0;
       // girato grezzo realmente disponibile in questa clip (dal punto di taglio alla fine)
       const dispRaw = (c.durata && c.durata>0) ? Math.max(0.2, c.durata - cIn) : 3;
@@ -34535,6 +35524,10 @@ async function vaiSincronizzaBeat(){
         c.velocita = vv;
         c.taglioDurata = dispRaw;
       }
+      // Un montaggio sul ritmo vuole tagli netti: la dissolvenza sposta il taglio reale prima
+      // del punto calcolato (si "mangia" un pezzo della clip per sfumare) e ammorbidisce il
+      // colpo visivo che deve cadere esattamente sul beat. Tolgo qualunque transizione qui.
+      c.transizione = 'nessuna';
       applicate++;
     });
     try{ if(typeof _vaiRicalcolaGruppiEstesi==='function') _vaiRicalcolaGruppiEstesi(); }catch(e){}
@@ -34542,7 +35535,8 @@ async function vaiSincronizzaBeat(){
     try{ if(typeof vaiClipsRender==='function') vaiClipsRender(); }catch(e){}
     try{ _vaiDirty=true; }catch(e){}
     const extra = (modo==='taglia' && accelerate>0) ? ' ('+accelerate+' troppo corte: adattata la velocità)' : '';
-    toast('Montaggio sul ritmo: '+applicate+' clip agganciate al beat ('+B+' colpi)'+extra,'success');
+    const extraRaf = raffiche>0 ? ' · '+raffiche+' in raffica' : '';
+    toast('Montaggio sul ritmo: '+applicate+' clip agganciate al beat, tagli netti'+extraRaf+extra,'success');
   });
 }
 window.vaiSincronizzaBeat=vaiSincronizzaBeat;
@@ -35193,14 +36187,67 @@ window.vaiTrasfMenuChiudi=vaiTrasfMenuChiudi;
 window.vaiTrasfScegli=vaiTrasfScegli;
 window._vaiTrasfAggiornaAnteprima=_vaiTrasfAggiornaAnteprima;
 
-/* Inverti: NON è come le altre. L'anteprima non sa riprodurre un video al
-   contrario, e FFmpeg per invertire deve tenere in memoria tutti i fotogrammi
-   della clip. Lo dico invece di far finta che sia un interruttore come gli altri. */
+/* Inverti [30 ott 2026] — non è un interruttore come gli altri (specchia/ruota), perché
+   un elemento <video> non sa riprodursi all'indietro (playbackRate negativo non esiste)
+   e inseguire il tempo con tanti piccoli "seek" durante l'esportazione vera è lento e
+   impreciso (ogni seek può costare decine di millisecondi).
+   La soluzione: all'esportazione, PRIMA si cattura la clip intera avanti, un fotogramma
+   alla volta, in un elenco in memoria (_vaiCatturaFrameInvertiti) — i seek costosi si
+   fanno una volta sola, fuori dal tempo reale. Poi, durante l'esportazione vera, quei
+   fotogrammi si rigiocano dalla fine all'inizio, leggendoli dalla memoria: niente altri
+   seek, quindi niente scatti. Il segno dell'inversione lo decide solo questo interruttore
+   sulla clip (clip.inverti); il resto (_vaiRenderClipSuCanvas) lo legge all'esportazione. */
 function vaiInvertiClip(){
-  toast('«Inverti» non è ancora pronto: richiede di generare una copia rovesciata della clip. Ne parliamo se ti serve.','info');
-  console.log('[Trasforma] Inverti richiede: generazione di un file rovesciato via FFmpeg (filtro reverse, tutta la clip in memoria) + sostituzione della sorgente in anteprima. Non è un semplice interruttore.');
+  if(_vaiClipAttiva<0 || !_vaiClips[_vaiClipAttiva]){ toast('Seleziona prima una clip','error'); return; }
+  const c=_vaiClips[_vaiClipAttiva];
+  vaiSnapshot('inverti clip');
+  c.inverti=!c.inverti;
+  _vaiDirty=true;
+  try{ vaiClipsRender(); }catch(e){}
+  try{ vaiTlRender(); }catch(e){}
+  toast(c.inverti ? 'Clip invertita: nell\'export scorrerà al contrario (l\'anteprima qui resta avanti)' : 'Clip riportata al verso normale', 'success');
 }
 window.vaiInvertiClip=vaiInvertiClip;
+
+/* Cattura in memoria i fotogrammi della finestra [startAt, fineNormale] di un video,
+   avanti, a un passo fisso — serve solo per poterli rigiocare al contrario senza altri
+   seek durante l'esportazione vera (vedi commento sopra a vaiInvertiClip). */
+/* Cattura l'INTERA clip (0 → fine del file), non solo la finestra che serve in quel
+   momento: così la cattura si fa una volta sola per clip, PRIMA che il registratore
+   dell'esportazione parta (vedi vaiMontaTutto), e il risultato si riusa per qualunque
+   finestra [startAt,fineNormale] serva davvero. Se la cattura succedesse DURANTE la
+   registrazione vera, il canvas resterebbe fermo per tutto il tempo reale che i seek
+   impiegano — e captureStream(30) registra comunque quei secondi, come fotogrammi
+   fermi, allungando il video esportato molto oltre la durata vera della clip. */
+function _vaiCatturaFrameInvertiti(url){
+  return new Promise((resolve)=>{
+    const v=document.createElement('video');
+    v.muted=true; v.playsInline=true; v.preload='auto'; v.src=url;
+    const frames=[]; const FW=480; const FPS=12;
+    const killer=setTimeout(()=>{ try{ v.pause(); v.remove(); }catch(e){} resolve({frames, durata:0}); }, 30000);
+    v.onloadedmetadata=async ()=>{
+      let durata=0;
+      try{
+        durata=(isFinite(v.duration)&&v.duration>0)?v.duration:0;
+        const FH=Math.max(1, Math.round(FW*((v.videoHeight||16)/(v.videoWidth||9))));
+        const nPassi=Math.max(1, Math.round(durata*FPS));
+        for(let i=0;i<=nPassi;i++){
+          const tt=Math.min(durata, i*(durata/nPassi));
+          await _vaiSeekAndWait(v, tt);
+          const cv=document.createElement('canvas'); cv.width=FW; cv.height=FH;
+          try{ cv.getContext('2d').drawImage(v,0,0,FW,FH); }catch(e){}
+          let img=cv; try{ img=await createImageBitmap(cv); }catch(e){}
+          frames.push({ img, w:FW, h:FH });
+        }
+      }catch(e){}
+      clearTimeout(killer);
+      try{ v.pause(); v.remove(); }catch(e){}
+      resolve({frames, durata});
+    };
+    v.onerror=()=>{ clearTimeout(killer); resolve({frames, durata:0}); };
+  });
+}
+window._vaiCatturaFrameInvertiti=_vaiCatturaFrameInvertiti;
 
 /* ══════════ DIVIDI LA CLIP NEL PUNTO DEL CURSORE (agosto 2026) ══════════
    Mancava: si poteva accorciare una clip dai bordi, ma non spezzarla in due nel
@@ -37004,6 +38051,79 @@ function vaiMdsApplica(){
 window.vaiMontaDaSolo=vaiMontaDaSolo; window.vaiMdsRispondi=vaiMdsRispondi;
 window.vaiMdsApplica=vaiMdsApplica; window.vaiMdsChiudiDomande=vaiMdsChiudiDomande;
 
+/* ═══════════ EFFETTI SUL PARLATO [28 ott 2026] ═══════════
+   Ascolta (con Gemini, che capisce audio e video insieme — Claude via il
+   proxy non legge audio) cosa dici nella clip e propone piccoli effetti
+   grafici — un'emoji e poche parole — nei momenti in cui nomini un numero,
+   un prezzo, un luogo o dici qualcosa di forte, come nei video TikTok/Reel.
+   Riusa DI PROPOSITO la stessa forma di scritta e la stessa vaiMdsApplica()
+   di "Monta da solo" qui sopra (t/durata/testo/sotto/ruolo): eredita gratis
+   tutta la logica già rifinita lì (scritte mai sovrapposte, tempi riscalati
+   se serve, tracce dedicate, Annulla). L'unica differenza è COSA genera il
+   piano: lì i fotogrammi via Claude, qui il parlato via Gemini. */
+function _vaiFileABase64(file){
+  return new Promise(function(ok,ko){
+    const r=new FileReader();
+    r.onload=function(){ const s=String(r.result||''); const i=s.indexOf(','); ok(i>=0?s.slice(i+1):s); };
+    r.onerror=function(){ ko(new Error('file non leggibile')); };
+    r.readAsDataURL(file);
+  });
+}
+async function vaiEffettiParlato(){
+  if(!_vaiClips.length){ toast('Carica prima un video','error'); return; }
+  const chiave=(typeof _psGemChiave==='function')?_psGemChiave():'';
+  if(!chiave){ toast('Serve una chiave Google Gemini (quella di "Foto AI"): aggiungila nelle impostazioni dell\'AI','error'); return; }
+  const ci=(_vaiClipAttiva>=0 && _vaiClips[_vaiClipAttiva]) ? _vaiClipAttiva : 0;
+  const clip=_vaiClips[ci];
+  if(!clip || !clip.file){ toast('Seleziona una clip con un video caricato (non una foto)','error'); return; }
+  const durEff=function(c){ return (typeof _vaiDurataEff==='function')?(_vaiDurataEff(c)||c.durata||0):(c.durata||0); };
+  const durata=durEff(clip);
+  if(durata>90){ toast('Questa clip dura più di 90 secondi: funziona meglio su un video breve, tipo Reel o TikTok','error'); return; }
+  toast('Ascolto cosa dici nel video…','');
+  try{
+    const b64=await _vaiFileABase64(clip.file);
+    const mime=clip.file.type||'video/webm';
+    const ctxImm=(typeof _vaiImmContext==='function')?(_vaiImmContext()||''):'';
+    const sys='Guarda E ASCOLTA questo video: una persona parla in prima persona davanti alla camera (o fuori campo). '+
+      'Compito: trova i MOMENTI in cui dice qualcosa che si presta a un piccolo effetto grafico a comparsa, come quelli dei video TikTok/Reel — un\'etichetta brevissima con un\'emoji, che spunta quando pronuncia un numero, un prezzo, un luogo, una misura, una caratteristica forte o un\'affermazione netta (esempi: dice "189 mila euro" → compare "💰 189.000€"; dice "tre camere" → compare "🛏️ 3 camere"; dice "vista mare" → compare "🌊 Vista mare"). '+
+      'Usa il SECONDO ESATTO in cui lo dice (ascolta davvero l\'audio, non stimare). Testo dell\'effetto: cortissimo, massimo 4 parole, con un\'emoji scelta bene all\'inizio. Resta visibile 1.5-2.5 secondi, mai più lungo della frase in cui lo dice. '+
+      'Sii selettivo: solo sui momenti che hanno davvero impatto. Se parla a lungo senza dire nulla che si presti a un effetto, lascia quel tratto senza nulla — meglio pochi effetti precisi che tanti e confusi. Se non c\'è NESSUN momento buono, restituisci una lista vuota: non inventare.'+
+      (ctxImm?('\n\nDati reali dell\'immobile, SOLO per riconoscere un numero/dato detto a voce (non aggiungere dati che non vengono detti):\n'+ctxImm):'')+
+      '\n\nRispondi SOLO con JSON valido, senza testo attorno e SENZA blocchi markdown, in questa forma ESATTA:\n'+
+      '{"scritte":[{"t":<secondo esatto>,"durata":<secondi, 1.5-2.5>,"testo":"<emoji e massimo 4 parole>","sotto":"","ruolo":"dato"}]}';
+    const modello='gemini-2.5-flash';   // serve capire audio+video insieme: il modello immagine (Nano Banana) non li legge
+    const r=await fetch(PS_GEM.base+'/models/'+encodeURIComponent(modello)+':generateContent', {
+      method:'POST', headers:{ 'Content-Type':'application/json', 'x-goog-api-key':chiave },
+      body:JSON.stringify({ contents:[{ role:'user', parts:[ { inlineData:{ mimeType:mime, data:b64 } }, { text:sys } ] }] })
+    });
+    const data=await _psGemRisposta(r);
+    const cand=(data.candidates||[])[0];
+    const txt=(cand && cand.content && Array.isArray(cand.content.parts) ? cand.content.parts.map(function(p){ return p.text||''; }).join('') : '').trim();
+    if(!txt) throw new Error('Gemini non ha risposto nulla (video troppo lungo o formato non capito)');
+    const piano=(typeof faiParseJSON==='function'?faiParseJSON(txt):null) || (typeof _descParseJSON==='function'?_descParseJSON(txt):null);
+    if(!piano || !Array.isArray(piano.scritte)) throw new Error('risposta non interpretabile (vedi console per il testo)');
+    if(!piano.scritte.length){ toast('Non ho trovato momenti giusti per un effetto in questo video','warn'); return; }
+
+    // il tempo di Gemini è relativo all'inizio di QUESTA clip sola: lo sposto avanti di
+    // quanto dura tutto ciò che viene prima nel progetto, così vaiMdsApplica() (che lavora
+    // su tempi globali, come già fa "Monta da solo") lo colloca sulla clip giusta
+    let offset=0;
+    for(let i=0;i<ci;i++) offset+=durEff(_vaiClips[i]);
+    piano.scritte.forEach(function(s){ s.t=(Number(s.t)||0)+offset; if(!s.durata || s.durata<=0) s.durata=2; });
+
+    let durataTot=0;
+    _vaiClips.forEach(function(c){ durataTot+=durEff(c); });
+
+    _vaiMdsStato={ piano:piano, durataTot:durataTot, offsets:[] };
+    vaiMdsApplica();
+    toast(piano.scritte.length+(piano.scritte.length===1?' effetto aggiunto':' effetti aggiunti')+' sul parlato','success');
+  }catch(e){
+    console.error('[Effetti sul parlato] errore:', e);
+    toast('Non riuscito: '+((e&&e.message)||e),'error');
+  }
+}
+window.vaiEffettiParlato=vaiEffettiParlato;
+
 /* ═══════════════════════════════════════════════════════════════════
    REEL COMPLETO — un pulsante che porta dall'immobile al video finito.
    Non reinventa nulla: mette in fila gli strumenti che già funzionano
@@ -37854,6 +38974,234 @@ function _vdcFinestraPartenza(st){
   });
 }
 
+/* ═══════════ GOBBO / TELEPROMPTER [28 ott 2026] ═══════════
+   Registra dalla videocamera del dispositivo con un testo che scorre sopra
+   l'anteprima: resta SOLO sullo schermo di chi registra, non entra nel video
+   (si registra lo stream della camera, non un canvas composito). Parte da
+   un testo già scritto (un'idea del Piano Social) o libero. Il video
+   registrato diventa una clip normale in _vaiClips, come quelle caricate
+   "Dal computer": da lì si monta con gli strumenti già esistenti. */
+let _vaiGobbo=null;
+
+function _vaiGobboTestiCandidati(){
+  const s=(typeof _settData==='function') ? _settData() : null;
+  if(!s || !Array.isArray(s.idee)) return [];
+  return s.idee.filter(x=>x && !x.archiviata && x.testi && (x.testi.ig||x.testi.fb||x.testi.tt))
+    .sort((a,b)=>(b.creata||0)-(a.creata||0)).slice(0,20)
+    .map(x=>({ id:x.id, titolo:x.titolo||'(senza titolo)', testo:String(x.testi.ig||x.testi.fb||x.testi.tt||'').trim() }));
+}
+
+function vaiApriGobbo(){
+  if(_vaiGobbo){ toast('Il gobbo è già aperto','error'); return; }
+  const cand=_vaiGobboTestiCandidati();
+  const opz=cand.map(c=>'<option value="'+_settEsc(c.id)+'">'+_settEsc(c.titolo)+'</option>').join('');
+  const testoIniziale=cand.length ? cand[0].testo : '';
+  const ov=document.createElement('div');
+  ov.id='vai-gobbo';
+  ov.style.cssText='position:fixed;inset:0;z-index:100001;background:#05080C;display:flex;flex-direction:column';
+  ov.innerHTML=
+    '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#0D1B2A;border-bottom:1px solid rgba(255,255,255,.1)">'+
+      '<div style="color:#fff;font-weight:800;font-size:.95rem">🎤 Gobbo per registrare</div>'+
+      '<button id="vai-gobbo-chiudi" style="background:transparent;border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:8px;padding:6px 12px;font-weight:700;cursor:pointer">Chiudi</button>'+
+    '</div>'+
+    '<div style="flex:1;display:flex;flex-direction:column;min-height:0;position:relative;background:#000">'+
+      '<video id="vai-gobbo-video" autoplay muted playsinline style="flex:1;width:100%;height:100%;object-fit:cover;background:#000"></video>'+
+      '<div id="vai-gobbo-prompt" style="position:absolute;top:6%;left:5%;right:5%;max-height:46%;overflow:hidden;background:rgba(0,0,0,.45);border-radius:10px;padding:10px 14px;pointer-events:none">'+
+        '<div id="vai-gobbo-prompt-testo" style="color:#fff;font-size:19px;line-height:1.5;font-weight:600;white-space:pre-wrap"></div>'+
+      '</div>'+
+      '<div id="vai-gobbo-anteprima" style="display:none;position:absolute;inset:0;background:#000;align-items:center;justify-content:center">'+
+        '<video id="vai-gobbo-player" controls playsinline style="max-width:100%;max-height:100%"></video>'+
+      '</div>'+
+    '</div>'+
+    '<div id="vai-gobbo-pannello" style="background:#0D1B2A;border-top:1px solid rgba(255,255,255,.1);padding:12px 14px;display:flex;flex-direction:column;gap:10px;max-height:46vh;overflow:auto">'+
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
+        '<label style="color:#93A5B8;font-size:.78rem">Parti da:</label>'+
+        '<select id="vai-gobbo-scelta" style="flex:1;min-width:140px;background:#152233;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:6px 8px">'+
+          '<option value="">— testo libero —</option>'+opz+
+        '</select>'+
+      '</div>'+
+      '<textarea id="vai-gobbo-testo" placeholder="Scrivi o incolla qui il testo da leggere…" style="width:100%;min-height:70px;background:#152233;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:8px;font-size:.92rem;resize:vertical">'+_settEsc(testoIniziale)+'</textarea>'+
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
+        '<label style="color:#93A5B8;font-size:.78rem">Velocità</label><input id="vai-gobbo-velocita" type="range" min="10" max="120" value="40" style="flex:1;min-width:80px">'+
+        '<label style="color:#93A5B8;font-size:.78rem">Dimensione testo</label><input id="vai-gobbo-dimensione" type="range" min="14" max="36" value="19" style="flex:1;min-width:80px">'+
+      '</div>'+
+      '<div id="vai-gobbo-azioni" style="display:flex;gap:8px;flex-wrap:wrap">'+
+        '<button id="vai-gobbo-avvia-cam" class="vai-start-btn vai-start-vdi">📷 Attiva la videocamera</button>'+
+      '</div>'+
+    '</div>';
+  document.body.appendChild(ov);
+  _vaiGobbo={ overlay:ov, stream:null, rec:null, chunks:[], mime:'', blob:null, scrollTimer:null, registrando:false, facing:'user' };
+  document.getElementById('vai-gobbo-chiudi').addEventListener('click', _vaiGobboChiudi);
+  document.getElementById('vai-gobbo-avvia-cam').addEventListener('click', _vaiGobboAvviaCamera);
+  document.getElementById('vai-gobbo-scelta').addEventListener('change', function(){
+    const c=cand.find(x=>x.id===this.value);
+    document.getElementById('vai-gobbo-testo').value = c ? c.testo : '';
+    _vaiGobboAggiornaPrompt();
+  });
+  document.getElementById('vai-gobbo-testo').addEventListener('input', _vaiGobboAggiornaPrompt);
+  document.getElementById('vai-gobbo-dimensione').addEventListener('input', _vaiGobboAggiornaPrompt);
+  _vaiGobboAggiornaPrompt();
+}
+
+function _vaiGobboAggiornaPrompt(){
+  if(!_vaiGobbo) return;
+  const testo=(document.getElementById('vai-gobbo-testo')||{}).value||'';
+  const dim=(document.getElementById('vai-gobbo-dimensione')||{}).value||19;
+  const el=document.getElementById('vai-gobbo-prompt-testo');
+  if(el){ el.textContent=testo; el.style.fontSize=dim+'px'; }
+}
+
+async function _vaiGobboAvviaCamera(){
+  const g=_vaiGobbo; if(!g) return;
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ toast('Questo browser non permette l\'accesso alla videocamera','error'); return; }
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({ video:{ facingMode:g.facing }, audio:true });
+    g.stream=stream;
+    const v=document.getElementById('vai-gobbo-video');
+    v.srcObject=stream;
+    v.style.transform=(g.facing==='user') ? 'scaleX(-1)' : 'none';
+    v.play().catch(()=>{});
+    _vaiGobboRenderControlli();
+  }catch(e){
+    toast('Videocamera non disponibile: '+((e&&e.message)||'permesso negato'),'error');
+  }
+}
+
+function _vaiGobboRenderControlli(){
+  const g=_vaiGobbo; if(!g) return;
+  const az=document.getElementById('vai-gobbo-azioni'); if(!az) return;
+  az.innerHTML=
+    '<button id="vai-gobbo-flip" class="vai-start-btn vai-start-vdi">🔄 Cambia camera</button>'+
+    '<button id="vai-gobbo-scroll" class="vai-start-btn vai-start-vdi">'+(g.scrollTimer?'⏸ Ferma lo scorrimento':'▶️ Fai scorrere')+'</button>'+
+    (g.registrando
+      ? '<button id="vai-gobbo-stop" class="vai-start-btn vai-start-open">⏹ Ferma la registrazione</button>'
+      : '<button id="vai-gobbo-rec" class="vai-start-btn vai-start-open">⏺ Inizia a registrare</button>');
+  const fb=document.getElementById('vai-gobbo-flip'); if(fb) fb.addEventListener('click', _vaiGobboCambiaCamera);
+  const sb=document.getElementById('vai-gobbo-scroll'); if(sb) sb.addEventListener('click', _vaiGobboToggleScroll);
+  const rb=document.getElementById('vai-gobbo-rec'); if(rb) rb.addEventListener('click', _vaiGobboInizia);
+  const stb=document.getElementById('vai-gobbo-stop'); if(stb) stb.addEventListener('click', _vaiGobboFerma);
+}
+
+function _vaiGobboCambiaCamera(){
+  const g=_vaiGobbo; if(!g || !g.stream) return;
+  g.facing=(g.facing==='user')?'environment':'user';
+  g.stream.getTracks().forEach(t=>t.stop());
+  g.stream=null;
+  _vaiGobboAvviaCamera();
+}
+
+function _vaiGobboToggleScroll(){
+  const g=_vaiGobbo; if(!g) return;
+  const box=document.getElementById('vai-gobbo-prompt');
+  const btn=document.getElementById('vai-gobbo-scroll');
+  if(g.scrollTimer){
+    clearInterval(g.scrollTimer); g.scrollTimer=null;
+    if(btn) btn.textContent='▶️ Fai scorrere';
+    return;
+  }
+  if(btn) btn.textContent='⏸ Ferma lo scorrimento';
+  g.scrollTimer=setInterval(function(){
+    const vEl=document.getElementById('vai-gobbo-velocita');
+    const v=Number((vEl&&vEl.value)||40);
+    if(box){
+      box.scrollTop+=v/10;
+      if(box.scrollTop+box.clientHeight>=box.scrollHeight){ clearInterval(g.scrollTimer); g.scrollTimer=null; if(btn) btn.textContent='▶️ Fai scorrere'; }
+    }
+  }, 100);
+}
+
+function _vaiGobboMime(){
+  if(!window.MediaRecorder || !MediaRecorder.isTypeSupported) return '';
+  const tipi=['video/mp4;codecs=h264,aac','video/mp4','video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+  for(let i=0;i<tipi.length;i++) if(MediaRecorder.isTypeSupported(tipi[i])) return tipi[i];
+  return '';
+}
+
+function _vaiGobboInizia(){
+  const g=_vaiGobbo; if(!g || !g.stream) return;
+  if(!window.MediaRecorder){ toast('Questo browser non sa registrare video (MediaRecorder non disponibile)','error'); return; }
+  const mime=_vaiGobboMime();
+  try{
+    g.rec=mime ? new MediaRecorder(g.stream,{ mimeType:mime }) : new MediaRecorder(g.stream);
+    g.mime=mime||'video/webm';
+  }catch(e){ toast('Non riesco ad avviare la registrazione: '+((e&&e.message)||e),'error'); return; }
+  g.chunks=[];
+  g.rec.ondataavailable=function(e){ if(e.data && e.data.size) g.chunks.push(e.data); };
+  g.rec.onstop=_vaiGobboRegistrazioneFinita;
+  g.rec.start();
+  g.registrando=true;
+  if(!g.scrollTimer) _vaiGobboToggleScroll();   // fa scorrere da sola, se non era già partito
+  _vaiGobboRenderControlli();
+  toast('Registrazione avviata','success');
+}
+
+function _vaiGobboFerma(){
+  const g=_vaiGobbo; if(!g || !g.rec) return;
+  try{ g.rec.stop(); }catch(e){}
+  g.registrando=false;
+}
+
+function _vaiGobboRegistrazioneFinita(){
+  const g=_vaiGobbo; if(!g) return;
+  const blob=new Blob(g.chunks, { type:g.mime||'video/webm' });
+  g.blob=blob;
+  const url=URL.createObjectURL(blob);
+  const player=document.getElementById('vai-gobbo-player');
+  if(player) player.src=url;
+  const ant=document.getElementById('vai-gobbo-anteprima'); if(ant) ant.style.display='flex';
+  if(g.scrollTimer){ clearInterval(g.scrollTimer); g.scrollTimer=null; }
+  const az=document.getElementById('vai-gobbo-azioni');
+  if(az) az.innerHTML=
+    '<button id="vai-gobbo-usa" class="vai-start-btn vai-start-open">✅ Usa questa clip</button>'+
+    '<button id="vai-gobbo-rifai" class="vai-start-btn vai-start-vdi">↩️ Rifai</button>';
+  const ub=document.getElementById('vai-gobbo-usa'); if(ub) ub.addEventListener('click', _vaiGobboUsaClip);
+  const rb=document.getElementById('vai-gobbo-rifai'); if(rb) rb.addEventListener('click', _vaiGobboRifai);
+}
+
+function _vaiGobboRifai(){
+  const g=_vaiGobbo; if(!g) return;
+  g.blob=null; g.chunks=[];
+  const ant=document.getElementById('vai-gobbo-anteprima'); if(ant) ant.style.display='none';
+  const player=document.getElementById('vai-gobbo-player');
+  if(player){ try{ if(player.src) URL.revokeObjectURL(player.src); }catch(e){} player.removeAttribute('src'); }
+  _vaiGobboRenderControlli();
+}
+
+function _vaiGobboUsaClip(){
+  const g=_vaiGobbo; if(!g || !g.blob) return;
+  const ext=/mp4/.test(g.mime||'')?'mp4':'webm';
+  const file=new File([g.blob], 'gobbo-'+Date.now()+'.'+ext, { type:g.mime||'video/webm' });
+  const url=URL.createObjectURL(file);
+  const clip={ id:_vaiNuovoIdClip(), file, url, nome:'Gobbo '+new Date().toLocaleDateString('it-IT'), durata:0, ambiente:'', scritte:[], logo:null, logoPos:{x:0.05,y:0.04,scale:0.22}, thumb:null, parlata:false, parlataAuto:false, parlataManuale:false };
+  _vaiClips.push(clip);
+  _vaiProbaDurata(clip);
+  _vaiAccodaThumb(clip);
+  _vaiAccodaRilevaParlato(clip);
+  if(_vaiClipAttiva<0) _vaiClipAttiva=0;
+  try{ document.getElementById('vai-drop').style.display='none'; }catch(e){}
+  try{ const pc=document.getElementById('vai-project-controls'); if(pc) pc.style.display='block'; }catch(e){}
+  try{ const sr=document.getElementById('vai-start-right'); if(sr) sr.style.display='flex'; }catch(e){}
+  try{ document.getElementById('vai-player-wrap').style.display='block'; }catch(e){}
+  vaiClipsRender();
+  try{ vaiClipSelect(_vaiClips.length-1, true); }catch(e){}
+  _vaiDirty=true;
+  toast('🎤 Clip del gobbo aggiunta: ora puoi montarla come le altre','success');
+  _vaiGobboChiudi();
+}
+
+function _vaiGobboChiudi(){
+  const g=_vaiGobbo; if(!g) return;
+  try{ if(g.rec && g.registrando) g.rec.stop(); }catch(e){}
+  try{ if(g.stream) g.stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
+  if(g.scrollTimer) clearInterval(g.scrollTimer);
+  try{
+    const player=document.getElementById('vai-gobbo-player');
+    if(player && player.src) URL.revokeObjectURL(player.src);
+  }catch(e){}
+  try{ g.overlay.remove(); }catch(e){}
+  _vaiGobbo=null;
+}
+
 async function vaiVideoDalleClip(){
   if(_vdiInCorso){ toast('C\'è già un video automatico in preparazione','error'); return; }
   if(typeof currentSection!=='undefined' && currentSection!=='videoai' && typeof switchSection==='function'){
@@ -38555,6 +39903,118 @@ function vaiInserisciScrittaProposta(payload){
   if(typeof vaiInspectorRender==='function') vaiInspectorRender();
   toast('Scritta inserita — ora puoi modificarla','success');
 }
+
+/* ═══════════ ANIMAZIONE SU MISURA (pulsante AI nella timeline) ═══════════
+   Enzo ferma il video nel punto che vuole e descrive a parole libere cosa
+   vuole vedere apparire — es. "traccia un rettangolo che misura 130 mq".
+   L'AI non genera un video vero: interpreta la richiesta e produce UNA
+   forma geometrica (rettangolo/quadrato/cerchio) con un'etichetta, che si
+   disegna progressivamente sopra il filmato, a sfondo trasparente — stesso
+   meccanismo delle scritte/figure già esistenti (tipo 'forma'), così resta
+   sempre un vero overlay compositato sul fotogramma reale, non un video a
+   parte da incollare sopra. */
+async function vaiCreaAnimazionePersonalizzata(){
+  const v=document.getElementById('vai-video');
+  if(!v||!v.videoWidth){ toast('Avvia un istante il video, poi fermati nel punto giusto e riprova','error'); return; }
+  const proxyUrl=(typeof aiGetProxy==='function')?aiGetProxy():'';
+  if(!proxyUrl){ vaiAvvisaProxy(); return; }
+  v.pause();
+  const tempo=v.currentTime;
+  const ov=_vaiMiniModal(
+    '<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:4px">'+_vaiIc('scintilla')+' Crea un\'animazione qui</div>'+
+    '<div style="color:#93A5B8;font-size:.76rem;margin-bottom:10px">Al secondo '+_vaiFmtT(tempo)+' del video. Descrivi cosa vuoi vedere apparire sopra il filmato — es. «traccia un rettangolo che misura 130 mq» o «un cerchio che evidenzia il balcone».</div>'+
+    '<textarea id="vai-can-prompt" rows="3" placeholder="Es.: crea un\'animazione con sfondo trasparente mentre traccia la forma di un rettangolo che misura 130 mq" style="width:100%;box-sizing:border-box;background:#080B0F;color:#E8EDF2;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:9px 11px;font-family:inherit;font-size:.84rem;resize:vertical;margin-bottom:12px"></textarea>'+
+    '<div style="color:#8FA3B8;font-size:.72rem;margin-bottom:6px">STILE DEL TRATTO</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px">'+
+      Object.keys(VAI_STILE_FORMA).map(k=>{
+        const st=VAI_STILE_FORMA[k];
+        return '<button type="button" class="vai-can-stile" data-s="'+k+'" style="padding:8px 4px;border-radius:8px;cursor:pointer;font-size:.72rem;font-weight:700;text-align:center;background:'+(k==='classico'?'#C9A84C':'#13263B')+';color:'+(k==='classico'?'#1A1205':st.defColor)+';border:1px solid rgba(255,255,255,.14)">'+st.label+'</button>';
+      }).join('')+
+    '</div>'+
+    '<div style="color:#6B7E92;font-size:.68rem;margin-bottom:12px">Per ora funziona solo con forme che si tracciano (rettangolo, quadrato, cerchio) più un\'etichetta — niente sfondo pieno, resta trasparente sopra il video. Non genera filmati o persone che si muovono.</div>'+
+    '<button id="vai-can-ok" class="vai-start-btn vai-start-open" style="width:100%;justify-content:center">✨ Genera l\'animazione</button>'
+  );
+  let stileScelto='classico';
+  ov.querySelectorAll('.vai-can-stile').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      stileScelto=b.getAttribute('data-s');
+      const st=VAI_STILE_FORMA[stileScelto];
+      ov.querySelectorAll('.vai-can-stile').forEach(x=>{
+        const on=(x===b);
+        x.style.background=on?'#C9A84C':'#13263B';
+        x.style.color=on?'#1A1205':(VAI_STILE_FORMA[x.getAttribute('data-s')].defColor);
+      });
+    });
+  });
+  const ta=ov.querySelector('#vai-can-prompt'); if(ta) setTimeout(()=>{ try{ ta.focus(); }catch(e){} },50);
+  const btn=ov.querySelector('#vai-can-ok');
+  if(btn) btn.addEventListener('click', async ()=>{
+    const richiesta=(ta&&ta.value||'').trim();
+    if(!richiesta){ toast('Scrivi prima cosa vuoi creare','error'); return; }
+    btn.disabled=true; btn.textContent='⏳ Sto generando…';
+    try{
+      await _vaiGeneraFormaAI(richiesta, tempo, stileScelto);
+      ov.remove();
+    }catch(e){
+      console.warn('[VAI] crea animazione KO', e);
+      toast('Errore nella generazione — '+((e&&e.message)||e),'error');
+      btn.disabled=false; btn.textContent='✨ Genera l\'animazione';
+    }
+  });
+}
+window.vaiCreaAnimazionePersonalizzata=vaiCreaAnimazionePersonalizzata;
+
+/* Interpreta la richiesta libera e inserisce la scritta tipo 'forma' nel punto giusto */
+async function _vaiGeneraFormaAI(richiesta, tempo, stileScelto){
+  const stileKey = VAI_STILE_FORMA[stileScelto] ? stileScelto : 'classico';
+  const proxyUrl=aiGetProxy();
+  const ctxImm=(typeof _vaiImmContext==='function')?_vaiImmContext():'';
+  const sys='Un utente sta montando un video immobiliare e ha fermato il video per chiedere una piccola animazione grafica da sovrapporre, a sfondo trasparente, sopra il filmato in questo punto. '+
+    'Puoi generare SOLO una di queste forme geometriche che si "tracciano" sullo schermo (il contorno si disegna progressivamente, senza riempimento) con un\'etichetta di testo al centro: rettangolo, quadrato, cerchio. '+
+    'Non puoi generare video reali, persone, oggetti fotorealistici o animazioni diverse da queste forme: se la richiesta chiede altro, interpreta comunque l\'INTENZIONE con la forma più vicina (es. "traccia i metri quadrati" → rettangolo con l\'etichetta dei mq; "evidenzia il balcone" → cerchio). '+
+    'Se la richiesta contiene un numero di metri quadrati, mettilo nell\'etichetta (es. "130 mq"). Se non ci sono numeri, usa come etichetta un testo breve (max 3 parole) che riassuma la richiesta. '+
+    (ctxImm||'')+
+    '\n\nRichiesta dell\'utente: "'+richiesta.replace(/"/g,"'")+'"'+
+    '\n\nRispondi SOLO con JSON valido, niente altro testo: {"forma":"rettangolo|quadrato|cerchio","etichetta":"<testo breve>","colore":"<colore esadecimale adatto, es. #ffffff o #C9A84C>","durata":<numero secondi tra 2 e 5>}';
+  const resp=await aiFetch(proxyUrl,{ method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ model:(typeof aiModel==='function'?aiModel():'claude-sonnet-4-6'), max_tokens:300,
+      messages:[{role:'user',content:[{type:'text',text:sys}]}] }) }, 20000);
+  const data=await resp.json();
+  let txt=''; try{ txt=(data.content||[]).map(b=>b.text||'').join('').trim(); }catch(e){}
+  let j=null; try{ j=JSON.parse(txt); }catch(e){ const m=txt.match(/\{[\s\S]*\}/); if(m){ try{ j=JSON.parse(m[0]); }catch(_){} } }
+  const formeValide=['rettangolo','quadrato','cerchio'];
+  const colDefStile = VAI_STILE_FORMA[stileKey].defColor;
+  if(!j || !formeValide.includes(j.forma)){
+    j=Object.assign({forma:'rettangolo', etichetta:richiesta.slice(0,24), colore:colDefStile, durata:3}, j||{});
+    if(!formeValide.includes(j.forma)) j.forma='rettangolo';
+  }
+  if(!_vaiClips || !_vaiClips.length){ toast('Carica prima un video','error'); return; }
+  vaiSnapshot('crea animazione su misura');
+  const ci=_vaiClipAttiva>=0?_vaiClipAttiva:0;
+  const c=_vaiClips[ci]||{};
+  const cIn=c.taglioInizio||0;
+  const offGlob=(typeof _vaiOffsetClip==='function')?_vaiOffsetClip(ci):0;
+  const localOut=(typeof _vaiRawToOutput==='function')?_vaiRawToOutput(c, Math.max(0,tempo-cIn)):Math.max(0,tempo-cIn);
+  const tGlob=offGlob+localOut;
+  const durataScelta=Math.max(2,Math.min(5,parseFloat(j.durata)||3));
+  const posto=(typeof _vaiTrovaPostoLibero==='function')?_vaiTrovaPostoLibero(0, tGlob, durataScelta):{traccia:0};
+  const nuova=_vaiPushScrittaGlobale(tGlob, {
+    tipo:'forma', forma:j.forma, etichetta:(j.etichetta||'').toString().slice(0,24),
+    color:(/^#[0-9a-f]{6}$/i.test(j.colore||'')?j.colore:colDefStile),
+    stileForma:stileKey,
+    durata:durataScelta, traccia:posto.traccia, x:0.5, y:0.5, w:0.5,
+    anim:'', animOut:''   // niente effetto generico: l'animazione è il tracciamento stesso
+  });
+  if(!nuova){ toast('Non riesco a inserire l\'animazione qui — prova un altro punto','error'); return; }
+  if(_vaiClipAttiva===ci) _vaiScritte=c.scritte||[];
+  _vaiSel={type:'scritta', id:nuova.id}; _vaiSelScritta=nuova.id; _vaiTracciaAttiva=posto.traccia;
+  _vaiDirty=true;
+  try{ _vaiRisolviSovrapposizioni(nuova.id); }catch(e){}
+  vaiTlRender(); vaiOverlayUpdate();
+  if(typeof vaiInspectorRender==='function') vaiInspectorRender();
+  toast('Animazione inserita — puoi spostarla o ridimensionarla','success');
+}
+window._vaiGeneraFormaAI=_vaiGeneraFormaAI;
 
 function vaiCattura(){
   try{
@@ -39592,8 +41052,11 @@ function vaiOverlayUpdate(){
           '<span class="vai-ov-ch vai-ov-ch-br" title="Dimensione" onmousedown="vaiScrittaResizeStart(event,\''+s.id+'\',\'size\')" ontouchstart="vaiScrittaResizeStart(event,\''+s.id+'\',\'size\')"></span>'
         : '';
       html += '<div class="vai-ov-box vai-ov-graf'+(editUI?' sel':'')+'" data-id="'+s.id+'" '+
-        'style="left:'+anchorLeft+'%;top:'+(s.y*100)+'%;transform:'+tx+';width:'+((s.w||0.5)*100)+'%" '+handlers+' '+
-        (editUI?('ondblclick="vaiGraficaModifica(event,\''+s.id+'\')"'):'')+'>'+
+        'style="left:'+anchorLeft+'%;top:'+(s.y*100)+'%;transform:'+tx+';width:'+((s.w||0.5)*100)+'%" '+
+        /* l'ondblclick specifico va PRIMA di handlers: un elemento con due attributi
+           ondblclick tiene solo il primo (il browser scarta i duplicati in silenzio),
+           quindi se restava dopo "vaiGraficaModifica" non partiva mai al doppio clic. */
+        (editUI?('ondblclick="vaiGraficaModifica(event,\''+s.id+'\')" '):'')+handlers+'>'+
         '<span class="vov-pill" style="background:'+bgCss+';color:'+(s.color||'#fff')+';font-size:'+grafFs+'cqw;padding:'+pad+';border-radius:'+radius+'">'+ico+_vaiEsc(s.testo||'')+'</span>'+
         grafH+
         '</div>';
@@ -39667,9 +41130,62 @@ function vaiOverlayUpdate(){
         figSpan='<span class="vov-linea" style="background:'+(s.color||'#fff')+';height:'+(2+((s.spessore||3)-3))+'px"></span>';
       }
       html += '<div class="vai-ov-box'+(editUI?' sel':'')+'" data-id="'+s.id+'" '+
-        'style="left:'+anchorLeft+'%;top:'+(s.y*100)+'%;transform:'+tx+';width:'+(s.w*100)+'%" '+handlers+' '+
-        (editUI?('ondblclick="vaiFiguraModifica(event,\''+s.id+'\')"'):'')+'>'+
+        'style="left:'+anchorLeft+'%;top:'+(s.y*100)+'%;transform:'+tx+';width:'+(s.w*100)+'%" '+
+        (editUI?('ondblclick="vaiFiguraModifica(event,\''+s.id+'\')" '):'')+handlers+'>'+
         figSpan+figHandles+
+        '</div>';
+    } else if(tipo==='forma'){
+      // forma generata dall'AI (pulsante "crea animazione qui"): un contorno che si
+      // traccia nel tempo (stroke-dasharray) + l'etichetta che compare alla fine —
+      // stessa logica, in versione SVG, del disegno sul canvas in _vaiDrawScrittaSuCanvas
+      const figHandles = editUI
+        ? '<span class="vai-ov-ch vai-ov-ch-tl" title="Dimensione" onmousedown="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')" ontouchstart="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')"></span>'+
+          '<span class="vai-ov-ch vai-ov-ch-tr" title="Dimensione" onmousedown="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')" ontouchstart="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')"></span>'+
+          '<span class="vai-ov-ch vai-ov-ch-bl" title="Dimensione" onmousedown="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')" ontouchstart="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')"></span>'+
+          '<span class="vai-ov-ch vai-ov-ch-br" title="Dimensione" onmousedown="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')" ontouchstart="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')"></span>'
+        : '';
+      const formaTipo=s.forma||'rettangolo';
+      const rap = formaTipo==='quadrato' ? 1 : (formaTipo==='cerchio' ? 1 : 0.68);
+      const vh = Math.round(100*rap);
+      const perim = formaTipo==='cerchio' ? (2*Math.PI*50) : (2*(100+vh));
+      const durataTot = Math.max(0.3, s.durata||3);
+      const faseTraccia = durataTot*0.62;
+      const tRel = editUI ? durataTot : Math.max(0, Math.min(durataTot, (t!=null?t:0) - s.t));
+      const progTr = Math.max(0, Math.min(1, faseTraccia>0 ? tRel/faseTraccia : 1));
+      const progEt = Math.max(0, Math.min(1, (tRel-faseTraccia)/Math.max(0.3, durataTot-faseTraccia)));
+      const dashOff = perim*(1-progTr);
+      const stileF = _vaiStileForma(s.stileForma);
+      const colF = s.color||stileF.defColor;
+      // L'anteprima non riproduce il tratteggio decorativo (es. Blueprint): il dasharray
+      // qui serve già a rivelare il tracciamento progressivo e i due usi non si possono
+      // sommare in SVG. Colore, bagliore e carattere dell'etichetta restano identici
+      // all'export — solo la "trama" della linea è un'approssimazione in anteprima.
+      const glowSvg = stileF.glow>0 ? (';filter:drop-shadow(0 0 '+(stileF.glow*3).toFixed(1)+'px '+(stileF.glowCol||colF)+')') : '';
+      const glowTxt = stileF.glow>0 ? (';filter:drop-shadow(0 0 '+(stileF.glow*2).toFixed(1)+'px '+(stileF.glowCol||colF)+')') : '';
+      const formaSvg = formaTipo==='cerchio'
+        ? '<circle cx="50" cy="50" r="48.5" fill="none" stroke="'+colF+'" stroke-width="'+(3*stileF.lw).toFixed(2)+'" stroke-dasharray="'+perim+'" stroke-dashoffset="'+dashOff+'" transform="rotate(-90 50 50)"/>'
+        : '<rect x="1.5" y="1.5" width="97" height="'+(vh-3)+'" fill="none" stroke="'+colF+'" stroke-width="'+(3*stileF.lw).toFixed(2)+'" stroke-dasharray="'+perim+'" stroke-dashoffset="'+dashOff+'"/>';
+      html += '<div class="vai-ov-box'+(editUI?' sel':'')+'" data-id="'+s.id+'" '+
+        'style="left:'+anchorLeft+'%;top:'+(s.y*100)+'%;transform:'+tx+';width:'+(s.w*100)+'%" '+
+        (editUI?('ondblclick="vaiFormaModifica(event,\''+s.id+'\')" '):'')+handlers+'>'+
+        '<svg viewBox="0 0 100 '+vh+'" style="width:100%;display:block;overflow:visible'+glowSvg+'">'+formaSvg+'</svg>'+
+        (s.etichetta?('<span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:'+colF+';font:'+(stileF.italic?'italic ':'')+stileF.weight+' 1.1cqw '+stileF.font+';text-shadow:0 2px 8px rgba(0,0,0,.6);opacity:'+progEt.toFixed(2)+';white-space:nowrap;pointer-events:none'+glowTxt+'">'+_vaiEsc(s.etichetta)+'</span>'):'')+
+        figHandles+
+        '</div>';
+    } else if(tipo==='emoji'){
+      // reazione emoji rilevata dal parlato: stesso rimbalzo in entrata e dissolvenza
+      // in uscita del disegno sul canvas, qui in versione CSS per l'anteprima dal vivo.
+      const durataTot=Math.max(0.3, s.durata||1.3);
+      const tRel = editUI ? durataTot*0.5 : Math.max(0, Math.min(durataTot, (t!=null?t:0)-s.t));
+      const pIn=Math.min(1, tRel/0.3);
+      const c1=1.70158, c3=c1+1;
+      const scalaIn=1 + c3*Math.pow(pIn-1,3) + c1*Math.pow(pIn-1,2);
+      const pOut=Math.max(0, Math.min(1, (tRel-(durataTot-0.35))/0.35));
+      const scalaFin=Math.max(0.05, scalaIn*(1-0.25*pOut));
+      const fsEm=fs*2.6*(s.size||1);
+      html += '<div class="vai-ov-box'+(editUI?' sel':'')+'" data-id="'+s.id+'" '+
+        'style="left:'+anchorLeft+'%;top:'+(s.y*100)+'%;transform:'+tx+'" '+handlers+'>'+
+        '<span style="display:block;font-size:'+fsEm+'cqw;line-height:1;opacity:'+(1-pOut).toFixed(3)+';transform:scale('+scalaFin.toFixed(3)+')">'+_vaiEsc(s.testo||'✨')+'</span>'+
         '</div>';
     } else {
       // testo normale — con formattazione completa (grassetto, corsivo, sottolineato, maiuscole, sfondo)
@@ -39888,7 +41404,7 @@ function _vaiFloatToolbar(s){
   const tipo = s.tipo || 'testo';
   const eTesto   = (tipo==='testo' || tipo==='titolo' || tipo==='lista' || tipo==='prezzo' || tipo==='rog' || tipo==='chips' || tipo==='bday' || tipo==='nessuna');
   const ePillola = (tipo==='badge' || tipo==='cta' || tipo==='contatto' || tipo==='contatti');
-  const eDisegno = (tipo==='freccia' || tipo==='immagine' || tipo==='cornice' || tipo==='linea');
+  const eDisegno = (tipo==='freccia' || tipo==='immagine' || tipo==='cornice' || tipo==='linea' || tipo==='forma');
   /* i comandi del carattere hanno senso solo dove c'è del testo scritto */
   const haCarattere = eTesto || ePillola;
   /* l'immagine importata ha i suoi colori: cambiarli non fa nulla */
@@ -40315,6 +41831,69 @@ function vaiFiguraModifica(e, id){
   if(rp) rp.addEventListener('input', function(){ s.rapporto=parseFloat(this.value); const l=ov.querySelector('#vfm-rp-v'); if(l)l.textContent=s.rapporto.toFixed(2); _vaiDirty=true; vaiOverlayUpdate(); });
 }
 window.vaiFiguraModifica=vaiFiguraModifica;
+
+/* Doppio click su una FORMA generata dall'AI = finestra di modifica (tipo di
+   forma, etichetta, colore) — altrimenti, una volta creata, l'unico modo per
+   cambiarla era cancellarla e rigenerarla da capo. */
+function vaiFormaModifica(e, id){
+  if(e){ e.preventDefault(); e.stopPropagation(); }
+  const s=_vaiScritte.find(x=>x.id===id); if(!s) return;
+  _vaiSelScritta=id; _vaiSel={type:'scritta', id};
+  const v=document.getElementById('vai-video'); if(v) v.pause();
+  const COLORI=['#ffffff','#C9A84C','#2E9B8F','#E14D4D','#3B82F6','#0D1B2A'];
+  const FORME=[['rettangolo','▭ Rettangolo'],['quadrato','◻ Quadrato'],['cerchio','◯ Cerchio']];
+  const ov=_vaiMiniModal(
+    '<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:10px">Modifica forma</div>'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Forma:</div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:14px">'+
+      FORME.map(f=>'<button class="vfo-forma" data-f="'+f[0]+'" style="flex:1;padding:9px 0;border-radius:8px;cursor:pointer;font-size:.8rem;font-weight:700;background:'+((s.forma||'rettangolo')===f[0]?'#C9A84C':'#13263B')+';color:'+((s.forma||'rettangolo')===f[0]?'#1A1205':'#fff')+';border:1px solid rgba(255,255,255,.14)">'+f[1]+'</button>').join('')+
+    '</div>'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Etichetta:</div>'+
+    '<input id="vfo-et" value="'+_vaiEsc(s.etichetta||'')+'" maxlength="24" style="width:100%;box-sizing:border-box;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:.86rem;margin-bottom:14px">'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Colore:</div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:14px">'+
+      COLORI.map(c=>'<button class="vfo-col" data-c="'+c+'" style="width:28px;height:28px;border-radius:50%;cursor:pointer;background:'+c+';border:2px solid '+((s.color||'#ffffff')===c?'#fff':'rgba(255,255,255,.2)')+'"></button>').join('')+
+    '</div>'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Stile del tratto:</div>'+
+    '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">'+
+      Object.keys(VAI_STILE_FORMA).map(k=>{
+        const st=VAI_STILE_FORMA[k]; const on=(s.stileForma||'classico')===k;
+        return '<button class="vfo-stile" data-s="'+k+'" style="padding:8px 4px;border-radius:8px;cursor:pointer;font-size:.72rem;font-weight:700;text-align:center;background:'+(on?'#C9A84C':'#13263B')+';color:'+(on?'#1A1205':st.defColor)+';border:1px solid rgba(255,255,255,.14)">'+st.label+'</button>';
+      }).join('')+
+    '</div>'
+  );
+  ov.querySelectorAll('.vfo-forma').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      s.forma=b.getAttribute('data-f');
+      ov.querySelectorAll('.vfo-forma').forEach(x=>{
+        const on=x===b;
+        x.style.background=on?'#C9A84C':'#13263B'; x.style.color=on?'#1A1205':'#fff';
+      });
+      _vaiDirty=true; vaiOverlayUpdate();
+    });
+  });
+  const et=ov.querySelector('#vfo-et');
+  if(et) et.addEventListener('input', function(){ s.etichetta=this.value; _vaiDirty=true; vaiOverlayUpdate(); });
+  ov.querySelectorAll('.vfo-col').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      s.color=b.getAttribute('data-c');
+      ov.querySelectorAll('.vfo-col').forEach(x=>x.style.borderColor=(x===b)?'#fff':'rgba(255,255,255,.2)');
+      _vaiDirty=true; vaiOverlayUpdate();
+    });
+  });
+  ov.querySelectorAll('.vfo-stile').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      s.stileForma=b.getAttribute('data-s');
+      ov.querySelectorAll('.vfo-stile').forEach(x=>{
+        const on=(x===b);
+        x.style.background=on?'#C9A84C':'#13263B';
+        x.style.color=on?'#1A1205':(VAI_STILE_FORMA[x.getAttribute('data-s')].defColor);
+      });
+      _vaiDirty=true; vaiOverlayUpdate();
+    });
+  });
+}
+window.vaiFormaModifica=vaiFormaModifica;
 
 /* Doppio click su una scritta = editing inline diretto (stile Canva) */
 function vaiScrittaEditTesto(e, id, campo){
@@ -41085,13 +42664,16 @@ function vaiTlRender(){
         const d=_vaiDurataEff(c);
         const left=(acc/durTot)*100, w=(d/durTot)*100; acc+=d;
         const sel=(_vaiSel && _vaiSel.type==='clip' && _vaiSel.idx===i)?' sel':'';
-        const thumb=c.thumb?('<img src="'+c.thumb+'" alt="">'):'';
+        const thumb = (c.filmstrip && c.filmstrip.length)
+          ? ('<div class="vai-tl-filmstrip">'+c.filmstrip.map(f=>'<img src="'+f+'" style="width:'+(100/c.filmstrip.length).toFixed(4)+'%" alt="">').join('')+'</div>')
+          : (c.thumb?('<img src="'+c.thumb+'" alt="">'):'');
         // sulla clip ATTIVA metto un canvas "vivo": rispecchia in tempo reale il fotogramma
         // che si vede a video, alla stessa velocità (rampa compresa) — non un'immagine ferma.
         const liveCanvas=(i===_vaiClipAttiva)?'<canvas class="vai-tl-live-canvas" id="vai-tl-live-canvas"></canvas>':'';
         const lockCls=_vaiVideoLock?' vai-tl-vclip-lock':'';
         return '<div class="vai-tl-vclip'+sel+lockCls+'" data-idx="'+i+'" style="left:'+left+'%;width:'+w+'%" '+(_vaiVideoLock?'':'onmousedown="vaiClipDragReorder(event,'+i+')" ontouchstart="vaiClipDragReorder(event,'+i+')"')+' title="'+_vaiEsc(c.nome||('Clip '+(i+1)))+'">'+
           thumb+liveCanvas+'<span class="vai-tl-vclip-n">'+(i+1)+'</span>'+
+          (c.inverti?'<span class="vai-tl-vclip-n" style="left:auto;right:3px;background:rgba(201,168,76,.9);color:#1A1205" title="Invertita: scorre al contrario nell\'export">⟲</span>':'')+
           (_vaiVideoLock?'':(
             '<span class="vai-tl-vclip-h vai-tl-vclip-hl" onmousedown="event.stopPropagation();vaiClipTrimStart(event,'+i+',\'left\')" ontouchstart="event.stopPropagation();vaiClipTrimStart(event,'+i+',\'left\')"></span>'+
             '<span class="vai-tl-vclip-h vai-tl-vclip-hr" onmousedown="event.stopPropagation();vaiClipTrimStart(event,'+i+',\'right\')" ontouchstart="event.stopPropagation();vaiClipTrimStart(event,'+i+',\'right\')"></span>'
@@ -41866,9 +43448,13 @@ function vaiInspectorRender(){
   } else if(_vaiSel.type==='scritta'){
     const s=_vaiScritte.find(x=>x.id===_vaiSel.id); if(!s){ insp.style.display='none'; return; }
     const startMs=Math.round(s.t*1000), endMs=Math.round((s.t+(s.durata||3))*1000);
+    const _formaSel=(s.tipo==='forma');
     insp.innerHTML=
-      '<div class="vai-insp-h"><span class="vai-insp-tag vai-insp-tag-text">TESTO</span> '+_vaiEsc((s.testo||'Scritta').substring(0,22))+'</div>'+
-      '<div class="vai-insp-row"><span class="vai-insp-l">Testo</span><input class="vai-insp-in" value="'+_vaiEsc(s.testo||'')+'" oninput="vaiScrittaEdit(\''+s.id+'\',\'testo\',this.value);vaiInspectorRefreshLive()"></div>'+
+      (_formaSel
+        ? ('<div class="vai-insp-h"><span class="vai-insp-tag vai-insp-tag-text">FORMA</span> '+_vaiEsc((s.forma||'rettangolo'))+'</div>'+
+           '<div class="vai-insp-row"><span class="vai-insp-l">Etichetta</span><input class="vai-insp-in" value="'+_vaiEsc(s.etichetta||'')+'" oninput="vaiScrittaEdit(\''+s.id+'\',\'etichetta\',this.value);vaiInspectorRefreshLive()"></div>')
+        : ('<div class="vai-insp-h"><span class="vai-insp-tag vai-insp-tag-text">TESTO</span> '+_vaiEsc((s.testo||'Scritta').substring(0,22))+'</div>'+
+           '<div class="vai-insp-row"><span class="vai-insp-l">Testo</span><input class="vai-insp-in" value="'+_vaiEsc(s.testo||'')+'" oninput="vaiScrittaEdit(\''+s.id+'\',\'testo\',this.value);vaiInspectorRefreshLive()"></div>'))+
       '<div class="vai-insp-row"><span class="vai-insp-l">Inizio</span><span class="vai-insp-val">'+_vaiFmtMs(startMs)+'</span><span class="vai-insp-l" style="margin-left:8px">Fine</span><span class="vai-insp-val">'+_vaiFmtMs(endMs)+'</span></div>'+
       '<div class="vai-insp-row"><span class="vai-insp-l">Durata</span>'+
         '<input class="vai-insp-num" type="number" min="1" max="20" step="0.5" value="'+(s.durata||3)+'" oninput="vaiScrittaEdit(\''+s.id+'\',\'durata\',this.value)"><span class="vai-insp-unit">s</span></div>'+
@@ -42230,7 +43816,7 @@ function _vaiCostruisciRecordProgetto(nome){
     velocita:c.velocita||1, rampaOn:!!c.rampaOn, rampaDa:c.rampaDa||1, rampaA:c.rampaA||1,
     taglioInizio:c.taglioInizio||0, taglioDurata:c.taglioDurata||null,
     // effetti e transizioni della clip (si perdevano alla riapertura)
-    zoomcine:c.zoomcine||null, kbTipo:c.kbTipo||null, transizione:c.transizione||null,
+    zoomcine:c.zoomcine||null, kbTipo:c.kbTipo||null, transizione:c.transizione||null, durataTrans:c.durataTrans||null,
     specchia:!!c.specchia, rot:c.rot||0,
     /* FERMO IMMAGINE: salvo anche il fotogramma originale, così riaprendo il
        progetto l'export continua ad animare l'IMMAGINE invece di ricodificare il
@@ -42275,7 +43861,6 @@ function _vaiCostruisciRecordProgetto(nome){
     /* l'allineamento (tempi di pronuncia carattere per carattere) viaggia col progetto:
        senza, riaprendolo le scritte tornerebbero a essere stimate sulla lunghezza */
     voce:(_vaiElUltimoBlob && _vaiVoceDur>0) ? { blob:_vaiElUltimoBlob, start:_vaiVoceStart, durata:_vaiVoceDur, vol:_vaiVoceVol, off:!!_vaiVoceOff, nome:_vaiVoceNome||'', allineamento:(window._vaiVoceAllineamento||null) } : null,
-    trans:(typeof window._vaiTransSnapshot==='function') ? window._vaiTransSnapshot() : null,
     beatFx:(typeof _vaiBeatFxTipo!=='undefined') ? _vaiBeatFxTipo : 'nessuno'
   };
 }
@@ -42383,7 +43968,7 @@ async function vaiCaricaProgetto(id){
       const url=file?URL.createObjectURL(file):null;
       const clip={ id:c.id||_vaiNuovoIdClip(), file:file||null, url, nome:c.nome, durata:c.durata||0, ambiente:c.ambiente||'', fit:c.fit||'contain', inqY:(typeof c.inqY==='number')?c.inqY:0.5, inqX:(typeof c.inqX==='number')?c.inqX:0.5, scritte:JSON.parse(JSON.stringify(c.scritte||[])), logo:null, logoPos:c.logoPos||{x:0.05,y:0.04,scale:0.22}, logoPosOwn:!!c.logoPosOwn,
         gridSplit:(typeof c.gridSplit==='number')?c.gridSplit:0.5, gridAudio:c.gridAudio||'sx', gridDir:c.gridDir||'auto',
-        gridB:(c.gridBlob&&c.gridB)?{ file:c.gridBlob, url:URL.createObjectURL(c.gridBlob), nome:c.gridB.nome||'', durata:c.gridB.durata||0, taglioInizio:c.gridB.taglioInizio||0, inqX:(typeof c.gridB.inqX==='number')?c.gridB.inqX:0.5, inqY:(typeof c.gridB.inqY==='number')?c.gridB.inqY:0.5 }:null, thumb:null, parlata:!!c.parlata, parlataAuto:false, parlataManuale:!!c.parlataManuale, velocita:c.velocita||1, rampaOn:!!c.rampaOn, rampaDa:c.rampaDa||1, rampaA:c.rampaA||1, taglioInizio:c.taglioInizio||0, taglioDurata:c.taglioDurata||null, zoomcine:c.zoomcine||null, kbTipo:c.kbTipo||null, transizione:c.transizione||null, effetto:c.effetto||null, grading:c.grading||null, lightLeak:c.lightLeak||null, daFoto:!!c.daFoto, _fermoImmagine:!!c.fermoImmagine, fotoSrc:c.fotoSrc||null, specchia:!!c.specchia, rot:c.rot||0, kbStatico:!!c.kbStatico };
+        gridB:(c.gridBlob&&c.gridB)?{ file:c.gridBlob, url:URL.createObjectURL(c.gridBlob), nome:c.gridB.nome||'', durata:c.gridB.durata||0, taglioInizio:c.gridB.taglioInizio||0, inqX:(typeof c.gridB.inqX==='number')?c.gridB.inqX:0.5, inqY:(typeof c.gridB.inqY==='number')?c.gridB.inqY:0.5 }:null, thumb:null, parlata:!!c.parlata, parlataAuto:false, parlataManuale:!!c.parlataManuale, velocita:c.velocita||1, rampaOn:!!c.rampaOn, rampaDa:c.rampaDa||1, rampaA:c.rampaA||1, taglioInizio:c.taglioInizio||0, taglioDurata:c.taglioDurata||null, zoomcine:c.zoomcine||null, kbTipo:c.kbTipo||null, transizione:c.transizione||null, durataTrans:c.durataTrans||null, effetto:c.effetto||null, grading:c.grading||null, lightLeak:c.lightLeak||null, daFoto:!!c.daFoto, _fermoImmagine:!!c.fermoImmagine, fotoSrc:c.fotoSrc||null, specchia:!!c.specchia, rot:c.rot||0, kbStatico:!!c.kbStatico };
       _vaiClips.push(clip);
       if(url) _vaiAccodaThumb(clip);
     });
@@ -42463,10 +44048,8 @@ async function vaiCaricaProgetto(id){
         _vaiElUltimoBlob=null; _vaiElUltimoUrl=null; _vaiVoceStart=0; _vaiVoceDur=0;
       }
     }catch(e){}
-    // ripristino transizioni/effetti per giunzione (vivono in desktop-export.js)
-    try{
-      if(rec.trans && typeof window._vaiTransRestore==='function') window._vaiTransRestore(rec.trans);
-    }catch(e){}
+    // (le transizioni tra le clip tornano da sole: viaggiano su ogni clip —
+    // c.transizione/c.durataTrans — già ricostruite poco sopra)
     // ripristino l'effetto beat globale
     try{
       if(rec.beatFx && typeof _vaiBeatFxTipo!=='undefined'){
@@ -42682,6 +44265,15 @@ function vaiTlZoomApply(){
 }
 function vaiTlZoomSet(v){ _vaiZoom=Math.max(1, Math.min(8, parseFloat(v)||1)); vaiTlZoomApply(); window._vaiTlMis=null; }
 function vaiTlZoom(dir){ vaiTlZoomSet(_vaiZoom + dir*0.5); }
+/* Rotellina del mouse sulla timeline = zoom, come negli editor video veri. Passo piccolo
+   (0.25) perché la rotellina manda tanti eventi di fila: a passo grande lo zoom "scatta"
+   invece di scorrere morbido. preventDefault blocca lo scroll della pagina sotto. */
+function _vaiTlWheelZoom(e){
+  e.preventDefault();
+  const dir = e.deltaY < 0 ? 1 : -1;
+  vaiTlZoomSet(_vaiZoom + dir*0.25);
+}
+window._vaiTlWheelZoom=_vaiTlWheelZoom;
 
 /* ── ALTEZZA TRACCE ── alza/abbassa la corsia video (miniature più grandi/piccole, stile CapCut) */
 let _vaiTrackH=40;
@@ -43696,7 +45288,7 @@ function _vaiScrittaDefault(over){
     traccia:0,              // livello/traccia (0,1,2...)
     anim:'',                // effetto di ingresso (vedi VAI_EFFETTI)
     animOut:'',             // effetto di uscita
-    tipo:'testo',           // testo | badge | pill | cta | freccia | contatto | cornice | linea
+    tipo:'testo',           // testo | badge | pill | cta | freccia | contatto | cornice | linea | forma
     bg:'',                  // colore sfondo (per badge/pill/cta)
     icona:''                // emoji/icona generica opzionale
   }, _vaiStileDefault||{}, { bgText:'', color:'#ffffff' }, over||{});
@@ -43733,7 +45325,9 @@ const VAI_SVG_ICONE = {
   vista:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>',
   sole:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19"/></svg>',
   chiave:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5"/><path d="M11.5 11.5L21 21M17 17l2-2M15 15l1.5-1.5"/></svg>',
-  riscaldamento:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2c1 2-1 3-1 5s2 2 1 5"/><path d="M15 2c1 2-1 3-1 5s2 2 1 5"/><path d="M5 14h14a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1v-5a1 1 0 011-1z"/></svg>'
+  riscaldamento:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2c1 2-1 3-1 5s2 2 1 5"/><path d="M15 2c1 2-1 3-1 5s2 2 1 5"/><path d="M5 14h14a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1v-5a1 1 0 011-1z"/></svg>',
+  clima:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>',
+  divano:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12V7a2 2 0 012-2h12a2 2 0 012 2v5"/><path d="M2 12h20v5a2 2 0 01-2 2H4a2 2 0 01-2-2z"/><line x1="4" y1="19" x2="4" y2="22"/><line x1="20" y1="19" x2="20" y2="22"/></svg>'
 };
 function _vaiSvgIco(key){ return VAI_SVG_ICONE[key]||''; }
 
@@ -43754,45 +45348,51 @@ function _vaiSvgComeImg(key, colore){
 
 const VAI_GRAFICHE = {
   badge: [
-    {label:'VENDESI', testo:'VENDESI', bg:'#E11D2A', color:'#ffffff', svg:'home'},
-    {label:'VENDUTO', testo:'VENDUTO', bg:'#DC2626', color:'#ffffff', svg:'check'},
-    {label:'NUOVO', testo:'NUOVO', bg:'#7C3AED', color:'#ffffff', svg:'star'},
-    {label:'IN VENDITA', testo:'IN VENDITA', bg:'#0D1B2A', color:'#ffffff', svg:'home'},
-    {label:'RIBASSATO', testo:'RIBASSATO', bg:'#F59E0B', color:'#0D1B2A', svg:'euro'},
-    {label:'AFFARE', testo:'AFFARE', bg:'#10B981', color:'#ffffff', svg:'fire'},
-    {label:'ESCLUSIVA', testo:'ESCLUSIVA', bg:'#C9A84C', color:'#0D1B2A', svg:'star'}
+    {label:'VENDESI', testo:'VENDESI', bg:'#E11D2A', color:'#ffffff', svg:'home', anim:'pop', animOut:'fade'},
+    {label:'VENDUTO', testo:'VENDUTO', bg:'#DC2626', color:'#ffffff', svg:'check', anim:'bounce', animOut:'fade'},
+    {label:'NUOVO', testo:'NUOVO', bg:'#7C3AED', color:'#ffffff', svg:'star', anim:'spin', animOut:'fade'},
+    {label:'IN VENDITA', testo:'IN VENDITA', bg:'#0D1B2A', color:'#ffffff', svg:'home', anim:'pop', animOut:'fade'},
+    {label:'RIBASSATO', testo:'RIBASSATO', bg:'#F59E0B', color:'#0D1B2A', svg:'euro', anim:'bounce', animOut:'fade'},
+    {label:'AFFARE', testo:'AFFARE', bg:'#10B981', color:'#ffffff', svg:'fire', anim:'pop', animOut:'fade'},
+    {label:'ESCLUSIVA', testo:'ESCLUSIVA', bg:'#C9A84C', color:'#0D1B2A', svg:'star', anim:'zoom', animOut:'fade'},
+    {label:'TRATTATIVA RISERVATA', testo:'TRATTATIVA RISERVATA', bg:'#0D1B2A', color:'#ffffff', svg:'chiave', anim:'slideL', animOut:'fade'},
+    {label:'OPEN HOUSE', testo:'OPEN HOUSE', bg:'#EC4899', color:'#ffffff', svg:'pin', anim:'bounce', animOut:'fade'},
+    {label:'PRONTA CONSEGNA', testo:'PRONTA CONSEGNA', bg:'#10B981', color:'#ffffff', svg:'check', anim:'pop', animOut:'fade'},
+    {label:'RISTRUTTURATO', testo:'RISTRUTTURATO', bg:'#0EA5E9', color:'#ffffff', svg:'star', anim:'zoom', animOut:'fade'}
   ],
   caratteristiche: [
-    {label:'Mq', testo:'mq', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'mq'},
-    {label:'Camere', testo:'camere', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'letto'},
-    {label:'Bagni', testo:'bagni', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'bagno'},
-    {label:'Piantina', testo:'Planimetria', tipo:'badge', bg:'#0D1B2A', color:'#fff', svg:'piantina'},
-    {label:'Vista mare', testo:'Vista mare', tipo:'badge', bg:'#0EA5E9', color:'#fff', svg:'mare'},
-    {label:'Terrazzo', testo:'Terrazzo', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'terrazzo'},
-    {label:'Giardino', testo:'Giardino', tipo:'badge', bg:'#10B981', color:'#fff', svg:'giardino'},
-    {label:'Posto auto', testo:'Posto auto', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'auto'},
-    {label:'Ascensore', testo:'Ascensore', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'ascensore'},
-    {label:'Vista', testo:'Panoramica', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'vista'},
-    {label:'Luminoso', testo:'Luminoso', tipo:'badge', bg:'#F59E0B', color:'#0D1B2A', svg:'sole'},
-    {label:'Pronto', testo:'Chiavi in mano', tipo:'badge', bg:'#C9A84C', color:'#0D1B2A', svg:'chiave'}
+    {label:'Mq', testo:'mq', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'mq', anim:'slideUp', animOut:'fade'},
+    {label:'Camere', testo:'camere', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'letto', anim:'slideUp', animOut:'fade'},
+    {label:'Bagni', testo:'bagni', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'bagno', anim:'slideUp', animOut:'fade'},
+    {label:'Piantina', testo:'Planimetria', tipo:'badge', bg:'#0D1B2A', color:'#fff', svg:'piantina', anim:'zoom', animOut:'fade'},
+    {label:'Vista mare', testo:'Vista mare', tipo:'badge', bg:'#0EA5E9', color:'#fff', svg:'mare', anim:'slideL', animOut:'fade'},
+    {label:'Terrazzo', testo:'Terrazzo', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'terrazzo', anim:'slideUp', animOut:'fade'},
+    {label:'Giardino', testo:'Giardino', tipo:'badge', bg:'#10B981', color:'#fff', svg:'giardino', anim:'slideUp', animOut:'fade'},
+    {label:'Posto auto', testo:'Posto auto', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'auto', anim:'slideUp', animOut:'fade'},
+    {label:'Ascensore', testo:'Ascensore', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'ascensore', anim:'slideUp', animOut:'fade'},
+    {label:'Vista', testo:'Panoramica', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'vista', anim:'slideL', animOut:'fade'},
+    {label:'Luminoso', testo:'Luminoso', tipo:'badge', bg:'#F59E0B', color:'#0D1B2A', svg:'sole', anim:'pop', animOut:'fade'},
+    {label:'Pronto', testo:'Chiavi in mano', tipo:'badge', bg:'#C9A84C', color:'#0D1B2A', svg:'chiave', anim:'pop', animOut:'fade'},
+    {label:'Climatizzato', testo:'Climatizzato', tipo:'badge', bg:'#0EA5E9', color:'#fff', svg:'clima', anim:'slideUp', animOut:'fade'},
+    {label:'Arredato', testo:'Arredato', tipo:'badge', bg:'#1A2330', color:'#E8EDF2', svg:'divano', anim:'slideUp', animOut:'fade'}
   ],
   cta: [
-    {label:'Seguici', testo:'Seguici', svg:'plus', bg:'#EC4899', color:'#ffffff'},
-    {label:'Link in bio', testo:'Link in bio', svg:'link', bg:'#0D1B2A', color:'#ffffff'},
-    {label:'Scrivi INFO', testo:'Scrivi INFO nei commenti', svg:'chat', bg:'#7C3AED', color:'#ffffff'},
-    {label:'Swipe up', testo:'Scorri su', svg:'up', bg:'rgba(13,27,42,.78)', color:'#ffffff'},
-    {label:'Salva', testo:'Salva il post', svg:'bookmark', bg:'#0EA5E9', color:'#ffffff'}
+    {label:'Seguici', testo:'Seguici', svg:'plus', bg:'#EC4899', color:'#ffffff', anim:'pop', animOut:'fade'},
+    {label:'Link in bio', testo:'Link in bio', svg:'link', bg:'#0D1B2A', color:'#ffffff', anim:'bounce', animOut:'fade'},
+    {label:'Scrivi INFO', testo:'Scrivi INFO nei commenti', svg:'chat', bg:'#7C3AED', color:'#ffffff', anim:'pop', animOut:'fade'},
+    {label:'Swipe up', testo:'Scorri su', svg:'up', bg:'rgba(13,27,42,.78)', color:'#ffffff', anim:'slideUp', animOut:'fade'},
+    {label:'Salva', testo:'Salva il post', svg:'bookmark', bg:'#0EA5E9', color:'#ffffff', anim:'pop', animOut:'fade'}
   ],
   contatto: [
-    {label:'WhatsApp', testo:'', svg:'whatsapp', bg:'#25D366', color:'#ffffff', campo:'tel'},
-    {label:'Telefono', testo:'', svg:'phone', bg:'#0D1B2A', color:'#ffffff', campo:'tel'},
-    {label:'Sito', testo:'', svg:'globe', bg:'#C9A84C', color:'#0D1B2A', campo:'sito'}
+    {label:'WhatsApp', testo:'', svg:'whatsapp', bg:'#25D366', color:'#ffffff', campo:'tel', anim:'pop', animOut:'fade'},
+    {label:'Telefono', testo:'', svg:'phone', bg:'#0D1B2A', color:'#ffffff', campo:'tel', anim:'pop', animOut:'fade'},
+    {label:'Sito', testo:'', svg:'globe', bg:'#C9A84C', color:'#0D1B2A', campo:'sito', anim:'slideUp', animOut:'fade'}
   ],
   deco: [
-    {label:'Freccia su', testo:'⬆', tipo:'freccia', color:'#ffffff', size:1.6},
-    {label:'Freccia giù', testo:'⬇', tipo:'freccia', color:'#ffffff', size:1.6},
-    {label:'Evidenzia', testo:'', tipo:'cornice', color:'#C9A84C'},
-    {label:'Linea', testo:'', tipo:'linea', color:'#ffffff'}
+    {label:'Freccia su', testo:'⬆', tipo:'freccia', color:'#ffffff', size:1.6, anim:'bounce', animOut:'fade'},
+    {label:'Freccia giù', testo:'⬇', tipo:'freccia', color:'#ffffff', size:1.6, anim:'bounce', animOut:'fade'},
+    {label:'Evidenzia', testo:'', tipo:'cornice', color:'#C9A84C', anim:'zoom', animOut:'fade'},
+    {label:'Linea', testo:'', tipo:'linea', color:'#ffffff', anim:'fade', animOut:'fade'}
   ],
   adesivi: [
     {label:'Cuore', testo:'❤️', size:2.2, anim:'pop', animOut:'fade'},
@@ -43813,6 +45413,21 @@ const VAI_GRAFICHE = {
     {label:'Applausi', testo:'👏', size:2.0, anim:'pop', animOut:'fade'}
   ]
 };
+
+/* ═══════════ ATLANTE STILI PER "CREA ANIMAZIONE QUI" [30 ott 2026] ═══════════
+   La forma tracciata (rettangolo/quadrato/cerchio + etichetta) resta la stessa
+   per sicurezza — niente codice generato dall'AI eseguito nel browser — ma il
+   TRATTO con cui si disegna cambia look: dash, bagliore, colore di base e
+   carattere dell'etichetta. "glowCol:null" per il neon vuol dire "usa il colore
+   scelto per la forma anche per il bagliore", come un vero bagliore al neon. */
+const VAI_STILE_FORMA = {
+  classico:     { label:'Classico',     dash:null,     lw:1,    glow:0.5, glowCol:'rgba(0,0,0,.5)',       font:'DM Sans, sans-serif',                  weight:900, italic:false, defColor:'#ffffff' },
+  blueprint:    { label:'Blueprint',    dash:[9,7],    lw:0.6,  glow:0.9, glowCol:'rgba(80,170,255,.6)',  font:'"JetBrains Mono", monospace',          weight:700, italic:false, defColor:'#8ECBFF' },
+  neon:         { label:'Neon anni 80', dash:null,     lw:1.3,  glow:2.4, glowCol:null,                    font:'DM Sans, sans-serif',                  weight:900, italic:false, defColor:'#FF2FD6' },
+  pergamena:    { label:'Pergamena',    dash:null,     lw:1.5,  glow:1.1, glowCol:'rgba(120,70,20,.55)',  font:'"DM Serif Display", Georgia, serif',   weight:700, italic:true,  defColor:'#C9A050' },
+  documentario: { label:'Documentario', dash:null,     lw:0.55, glow:0,   glowCol:'transparent',          font:'DM Sans, sans-serif',                  weight:600, italic:false, defColor:'#ffffff' }
+};
+function _vaiStileForma(key){ return VAI_STILE_FORMA[key] || VAI_STILE_FORMA.classico; }
 
 /* UN CLICK: la scritta copre TUTTO il video, dalla prima all'ultima clip.
    Porta la scritta all'inizio della prima clip e la estende su tutte le successive
@@ -44463,6 +46078,21 @@ async function vaiMontaTutto(){
     const mime = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4'
                : MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9'
                : 'video/webm';
+
+    // CLIP INVERTITE: catturo i loro fotogrammi ORA, prima che il registratore parta.
+    // captureStream(30) registra in tempo reale, fotogramma fermo compreso: se la
+    // cattura (tanti "seek" in sequenza, lenti) succedesse a registrazione già avviata,
+    // tutto quel tempo reale finirebbe nel video come immagine ferma, allungandolo
+    // di molto oltre la durata vera. Fuori dalla registrazione, invece, non costa nulla.
+    const clipsInvertite=_vaiClips.filter(c=>c.inverti && !c._frameInvCache);
+    if(clipsInvertite.length){
+      for(let i=0;i<clipsInvertite.length;i++){
+        setS('Preparo la clip invertita '+(i+1)+'/'+clipsInvertite.length+'…');
+        try{ clipsInvertite[i]._frameInvCache = await _vaiCatturaFrameInvertiti(clipsInvertite[i].url); }
+        catch(e){ clipsInvertite[i]._frameInvCache = { frames:[], durata:0 }; }
+      }
+    }
+
     const rec=new MediaRecorder(stream,{ mimeType:mime, videoBitsPerSecond:10000000 });
     const chunks=[];
     rec.ondataavailable=e=>{ if(e.data&&e.data.size) chunks.push(e.data); };
@@ -44473,13 +46103,21 @@ async function vaiMontaTutto(){
     const durataTot = _vaiClips.reduce((s,c)=> s + (c.durata && c.durata>0 ? c.durata : 3), 0);
     const infoCards = _vaiBuildInfoOverlays(durataTot);
 
-    // riproduco ogni clip in sequenza sullo stesso canvas
-    let tOffset=0;
+    // riproduco ogni clip in sequenza sullo stesso canvas — se una giunzione ha una
+    // transizione, le due clip si sovrappongono e si fondono invece del taglio secco;
+    // "startAt" porta avanti quanto della clip successiva è già stato mostrato durante
+    // la fusione, così non si rivede due volte lo stesso pezzetto.
+    let tOffset=0, startAt=0;
     for(let i=0;i<_vaiClips.length;i++){
       const clip=_vaiClips[i];
-      setS('Monto clip '+(i+1)+'/'+_vaiClips.length+'…');
-      await _vaiRenderClipSuCanvas(clip, ctx, cv.width, cv.height, infoCards, tOffset);
-      tOffset += (clip.durata && clip.durata>0 ? clip.durata : 3);
+      const prossima=(i<_vaiClips.length-1)?_vaiClips[i+1]:null;
+      const tr=(prossima && typeof _vaiTransPerGiunzione==='function')?_vaiTransPerGiunzione(i):null;
+      const transOut=(tr && tr.tipo!=='nessuna')?tr:null;
+      setS('Monto clip '+(i+1)+'/'+_vaiClips.length+'…'+(transOut?' (fusione con la successiva)':''));
+      const esito=await _vaiRenderClipSuCanvas(clip, ctx, cv.width, cv.height, infoCards, tOffset, startAt, transOut, prossima);
+      const durataClipEff=(clip.durata && clip.durata>0 ? clip.durata : 3) - startAt;
+      tOffset += durataClipEff;
+      startAt = (esito && esito.consumatoProssima) ? esito.consumatoProssima : 0;
     }
 
     if(rec.state!=='inactive') rec.stop();
@@ -44506,18 +46144,72 @@ async function vaiMontaTutto(){
 }
 
 /* Riproduce UNA clip su un canvas condiviso (per il montaggio unico),
-   imprimendo scritte, logo e schede info immobile (tempo globale = tOffset+tempo clip). */
-function _vaiRenderClipSuCanvas(clip, ctx, W, H, infoCards, tOffset){
-  infoCards = infoCards||[]; tOffset = tOffset||0;
+   imprimendo scritte, logo e schede info immobile (tempo globale = tOffset+tempo clip).
+   startAt: secondi da cui partire nel file di questa clip (>0 quando la clip precedente
+   l'ha già fatta vedere in parte durante una fusione). transOut+nextClip: se presenti,
+   gli ultimi transOut.durata secondi di QUESTA clip si fondono con l'inizio della
+   PROSSIMA invece di tagliare di netto — risolve "zhi.consumatoProssima" quanti secondi
+   della prossima sono già stati mostrati, così il chiamante non li ripete. */
+function _vaiRenderClipSuCanvas(clip, ctx, W, H, infoCards, tOffset, startAt, transOut, nextClip){
+  infoCards = infoCards||[]; tOffset = tOffset||0; startAt = startAt||0;
   return new Promise(async (resolve, reject)=>{
     const tv=document.createElement('video');
     tv.muted=true; tv.playsInline=true; tv.preload='auto'; tv.src=clip.url;
     const scritte=clip.scritte||[];
     const logo=clip.logo||null, logoPos=_vaiLogoPosDi(clip);
-    const onErr=(e)=>{ try{tv.remove();}catch(x){} resolve(); /* salto la clip ma non blocco il montaggio */ };
+    const onErr=(e)=>{ try{tv.remove();}catch(x){} resolve({}); /* salto la clip ma non blocco il montaggio */ };
     tv.onerror=onErr;
     tv.onloadedmetadata=async ()=>{
       try{
+        const durataClip=(isFinite(tv.duration)&&tv.duration>0)?tv.duration:(clip.durata||3);
+        const haTrans=!!(transOut && transOut.tipo && transOut.tipo!=='nessuna' && nextClip);
+        // la transizione "costa" secondi di coda a QUESTA clip: mi fermo prima, il resto
+        // lo disegna la fusione qui sotto. Mai più dei secondi che restano davvero.
+        const transDur=haTrans ? Math.min(transOut.durata||0.6, Math.max(0.15, durataClip-startAt-0.15)) : 0;
+        const fineNormale=durataClip-transDur;
+
+        if(clip.inverti){
+          // CLIP INVERTITA — vedi il commento su vaiInvertiClip: i fotogrammi sono già
+          // in clip._frameInvCache, catturati PRIMA che il registratore partisse (in
+          // vaiMontaTutto). Qui non si fa più nessun seek: solo letture dalla memoria,
+          // a tempo scandito — zero rischio di "rubare" secondi veri alla registrazione.
+          const cache = clip._frameInvCache || { frames:[], durata:durataClip };
+          const frames = cache.frames;
+          const durataSegmento=Math.max(0.05, fineNormale-startAt);
+          const nF=frames.length;
+          const durataCache=Math.max(0.05, cache.durata||durataClip);
+          if(nF>0){
+            const passoT=durataCache/Math.max(1,nF-1);
+            await new Promise(res=>{
+              const t0=performance.now();
+              const step=()=>{
+                const elapsed=(performance.now()-t0)/1000;
+                if(elapsed>=durataSegmento){ res(); return; }
+                const target=fineNormale-elapsed;   // il tempo "vero" nel file scende
+                const idx=Math.max(0, Math.min(nF-1, Math.round(target/passoT)));
+                const fr=frames[idx];
+                const vw=fr.w||W, vh=fr.h||H;
+                const ar=vw/vh, tr=W/H; let dw,dh,dx,dy;
+                if(ar>tr){ dh=H; dw=dh*ar; dx=(W-dw)/2; dy=0; } else { dw=W; dh=dw/ar; dx=0; dy=(H-dh)/2; }
+                ctx.fillStyle='#0D1B2A'; ctx.fillRect(0,0,W,H);
+                try{ ctx.drawImage(fr.img,dx,dy,dw,dh); }catch(e){}
+                const tGlob=tOffset+elapsed;
+                infoCards.forEach(c=> _vaiDrawInfoCard(ctx, W, H, c, tGlob));
+                const attive=scritte.filter(x=> !x.hidden && target>=x.t && target<=(x.t+(x.durata||3)) );
+                attive.forEach(s=> _vaiDrawScrittaSuCanvas(ctx, W, H, s, target) );
+                try{ _vaiDrawLogoContattiClip(ctx, W, H, logo, logoPos); }catch(e){ try{_vaiDrawLogoContatti(ctx,W,H);}catch(x){} }
+                requestAnimationFrame(step);
+              };
+              requestAnimationFrame(step);
+            });
+          }
+          // Niente transizione in uscita su una clip invertita in questa prima versione:
+          // l'ultimo fotogramma mostrato (il più indietro nel file) resta fermo un istante.
+          try{ tv.remove(); }catch(e){}
+          resolve({ consumatoProssima:0 });
+          return;
+        }
+
         let raf;
         const draw=()=>{
           // cover-fit del frame video sul canvas
@@ -44528,28 +46220,118 @@ function _vaiRenderClipSuCanvas(clip, ctx, W, H, infoCards, tOffset){
           ctx.fillStyle='#0D1B2A'; ctx.fillRect(0,0,W,H);
           try{ ctx.drawImage(tv,dx,dy,dw,dh); }catch(e){}
           const t=tv.currentTime;
-          const tGlob=tOffset+t; // tempo globale nel montaggio
+          const tGlob=tOffset+(t-startAt); // tempo globale nel montaggio
           // schede info immobile, ordinate sull'intera durata
           infoCards.forEach(c=> _vaiDrawInfoCard(ctx, W, H, c, tGlob));
           const attive=scritte.filter(x=> !x.hidden && t>=x.t && t<=(x.t+(x.durata||3)) );
           attive.forEach(s=> _vaiDrawScrittaSuCanvas(ctx, W, H, s, t) );
           try{ _vaiDrawLogoContattiClip(ctx, W, H, logo, logoPos); }catch(e){ try{_vaiDrawLogoContatti(ctx,W,H);}catch(x){} }
-          if(!tv.paused && !tv.ended) raf=requestAnimationFrame(draw);
+          if(!tv.paused && !tv.ended && tv.currentTime<fineNormale) raf=requestAnimationFrame(draw);
         };
-        tv.currentTime=0;
-        await _vaiSeekAndWait(tv,0);
+        tv.currentTime=startAt;
+        await _vaiSeekAndWait(tv,startAt);
         await tv.play();
         draw();
         await new Promise(res=>{
           let done=false; const fine=()=>{ if(done)return; done=true; res(); };
           tv.onended=fine;
-          setTimeout(fine, ((isFinite(tv.duration)&&tv.duration>0?tv.duration:(clip.durata||3))*1000)+1200);
+          setTimeout(fine, Math.max(0,(fineNormale-startAt))*1000+1200);
+          // ontimeupdate/raf non garantiscono di fermarsi ESATTAMENTE a fineNormale: un
+          // controllo leggero e frequente fa partire la fusione al punto giusto
+          const chk=setInterval(()=>{ if(tv.currentTime>=fineNormale-0.02 || tv.paused || tv.ended){ clearInterval(chk); fine(); } }, 30);
         });
         cancelAnimationFrame(raf);
+        let consumatoProssima=0;
+        if(transDur>0){
+          consumatoProssima=await _vaiRenderTransizioneSuCanvas(
+            tv, scritte, logo, logoPos, tOffset, startAt, nextClip, ctx, W, H, infoCards, transOut.tipo, transDur
+          );
+        }
         try{ tv.pause(); tv.remove(); }catch(e){}
-        resolve();
+        resolve({ consumatoProssima });
       }catch(e){ onErr(e); }
     };
+  });
+}
+
+/* Disegna la FUSIONE tra la clip che sta finendo (tvA, già in riproduzione, fermata al
+   suo punto di uscita) e l'inizio della prossima clip: per "durata" secondi entrambe
+   suonano e si disegnano insieme, mescolate secondo "tipo" — lo stesso linguaggio
+   visivo dell'anteprima dal vivo (_vaiAvviaTransizionePreview), qui ricalcolato
+   fotogramma per fotogramma così finisce DENTRO il file esportato, non solo a schermo.
+   Torna quanti secondi della prossima clip sono già stati mostrati qui. */
+function _vaiRenderTransizioneSuCanvas(tvA, scritteA, logoA, logoPosA, tOffsetA, startAtA, clipB, ctx, W, H, infoCards, tipo, durata){
+  return new Promise(async (resolve)=>{
+    const tvB=document.createElement('video');
+    tvB.muted=true; tvB.playsInline=true; tvB.preload='auto'; tvB.src=clipB.url;
+    await new Promise(res=>{ tvB.onloadedmetadata=res; tvB.onerror=res; });
+    try{ tvB.currentTime=0; await _vaiSeekAndWait(tvB,0); await tvB.play(); }catch(e){}
+    const scritteB=clipB.scritte||[];
+    const disegnaUno=(tv,ox,oy,alpha)=>{
+      const vw=tv.videoWidth||W, vh=tv.videoHeight||H;
+      if(!vw||!vh) return;
+      const ar=vw/vh, tr=W/H; let dw,dh,dx,dy;
+      if(ar>tr){ dh=H; dw=dh*ar; dx=(W-dw)/2; dy=0; } else { dw=W; dh=dw/ar; dx=0; dy=(H-dh)/2; }
+      ctx.globalAlpha=(alpha!=null)?Math.max(0,Math.min(1,alpha)):1;
+      try{ ctx.drawImage(tv,dx+(ox||0),dy+(oy||0),dw,dh); }catch(e){}
+      ctx.globalAlpha=1;
+    };
+    let raf, finito=false;
+    const fine=()=>{
+      if(finito) return; finito=true;
+      try{ cancelAnimationFrame(raf); }catch(e){}
+      try{ tvB.pause(); }catch(e){}
+      resolve(Math.min(durata, tvB.currentTime||durata));
+    };
+    const draw=()=>{
+      const p=Math.min(1, durata>0 ? (tvB.currentTime/durata) : 1);
+      ctx.fillStyle='#0D1B2A'; ctx.fillRect(0,0,W,H);
+      if(tipo==='fadeblack'||tipo==='fadewhite'){
+        const colore=(tipo==='fadewhite')?'#fff':'#000';
+        if(p<0.5){ disegnaUno(tvA); ctx.globalAlpha=p/0.5; ctx.fillStyle=colore; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1; }
+        else{ disegnaUno(tvB); ctx.globalAlpha=1-((p-0.5)/0.5); ctx.fillStyle=colore; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1; }
+      } else if(/^slide|^smooth/.test(tipo)){
+        disegnaUno(tvA);
+        const morbida=(tipo==='smoothleft'||tipo==='smoothup');
+        const pp=morbida?(1-Math.pow(1-p,3)):p;
+        let ox=0, oy=0;
+        if(tipo==='slideleft'||tipo==='smoothleft') ox=W*(1-pp);
+        else if(tipo==='slideright') ox=-W*(1-pp);
+        else if(tipo==='slideup'||tipo==='smoothup') oy=H*(1-pp);
+        else if(tipo==='slidedown') oy=-H*(1-pp);
+        disegnaUno(tvB, ox, oy, morbida?Math.min(1,0.55+0.45*pp):1);
+      } else if(tipo==='circleopen'||tipo==='circleclose'){
+        disegnaUno(tipo==='circleopen'?tvA:tvB);
+        const rr=(tipo==='circleopen'?p:1-p)*0.75*Math.hypot(W,H)/2;
+        ctx.save(); ctx.beginPath(); ctx.arc(W/2,H/2,Math.max(1,rr),0,Math.PI*2); ctx.clip();
+        disegnaUno(tipo==='circleopen'?tvB:tvA);
+        ctx.restore();
+      } else if(tipo==='wipeup'){
+        disegnaUno(tvA);
+        const h=H*p;
+        ctx.save(); ctx.beginPath(); ctx.rect(0,H-h,W,h); ctx.clip();
+        disegnaUno(tvB);
+        ctx.restore();
+      } else if(tipo==='pixelize'){
+        disegnaUno(tvA);
+        ctx.save(); try{ ctx.filter='blur('+(14*(1-p)).toFixed(1)+'px)'; }catch(e){}
+        disegnaUno(tvB,0,0,p);
+        ctx.restore(); try{ ctx.filter='none'; }catch(e){}
+      } else {
+        // fade, dissolve e qualunque tipo non mappato: dissolvenza incrociata
+        disegnaUno(tvA);
+        disegnaUno(tvB,0,0,p);
+      }
+      const tA=tvA.currentTime, tB=tvB.currentTime;
+      const tGlobA=tOffsetA+(tA-startAtA);
+      infoCards.forEach(c=> _vaiDrawInfoCard(ctx, W, H, c, tGlobA));
+      (scritteA||[]).filter(x=>!x.hidden && tA>=x.t && tA<=(x.t+(x.durata||3))).forEach(s=> _vaiDrawScrittaSuCanvas(ctx, W, H, s, tA));
+      (scritteB||[]).filter(x=>!x.hidden && tB>=x.t && tB<=(x.t+(x.durata||3))).forEach(s=> _vaiDrawScrittaSuCanvas(ctx, W, H, s, tB));
+      try{ _vaiDrawLogoContattiClip(ctx, W, H, logoA, logoPosA); }catch(e){}
+      if(p<1 && !finito) raf=requestAnimationFrame(draw); else fine();
+    };
+    draw();
+    setTimeout(fine, durata*1000+500);
   });
 }
 
@@ -45441,6 +47223,83 @@ function _vaiDrawScrittaSuCanvas(ctx, W, H, s, t){
         }
       }catch(e){}
     }
+    _finish(); return;
+  }
+  if(tipo==='forma'){
+    // forma generata dall'AI dal pulsante "crea animazione qui": un contorno (rettangolo,
+    // quadrato o cerchio) che si TRACCIA progressivamente nel tempo, poi l'etichetta che
+    // compare — nessun riempimento, quindi nessuno sfondo: resta trasparente sopra il video.
+    const formaTipo=s.forma||'rettangolo';
+    const bw=(s.w||0.5)*W;
+    const rap = formaTipo==='quadrato' ? 1 : (formaTipo==='cerchio' ? 1 : 0.68);
+    const bh = formaTipo==='cerchio' ? bw : bw*rap;
+    const stileF = _vaiStileForma(s.stileForma);
+    const colF = s.color||stileF.defColor;
+    const durataTot=Math.max(0.3, s.durata||3);
+    const faseTraccia=durataTot*0.62;
+    const tRel=(t!=null) ? Math.max(0, Math.min(durataTot, t-s.t)) : durataTot;
+    const progTraccia=Math.max(0, Math.min(1, faseTraccia>0 ? tRel/faseTraccia : 1));
+    const progEtichetta=Math.max(0, Math.min(1, (tRel-faseTraccia)/Math.max(0.3, durataTot-faseTraccia)));
+    ctx.strokeStyle=colF; ctx.lineWidth=Math.max(2, W*0.006)*stileF.lw; ctx.lineCap='round'; ctx.lineJoin='round';
+    try{ ctx.setLineDash(stileF.dash||[]); }catch(e){}
+    ctx.shadowColor=stileF.glowCol||colF; ctx.shadowBlur=W*0.01*stileF.glow;
+    if(formaTipo==='cerchio'){
+      ctx.beginPath();
+      ctx.arc(ax, ay, bw/2, -Math.PI/2, -Math.PI/2 + progTraccia*Math.PI*2);
+      ctx.stroke();
+    } else {
+      const x0=ax-bw/2, y0=ay-bh/2, x1=ax+bw/2, y1=ay+bh/2;
+      const lati=[[x0,y0,x1,y0],[x1,y0,x1,y1],[x1,y1,x0,y1],[x0,y1,x0,y0]];
+      const perim=2*(bw+bh);
+      let resto=progTraccia*perim;
+      ctx.beginPath();
+      for(const lato of lati){
+        if(resto<=0) break;
+        const lx0=lato[0], ly0=lato[1], lx1=lato[2], ly1=lato[3];
+        const lunghezza=Math.max(0.001, Math.hypot(lx1-lx0, ly1-ly0));
+        const frac=Math.min(1, resto/lunghezza);
+        ctx.moveTo(lx0,ly0);
+        ctx.lineTo(lx0+(lx1-lx0)*frac, ly0+(ly1-ly0)*frac);
+        resto-=lunghezza;
+      }
+      ctx.stroke();
+    }
+    try{ ctx.setLineDash([]); }catch(e){}
+    ctx.shadowBlur=0;
+    if(s.etichetta && progEtichetta>0){
+      const fsEt=Math.round(W*0.065);
+      ctx.font=(stileF.italic?'italic ':'')+stileF.weight+' '+fsEt+'px '+stileF.font;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.globalAlpha=Math.min(1, progEtichetta*1.6);
+      ctx.fillStyle=colF;
+      ctx.shadowColor = stileF.glow>0 ? (stileF.glowCol||colF) : 'rgba(0,0,0,.6)';
+      ctx.shadowBlur = stileF.glow>0 ? W*0.012*stileF.glow : W*0.012;
+      ctx.fillText(s.etichetta, ax, ay);
+      ctx.globalAlpha=1; ctx.shadowBlur=0;
+    }
+    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+    _finish(); return;
+  }
+  if(tipo==='emoji'){
+    // reazione emoji rilevata dal parlato: entra con un piccolo rimbalzo e sparisce
+    // in fretta — nessuno sfondo, nessuna etichetta, solo l'emoji sopra al video.
+    const durataTot=Math.max(0.3, s.durata||1.3);
+    const tRel=(t!=null) ? Math.max(0, Math.min(durataTot, t-s.t)) : durataTot*0.5;
+    const pIn=Math.min(1, tRel/0.3);
+    const c1=1.70158, c3=c1+1;
+    const scalaIn=1 + c3*Math.pow(pIn-1,3) + c1*Math.pow(pIn-1,2);
+    const pOut=Math.max(0, Math.min(1, (tRel-(durataTot-0.35))/0.35));
+    const scalaFin=Math.max(0.05, scalaIn*(1-0.25*pOut));
+    const fsEm=Math.round(W*0.13*(s.size||1));
+    ctx.save();
+    ctx.globalAlpha=1-pOut;
+    ctx.translate(ax,ay);
+    ctx.scale(scalaFin, scalaFin);
+    ctx.font=fsEm+'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    try{ ctx.fillText(s.testo||'✨', 0, 0); }catch(e){}
+    ctx.restore();
+    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
     _finish(); return;
   }
   if(tipo==='cornice'){
@@ -51576,6 +53435,164 @@ async function pubConfrontaAI(){
     _vaiTlRenderPigro = function(){ if(inCorso) return; return _orig.apply(this, arguments); };
   }
 })();
+/* ═══════════ RILEVAZIONE AUTOMATICA DI MQ/PREZZO/AMBIENTI DAL PARLATO [29 ott 2026] ═══════════
+   Nessuna IA, nessun dato inventato: legge SOLO le parole davvero riconosciute (con i
+   loro tempi) dal riconoscimento vocale locale e cerca schemi noti in italiano (numero +
+   "mq", "euro" + numero, "camere", "bagni", "terrazzo"...). Un numero scritto a parole
+   (es. "settanta", "centotrentadue", "quarantacinquemila") viene convertito in cifre. */
+function _vaiNumeroItaliano(parola){
+  var pulita=String(parola||'').trim().toLowerCase();
+  var cifre=pulita.replace(/[.\s]/g,'');
+  if(/^\d+$/.test(cifre)) return parseInt(cifre,10);
+  var UNITA={zero:0,uno:1,un:1,una:1,due:2,tre:3,quattro:4,cinque:5,sei:6,sette:7,otto:8,nove:9,
+    dieci:10,undici:11,dodici:12,tredici:13,quattordici:14,quindici:15,sedici:16,
+    diciassette:17,diciotto:18,diciannove:19};
+  var DECINE={venti:20,trenta:30,quaranta:40,cinquanta:50,sessanta:60,settanta:70,ottanta:80,novanta:90};
+  var w=pulita.replace(/[^a-zàèéìòù]/g,'');
+  if(!w) return null;
+  if(UNITA.hasOwnProperty(w)) return UNITA[w];
+  if(DECINE.hasOwnProperty(w)) return DECINE[w];
+  function sottoMille(s){
+    if(!s) return 0;
+    if(UNITA.hasOwnProperty(s)) return UNITA[s];
+    if(DECINE.hasOwnProperty(s)) return DECINE[s];
+    for(var d in DECINE){
+      if(s.indexOf(d)===0){ var r=s.slice(d.length); if(!r) return DECINE[d]; if(UNITA.hasOwnProperty(r)) return DECINE[d]+UNITA[r]; }
+      var base=d.slice(0,-1);
+      if(s.indexOf(base)===0){ var r2=s.slice(base.length); if(UNITA.hasOwnProperty(r2) && /^[uo]/.test(r2)) return DECINE[d]+UNITA[r2]; }
+    }
+    if(s.indexOf('cento')===0){ var r3=s.slice(5); var sub=sottoMille(r3); return sub==null?null:100+sub; }
+    for(var u2 in UNITA){
+      if(u2==='zero'||u2==='un'||u2==='uno'||u2==='una') continue;
+      var pre=u2+'cento';
+      if(s.indexOf(pre)===0){ var r4=s.slice(pre.length); var sub2=sottoMille(r4); return sub2==null?null:UNITA[u2]*100+sub2; }
+    }
+    return null;
+  }
+  if(w==='mille') return 1000;
+  if(/mila$/.test(w)){
+    var pre3=w.slice(0,-4);
+    var n3=pre3?sottoMille(pre3):1;
+    return n3==null?null:n3*1000;
+  }
+  return sottoMille(w);
+}
+
+/* Cerca nelle parole riconosciute i fatti dell'immobile (mq, prezzo, camere, bagni,
+   terrazzo, giardino, posto auto, ascensore, vista mare) e torna un elenco pronto da
+   trasformare in badge, un fatto per tipo (il primo che trova), con il tempo (secondi,
+   stesso riferimento delle parole di "parole") a cui comparire. */
+function _vaiRilevaFattiImmobiliari(parole){
+  var out=[], trovati={};
+  var pul=(parole||[]).map(function(p){ return { w:String(p.w||'').toLowerCase().replace(/[^\wàèéìòù]/g,''), da:Number(p.da)||0 }; });
+  function aggiungi(tipo, testo, t, svg, bg, color){
+    if(trovati[tipo]) return;
+    trovati[tipo]=true;
+    out.push({ tipo:tipo, testo:testo, t:Math.round(t*10)/10, svg:svg, bg:bg||'#1A2330', color:color||'#E8EDF2' });
+  }
+  for(var i=0;i<pul.length;i++){
+    var w=pul[i].w; if(!w) continue;
+    var nxt=pul[i+1]?pul[i+1].w:'';
+    var num=_vaiNumeroItaliano(w);
+    if(num!=null){
+      if(nxt==='mq'||nxt==='metri'){ aggiungi('mq', num+' mq', pul[i].da, 'mq'); continue; }
+      if(nxt==='euro'){ aggiungi('euro', '€ '+num.toLocaleString('it-IT'), pul[i].da, 'euro', '#F59E0B', '#0D1B2A'); continue; }
+      if(nxt==='camere'||nxt==='camera'){ aggiungi('camere', num+' camer'+(num===1?'a':'e'), pul[i].da, 'letto'); continue; }
+      if(nxt==='bagni'||nxt==='bagno'){ aggiungi('bagni', num+' bagn'+(num===1?'o':'i'), pul[i].da, 'bagno'); continue; }
+    }
+    if(w==='euro' && pul[i+1]){
+      var num2=_vaiNumeroItaliano(nxt);
+      if(num2!=null){ aggiungi('euro', '€ '+num2.toLocaleString('it-IT'), pul[i].da, 'euro', '#F59E0B', '#0D1B2A'); continue; }
+    }
+    if(w==='terrazzo'||w==='terrazzino'){ aggiungi('terrazzo', 'Terrazzo', pul[i].da, 'terrazzo'); continue; }
+    if(w==='giardino'){ aggiungi('giardino', 'Giardino', pul[i].da, 'giardino', '#10B981', '#fff'); continue; }
+    if((w==='garage'||w==='box') || (w==='posto'&&nxt==='auto')){ aggiungi('auto', 'Posto auto', pul[i].da, 'auto'); continue; }
+    if(w==='ascensore'){ aggiungi('ascensore', 'Ascensore', pul[i].da, 'ascensore'); continue; }
+    if(w==='mare' && (nxt==='vista'||(pul[i-1]&&pul[i-1].w==='vista'))){ aggiungi('mare', 'Vista mare', pul[i].da, 'mare', '#0EA5E9', '#fff'); continue; }
+  }
+  return out;
+}
+
+/* Trasforma i fatti rilevati in badge veri, con lo stesso aspetto dei badge del
+   pannello Grafiche, inseriti nella clip al tempo esatto in cui vengono detti. */
+function _vaiInserisciFattiComeBadge(clip, fatti){
+  if(!fatti || !fatti.length) return 0;
+  var tr=(typeof _vaiTracciaAutomazione==='function')?_vaiTracciaAutomazione():1;
+  var inserite=0;
+  fatti.forEach(function(f){
+    var durataMax=Math.max(1, (clip.durata||3)-f.t-0.2);
+    var nuova=_vaiScrittaAI({
+      t:f.t, durata:Math.min(2.8, durataMax),
+      testo:f.testo, tipo:'badge',
+      bg:'', bgSuggerito:f.bg, svgIco:f.svg, color:f.color,
+      traccia:tr, y:0.12, size:1, anim:'', animOut:''
+    });
+    clip.scritte=clip.scritte||[];
+    clip.scritte.push(nuova);
+    inserite++;
+  });
+  if(typeof _vaiClipAttiva!=='undefined' && _vaiClipAttiva>=0 && _vaiClips[_vaiClipAttiva] && _vaiClips[_vaiClipAttiva].id===clip.id) _vaiScritte=clip.scritte;
+  try{ vaiTlRender(); }catch(e){}
+  try{ vaiOverlayUpdate(); }catch(e){}
+  return inserite;
+}
+
+/* ═══════════ REAZIONI EMOJI AUTOMATICHE DAL PARLATO [29 ott 2026] ═══════════
+   Stessa idea dei badge mq/prezzo qui sopra: niente IA, nessun dato inventato — legge
+   solo le parole che il riconoscimento vocale locale ha davvero trovato e fa comparire
+   un'emoji animata quando ne sente una "emotiva" (vista mare, affare, esclusiva...).
+   Per non affollare il video: almeno 2 secondi tra una reazione e l'altra, massimo 6
+   per clip. */
+const VAI_EMOJI_PAROLE = [
+  { re:/\bmare\b/,                         emoji:'🌊' },
+  { re:/\b(affare|conveniente|occasione)\b/, emoji:'🔥' },
+  { re:/\b(esclusiv[ao]|unic[ao])\b/,        emoji:'⭐' },
+  { re:/\b(lusso|pregio|prestigio)\b/,       emoji:'✨' },
+  { re:/\bgiardino\b/,                     emoji:'🌳' },
+  { re:/\b(luminos[ao]|sole)\b/,            emoji:'☀️' },
+  { re:/\bchiav[ei]\b/,                    emoji:'🔑' },
+  { re:/\b(investimento|rendita|reddito)\b/, emoji:'💰' },
+  { re:/\b(innamora|cuore)/,               emoji:'❤️' },
+  { re:/\bcasa\b/,                         emoji:'🏠' }
+];
+function _vaiRilevaEmozioniDalParlato(parole){
+  const out=[];
+  let ultimoT=-99;
+  (parole||[]).forEach(p=>{
+    const w=String(p.w||'').toLowerCase().replace(/[^\wàèéìòù]/g,'');
+    if(!w) return;
+    const t=Number(p.da)||0;
+    if(t-ultimoT<2) return;   // non affollare: almeno 2s tra una reazione e l'altra
+    for(let i=0;i<VAI_EMOJI_PAROLE.length;i++){
+      if(VAI_EMOJI_PAROLE[i].re.test(w)){ out.push({ emoji:VAI_EMOJI_PAROLE[i].emoji, t:Math.round(t*10)/10 }); ultimoT=t; break; }
+    }
+  });
+  return out.slice(0,6);
+}
+
+/* Trasforma le reazioni rilevate in scritte di tipo 'emoji', inserite nella clip
+   al tempo esatto in cui la parola viene detta. */
+function _vaiInserisciEmozioniComeReazioni(clip, reazioni){
+  if(!reazioni || !reazioni.length) return 0;
+  const tr=(typeof _vaiTracciaAutomazione==='function')?_vaiTracciaAutomazione():1;
+  let inserite=0;
+  reazioni.forEach(r=>{
+    const durataMax=Math.max(0.6, (clip.durata||3)-r.t-0.1);
+    const nuova=_vaiScrittaAI({
+      t:r.t, durata:Math.min(1.3, durataMax),
+      testo:r.emoji, tipo:'emoji',
+      traccia:tr, x:0.82, y:0.4, size:1, anim:'', animOut:''
+    });
+    clip.scritte=clip.scritte||[];
+    clip.scritte.push(nuova);
+    inserite++;
+  });
+  if(typeof _vaiClipAttiva!=='undefined' && _vaiClipAttiva>=0 && _vaiClips[_vaiClipAttiva] && _vaiClips[_vaiClipAttiva].id===clip.id) _vaiScritte=clip.scritte;
+  try{ vaiTlRender(); }catch(e){}
+  try{ vaiOverlayUpdate(); }catch(e){}
+  return inserite;
+}
+
 /* ═══════════ VIDEO SOCIAL: «Sottotitoli dalla voce» (24 ott 2026) ═══════════
    Riconosce le parole che dici nelle clip (programma sul tuo PC, nessun servizio esterno: il video non esce dal
    computer) e crea i sottotitoli con lo stesso motore di quelli della voce narrante: gruppetti di parole, e la
@@ -51585,7 +53602,7 @@ async function pubConfrontaAI(){
 (function(){
   if(window._svSottotitoli) return;
   window._svSottotitoli = true;
-  var S = { srv: null, ctrl: null, timer: null, voci: [], inLavoro: false, sel: {} };
+  var S = { srv: null, ctrl: null, timer: null, voci: [], inLavoro: false, sel: {}, rileva: true, emozioni: true };
 
   function $(id){ return document.getElementById(id); }
   function esc(s){ return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
@@ -51628,7 +53645,10 @@ async function pubConfrontaAI(){
       + '<button type="button" class="sv-x" data-s="chiudi" title="Chiudi">' + ic(IC_X, 18) + '</button></div>'
       + '<div class="sv-srv" id="sv-srv">Controllo la Fabbrica grafiche…</div>'
       + '<div class="sv-c"><div class="sv-sez">In quali clip parli</div><div id="sv-clip"></div>'
-      + '<div class="sv-nota" id="sv-opz"></div><div id="sv-err"></div></div>'
+      + '<div class="sv-nota" id="sv-opz"></div>'
+      + '<label class="sv-riga" style="cursor:pointer"><input type="checkbox" id="sv-fatti" checked><span class="t"><b>Rileva anche mq, prezzo e ambienti</b><small>Aggiunge in automatico i badge (mq, € prezzo, camere, bagni, terrazzo…) nel punto esatto in cui li dici — letti solo dalle parole riconosciute, niente inventato.</small></span></label>'
+      + '<label class="sv-riga" style="cursor:pointer"><input type="checkbox" id="sv-emoji" checked><span class="t"><b>Reazioni emoji automatiche</b><small>Fa comparire un\'emoji (🌊🔥⭐✨🔑...) quando dici una parola emotiva — vista mare, affare, esclusiva, lusso… Al massimo una ogni 2 secondi.</small></span></label>'
+      + '<div id="sv-err"></div></div>'
       + '<div class="sv-pie"><span class="sv-nota" id="sv-info"></span><button type="button" class="sv-b pieno" id="sv-crea" data-s="crea">' + ic(IC_MIC, 15) + 'Crea i sottotitoli</button></div></div>';
     d.addEventListener('click', function(e){
       if(e.target === d && !S.inLavoro){ chiudi(); return; }
@@ -51636,7 +53656,7 @@ async function pubConfrontaAI(){
       var a = b.getAttribute('data-s');
       if(a === 'chiudi') chiudi(); else if(a === 'crea') crea(); else if(a === 'riprova') controllaServer();
     });
-    d.addEventListener('change', function(e){ var t = e.target; if(t.matches('[data-clip]')){ S.sel[t.getAttribute('data-clip')] = t.checked; aggiornaStato(); } });
+    d.addEventListener('change', function(e){ var t = e.target; if(t.matches('[data-clip]')){ S.sel[t.getAttribute('data-clip')] = t.checked; aggiornaStato(); } else if(t.id === 'sv-fatti'){ S.rileva = t.checked; } else if(t.id === 'sv-emoji'){ S.emozioni = t.checked; } });
     d.addEventListener('keydown', function(e){ if(e.key === 'Escape' && !S.inLavoro) chiudi(); });
     document.body.appendChild(d);
     return d;
@@ -51713,14 +53733,26 @@ async function pubConfrontaAI(){
     if(!scelte.length || S.inLavoro) return;
     S.inLavoro = true; S.voci = scelte.map(function(x){ return { id: x.c.id, stato: 'attesa', pc: 0, fase: 'In coda', n: 0, errore: '' }; });
     $('sv-err').innerHTML = ''; disegna();
-    var coda = scelte.slice(), fatte = 0, parole = 0;
+    var coda = scelte.slice(), fatte = 0, parole = 0, badge = 0, reazioni = 0;
     (function prossima(){
       var x = coda.shift();
-      if(!x){ finito(fatte, parole); return; }
+      if(!x){ finito(fatte, parole, badge, reazioni); return; }
       var v = S.voci.filter(function(q){ return q.id === x.c.id; })[0];
       v.stato = 'lavoro'; v.fase = 'Invio il video…'; disegna();
       trascrivi(x.c, v).then(function(listaParole){
         var n = applica(x.c, listaParole);
+        if(S.rileva && typeof _vaiRilevaFattiImmobiliari === 'function'){
+          try{
+            var fatti = _vaiRilevaFattiImmobiliari(listaParole);
+            badge += _vaiInserisciFattiComeBadge(x.c, fatti);
+          }catch(e){ console.warn('[VAI] rilevazione fatti KO', e); }
+        }
+        if(S.emozioni && typeof _vaiRilevaEmozioniDalParlato === 'function'){
+          try{
+            var reaz = _vaiRilevaEmozioniDalParlato(listaParole);
+            reazioni += _vaiInserisciEmozioniComeReazioni(x.c, reaz);
+          }catch(e){ console.warn('[VAI] reazioni emoji KO', e); }
+        }
         v.stato = 'fatto'; v.n = n; v.pc = 100; fatte++; parole += listaParole.length; disegna(); prossima();
       }).catch(function(e){ v.stato = 'errore'; v.errore = e && e.message ? e.message : 'non riuscita'; disegna(); prossima(); });
     })();
@@ -51741,12 +53773,15 @@ async function pubConfrontaAI(){
       });
     });
   }
-  function finito(fatte, parole){
+  function finito(fatte, parole, badge, reazioni){
     S.inLavoro = false; aggiornaStato();
     var errori = S.voci.filter(function(v){ return v.stato === 'errore'; });
     if(errori.length) $('sv-err').innerHTML = '<div class="sv-err">' + (fatte ? 'Alcune clip non sono riuscite. ' : 'Non è riuscito. ')
       + 'Se il video non ha audio o la voce è molto bassa, il riconoscimento può non trovare parole.</div>';
-    if(typeof toast === 'function') toast(fatte ? ('Sottotitoli creati: ' + parole + ' parole in ' + fatte + (fatte === 1 ? ' clip' : ' clip')) : 'Nessun sottotitolo creato', fatte ? 'success' : 'error');
+    var msg = fatte ? ('Sottotitoli creati: ' + parole + ' parole in ' + fatte + (fatte === 1 ? ' clip' : ' clip')) : 'Nessun sottotitolo creato';
+    if(fatte && badge) msg += ' · ' + badge + (badge === 1 ? ' badge rilevato' : ' badge rilevati');
+    if(fatte && reazioni) msg += ' · ' + reazioni + (reazioni === 1 ? ' reazione' : ' reazioni');
+    if(typeof toast === 'function') toast(msg, fatte ? 'success' : 'error');
     if(fatte && !errori.length) setTimeout(chiudi, 900);
   }
 
