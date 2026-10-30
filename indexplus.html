@@ -39931,7 +39931,7 @@ async function vaiCreaAnimazionePersonalizzata(){
         return '<button type="button" class="vai-can-stile" data-s="'+k+'" style="padding:8px 4px;border-radius:8px;cursor:pointer;font-size:.72rem;font-weight:700;text-align:center;background:'+(k==='classico'?'#C9A84C':'#13263B')+';color:'+(k==='classico'?'#1A1205':st.defColor)+';border:1px solid rgba(255,255,255,.14)">'+st.label+'</button>';
       }).join('')+
     '</div>'+
-    '<div style="color:#6B7E92;font-size:.68rem;margin-bottom:12px">Per ora funziona solo con forme che si tracciano (rettangolo, quadrato, cerchio) più un\'etichetta — niente sfondo pieno, resta trasparente sopra il video. Non genera filmati o persone che si muovono.</div>'+
+    '<div style="color:#6B7E92;font-size:.68rem;margin-bottom:12px">Puoi chiedere una forma che si traccia (rettangolo, quadrato, cerchio) con un\'etichetta, oppure un\'icona che si muove per la stanza lungo un percorso irregolare con una traccia a puntini (es. "un\'ape che gira per casa") — sempre a sfondo trasparente sopra il video. Non genera filmati o persone reali che si muovono.</div>'+
     '<button id="vai-can-ok" class="vai-start-btn vai-start-open" style="width:100%;justify-content:center">✨ Genera l\'animazione</button>'
   );
   let stileScelto='classico';
@@ -39964,18 +39964,82 @@ async function vaiCreaAnimazionePersonalizzata(){
 }
 window.vaiCreaAnimazionePersonalizzata=vaiCreaAnimazionePersonalizzata;
 
+/* ═══════════ PERCORSO ANIMATO [30 ott 2026] ═══════════
+   "Crea animazione qui" sapeva fare solo forme FERME che si tracciano. Enzo voleva un
+   insetto che gira per la stanza in modo irregolare, lasciando una traccia a puntini —
+   cosa diversa: un elemento che SI MUOVE, non una forma che sta ferma in un punto.
+   Le coordinate del percorso NON le decide l'AI (chiederle con precisione a un modello
+   di testo è fragile): l'AI sceglie solo icona/colore/durata, il percorso vero lo
+   generiamo noi, matematicamente — waypoint casuali uniti con una curva morbida
+   (Catmull-Rom), così il tragitto è sempre irregolare ma mai a scatti. */
+
+/* Waypoint casuali "a passeggio" dentro il riquadro: mai due punti troppo vicini (il
+   percorso sembrerebbe fermo lì) né generati in fila ordinata. Coordinate relative al
+   riquadro, -0.5..0.5 su entrambi gli assi. */
+function _vaiGeneraWaypointPercorso(n){
+  n = n || 6;
+  const pts=[{x:(Math.random()-0.5)*0.6, y:(Math.random()-0.5)*0.6}];
+  for(let i=1;i<n;i++){
+    let p, tentativi=0;
+    do{
+      p={x:(Math.random()-0.5)*0.9, y:(Math.random()-0.5)*0.9};
+      tentativi++;
+    } while(tentativi<10 && Math.hypot(p.x-pts[i-1].x, p.y-pts[i-1].y)<0.25);
+    pts.push(p);
+  }
+  return pts;
+}
+/* Unisce i waypoint con una curva Catmull-Rom e la campiona fitto (default 160 punti),
+   con la lunghezza cumulata di ogni tratto — serve per muovere il marcatore a velocità
+   COSTANTE lungo la curva (per indice di waypoint sarebbe più veloce nei tratti lunghi). */
+function _vaiCampionaPercorso(waypoints, nCampioni){
+  nCampioni = nCampioni || 160;
+  const pts=waypoints, n=pts.length;
+  if(n<2) return { punti:pts.slice(), lungCum:[0], lungTot:0 };
+  const get=(i)=> pts[Math.max(0, Math.min(n-1, i))];
+  const campioni=[];
+  const segPerTratto=Math.max(4, Math.round(nCampioni/(n-1)));
+  for(let i=0;i<n-1;i++){
+    const p0=get(i-1), p1=get(i), p2=get(i+1), p3=get(i+2);
+    for(let j=0;j<segPerTratto;j++){
+      const tt=j/segPerTratto, t2=tt*tt, t3=t2*tt;
+      const x=0.5*((2*p1.x)+(-p0.x+p2.x)*tt+(2*p0.x-5*p1.x+4*p2.x-p3.x)*t2+(-p0.x+3*p1.x-3*p2.x+p3.x)*t3);
+      const y=0.5*((2*p1.y)+(-p0.y+p2.y)*tt+(2*p0.y-5*p1.y+4*p2.y-p3.y)*t2+(-p0.y+3*p1.y-3*p2.y+p3.y)*t3);
+      campioni.push({x,y});
+    }
+  }
+  campioni.push(pts[n-1]);
+  const lungCum=[0];
+  for(let i=1;i<campioni.length;i++) lungCum.push(lungCum[i-1]+Math.hypot(campioni[i].x-campioni[i-1].x, campioni[i].y-campioni[i-1].y));
+  return { punti:campioni, lungCum, lungTot:lungCum[lungCum.length-1] };
+}
+/* Posizione sul percorso campionato alla frazione p (0..1) della lunghezza TOTALE
+   (non dell'indice): così il marcatore avanza a velocità costante lungo tutta la curva. */
+function _vaiPuntoSuPercorso(camp, p){
+  if(!camp.punti.length) return {x:0,y:0};
+  const target=Math.max(0,Math.min(1,p))*camp.lungTot;
+  let i=1; while(i<camp.lungCum.length-1 && camp.lungCum[i]<target) i++;
+  const a=camp.punti[i-1], b=camp.punti[i];
+  const la=camp.lungCum[i-1], lb=camp.lungCum[i];
+  const f=(lb>la) ? (target-la)/(lb-la) : 0;
+  return { x:a.x+(b.x-a.x)*f, y:a.y+(b.y-a.y)*f };
+}
+window._vaiCampionaPercorso=_vaiCampionaPercorso;
+window._vaiPuntoSuPercorso=_vaiPuntoSuPercorso;
+
 /* Interpreta la richiesta libera e inserisce la scritta tipo 'forma' nel punto giusto */
 async function _vaiGeneraFormaAI(richiesta, tempo, stileScelto){
   const stileKey = VAI_STILE_FORMA[stileScelto] ? stileScelto : 'classico';
   const proxyUrl=aiGetProxy();
   const ctxImm=(typeof _vaiImmContext==='function')?_vaiImmContext():'';
   const sys='Un utente sta montando un video immobiliare e ha fermato il video per chiedere una piccola animazione grafica da sovrapporre, a sfondo trasparente, sopra il filmato in questo punto. '+
-    'Puoi generare SOLO una di queste forme geometriche che si "tracciano" sullo schermo (il contorno si disegna progressivamente, senza riempimento) con un\'etichetta di testo al centro: rettangolo, quadrato, cerchio. '+
-    'Non puoi generare video reali, persone, oggetti fotorealistici o animazioni diverse da queste forme: se la richiesta chiede altro, interpreta comunque l\'INTENZIONE con la forma più vicina (es. "traccia i metri quadrati" → rettangolo con l\'etichetta dei mq; "evidenzia il balcone" → cerchio). '+
-    'Se la richiesta contiene un numero di metri quadrati, mettilo nell\'etichetta (es. "130 mq"). Se non ci sono numeri, usa come etichetta un testo breve (max 3 parole) che riassuma la richiesta. '+
+    'Puoi generare uno di questi DUE tipi di animazione astratta, mai un video reale o fotorealistico:\n'+
+    '1) "forma": un contorno FERMO che si "traccia" sullo schermo (il bordo si disegna progressivamente, senza riempimento) con un\'etichetta di testo al centro — rettangolo, quadrato o cerchio. Adatto a misure, metri quadrati, o per evidenziare un punto preciso e fermo.\n'+
+    '2) "percorso": una piccola icona (un\'emoji) che SI MUOVE per la stanza lungo un tragitto irregolare, lasciando una traccia a puntini — adatto quando la richiesta descrive qualcosa che si muove, gira, vola o cammina (es. "un insetto che gira per casa", "un\'ape", "traccia un percorso", "qualcosa che si muove in modo non ordinato"). Il tragitto vero lo generiamo noi: a te serve solo scegliere l\'icona giusta.\n'+
+    'Se la richiesta contiene un numero di metri quadrati, mettilo nell\'etichetta di "forma" (es. "130 mq"). '+
     (ctxImm||'')+
     '\n\nRichiesta dell\'utente: "'+richiesta.replace(/"/g,"'")+'"'+
-    '\n\nRispondi SOLO con JSON valido, niente altro testo: {"forma":"rettangolo|quadrato|cerchio","etichetta":"<testo breve>","colore":"<colore esadecimale adatto, es. #ffffff o #C9A84C>","durata":<numero secondi tra 2 e 5>}';
+    '\n\nRispondi SOLO con JSON valido, niente altro testo: {"tipo":"forma|percorso","forma":"rettangolo|quadrato|cerchio (solo se tipo è forma)","icona":"<una sola emoji adatta, solo se tipo è percorso — es. 🐝 🐞 🦋 🐛 🦗, o un pallino ⚪ se la richiesta non specifica cosa si muove>","etichetta":"<testo breve, max 3 parole — opzionale per percorso>","colore":"<colore esadecimale adatto, es. #ffffff o #C9A84C>","durata":<numero secondi tra 2 e 8>}';
   const resp=await aiFetch(proxyUrl,{ method:'POST', headers:{'Content-Type':'application/json'},
     body:JSON.stringify({ model:(typeof aiModel==='function'?aiModel():'claude-sonnet-4-6'), max_tokens:300,
       messages:[{role:'user',content:[{type:'text',text:sys}]}] }) }, 20000);
@@ -39984,7 +40048,8 @@ async function _vaiGeneraFormaAI(richiesta, tempo, stileScelto){
   let j=null; try{ j=JSON.parse(txt); }catch(e){ const m=txt.match(/\{[\s\S]*\}/); if(m){ try{ j=JSON.parse(m[0]); }catch(_){} } }
   const formeValide=['rettangolo','quadrato','cerchio'];
   const colDefStile = VAI_STILE_FORMA[stileKey].defColor;
-  if(!j || !formeValide.includes(j.forma)){
+  const ePercorso = !!(j && j.tipo==='percorso');
+  if(!ePercorso && (!j || !formeValide.includes(j.forma))){
     j=Object.assign({forma:'rettangolo', etichetta:richiesta.slice(0,24), colore:colDefStile, durata:3}, j||{});
     if(!formeValide.includes(j.forma)) j.forma='rettangolo';
   }
@@ -39996,15 +40061,29 @@ async function _vaiGeneraFormaAI(richiesta, tempo, stileScelto){
   const offGlob=(typeof _vaiOffsetClip==='function')?_vaiOffsetClip(ci):0;
   const localOut=(typeof _vaiRawToOutput==='function')?_vaiRawToOutput(c, Math.max(0,tempo-cIn)):Math.max(0,tempo-cIn);
   const tGlob=offGlob+localOut;
-  const durataScelta=Math.max(2,Math.min(5,parseFloat(j.durata)||3));
-  const posto=(typeof _vaiTrovaPostoLibero==='function')?_vaiTrovaPostoLibero(0, tGlob, durataScelta):{traccia:0};
-  const nuova=_vaiPushScrittaGlobale(tGlob, {
-    tipo:'forma', forma:j.forma, etichetta:(j.etichetta||'').toString().slice(0,24),
-    color:(/^#[0-9a-f]{6}$/i.test(j.colore||'')?j.colore:colDefStile),
-    stileForma:stileKey,
-    durata:durataScelta, traccia:posto.traccia, x:0.5, y:0.5, w:0.5,
-    anim:'', animOut:''   // niente effetto generico: l'animazione è il tracciamento stesso
-  });
+  let nuova, posto;
+  if(ePercorso){
+    const durataScelta=Math.max(3,Math.min(8,parseFloat(j.durata)||6));
+    posto=(typeof _vaiTrovaPostoLibero==='function')?_vaiTrovaPostoLibero(0, tGlob, durataScelta):{traccia:0};
+    nuova=_vaiPushScrittaGlobale(tGlob, {
+      tipo:'percorso', icona:(j.icona||'🐝').toString().slice(0,4),
+      waypoints:_vaiGeneraWaypointPercorso(6),
+      etichetta:(j.etichetta||'').toString().slice(0,24),
+      color:(/^#[0-9a-f]{6}$/i.test(j.colore||'')?j.colore:'#F5E6B8'),
+      durata:durataScelta, traccia:posto.traccia, x:0.5, y:0.5, w:0.65,
+      anim:'', animOut:''
+    });
+  } else {
+    const durataScelta=Math.max(2,Math.min(5,parseFloat(j.durata)||3));
+    posto=(typeof _vaiTrovaPostoLibero==='function')?_vaiTrovaPostoLibero(0, tGlob, durataScelta):{traccia:0};
+    nuova=_vaiPushScrittaGlobale(tGlob, {
+      tipo:'forma', forma:j.forma, etichetta:(j.etichetta||'').toString().slice(0,24),
+      color:(/^#[0-9a-f]{6}$/i.test(j.colore||'')?j.colore:colDefStile),
+      stileForma:stileKey,
+      durata:durataScelta, traccia:posto.traccia, x:0.5, y:0.5, w:0.5,
+      anim:'', animOut:''   // niente effetto generico: l'animazione è il tracciamento stesso
+    });
+  }
   if(!nuova){ toast('Non riesco a inserire l\'animazione qui — prova un altro punto','error'); return; }
   if(_vaiClipAttiva===ci) _vaiScritte=c.scritte||[];
   _vaiSel={type:'scritta', id:nuova.id}; _vaiSelScritta=nuova.id; _vaiTracciaAttiva=posto.traccia;
@@ -41196,6 +41275,36 @@ function vaiOverlayUpdate(){
         '</div>'):'')+
         figHandles+
         '</div>';
+    } else if(tipo==='percorso'){
+      // Stessa idea del canvas, in versione SVG per l'anteprima dal vivo: un'icona che
+      // gira per la stanza lasciando una traccia a puntini.
+      const wp=(s.waypoints&&s.waypoints.length>=2)?s.waypoints:[{x:-.2,y:0},{x:.2,y:.1},{x:0,y:-.2}];
+      const camp=_vaiCampionaPercorso(wp);
+      const durataTotP=Math.max(0.5, s.durata||6);
+      const tRelP = editUI ? durataTotP : Math.max(0, Math.min(durataTotP, (t!=null?t:0) - s.t));
+      const progP=Math.max(0, Math.min(1, tRelP/durataTotP));
+      const colP=s.color||'#F5E6B8';
+      const toXY=function(p){ return (50+p.x*100)+','+(50+p.y*100); };
+      const limiteIdx=Math.max(1, Math.round(camp.punti.length*progP));
+      const dPathVisibile='M'+camp.punti.slice(0,limiteIdx).map(toXY).join(' L');
+      const posP=_vaiPuntoSuPercorso(camp, progP);
+      const pxP=50+posP.x*100, pyP=50+posP.y*100;
+      const figHandlesP = editUI
+        ? '<span class="vai-ov-ch vai-ov-ch-tl" title="Dimensione" onmousedown="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')" ontouchstart="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')"></span>'+
+          '<span class="vai-ov-ch vai-ov-ch-tr" title="Dimensione" onmousedown="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')" ontouchstart="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')"></span>'+
+          '<span class="vai-ov-ch vai-ov-ch-bl" title="Dimensione" onmousedown="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')" ontouchstart="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')"></span>'+
+          '<span class="vai-ov-ch vai-ov-ch-br" title="Dimensione" onmousedown="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')" ontouchstart="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')"></span>'
+        : '';
+      html += '<div class="vai-ov-box'+(editUI?' sel':'')+'" data-id="'+s.id+'" '+
+        'style="left:'+anchorLeft+'%;top:'+(s.y*100)+'%;transform:'+tx+';width:'+(s.w*100)+'%" '+
+        (editUI?('ondblclick="vaiPercorsoModifica(event,\''+s.id+'\')" '):'')+handlers+'>'+
+        '<svg viewBox="0 0 100 100" style="width:100%;display:block;overflow:visible">'+
+          '<path d="'+dPathVisibile+'" fill="none" stroke="'+colP+'" stroke-width="1.6" stroke-dasharray="2.2 3.4" stroke-linecap="round" style="filter:drop-shadow(0 2px 3px rgba(0,0,0,.4))"/>'+
+        '</svg>'+
+        '<span style="position:absolute;left:'+pxP+'%;top:'+pyP+'%;transform:translate(-50%,-50%);font-size:5.4cqw;pointer-events:none;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))">'+_vaiEsc(s.icona||'🐝')+'</span>'+
+        (s.etichetta?('<span style="position:absolute;left:'+pxP+'%;top:'+(pyP-14)+'%;transform:translate(-50%,-50%);color:'+colP+';font:700 2.2cqw DM Sans, sans-serif;text-shadow:0 2px 6px rgba(0,0,0,.6);white-space:nowrap;pointer-events:none">'+_vaiEsc(s.etichetta)+'</span>'):'')+
+        figHandlesP+
+        '</div>';
     } else if(tipo==='emoji'){
       // reazione emoji rilevata dal parlato: stesso rimbalzo in entrata e dissolvenza
       // in uscita del disegno sul canvas, qui in versione CSS per l'anteprima dal vivo.
@@ -41918,6 +42027,64 @@ function vaiFormaModifica(e, id){
   });
 }
 window.vaiFormaModifica=vaiFormaModifica;
+
+function vaiPercorsoModifica(e, id){
+  if(e){ e.preventDefault(); e.stopPropagation(); }
+  const s=_vaiScritte.find(x=>x.id===id); if(!s) return;
+  _vaiSelScritta=id; _vaiSel={type:'scritta', id};
+  const v=document.getElementById('vai-video'); if(v) v.pause();
+  const COLORI=['#ffffff','#C9A84C','#2E9B8F','#E14D4D','#3B82F6','#0D1B2A'];
+  const ICONE=['🐝','🐞','🦋','🐛','🦗','⚪'];
+  const ov=_vaiMiniModal(
+    '<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:10px">Modifica percorso</div>'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Icona:</div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">'+
+      ICONE.map(ic=>'<button class="vpe-ico" data-i="'+ic+'" style="width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:1.1rem;background:'+((s.icona||'🐝')===ic?'#C9A84C':'#13263B')+';border:1px solid rgba(255,255,255,.14)">'+ic+'</button>').join('')+
+    '</div>'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Icona personalizzata (emoji):</div>'+
+    '<input id="vpe-ico-custom" value="'+_vaiEsc(s.icona||'')+'" maxlength="4" style="width:72px;box-sizing:border-box;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:1rem;margin-bottom:14px;text-align:center">'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Etichetta (opzionale):</div>'+
+    '<input id="vpe-et" value="'+_vaiEsc(s.etichetta||'')+'" maxlength="24" style="width:100%;box-sizing:border-box;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:.86rem;margin-bottom:14px">'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Colore traccia:</div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:14px">'+
+      COLORI.map(c=>'<button class="vpe-col" data-c="'+c+'" style="width:28px;height:28px;border-radius:50%;cursor:pointer;background:'+c+';border:2px solid '+((s.color||'#F5E6B8')===c?'#fff':'rgba(255,255,255,.2)')+'"></button>').join('')+
+    '</div>'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Durata (secondi): <span id="vpe-dur-val">'+(s.durata||6)+'</span>s</div>'+
+    '<input id="vpe-dur" type="range" min="2" max="8" step="0.5" value="'+(s.durata||6)+'" style="width:100%;margin-bottom:6px">'+
+    '<button id="vpe-rigenera" style="width:100%;margin-top:8px;padding:9px 0;border-radius:8px;cursor:pointer;font-size:.8rem;font-weight:700;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14)">↻ Rigenera percorso</button>'
+  );
+  ov.querySelectorAll('.vpe-ico').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      s.icona=b.getAttribute('data-i');
+      const custom=ov.querySelector('#vpe-ico-custom'); if(custom) custom.value=s.icona;
+      ov.querySelectorAll('.vpe-ico').forEach(x=>{ x.style.background=(x===b)?'#C9A84C':'#13263B'; });
+      _vaiDirty=true; vaiOverlayUpdate();
+    });
+  });
+  const icoCustom=ov.querySelector('#vpe-ico-custom');
+  if(icoCustom) icoCustom.addEventListener('input', function(){ s.icona=this.value||'🐝'; _vaiDirty=true; vaiOverlayUpdate(); });
+  const et=ov.querySelector('#vpe-et');
+  if(et) et.addEventListener('input', function(){ s.etichetta=this.value; _vaiDirty=true; vaiOverlayUpdate(); });
+  ov.querySelectorAll('.vpe-col').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      s.color=b.getAttribute('data-c');
+      ov.querySelectorAll('.vpe-col').forEach(x=>x.style.borderColor=(x===b)?'#fff':'rgba(255,255,255,.2)');
+      _vaiDirty=true; vaiOverlayUpdate();
+    });
+  });
+  const dur=ov.querySelector('#vpe-dur'), durVal=ov.querySelector('#vpe-dur-val');
+  if(dur) dur.addEventListener('input', function(){
+    s.durata=parseFloat(this.value)||6;
+    if(durVal) durVal.textContent=s.durata;
+    _vaiDirty=true; vaiOverlayUpdate();
+  });
+  const rig=ov.querySelector('#vpe-rigenera');
+  if(rig) rig.addEventListener('click', ()=>{
+    s.waypoints=_vaiGeneraWaypointPercorso(6);
+    _vaiDirty=true; vaiOverlayUpdate();
+  });
+}
+window.vaiPercorsoModifica=vaiPercorsoModifica;
 
 /* Doppio click su una scritta = editing inline diretto (stile Canva) */
 function vaiScrittaEditTesto(e, id, campo){
@@ -47354,6 +47521,56 @@ function _vaiDrawScrittaSuCanvas(ctx, W, H, s, t){
       ctx.fillText(s.etichetta, x0, ay);
       ctx.restore();
       ctx.shadowBlur=0;
+    }
+    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+    _finish(); return;
+  }
+  if(tipo==='percorso'){
+    // Un'icona che gira per la stanza lungo un tragitto irregolare, lasciando una
+    // traccia a puntini — l'effetto "insetto che gira per casa" chiesto da Enzo, diverso
+    // dalla forma ferma: qui si MUOVE. Il percorso (waypoint + curva morbida) è già
+    // pronto su s.waypoints, generato una volta sola alla creazione (vedi
+    // _vaiGeneraWaypointPercorso): qui lo si disegna e basta, sempre uguale a sé stesso.
+    const bw=(s.w||0.65)*W;
+    const wp=(s.waypoints&&s.waypoints.length>=2)?s.waypoints:[{x:-.2,y:0},{x:.2,y:.1},{x:0,y:-.2}];
+    const camp=_vaiCampionaPercorso(wp);
+    const durataTot=Math.max(0.5, s.durata||6);
+    const tRel=(t!=null) ? Math.max(0, Math.min(durataTot, t-s.t)) : durataTot;
+    const prog=Math.max(0, Math.min(1, tRel/durataTot));
+    const colP=s.color||'#F5E6B8';
+    ctx.save();
+    ctx.strokeStyle=colP; ctx.lineWidth=Math.max(2,W*0.005); ctx.lineCap='round';
+    ctx.setLineDash([Math.max(3,W*0.006), Math.max(6,W*0.012)]);
+    ctx.shadowColor='rgba(0,0,0,.5)'; ctx.shadowBlur=W*0.006;
+    ctx.beginPath();
+    const limite=Math.max(1, Math.round(camp.punti.length*prog));
+    for(let i=0;i<limite;i++){
+      const px=ax+camp.punti[i].x*bw, py=ay+camp.punti[i].y*bw;
+      if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+    }
+    ctx.stroke();
+    ctx.restore();
+    const pos=_vaiPuntoSuPercorso(camp, prog);
+    const px=ax+pos.x*bw, py=ay+pos.y*bw;
+    // Piccola oscillazione (non una rotazione sulla direzione: un'emoji capovolta sta
+    // male) — dà l'idea di volo/cammino irregolare senza deformare l'icona.
+    const bobY=Math.sin(tRel*9)*W*0.012, bobX=Math.sin(tRel*6.3)*W*0.008;
+    ctx.save();
+    ctx.translate(px+bobX, py+bobY);
+    const fsIco=Math.round(W*0.075);
+    ctx.font=fsIco+'px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    try{ ctx.fillText(s.icona||'🐝', 0, 0); }catch(e){}
+    ctx.restore();
+    if(s.etichetta && prog>0.1){
+      const fsEt=Math.round(W*0.04);
+      ctx.font='700 '+fsEt+'px DM Sans, sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillStyle=colP;
+      ctx.shadowColor='rgba(0,0,0,.6)'; ctx.shadowBlur=W*0.01;
+      ctx.globalAlpha=Math.min(1,(prog-0.1)*3);
+      ctx.fillText(s.etichetta, px, py-fsIco*0.75);
+      ctx.globalAlpha=1; ctx.shadowBlur=0;
     }
     ctx.textAlign='left'; ctx.textBaseline='alphabetic';
     _finish(); return;
