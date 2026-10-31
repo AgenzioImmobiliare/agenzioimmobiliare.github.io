@@ -3453,6 +3453,11 @@ input[type=range].vai-ms-rng-mini{max-width:78px}
    piccolissime invece di stendersi su tutta la clip. La percentuale è calcolata e scritta
    inline (100/n%), zero ambiguità. */
 .vai-tl-filmstrip img{height:100%;object-fit:cover;display:block;opacity:.85;flex:none}
+/* Forma d'onda dell'audio ORIGINALE della clip (non la musica aggiunta dopo, che ha
+   la sua corsia a parte): una striscia in basso, sempre visibile, come in un vero
+   editor — si vede cosa si sente, non solo cosa si vede. */
+.vai-tl-clipwave{position:absolute;left:0;right:0;bottom:0;height:34%;background:linear-gradient(0deg,rgba(0,0,0,.55),rgba(0,0,0,.1));pointer-events:none;z-index:1}
+.vai-tl-clipwave svg{width:100%;height:100%;display:block}
 .vai-tl-vclip.sel{border-color:var(--gold,#C9A84C);box-shadow:0 0 0 2px var(--gold,#C9A84C),0 0 14px rgba(201,168,76,.4)}
 .vai-tl-vclip-lock{cursor:not-allowed;opacity:.7}
 .vai-tl-vclip-n{position:absolute;top:2px;left:3px;font-size:.6rem;font-weight:700;color:#fff;background:rgba(0,0,0,.5);border-radius:3px;padding:0 4px}
@@ -34281,9 +34286,56 @@ function _vaiGenFilmstripClip(clip, n){
 }
 
 function _vaiAccodaThumb(clip){
-  _vaiThumbQueue = _vaiThumbQueue.then(()=>_vaiGenThumbClip(clip)).then(()=>_vaiGenFilmstripClip(clip)).catch(()=>{});
+  _vaiThumbQueue = _vaiThumbQueue.then(()=>_vaiGenThumbClip(clip)).then(()=>_vaiGenFilmstripClip(clip)).then(()=>_vaiAssicuraWaveClip(clip)).catch(()=>{});
   return _vaiThumbQueue;
 }
+
+/* FORMA D'ONDA DELL'AUDIO ORIGINALE DELLA CLIP [31 ott 2026] — Enzo, dopo aver visto le
+   anteprime della nuova timeline, ha chiesto di vedere anche l'audio. La musica di sottofondo
+   ce l'aveva già (_vaiRilevaBeat); qui faccio la stessa cosa ma più leggera (niente
+   rilevamento del BPM, serve solo l'onda) per il suono VERO di ogni clip — la voce o
+   l'ambiente registrati mentre giravi, non la musica aggiunta dopo.
+   Se la clip non ha una traccia audio leggibile (es. muta), _wavePeaks resta un array vuoto:
+   la clip lo ricorda e non viene più ri-analizzata, e semplicemente non mostra l'onda. */
+function _vaiAssicuraWaveClip(clip){
+  return new Promise(async (resolve)=>{
+    if(!clip || !clip.url || clip._wavePeaks || clip._waveInCorso){ resolve(); return; }
+    clip._waveInCorso=true;
+    try{
+      const resp=await fetch(clip.url);
+      const ab=await resp.arrayBuffer();
+      const AC=window.AudioContext||window.webkitAudioContext;
+      if(!AC) throw new Error('no-audiocontext');
+      const ctx=new AC();
+      const buf=await ctx.decodeAudioData(ab);
+      try{ ctx.close(); }catch(e){}
+      const ch=buf.getChannelData(0);
+      const durata=buf.duration||0;
+      const win=1024;
+      const passi=Math.max(1, Math.floor(ch.length/win));
+      const energie=new Float32Array(passi);
+      for(let i=0;i<passi;i++){ let s=0; const base=i*win; for(let j=0;j<win;j++){ const v=ch[base+j]||0; s+=v*v; } energie[i]=Math.sqrt(s/win); }
+      // ~6 barre al secondo: le clip sono di solito corte, bastano per restare leggibili
+      // anche quando la clip è stretta sulla timeline (a differenza delle 3/s della musica).
+      const NB=Math.min(260, Math.max(16, Math.round(durata*6)));
+      const peaks=new Array(NB).fill(0);
+      const perBarra=Math.max(1, Math.floor(passi/NB));
+      let maxE=0;
+      for(let b=0;b<NB;b++){
+        let somma=0, cnt=0; const base=b*perBarra;
+        for(let k=0;k<perBarra;k++){ const e=energie[base+k]; if(e!=null){ somma+=e*e; cnt++; } }
+        const val=cnt?Math.sqrt(somma/cnt):0;
+        peaks[b]=val; if(val>maxE) maxE=val;
+      }
+      if(maxE>0){ for(let b=0;b<NB;b++) peaks[b]=Math.pow(peaks[b]/maxE,0.7); }
+      clip._wavePeaks=peaks;
+    }catch(e){ clip._wavePeaks=[]; }
+    clip._waveInCorso=false;
+    try{ if(typeof _vaiTlRenderPigro==='function') _vaiTlRenderPigro(); else vaiTlRender(); }catch(e){}
+    resolve();
+  });
+}
+window._vaiAssicuraWaveClip=_vaiAssicuraWaveClip;
 
 function vaiClipsRender(){
   const strip = document.getElementById('vai-clips-strip');
@@ -43187,8 +43239,16 @@ function vaiTlRender(){
         // che si vede a video, alla stessa velocità (rampa compresa) — non un'immagine ferma.
         const liveCanvas=(i===_vaiClipAttiva)?'<canvas class="vai-tl-live-canvas" id="vai-tl-live-canvas"></canvas>':'';
         const lockCls=_vaiVideoLock?' vai-tl-vclip-lock':'';
+        // FORMA D'ONDA DELL'AUDIO ORIGINALE — una striscia in basso sulla clip, come in un
+        // montaggio vero: si vede cosa si sente, non solo cosa si vede. Se non ancora
+        // analizzata la richiedo ora (in coda, senza bloccare il disegno); se risulta senza
+        // audio leggibile (_wavePeaks vuoto) non mostro nulla.
+        if(!c._wavePeaks && !c._waveInCorso && c.url && typeof _vaiAssicuraWaveClip==='function') _vaiAssicuraWaveClip(c);
+        const wave=(c._wavePeaks && c._wavePeaks.length)
+          ? ('<div class="vai-tl-clipwave">'+_vaiWaveformSVG(c._wavePeaks, !_vaiAudioVideoOn, [], d)+'</div>')
+          : '';
         return '<div class="vai-tl-vclip'+sel+lockCls+'" data-idx="'+i+'" style="left:'+left+'%;width:'+w+'%" '+(_vaiVideoLock?'':'onmousedown="vaiClipDragReorder(event,'+i+')" ontouchstart="vaiClipDragReorder(event,'+i+')"')+' title="'+_vaiEsc(c.nome||('Clip '+(i+1)))+'">'+
-          thumb+liveCanvas+'<span class="vai-tl-vclip-n">'+(i+1)+'</span>'+
+          thumb+wave+liveCanvas+'<span class="vai-tl-vclip-n">'+(i+1)+'</span>'+
           (c.inverti?'<span class="vai-tl-vclip-n" style="left:auto;right:3px;background:rgba(201,168,76,.9);color:#1A1205" title="Invertita: scorre al contrario nell\'export">⟲</span>':'')+
           (_vaiVideoLock?'':(
             '<span class="vai-tl-vclip-h vai-tl-vclip-hl" onmousedown="event.stopPropagation();vaiClipTrimStart(event,'+i+',\'left\')" ontouchstart="event.stopPropagation();vaiClipTrimStart(event,'+i+',\'left\')"></span>'+
