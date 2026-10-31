@@ -19932,6 +19932,31 @@ function _socCaricaHeic(file){
   window._heicLoading.then(procedi);
 }
 
+/* Stessa conversione di _socCaricaHeic, ma restituisce un File JPEG pronto per
+   pipeline che lavorano su File (es. "Video dall'immobile"), non un dataURL
+   iniettato in galleria. Usata per non perdere in silenzio le foto iPhone. */
+function _vaiConvertiHeicAFile(file){
+  return new Promise((resolve,reject)=>{
+    const procedi=()=>{
+      if(typeof window.heic2any!=='function'){ reject(new Error('heic2any non disponibile (serve internet la prima volta)')); return; }
+      window.heic2any({ blob:file, toType:'image/jpeg', quality:0.92 })
+        .then(out=>{
+          const blob=Array.isArray(out)?out[0]:out;
+          const nome=(file.name||'foto').replace(/\.(heic|heif)$/i,'.jpg');
+          resolve(new File([blob], nome, { type:'image/jpeg' }));
+        })
+        .catch(reject);
+    };
+    if(typeof window.heic2any==='function'){ procedi(); return; }
+    if(window._heicLoading){ window._heicLoading.then(procedi); return; }
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
+    window._heicLoading=new Promise((res)=>{ s.onload=()=>res(); s.onerror=()=>res(); });
+    document.head.appendChild(s);
+    window._heicLoading.then(procedi);
+  });
+}
+
 /* Ridimensiona un'immagine (dataURL o URL) al lato lungo richiesto, JPEG.
    Protegge localStorage dalla saturazione con foto ad alta risoluzione. */
 function _socResizeSrc(src, maxSide, quality){
@@ -35764,6 +35789,21 @@ async function vaiTemplateApplica(chiave){
       if(c.daFoto){ c.taglioDurata = tpl.durataFoto; }
       // 2) movimenti Ken Burns alternati: due clip vicine non si muovono mai uguale
       if(c.daFoto){ c.kbTipo = tpl.kb[i % tpl.kb.length]; }
+      // [31 ott 2026] l'effetto "a ritmo" (beatFx, sotto) vive SOLO nell'anteprima dal vivo:
+      // nell'export restava un taglio piatto — per questo i video generati sembravano meno
+      // "di qualità" nonostante lo stile scelto. Qui aggiungo l'equivalente VERO (si vede
+      // anche nel file esportato) usando gli effetti cinematografici già pronti: uno zoom
+      // improvviso per gli stili energici, grana pellicola + vignetta per quelli eleganti.
+      if(c.daFoto){
+        const fx=Object.assign({}, c.fx);
+        delete fx.zoom; delete fx.grain; delete fx.vignetta;
+        if(tpl.beatFx==='punch'){
+          fx.zoom={ t:tpl.durataFoto*0.42, durata:Math.min(0.8, tpl.durataFoto*0.4), verso:'in', forza:1.35 };
+        } else if(tpl.beatFx==='zoomcine'){
+          fx.grain={forza:0.3}; fx.vignetta={forza:0.38};
+        }
+        c.fx = Object.keys(fx).length ? fx : undefined;
+      }
     });
     // 3) effetto a ritmo
     _vaiBeatFxTipo = tpl.beatFx;
@@ -39096,17 +39136,28 @@ function _vdiFinestraPartenza(st){
     };
     const inp=ov.querySelector('#vdi-foto-in');
     ov.querySelector('#vdi-foto-btn').addEventListener('click',()=>{ inp.value=''; inp.click(); });
-    inp.addEventListener('change',()=>{
+    inp.addEventListener('change', async ()=>{
       const diretti=Array.from(inp.files||[]);
       const img=diretti.filter(f=>/\.(jpe?g|png|webp)$/i.test(f.name) || /^image\/(jpeg|png|webp)$/i.test(f.type||''));
-      saltate=diretti.filter(f=>/\.(heic|heif)$/i.test(f.name)).length;
+      const heicFiles=diretti.filter(f=>/\.(heic|heif)$/i.test(f.name) || /image\/hei[cf]/i.test(f.type||''));
+      saltate=0;
+      // [31 ott 2026] PRIMA le foto HEIC (iPhone) venivano scartate in silenzio con solo
+      // un avviso piccolo: Enzo caricava 18 foto, ne restavano 6 (solo quelle già JPG)
+      // senza capire perché. Ora le converto in JPEG al volo, come già si fa altrove.
+      if(heicFiles.length){
+        ov.querySelector('#vdi-foto-info').innerHTML='<span style="color:#E0C068">Converto '+heicFiles.length+' foto iPhone (HEIC)…</span>';
+        for(const f of heicFiles){
+          try{ img.push(await _vaiConvertiHeicAFile(f)); }
+          catch(e){ saltate++; }
+        }
+      }
       img.sort((a,b)=>a.name.localeCompare(b.name,'it',{ numeric:true }));
       foto=img;
       ov.querySelector('#vdi-foto-info').innerHTML = foto.length
         ? '<b style="color:#E8EDF2">'+foto.length+(foto.length===1?' foto scelta':' foto scelte')+'</b>'+
-          (saltate ? ' · <span style="color:#E0C068">'+saltate+' HEIC saltate (formato non leggibile qui)</span>' : '')+
+          (saltate ? ' · <span style="color:#E0C068">'+saltate+' HEIC non convertite (serve internet la prima volta): salvale in JPG</span>' : '')+
           ' · <span style="color:#93A5B8">per cambiarle ripremi il pulsante</span>'
-        : (saltate ? '<span style="color:#E0C068">Le foto scelte sono HEIC (iPhone): qui non si leggono. Salvale in JPG.</span>'
+        : (saltate ? '<span style="color:#E0C068">Conversione HEIC non riuscita (serve internet la prima volta). Salva le foto in JPG e riprova.</span>'
                    : '<span style="color:#E0C068">Nessuna foto JPG, PNG o WEBP tra i file scelti.</span>');
       aggiorna();
     });
