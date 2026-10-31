@@ -36551,7 +36551,23 @@ function _vaiTrasfCss(){
         kb=_vaiKbCss(c, dur>0 ? loc/dur : 0);
       }
     }catch(e){}
-    return kb+(sp?'scaleX(-1) ':'')+(rot?('rotate('+rot+'deg) '):'');
+    // Zoom improvviso + tremolio camera (effetti cinematografici): stessa matematica
+    // del canvas d'esportazione (_vaiFxCalcolaTrasform), qui in CSS per l'anteprima dal
+    // vivo. incluKb=false: il Ken Burns lo gestisce già kb qui sopra, non lo sommo due volte.
+    let fxCss='';
+    try{
+      if(c && (c.fx && (c.fx.zoom || c.fx.shake))){
+        const v=document.getElementById('vai-video');
+        const cIn=c.taglioInizio||0;
+        const dur=(c.taglioDurata>0)?c.taglioDurata:((c.durata>0)?c.durata:3);
+        const loc=(v&&isFinite(v.currentTime))?(v.currentTime-cIn):0;
+        const ft=_vaiFxCalcolaTrasform(c, loc, dur, false);
+        if(ft.scale!==1 || ft.shakeX || ft.shakeY || ft.shakeRot){
+          fxCss='translate('+(ft.shakeX*1.5).toFixed(3)+'%,'+(ft.shakeY*1.5).toFixed(3)+'%) rotate('+ft.shakeRot.toFixed(3)+'deg) scale('+ft.scale.toFixed(4)+') ';
+        }
+      }
+    }catch(e){}
+    return kb+fxCss+(sp?'scaleX(-1) ':'')+(rot?('rotate('+rot+'deg) '):'');
   }catch(e){ return ''; }
 }
 window._vaiTrasfCss=_vaiTrasfCss;
@@ -36760,6 +36776,111 @@ function _vaiDrawPrimaDopo(ctx, W, H, tGlob){
 }
 window._vaiDrawPrimaDopo=_vaiDrawPrimaDopo;
 
+/* ═══════ RESA DEGLI EFFETTI CINEMATOGRAFICI SUL CANVAS D'ESPORTAZIONE ═══════
+   Zoom improvviso + tremolio si applicano come trasformazione del canvas PRIMA di
+   disegnare il fotogramma del video (così deformano anche scritte/logo sopra, come
+   farebbe una vera camera che si muove); grana e vignetta sono un velo sopra, DOPO,
+   quindi restano sempre nitide indipendentemente dallo zoom. localT è il tempo RAW
+   dentro il file della clip (lo stesso che usa già kbTipo/Ken Burns in anteprima). */
+function _vaiFxCalcolaTrasform(clip, localT, durataClipRaw, incluKb){
+  if(incluKb===undefined) incluKb=true;
+  let scale=1, dxFrac=0, shakeX=0, shakeY=0, shakeRot=0;
+  const fx=clip && clip.fx;
+  if(fx && fx.zoom){
+    const z=fx.zoom;
+    const durata=Math.max(0.2, z.durata||0.7);
+    const tRel=localT-(z.t||0);
+    const salita=durata*0.4, assestato=0.25, discesa=Math.max(0.15,durata*0.6);
+    if(tRel>=-0.02 && tRel<=salita+assestato+discesa){
+      const picco=(z.verso==='out')?Math.max(0.6,2-z.forza):z.forza;
+      if(tRel<=salita){
+        const p=Math.max(0,Math.min(1, tRel/salita));
+        scale=1+(picco-1)*(1-Math.pow(1-p,3));
+      } else if(tRel<=salita+assestato){
+        scale=picco;
+      } else {
+        const p=Math.max(0,Math.min(1,(tRel-salita-assestato)/discesa));
+        scale=picco-(picco-1)*p;
+      }
+    }
+  }
+  if(incluKb && clip && clip.daFoto && clip.kbStatico && clip.kbTipo){
+    const Z=1.12;
+    const p=Math.max(0, Math.min(1, durataClipRaw>0 ? localT/durataClipRaw : 0));
+    const e=p<0.5?2*p*p:1-Math.pow(-2*p+2,2)/2;
+    let z2, ddx=0;
+    if(clip.kbTipo==='in') z2=1+(Z-1)*e;
+    else if(clip.kbTipo==='out') z2=Z-(Z-1)*e;
+    else { z2=1.10; ddx=(clip.kbTipo==='panR'?(e-0.5):(0.5-e)); }
+    scale*=z2; dxFrac+=ddx*(1-1/z2);
+  }
+  if(fx && fx.shake){
+    const f=fx.shake.forza||0.6;
+    shakeX=(Math.sin(localT*14.3)*0.6+Math.sin(localT*7.1+1.7)*0.4)*f;
+    shakeY=(Math.sin(localT*11.7+0.5)*0.6+Math.sin(localT*5.3+2.2)*0.4)*f;
+    shakeRot=(Math.sin(localT*6.1+0.9)*0.4)*f;
+  }
+  return { scale, dxFrac, shakeX, shakeY, shakeRot };
+}
+window._vaiFxCalcolaTrasform=_vaiFxCalcolaTrasform;
+
+/* Applica la trasformazione calcolata sopra: chiamare PRIMA del drawImage del video,
+   con _vaiFxFinePre() subito dopo (ctx.restore semplice, tenuto distinto per chiarezza). */
+function _vaiFxInizioPre(ctx, clip, localT, durataClipRaw, W, H){
+  const t=_vaiFxCalcolaTrasform(clip, localT, durataClipRaw);
+  const haEffetto = t.scale!==1 || t.shakeX || t.shakeY || t.shakeRot;
+  if(!haEffetto) return false;
+  ctx.save();
+  ctx.translate(W/2 + t.shakeX*W*0.012, H/2 + t.shakeY*H*0.012);
+  ctx.rotate(t.shakeRot*Math.PI/180);
+  ctx.scale(t.scale, t.scale);
+  ctx.translate(-W/2 + t.dxFrac*W, -H/2);
+  return true;
+}
+window._vaiFxInizioPre=_vaiFxInizioPre;
+
+let _vaiFxGranaTileCache=null;
+function _vaiFxGranaTile(){
+  if(_vaiFxGranaTileCache) return _vaiFxGranaTileCache;
+  try{
+    const cv=document.createElement('canvas'); cv.width=160; cv.height=160;
+    const cx=cv.getContext('2d');
+    const img=cx.createImageData(160,160);
+    for(let i=0;i<img.data.length;i+=4){
+      const v=120+Math.floor(Math.random()*80);
+      img.data[i]=v; img.data[i+1]=v; img.data[i+2]=v; img.data[i+3]=255;
+    }
+    cx.putImageData(img,0,0);
+    _vaiFxGranaTileCache=cv;
+  }catch(e){ _vaiFxGranaTileCache=null; }
+  return _vaiFxGranaTileCache;
+}
+function _vaiFxDisegnaPost(ctx, clip, W, H){
+  if(!clip || !clip.fx) return;
+  try{
+    if(clip.fx.vignetta){
+      const f=clip.fx.vignetta.forza||0.5;
+      const grad=ctx.createRadialGradient(W/2,H/2,H*0.32,W/2,H/2,H*0.75);
+      grad.addColorStop(0,'rgba(0,0,0,0)');
+      grad.addColorStop(1,'rgba(0,0,0,'+(0.55*f).toFixed(2)+')');
+      ctx.save(); ctx.fillStyle=grad; ctx.fillRect(0,0,W,H); ctx.restore();
+    }
+    if(clip.fx.grain){
+      const f=clip.fx.grain.forza||0.5;
+      const tile=_vaiFxGranaTile();
+      if(tile){
+        ctx.save();
+        ctx.globalAlpha=Math.min(0.5, 0.18*f+0.05);
+        ctx.globalCompositeOperation='overlay';
+        const ox=-((Math.random()*tile.width)|0), oy=-((Math.random()*tile.height)|0);
+        for(let y=oy;y<H;y+=tile.height) for(let x=ox;x<W;x+=tile.width) ctx.drawImage(tile,x,y);
+        ctx.restore();
+      }
+    }
+  }catch(e){}
+}
+window._vaiFxDisegnaPost=_vaiFxDisegnaPost;
+
 /* ══════════ DIVIDI LA CLIP NEL PUNTO DEL CURSORE (agosto 2026) ══════════
    Mancava: si poteva accorciare una clip dai bordi, ma non spezzarla in due nel
    mezzo. Serve per infilare un fermo immagine o uno stacco dove capita il momento
@@ -36940,7 +37061,7 @@ async function vaiFermoImmagine(){
        zoomata lenta, ma su un fotogramma catturato dal video — già compresso, pieno
        di dettagli fini — il movimento faceva tremolare l'immagine.
        Il movimento resta disponibile: si aggiunge dall'Inspector della clip. */
-    daFoto:true, fotoSrc:dataUrl, kbTipo:null,
+    daFoto:true, fotoSrc:dataUrl, kbTipo:null, kbStatico:true,
     taglioInizio:0, taglioDurata:DUR,
     /* FORMATO IDENTICO ALLA CLIP: il fermo immagine deve stare nel quadro
        esattamente come il filmato da cui è preso. Senza ereditare fit e
@@ -40161,7 +40282,9 @@ function vaiAnimLoop(){
      quanto è avanzata la clip */
   try{
     const _cf=(_vaiClipAttiva>=0)?_vaiClips[_vaiClipAttiva]:null;
-    if(_cf && _cf.daFoto && _cf.kbStatico && _cf.kbTipo) _vaiTrasfAggiornaAnteprima();
+    // stessa idea: anche zoom improvviso e tremolio camera dipendono da quanto è
+    // avanzata la clip, vanno ricalcolati a ogni fotogramma per animarsi dal vivo
+    if(_cf && ((_cf.daFoto && _cf.kbStatico && _cf.kbTipo) || (_cf.fx && (_cf.fx.zoom || _cf.fx.shake)))) _vaiTrasfAggiornaAnteprima();
   }catch(e){}
   _vaiTlLiveDraw();
   // se è attivo un formato con sfondo sfocato, lo rinfresco ~4 volte al secondo
@@ -42008,6 +42131,7 @@ function vaiOverlayUpdate(){
   // riposizionato e riattaccato dopo il reset di frame.innerHTML.
   try{ _vaiPipSync(frame, v); }catch(e){}
   try{ _vaiPrimaDopoSync(frame, v); }catch(e){}
+  try{ _vaiFxOverlaySync(frame); }catch(e){}
   // AUTO-ADATTAMENTO: una scritta "a una riga" (nowrap) che sfora la larghezza del video
   // resterebbe tagliata ai lati (es. "...00 Mt Dal M..."). Dopo aver disegnato, misuro
   // ogni scritta e, se il suo testo è più largo del riquadro, la rimpicciolisco con uno
@@ -42148,6 +42272,46 @@ function _vaiPrimaDopoSync(frame, v){
   if(lblD){ lblD.textContent=_vaiPrimaDopo.etichettaDopo||''; lblD.style.cssText=lblCss+';right:10px'; lblD.style.display=_vaiPrimaDopo.etichettaDopo?'block':'none'; }
 }
 window._vaiPrimaDopoSync=_vaiPrimaDopoSync;
+
+/* Grana pellicola + vignetta nell'anteprima dal vivo: un velo CSS sopra il video,
+   nodo persistente come gli altri overlay qui sopra (mai ricreato a ogni ridisegno).
+   Riusa lo stesso tile di rumore generato per il canvas d'esportazione. */
+function _vaiFxOverlaySync(frame){
+  const c=(_vaiClipAttiva>=0)?_vaiClips[_vaiClipAttiva]:null;
+  const fx=c && c.fx;
+  let el=window._vaiFxOverlayEl;
+  if(!fx || (!fx.grain && !fx.vignetta)){
+    if(el) el.style.display='none';
+    return;
+  }
+  if(!el){
+    el=document.createElement('div');
+    el.id='vai-ov-fx';
+    el.style.cssText='position:absolute;inset:0;z-index:7;pointer-events:none';
+    const vign=document.createElement('div'); vign.className='vai-ov-fx-vign';
+    vign.style.cssText='position:absolute;inset:0';
+    const grain=document.createElement('div'); grain.className='vai-ov-fx-grain';
+    grain.style.cssText='position:absolute;inset:0;background-repeat:repeat;background-size:160px 160px;mix-blend-mode:overlay';
+    el.appendChild(vign); el.appendChild(grain);
+    window._vaiFxOverlayEl=el;
+  }
+  if(el.parentNode!==frame) frame.appendChild(el);
+  el.style.display='block';
+  const vign=el.querySelector('.vai-ov-fx-vign'), grain=el.querySelector('.vai-ov-fx-grain');
+  if(fx.vignetta){
+    const f=fx.vignetta.forza||0.5;
+    vign.style.display='block';
+    vign.style.background='radial-gradient(ellipse at center, rgba(0,0,0,0) 45%, rgba(0,0,0,'+(0.55*f).toFixed(2)+') 100%)';
+  } else { vign.style.display='none'; }
+  if(fx.grain){
+    const f=fx.grain.forza||0.5;
+    const tile=_vaiFxGranaTile();
+    grain.style.display='block';
+    grain.style.opacity=Math.min(0.55, 0.22*f+0.06);
+    if(tile && !grain._tileSet){ grain.style.backgroundImage='url('+tile.toDataURL('image/png')+')'; grain._tileSet=true; }
+  } else { grain.style.display='none'; }
+}
+window._vaiFxOverlaySync=_vaiFxOverlaySync;
 
 /* Trascinamento libero del video PiP sul video — stessa idea di vaiLogoDragStart */
 let _vaiPipDragging=false;
@@ -44383,6 +44547,131 @@ function vaiSelScrittaTL(id){
   vaiInspectorRender();
 }
 
+/* ═══════ EFFETTI CINEMATOGRAFICI SU UNA CLIP [31 ott 2026] ═══════
+   Chiesti da Enzo dopo un video YouTube su tecniche di montaggio: zoom improvviso,
+   velocità variabile, tremolio camera, grana pellicola + vignetta, fermo immagine con
+   zoom. Vivono su c.fx (zoom/shake/grain/vignetta) + c.velocita (campo che esisteva
+   già nel progetto per il montaggio sul ritmo, qui lo rendo accessibile a mano).
+   Ogni effetto è letto sia dall'anteprima dal vivo (_vaiTrasfCss per zoom/shake, un
+   filtro CSS per grana/vignetta) sia dal canvas dell'esportazione reale — due
+   disegni separati, stessa idea del resto del progetto. */
+function _vaiInspEffettiHtml(c, idx){
+  c.fx = c.fx || {};
+  const vel = (c.velocita && c.velocita>0) ? c.velocita : 1;
+  const VELOCITA=[[0.5,'0.5×'],[0.75,'0.75×'],[1,'1×'],[1.5,'1.5×'],[2,'2×']];
+  const zoomOn=!!c.fx.zoom, shakeOn=!!c.fx.shake, grainOn=!!c.fx.grain, vignOn=!!c.fx.vignetta;
+  const livelli=[[0.3,'Basso'],[0.6,'Medio'],[1,'Alto']];
+  const segLivelli=(campo, valoreAttuale, fn)=> livelli.map(l=>'<button class="vai-insp-sb'+(Math.abs((valoreAttuale||0)-l[0])<0.01?' on':'')+'" onclick="'+fn+'('+idx+','+l[0]+')">'+l[1]+'</button>').join('');
+  return '<div class="vai-insp-fx">'+
+    '<div class="vai-insp-preset-h">'+_vaiIc('fulmine')+' Effetti cinematografici</div>'+
+    (c.daFoto?(
+      '<div class="vai-insp-row"><span class="vai-insp-l">Zoom lento</span><div class="vai-insp-seg">'+
+        '<button class="vai-insp-sb'+(!c.kbTipo?' on':'')+'" onclick="vaiInspFermoZoom('+idx+',null)">Fermo</button>'+
+        '<button class="vai-insp-sb'+(c.kbTipo==='in'?' on':'')+'" onclick="vaiInspFermoZoom('+idx+',\'in\')">Avanti</button>'+
+        '<button class="vai-insp-sb'+(c.kbTipo==='out'?' on':'')+'" onclick="vaiInspFermoZoom('+idx+',\'out\')">Indietro</button>'+
+      '</div></div>'
+    ):'')+
+    '<div class="vai-insp-row"><span class="vai-insp-l">Velocità</span><div class="vai-insp-seg">'+
+      VELOCITA.map(v=>'<button class="vai-insp-sb'+(Math.abs(vel-v[0])<0.01?' on':'')+'" onclick="vaiInspVelocita('+idx+','+v[0]+')">'+v[1]+'</button>').join('')+
+    '</div></div>'+
+    (vel!==1?'<div class="vai-insp-row"><span class="vai-insp-l"></span><span style="flex:1;font-size:.72rem;color:#8FA3B8">'+(vel<1?'Rallenty: la clip dura di più nel montaggio.':'Accelerata: la clip dura di meno nel montaggio.')+'</span></div>':'')+
+    '<div class="vai-insp-row"><span class="vai-insp-l">Zoom improvviso</span>'+
+      '<label class="vai-check" style="flex:1;display:flex;align-items:center;gap:7px;font-size:.78rem;color:#8FA3B8;cursor:pointer">'+
+        '<input type="checkbox"'+(zoomOn?' checked':'')+' onchange="vaiInspFxZoomToggle('+idx+',this.checked)"> al punto dove sei ora'+
+      '</label></div>'+
+    (zoomOn?('<div class="vai-insp-row"><span class="vai-insp-l">Verso</span><div class="vai-insp-seg">'+
+      '<button class="vai-insp-sb'+(c.fx.zoom.verso==='in'?' on':'')+'" onclick="vaiInspFxZoomVerso('+idx+',\'in\')">Avanti</button>'+
+      '<button class="vai-insp-sb'+(c.fx.zoom.verso==='out'?' on':'')+'" onclick="vaiInspFxZoomVerso('+idx+',\'out\')">Indietro</button>'+
+    '</div></div>'):'')+
+    '<div class="vai-insp-row"><span class="vai-insp-l">Tremolio camera</span>'+
+      '<label class="vai-check" style="flex:1;display:flex;align-items:center;gap:7px;font-size:.78rem;color:#8FA3B8;cursor:pointer">'+
+        '<input type="checkbox"'+(shakeOn?' checked':'')+' onchange="vaiInspFxShakeToggle('+idx+',this.checked)"> presa a mano'+
+      '</label></div>'+
+    (shakeOn?('<div class="vai-insp-row"><span class="vai-insp-l">Intensità</span><div class="vai-insp-seg">'+segLivelli('shake', c.fx.shake.forza, 'vaiInspFxShakeLivello')+'</div></div>'):'')+
+    '<div class="vai-insp-row"><span class="vai-insp-l">Grana pellicola</span>'+
+      '<label class="vai-check" style="flex:1;display:flex;align-items:center;gap:7px;font-size:.78rem;color:#8FA3B8;cursor:pointer">'+
+        '<input type="checkbox"'+(grainOn?' checked':'')+' onchange="vaiInspFxGrainToggle('+idx+',this.checked)"> texture pellicola'+
+      '</label></div>'+
+    '<div class="vai-insp-row"><span class="vai-insp-l">Vignetta</span>'+
+      '<label class="vai-check" style="flex:1;display:flex;align-items:center;gap:7px;font-size:.78rem;color:#8FA3B8;cursor:pointer">'+
+        '<input type="checkbox"'+(vignOn?' checked':'')+' onchange="vaiInspFxVignettaToggle('+idx+',this.checked)"> bordi scuri'+
+      '</label></div>'+
+    '</div>';
+}
+window._vaiInspEffettiHtml=_vaiInspEffettiHtml;
+
+function vaiInspFermoZoom(idx, tipo){
+  const c=_vaiClips[idx]; if(!c) return;
+  vaiSnapshot('zoom fermo immagine');
+  c.kbTipo=tipo; c.kbStatico=true;
+  _vaiDirty=true;
+  try{ _vaiTrasfAggiornaAnteprima(); }catch(e){}
+  vaiInspectorRender();
+}
+window.vaiInspFermoZoom=vaiInspFermoZoom;
+
+function vaiInspVelocita(idx, val){
+  const c=_vaiClips[idx]; if(!c) return;
+  vaiSnapshot('velocità clip');
+  c.velocita=parseFloat(val)||1;
+  _vaiDirty=true;
+  try{ vaiAggiornaVelPreview(); }catch(e){}
+  try{ if(typeof _vaiRicalcolaGruppiEstesi==='function') _vaiRicalcolaGruppiEstesi(); }catch(e){}
+  vaiTlRender(); vaiOverlayUpdate(); vaiInspectorRender();
+}
+window.vaiInspVelocita=vaiInspVelocita;
+
+function vaiInspFxZoomToggle(idx, on){
+  const c=_vaiClips[idx]; if(!c) return;
+  vaiSnapshot('zoom improvviso');
+  c.fx=c.fx||{};
+  if(on){
+    const v=document.getElementById('vai-video');
+    const cIn=c.taglioInizio||0;
+    const tLocale=(v && idx===_vaiClipAttiva)?Math.max(0,v.currentTime-cIn):0;
+    c.fx.zoom={ t:tLocale, durata:0.7, verso:'in', forza:1.35 };
+  } else { delete c.fx.zoom; }
+  _vaiDirty=true; vaiOverlayUpdate(); vaiInspectorRender();
+}
+window.vaiInspFxZoomToggle=vaiInspFxZoomToggle;
+function vaiInspFxZoomVerso(idx, verso){
+  const c=_vaiClips[idx]; if(!c || !c.fx || !c.fx.zoom) return;
+  c.fx.zoom.verso=verso; _vaiDirty=true; vaiOverlayUpdate(); vaiInspectorRender();
+}
+window.vaiInspFxZoomVerso=vaiInspFxZoomVerso;
+
+function vaiInspFxShakeToggle(idx, on){
+  const c=_vaiClips[idx]; if(!c) return;
+  vaiSnapshot('tremolio camera');
+  c.fx=c.fx||{};
+  if(on) c.fx.shake={ forza:0.6 }; else delete c.fx.shake;
+  _vaiDirty=true; vaiOverlayUpdate(); vaiInspectorRender();
+}
+window.vaiInspFxShakeToggle=vaiInspFxShakeToggle;
+function vaiInspFxShakeLivello(idx, forza){
+  const c=_vaiClips[idx]; if(!c || !c.fx || !c.fx.shake) return;
+  c.fx.shake.forza=forza; _vaiDirty=true; vaiOverlayUpdate(); vaiInspectorRender();
+}
+window.vaiInspFxShakeLivello=vaiInspFxShakeLivello;
+
+function vaiInspFxGrainToggle(idx, on){
+  const c=_vaiClips[idx]; if(!c) return;
+  vaiSnapshot('grana pellicola');
+  c.fx=c.fx||{};
+  if(on) c.fx.grain={ forza:0.5 }; else delete c.fx.grain;
+  _vaiDirty=true; vaiOverlayUpdate(); vaiInspectorRender();
+}
+window.vaiInspFxGrainToggle=vaiInspFxGrainToggle;
+
+function vaiInspFxVignettaToggle(idx, on){
+  const c=_vaiClips[idx]; if(!c) return;
+  vaiSnapshot('vignetta');
+  c.fx=c.fx||{};
+  if(on) c.fx.vignetta={ forza:0.5 }; else delete c.fx.vignetta;
+  _vaiDirty=true; vaiOverlayUpdate(); vaiInspectorRender();
+}
+window.vaiInspFxVignettaToggle=vaiInspFxVignettaToggle;
+
 /* Disegna l'Inspector in base alla selezione corrente */
 function vaiInspectorRender(){
   const insp=document.getElementById('vai-inspector');
@@ -44450,6 +44739,7 @@ function vaiInspectorRender(){
         '</label></div>'+
       '<div class="vai-insp-row"><span class="vai-insp-l"></span>'+
         '<button class="btn btn-outline btn-sm" onclick="vaiLogoAllinea()" title="Riporta il logo nella stessa posizione su tutte le clip">Allinea il logo su tutte</button></div>'+
+      _vaiInspEffettiHtml(c, _vaiSel.idx)+
       '<div class="vai-insp-actions">'+
         '<button class="btn btn-outline btn-sm" onclick="vaiClipSelect('+_vaiSel.idx+',true)">▶ Anteprima</button>'+
         '<button class="btn btn-outline btn-sm vai-insp-del" onclick="vaiClipDel('+_vaiSel.idx+');_vaiSel=null;vaiInspectorRender();">'+_vaiIc('cestino')+' Rimuovi clip</button>'+
@@ -47162,7 +47452,12 @@ async function vaiMontaTutto(fmtIdxOverride){
       const transOut=(tr && tr.tipo!=='nessuna')?tr:null;
       setS('Monto clip '+(i+1)+'/'+_vaiClips.length+'…'+(transOut?' (fusione con la successiva)':''));
       const esito=await _vaiRenderClipSuCanvas(clip, ctx, cv.width, cv.height, infoCards, tOffset, startAt, transOut, prossima);
-      const durataClipEff=(clip.durata && clip.durata>0 ? clip.durata : 3) - startAt;
+      // in OUTPUT (non RAW): una clip al rallenty dura di più nel montaggio, una
+      // accelerata di meno — _vaiRawToOutput è la stessa conversione già usata
+      // ovunque nel progetto per tempi scritte/timeline, qui applicata all'intera
+      // durata così l'accumulo tOffset resta allineato a quanto viene DAVVERO
+      // registrato (vedi il playbackRate impostato qui sotto in _vaiRenderClipSuCanvas).
+      const durataClipEff=_vaiRawToOutput(clip, clip.durata||3) - _vaiRawToOutput(clip, startAt);
       tOffset += durataClipEff;
       startAt = (esito && esito.consumatoProssima) ? esito.consumatoProssima : 0;
     }
@@ -47279,7 +47574,10 @@ function _vaiRenderClipSuCanvas(clip, ctx, W, H, infoCards, tOffset, startAt, tr
                 const ar=vw/vh, tr=W/H; let dw,dh,dx,dy;
                 if(ar>tr){ dh=H; dw=dh*ar; dx=(W-dw)/2; dy=0; } else { dw=W; dh=dw/ar; dx=0; dy=(H-dh)/2; }
                 ctx.fillStyle='#0D1B2A'; ctx.fillRect(0,0,W,H);
+                const _fxAttivoInv=_vaiFxInizioPre(ctx, clip, target, durataCache, W, H);
                 try{ ctx.drawImage(fr.img,dx,dy,dw,dh); }catch(e){}
+                if(_fxAttivoInv) ctx.restore();
+                _vaiFxDisegnaPost(ctx, clip, W, H);
                 const tGlob=tOffset+elapsed;
                 infoCards.forEach(c=> _vaiDrawInfoCard(ctx, W, H, c, tGlob));
                 const attive=scritte.filter(x=> !x.hidden && target>=x.t && target<=(x.t+(x.durata||3)) );
@@ -47307,9 +47605,15 @@ function _vaiRenderClipSuCanvas(clip, ctx, W, H, infoCards, tOffset, startAt, tr
           if(ar>tr){ dh=H; dw=dh*ar; dx=(W-dw)/2; dy=0; }
           else     { dw=W; dh=dw/ar; dx=0; dy=(H-dh)/2; }
           ctx.fillStyle='#0D1B2A'; ctx.fillRect(0,0,W,H);
+          const _fxAttivo=_vaiFxInizioPre(ctx, clip, tv.currentTime, durataClip, W, H);
           try{ ctx.drawImage(tv,dx,dy,dw,dh); }catch(e){}
+          if(_fxAttivo) ctx.restore();
+          _vaiFxDisegnaPost(ctx, clip, W, H);
           const t=tv.currentTime;
-          const tGlob=tOffset+(t-startAt); // tempo globale nel montaggio
+          // tempo globale nel montaggio: con velocità diversa da 1, (t-startAt) raw non
+          // corrisponde più al tempo davvero trascorso nel video registrato — serve la
+          // stessa conversione raw→output di _vaiRawToOutput.
+          const tGlob=tOffset+(_vaiRawToOutput(clip,t)-_vaiRawToOutput(clip,startAt));
           // schede info immobile, ordinate sull'intera durata
           infoCards.forEach(c=> _vaiDrawInfoCard(ctx, W, H, c, tGlob));
           const attive=scritte.filter(x=> !x.hidden && t>=x.t && t<=(x.t+(x.durata||3)) );
@@ -47321,12 +47625,21 @@ function _vaiRenderClipSuCanvas(clip, ctx, W, H, infoCards, tOffset, startAt, tr
         };
         tv.currentTime=startAt;
         await _vaiSeekAndWait(tv,startAt);
+        // VELOCITÀ: clip.velocita (già usata ovunque per i calcoli di durata/tempo,
+        // vedi _vaiDurataEff) non veniva mai applicata DAVVERO al lettore durante
+        // l'esportazione reale — solo nell'anteprima. Qui è dove il video viene
+        // VERAMENTE riprodotto per essere registrato: senza questa riga, una clip
+        // segnata come rallenty/accelerata usciva sempre a velocità normale.
+        try{ tv.playbackRate=Math.max(0.25, Math.min(4, (clip.velocita&&clip.velocita>0)?clip.velocita:1)); }catch(e){}
         await tv.play();
         draw();
         await new Promise(res=>{
           let done=false; const fine=()=>{ if(done)return; done=true; res(); };
           tv.onended=fine;
-          setTimeout(fine, Math.max(0,(fineNormale-startAt))*1000+1200);
+          // la rete di sicurezza deve contare il tempo VERO che serve a video.currentTime
+          // per arrivare a fineNormale, non quello a velocità 1 — a 0.5x ci vuole il
+          // doppio del tempo reale, altrimenti questo timeout taglia il rallenty a metà.
+          setTimeout(fine, Math.max(0,(fineNormale-startAt))/(tv.playbackRate||1)*1000+1200);
           // ontimeupdate/raf non garantiscono di fermarsi ESATTAMENTE a fineNormale: un
           // controllo leggero e frequente fa partire la fusione al punto giusto
           const chk=setInterval(()=>{ if(tv.currentTime>=fineNormale-0.02 || tv.paused || tv.ended){ clearInterval(chk); fine(); } }, 30);
