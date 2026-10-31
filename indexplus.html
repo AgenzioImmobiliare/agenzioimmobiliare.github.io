@@ -30890,11 +30890,23 @@ function vaiRenderCatalogo(){
       .forEach(p=>extra.push(p.charAt(0).toUpperCase()+p.slice(1)));
     lista=[...new Set([...extra, ...lista])];
   }
-  box.innerHTML='<span class="vai-cat-lbl">Inserisci:</span>'+
-    '<button class="vai-cat-chip vai-cat-sticker" onclick="vaiStickerPicker()" title="Frecce e sticker per indicare dettagli sul video">Sticker</button>'+
-    '<button class="vai-cat-chip vai-cat-sticker" onclick="vaiFigurePicker()" title="Figure geometriche senza sfondo: cornici, cerchi, linee">Figure</button>'+
-    '<span style="position:relative;display:inline-block">'+
-      '<button class="vai-cat-chip vai-cat-sticker" onclick="vaiImgMenuToggle(event)" title="Inserisci una foto: in sequenza come clip a sé, oppure sopra la clip attuale">Immagine <span style="opacity:.6">▾</span></button>'+
+  // Icone semplici in linea (stesso linguaggio delle card sopra: 24x24, tratto 2px) —
+  // così questi pulsanti "da inserire" sembrano card anche loro, non più un residuo
+  // di barra degli strumenti incollato sotto.
+  const _ic=(p)=>'<svg class="vai-cat-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';
+  const _chev=_ic('<polyline points="6 9 12 15 18 9"/>');
+  const I_STICKER='<path d="M12 2l1.8 5.2L19 9l-5.2 1.8L12 16l-1.8-5.2L5 9l5.2-1.8z"/>';
+  const I_FIGURE='<rect x="3" y="3" width="9" height="9" rx="1.5"/><circle cx="17" cy="17" r="5"/>';
+  const I_IMG='<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>';
+  const I_BANDA='<rect x="2" y="14" width="20" height="6" rx="1"/><line x1="5" y1="17" x2="14" y2="17"/>';
+  const I_ANIMATO='<path d="M4 6h16M4 12h10M4 18h6"/><path d="M18 14l3 3-3 3"/>';
+  const I_TRASFORMA='<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.5 9a9 9 0 0114.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0020.5 15"/>';
+  const I_STANZA='<path d="M3 21h18"/><path d="M6 21V5a2 2 0 012-2h5l5 2v16"/><path d="M13 12v.01"/>';
+  box.innerHTML=
+    '<button class="vai-cat-chip vai-cat-sticker" onclick="vaiStickerPicker()" title="Frecce e sticker per indicare dettagli sul video">'+_ic(I_STICKER)+'<span>Sticker</span></button>'+
+    '<button class="vai-cat-chip vai-cat-sticker" onclick="vaiFigurePicker()" title="Figure geometriche senza sfondo: cornici, cerchi, linee">'+_ic(I_FIGURE)+'<span>Figure</span></button>'+
+    '<span style="position:relative;display:block">'+
+      '<button class="vai-cat-chip vai-cat-sticker" onclick="vaiImgMenuToggle(event)" title="Inserisci una foto: in sequenza come clip a sé, oppure sopra la clip attuale">'+_ic(I_IMG)+'<span>Immagine</span>'+_chev+'</button>'+
       '<div id="vai-img-list" style="display:none;position:absolute;left:0;top:calc(100% + 6px);z-index:60;flex-direction:column;min-width:250px;background:#111A24;border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:5px;box-shadow:0 10px 28px rgba(0,0,0,.45)">'+
         '<button class="vai-trasf-v" onclick="vaiImgScopo(\'clip\')">In sequenza, come clip a sé'+
           '<div style="font-size:.7rem;opacity:.55;margin-top:2px">Diventa una scena del video, dopo quella attuale</div></button>'+
@@ -30902,10 +30914,10 @@ function vaiRenderCatalogo(){
           '<div style="font-size:.7rem;opacity:.55;margin-top:2px">Resta sovrapposta al filmato: la sposti e ridimensioni</div></button>'+
       '</div>'+
     '</span>'+
-    '<button class="vai-cat-chip vai-cat-sticker" onclick="vaiLowerThird()" title="Banner professionale in basso coi tuoi dati (nome, prezzo, riferimento) — stile TG">Lower third</button>'+
-    '<button class="vai-cat-chip vai-cat-sticker" onclick="vaiKineticText()" title="Testo d\'impatto le cui parole compaiono una alla volta a ritmo — stile Reel virale">Testo animato</button>'+
-    '<span style="position:relative;display:inline-block">'+
-      '<button class="vai-cat-chip vai-cat-sticker" onclick="vaiTrasfMenuToggle(event)" title="Blocca, specchia o ruota la clip">Trasforma <span style="opacity:.6">▾</span></button>'+
+    '<button class="vai-cat-chip vai-cat-sticker" onclick="vaiLowerThird()" title="Banner professionale in basso coi tuoi dati (nome, prezzo, riferimento) — stile TG">'+_ic(I_BANDA)+'<span>Lower third</span></button>'+
+    '<button class="vai-cat-chip vai-cat-sticker" onclick="vaiKineticText()" title="Testo d\'impatto le cui parole compaiono una alla volta a ritmo — stile Reel virale">'+_ic(I_ANIMATO)+'<span>Testo animato</span></button>'+
+    '<span style="position:relative;display:block">'+
+      '<button class="vai-cat-chip vai-cat-sticker" onclick="vaiTrasfMenuToggle(event)" title="Blocca, specchia o ruota la clip">'+_ic(I_TRASFORMA)+'<span>Trasforma</span>'+_chev+'</button>'+
       '<div id="vai-trasf-list" style="display:none;position:absolute;left:0;top:calc(100% + 6px);z-index:60;flex-direction:column;min-width:186px;background:#111A24;border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:5px;box-shadow:0 10px 28px rgba(0,0,0,.45)">'+
         '<button class="vai-trasf-v" onclick="vaiTrasfScegli(\'blocca\')" title="Ferma il fotogramma che stai guardando e lo inserisce come clip a sé, spezzando la clip nel punto esatto">Blocca'+
           '<div style="font-size:.7rem;opacity:.55;margin-top:2px">Taglia qui e inserisce il fotogramma fermo</div></button>'+
@@ -30917,8 +30929,8 @@ function vaiRenderCatalogo(){
       '</div>'+
     '</span>'+
     // STANZE in un menu a tendina, per liberare la riga: apre l'elenco al clic
-    '<div class="vai-stanza-dd" style="position:relative;display:inline-block">'+
-      '<button class="vai-cat-chip vai-stanza-btn" onclick="vaiStanzaMenuToggle(event)" title="Inserisci il nome di una stanza al punto attuale">Stanza <span style="opacity:.6">▾</span></button>'+
+    '<div class="vai-stanza-dd" style="position:relative;display:block">'+
+      '<button class="vai-cat-chip vai-stanza-btn" onclick="vaiStanzaMenuToggle(event)" title="Inserisci il nome di una stanza al punto attuale">'+_ic(I_STANZA)+'<span>Stanza</span>'+_chev+'</button>'+
       '<div class="vai-stanza-list" id="vai-stanza-list" style="display:none">'+
         lista.map(a=>'<button class="vai-stanza-item" onclick="vaiInserisciDato(\''+a.replace(/'/g,"\\'")+'\');vaiStanzaMenuChiudi()" title="Inserisci «'+_vaiEsc(a)+'»">'+_vaiEsc(a)+'</button>').join('')+
       '</div>'+
@@ -52352,6 +52364,15 @@ async function pubConfrontaAI(){
    nei nuovi riquadri, quindi ogni pulsante continua a chiamare la funzione di prima. */
 (function(){
   var CSS = ''
+  /* ── UN SOLO ACCENTO [31 ott 2026] ── Qui dentro (.vcc-*) molte regole usano
+     var(--brand, #EA580C): --brand non viene mai definita altrove nel progetto,
+     quindi quel fallback arancione scattava SEMPRE, su tab attiva, pulsante
+     Esporta, bordo/icona delle card al passaggio del mouse — un terzo colore
+     acceso vicino al teal di Video Social e all'oro dei pulsanti principali.
+     La fisso qui, SOLO dentro la shell di Video Social (body.vai-cc2), sull'oro
+     dell'agenzia: oro per i pulsanti/stati principali, teal per il resto, niente
+     terzo colore che spunta a sorpresa. Non tocco --brand altrove nel gestionale. */
+  + 'body.vai-cc2{--brand:#C9A84C}'
   /* ── cornice ── */
   + 'body.vai-cc2 .main-content{padding:0!important}'
   + 'body.vai-cc2 #sec-videoai{padding:0}'
@@ -52392,9 +52413,16 @@ async function pubConfrontaAI(){
   + '.vcc-pane .vai-acc{display:block!important;border:0!important;background:transparent!important;margin:0!important;box-shadow:none!important}'
   + '.vcc-pane .vai-acc-head{display:none!important}'
   + '.vcc-pane .vai-acc .vai-acc-body{display:block!important;max-height:none!important;padding:0!important;overflow:visible!important}'
-  + '.vcc-pane .vai-catalogo{display:flex;flex-wrap:wrap;gap:8px}'
+  + '.vcc-pane .vai-catalogo{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}'
   + '.vcc-pane .vai-catalogo .vai-cat-lbl{display:none}'
-  + '.vcc-pane .vai-catalogo .vai-cat-chip{height:36px;padding:0 14px;border-radius:8px}'
+  + '.vcc-pane .vai-catalogo .vai-cat-chip{height:auto;width:100%;box-sizing:border-box;display:flex;align-items:center;gap:9px;padding:11px 12px;border-radius:8px;border:1px solid #232D38;background:#1A212A;color:#DCE3EA;font:600 .8rem/1.2 inherit;text-align:left;justify-content:flex-start}'
+  + '.vcc-pane .vai-catalogo .vai-cat-chip:hover{border-color:var(--brand,#EA580C);color:#fff}'
+  + '.vcc-pane .vai-catalogo .vai-cat-chip .vai-cat-ico{flex-shrink:0;color:var(--brand,#EA580C)}'
+  + '.vcc-pane .vai-catalogo .vai-cat-chip span{flex:1}'
+  + '.vcc-pane .vai-catalogo .vai-cat-chip .vai-cat-ico:last-child{flex:none;width:13px;height:13px;opacity:.6}'
+  + '.vcc-pane .vai-catalogo .vai-stanza-dd,.vcc-pane .vai-catalogo>span{display:block}'
+  + '.vcc-pane .vai-catalogo .vai-stanza-btn{border-color:#232D38!important;color:#DCE3EA!important}'
+  + '.vcc-pane .vai-catalogo .vai-stanza-btn:hover{border-color:var(--brand,#EA580C)!important;color:#fff!important}'
   + '.vcc-pane .vai-clips-ai{display:flex!important;flex-direction:column;gap:8px}'
   + '.vcc-pane .vai-clips-ai .btn{justify-content:flex-start;height:42px;background:#1A212A!important;border:1px solid #232D38!important;color:#DCE3EA!important;font-weight:600}'
   + '.vcc-pane .vai-clips-ai .btn:hover{border-color:var(--brand,#EA580C)!important;color:#fff!important}'
