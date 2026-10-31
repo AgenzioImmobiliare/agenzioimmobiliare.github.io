@@ -7844,6 +7844,9 @@ Un caro saluto,
             <div class="vai-export-grp-l" style="margin-top:10px">Alternativa veloce (WebM)</div>
             <button class="btn vai-export-sec" onclick="vaiExportVideo()" id="vai-export-btn"><span style="display:inline-flex;align-items:center;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Esporta veloce (WebM, può avere scatti)</span></button>
             <button class="btn vai-export-sec" onclick="vaiMontaTutto()" id="vai-monta-btn" style="display:none"><span style="display:inline-flex;align-items:center;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 8h20M6 8l-2-4M11 8L9 4M16 8l-2-4M21 8l-2-4"/><rect x="2" y="8" width="20" height="12" rx="2"/></svg> Unisci tutte le clip in un video</span></button>
+            <div class="vai-export-grp-l">Più piattaforme in un colpo</div>
+            <button class="btn btn-gold vai-export-primary" onclick="vaiEsportaTuttiFormati()" id="vai-export-tutti-btn"><span style="display:inline-flex;align-items:center;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg> Esporta tutti i formati (verticale + quadrato + orizzontale)</span></button>
+            <div class="vai-capcut-hint"><svg class="vai-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M3 8l1.6-4.6L20.4 3 21 8M8.5 3.3L7 8M13.5 3.2L12 8M18.5 3.1L17 8"/></svg> Scarica 3 file con lo stesso montaggio: verticale (Reel/TikTok/Storie), quadrato (post nel feed) e orizzontale (YouTube/Facebook). Non devi più cambiare formato e riesportare a mano.</div>
             <div class="vai-export-grp-l">Altri formati</div>
             <button class="btn vai-export-sec" onclick="vaiExportTutteClip()" id="vai-export-multi-btn" style="display:none"><span style="display:inline-flex;align-items:center;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/></svg> Clip separate (numerate)</span></button>
             <button class="btn vai-export-sec" onclick="vaiExportFrames()" title="Salva ogni scritta come immagine"><span style="display:inline-flex;align-items:center;gap:7px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg> Fotogrammi-chiave (immagini)</span></button>
@@ -46633,7 +46636,7 @@ async function vaiExportTutteClip(){
 /* ═══════════ MONTA TUTTO: un UNICO video con tutte le clip in sequenza ═══════════
    Riproduce ogni clip una dopo l'altra sullo stesso canvas, imprimendo scritte e
    logo di ciascuna, e registra il tutto in un solo file video pronto da pubblicare. */
-async function vaiMontaTutto(){
+async function vaiMontaTutto(fmtIdxOverride){
   if(!_vaiClips.length){ toast('Nessuna clip da montare','error'); return; }
   if(typeof MediaRecorder==='undefined' || !HTMLCanvasElement.prototype.captureStream){
     toast('Il browser non supporta il montaggio video. Usa Chrome o Edge aggiornati.','error'); return;
@@ -46656,8 +46659,17 @@ async function vaiMontaTutto(){
 
   try{
     setS('Preparo il montaggio… resta su questa scheda');
-    // canvas di composizione (Full HD verticale standard reel)
-    const cv=document.createElement('canvas'); cv.width=1080; cv.height=1920;
+    // canvas di composizione, Full HD nel formato scelto — di norma quello che hai
+    // impostato nel lettore (il pulsante 9:16/1:1/16:9), ma "Esporta tutti i formati"
+    // può chiedermene uno specifico per questo giro (fmtIdxOverride), senza toccare
+    // quello che vedi nell'editor.
+    const _fmtIdx=(typeof fmtIdxOverride==='number')?fmtIdxOverride:(window._vaiFmtIdx||0);
+    const _fmtK=(typeof VAI_FORMATI!=='undefined' && VAI_FORMATI[_fmtIdx])?VAI_FORMATI[_fmtIdx].k:'9:16';
+    const _fmtNomi={'9:16':{file:'verticale',label:'Verticale (Reel/TikTok/Storie)'},'1:1':{file:'quadrato',label:'Quadrato (post nel feed)'},'16:9':{file:'orizzontale',label:'Orizzontale (YouTube/Facebook)'}};
+    const _fmtInfo=_fmtNomi[_fmtK]||_fmtNomi['9:16'];
+    let _cvW=1080,_cvH=1920;
+    if(_fmtK==='1:1'){ _cvW=1080; _cvH=1080; } else if(_fmtK==='16:9'){ _cvW=1920; _cvH=1080; }
+    const cv=document.createElement('canvas'); cv.width=_cvW; cv.height=_cvH;
     const ctx=cv.getContext('2d');
     ctx.imageSmoothingEnabled=true; ctx.imageSmoothingQuality='high';
     ctx.fillStyle='#0D1B2A'; ctx.fillRect(0,0,cv.width,cv.height);
@@ -46735,11 +46747,13 @@ async function vaiMontaTutto(){
     const blob=new Blob(chunks,{type:mime});
     const url=URL.createObjectURL(blob);
     const ext = mime.indexOf('mp4')>=0?'mp4':'webm';
+    const _nomeFile='reel-'+_fmtInfo.file+'.'+ext;
     const a=document.createElement('a');
-    a.href=url; a.download='reel-montato.'+ext; a.click();
+    a.href=url; a.download=_nomeFile; a.click();
     setTimeout(()=>URL.revokeObjectURL(url),8000);
-    setS('✓ Video montato e scaricato (reel-montato.'+ext+')');
-    toast('Reel montato in un unico video ✓','success');
+    setS('✓ Video montato e scaricato ('+_nomeFile+')');
+    toast('Reel '+_fmtInfo.label+' montato ✓','success');
+    return { ok:true, fmtK:_fmtK };
   }catch(e){
     console.error('[VAI] montaggio KO', e);
     setS('Montaggio non riuscito: '+(e&&e.message?e.message:e));
@@ -46749,6 +46763,44 @@ async function vaiMontaTutto(){
     if(clipAttivaPrima>=0) try{ vaiClipSelect(clipAttivaPrima, true); }catch(e){}
   }
 }
+
+/* ESPORTA TUTTI I FORMATI — chiesto da Enzo dopo la nuova grafica della timeline:
+   invece di cambiare a mano il formato (9:16/1:1/16:9) e rilanciare l'esportazione tre
+   volte, un solo pulsante monta e scarica tutti e tre i file in fila, uno via l'altro.
+   Riusa vaiMontaTutto (l'unico export che unisce TUTTE le clip, non solo quella attiva),
+   passandogli ogni volta il formato da usare per QUEL giro senza toccare quello impostato
+   nell'editor — lo ripristino alla fine. Il browser, dopo il primo download automatico,
+   può chiedere il permesso di scaricarne altri: è normale, va consentito una volta sola. */
+async function vaiEsportaTuttiFormati(){
+  if(!_vaiClips || !_vaiClips.length){ toast('Nessuna clip da montare','error'); return; }
+  const fmtOriginale=window._vaiFmtIdx||0;
+  const status=document.getElementById('vai-export-status');
+  const setS=(t)=>{ if(status) status.textContent=t; };
+  const btnTutti=document.getElementById('vai-export-tutti-btn');
+  if(btnTutti) btnTutti.disabled=true;
+  toast('Esporto tutti e 3 i formati — se il browser chiede il permesso di scaricare più file, consentilo','info');
+  const risultati=[];
+  for(let i=0;i<VAI_FORMATI.length;i++){
+    setS('Formato '+(i+1)+'/'+VAI_FORMATI.length+' ('+VAI_FORMATI[i].k+')…');
+    try{ risultati.push(await vaiMontaTutto(i)); }
+    catch(e){ risultati.push({ok:false}); }
+    // piccola pausa tra un download e l'altro: troppo ravvicinati, alcuni browser li trattano
+    // come sospetti e ne bloccano silenziosamente qualcuno
+    await new Promise(r=>setTimeout(r,700));
+  }
+  window._vaiFmtIdx=fmtOriginale;
+  try{ vaiFormatoMaskUpdate(); }catch(e){}
+  if(btnTutti) btnTutti.disabled=false;
+  const okCount=risultati.filter(r=>r&&r.ok).length;
+  if(okCount===VAI_FORMATI.length){
+    setS('✓ Tutti e 3 i formati scaricati (verticale, quadrato, orizzontale)');
+    toast('Tutti e 3 i formati esportati ✓','success');
+  } else {
+    setS(okCount+'/'+VAI_FORMATI.length+' formati scaricati — controlla sopra cosa non è riuscito');
+    toast(okCount+'/'+VAI_FORMATI.length+' formati riusciti','error');
+  }
+}
+window.vaiEsportaTuttiFormati=vaiEsportaTuttiFormati;
 
 /* Riproduce UNA clip su un canvas condiviso (per il montaggio unico),
    imprimendo scritte, logo e schede info immobile (tempo globale = tOffset+tempo clip).
