@@ -3528,15 +3528,17 @@ input[type=range].vai-ms-rng-mini{max-width:78px}
 .vai-tl-tick span{position:absolute;top:2px;left:3px;font-size:.58rem;color:rgba(255,255,255,.45);white-space:nowrap}
 .vai-tl-playhead{position:absolute;top:0;bottom:0;width:2px;background:#fff;box-shadow:0 0 4px rgba(255,255,255,.6);z-index:5;pointer-events:none}
 .vai-tl-playhead::before{content:'';position:absolute;top:0;left:-4px;width:10px;height:8px;background:#fff;clip-path:polygon(0 0,100% 0,50% 100%)}
-.vai-tl-block{position:absolute;top:0;height:var(--vai-lane-h,24px);border-radius:6px;display:flex;align-items:center;cursor:grab;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.3);min-width:30px}
-.vai-tl-block.sel{outline:2px solid #fff;outline-offset:-1px}
+.vai-tl-block{position:absolute;top:0;height:var(--vai-lane-h,24px);border-radius:8px;display:flex;align-items:center;cursor:grab;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.16);min-width:30px;border:1px solid rgba(0,0,0,.25);transition:box-shadow .15s ease,outline-color .15s ease}
+.vai-tl-block:not(.vai-tl-logoblock){background-image:linear-gradient(165deg, rgba(255,255,255,.24), rgba(255,255,255,0) 42%, rgba(0,0,0,.2))}
+.vai-tl-block:hover{box-shadow:0 3px 9px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.2)}
+.vai-tl-block.sel{outline:2px solid #C9A84C;outline-offset:-1px;box-shadow:0 0 0 3px rgba(201,168,76,.25),0 3px 10px rgba(0,0,0,.4)}
 .vai-tl-block:active{cursor:grabbing}
-.vai-tl-block-txt{flex:1;color:#fff;font-size:.7rem;font-weight:700;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,.4)}
-.vai-tl-block-h{width:11px;height:100%;background:rgba(255,255,255,.35);cursor:ew-resize;flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative;z-index:2}
-.vai-tl-block-h::after{content:'';width:2px;height:14px;border-radius:2px;background:rgba(255,255,255,.75)}
-.vai-tl-block-h:hover{background:rgba(255,255,255,.6)}
-.vai-tl-block-hl{border-radius:6px 0 0 6px}
-.vai-tl-block-hr{border-radius:0 6px 6px 0}
+.vai-tl-block-txt{flex:1;color:#fff;font-size:.7rem;font-weight:700;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,.45)}
+.vai-tl-block-h{width:11px;height:100%;background:rgba(255,255,255,.22);cursor:ew-resize;flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative;z-index:2;transition:background .12s ease}
+.vai-tl-block-h::after{content:'';width:2px;height:14px;border-radius:2px;background:rgba(255,255,255,.8)}
+.vai-tl-block-h:hover{background:rgba(255,255,255,.55)}
+.vai-tl-block-hl{border-radius:7px 0 0 7px}
+.vai-tl-block-hr{border-radius:0 7px 7px 0}
 /* blocco "multi-clip": una scritta continua estesa su più clip — bordo tratteggiato
    chiaro e badge con catena + numero di clip coperte, per distinguerla a colpo d'occhio */
 .vai-tl-block-multi{outline:1.5px dashed rgba(255,255,255,.55);outline-offset:-2px}
@@ -32370,6 +32372,14 @@ let _vaiLogoPosGlob = { x:0.05, y:0.04, scale:0.22 };
 function _vaiLogoPosDi(clip){
   return (clip && clip.logoPosOwn && clip.logoPos) ? clip.logoPos : _vaiLogoPosGlob;
 }
+
+/* ─── VIDEO IN SOVRIMPRESSIONE (picture-in-picture) ───
+   Richiesto da Enzo: poter mettere un secondo video, piccolo, sopra il video
+   principale (es. un dettaglio o il suo volto mentre parla, mentre sotto scorre
+   l'ambiente). È un solo overlay globale sull'intero montaggio — stessa idea del
+   logo (vedi sopra), con una finestra di tempo propria invece che per clip.
+   {url, fileName, naturalW, naturalH, naturalDur, taglioInizio, t, durata, x, y, w, radius} */
+let _vaiPip = null;
 window._vaiLogoPosDi = _vaiLogoPosDi;
 
 /* Drawer "Dati casa, logo e contatti" — stessa logica del drawer Testo */
@@ -32502,6 +32512,119 @@ function vaiLogoLoad(file){
   };
   reader.readAsDataURL(file);
 }
+
+/* Apre il selettore file per il video in sovrimpressione, o la finestra di
+   modifica se ce n'è già uno (un solo overlay PiP per progetto, come il logo). */
+function vaiPipApri(){
+  if(_vaiPip){ vaiPipModifica(); return; }
+  const inp=document.createElement('input');
+  inp.type='file'; inp.accept='video/*'; inp.style.display='none';
+  document.body.appendChild(inp);
+  inp.addEventListener('change', ()=>{ const f=inp.files&&inp.files[0]; if(f) vaiPipCarica(f); inp.remove(); });
+  inp.click();
+}
+window.vaiPipApri=vaiPipApri;
+
+function vaiPipCarica(file){
+  if(!file || !file.type.startsWith('video/')){ toast('Seleziona un video','error'); return; }
+  const v=document.getElementById('vai-video');
+  if(!v || !_vaiClips || !_vaiClips.length){ toast('Carica prima un video sulla timeline principale','error'); return; }
+  vaiSnapshot('aggiungi video in sovrimpressione');
+  const url=URL.createObjectURL(file);
+  const tv=document.createElement('video');
+  tv.preload='metadata'; tv.muted=true; tv.src=url;
+  tv.onloadedmetadata=()=>{
+    const naturalDur=(isFinite(tv.duration)&&tv.duration>0)?tv.duration:5;
+    const ci=_vaiClipAttiva>=0?_vaiClipAttiva:0;
+    const c=_vaiClips[ci]||{};
+    const cIn=c.taglioInizio||0;
+    const offGlob=(typeof _vaiOffsetClip==='function')?_vaiOffsetClip(ci):0;
+    const localOut=(typeof _vaiRawToOutput==='function')?_vaiRawToOutput(c, Math.max(0,v.currentTime-cIn)):Math.max(0,v.currentTime-cIn);
+    const tGlob=offGlob+localOut;
+    if(_vaiPip && _vaiPip.url){ try{ URL.revokeObjectURL(_vaiPip.url); }catch(e){} }
+    _vaiPip = {
+      url, fileName:file.name,
+      naturalW:tv.videoWidth||9, naturalH:tv.videoHeight||16, naturalDur,
+      taglioInizio:0, t:Math.round(tGlob*10)/10, durata:Math.min(5, naturalDur),
+      x:0.62, y:0.58, w:0.33, radius:14
+    };
+    _vaiDirty=true;
+    vaiTlRender(); vaiOverlayUpdate();
+    vaiPipModifica();
+    toast('Video in sovrimpressione aggiunto','success');
+    try{ tv.remove(); }catch(e){}
+  };
+  tv.onerror=()=>{ toast('Non riesco a leggere questo video','error'); try{ tv.remove(); }catch(e){} };
+}
+window.vaiPipCarica=vaiPipCarica;
+
+function vaiPipRimuovi(){
+  if(!_vaiPip) return;
+  vaiSnapshot('rimuovi video in sovrimpressione');
+  try{ URL.revokeObjectURL(_vaiPip.url); }catch(e){}
+  _vaiPip=null; _vaiDirty=true;
+  vaiTlRender(); vaiOverlayUpdate();
+  const m=document.getElementById('vai-pip-editor'); if(m) m.remove();
+  toast('Video in sovrimpressione rimosso','');
+}
+window.vaiPipRimuovi=vaiPipRimuovi;
+
+/* Posiziona il video in sovrimpressione in un angolo predefinito — stessa idea
+   di vaiLogoAngolo, qui con w invece di scale e l'altezza calcolata dal
+   rapporto reale del video caricato. */
+function vaiPipAngolo(dove){
+  if(!_vaiPip) return;
+  const ar=(_vaiPip.naturalH&&_vaiPip.naturalW)?(_vaiPip.naturalH/_vaiPip.naturalW):1.78;
+  const ph=_vaiPip.w*ar;
+  const m=0.04;
+  delete _vaiPip.cx;
+  if(dove==='tl'){ _vaiPip.x=m; _vaiPip.y=m; }
+  if(dove==='tr'){ _vaiPip.x=1-_vaiPip.w-m; _vaiPip.y=m; }
+  if(dove==='bl'){ _vaiPip.x=m; _vaiPip.y=1-ph-m; }
+  if(dove==='br'){ _vaiPip.x=1-_vaiPip.w-m; _vaiPip.y=1-ph-m; }
+  _vaiDirty=true;
+  vaiOverlayUpdate();
+}
+window.vaiPipAngolo=vaiPipAngolo;
+
+/* Modifica il video in sovrimpressione: inizio/durata nel montaggio, ritaglio
+   nel file sorgente, posizione (angoli), dimensione, angoli arrotondati. */
+function vaiPipModifica(){
+  if(!_vaiPip){ toast('Nessun video in sovrimpressione','error'); return; }
+  const s=_vaiPip;
+  const old=document.getElementById('vai-pip-editor'); if(old) old.remove();
+  const ov=_vaiMiniModal(
+    '<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:10px">Video in sovrimpressione</div>'+
+    '<div style="color:#8FA3B8;font-size:.72rem;margin-bottom:10px">'+_vaiEsc(s.fileName||'')+' — '+s.naturalDur.toFixed(1)+'s sorgente</div>'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Posizione:</div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:14px">'+
+      [['tl','↖'],['tr','↗'],['bl','↙'],['br','↘']].map(p=>'<button class="vpp-ang" data-d="'+p[0]+'" style="flex:1;padding:9px 0;border-radius:8px;cursor:pointer;font-size:1rem;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14)">'+p[1]+'</button>').join('')+
+    '</div>'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Dimensione: <span id="vpp-w-val">'+Math.round(s.w*100)+'</span>%</div>'+
+    '<input id="vpp-w" type="range" min="0.14" max="0.55" step="0.01" value="'+s.w+'" style="width:100%;margin-bottom:14px">'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Inizio nel montaggio (secondi): <span id="vpp-t-val">'+s.t.toFixed(1)+'</span>s</div>'+
+    '<input id="vpp-t" type="number" min="0" step="0.1" value="'+s.t+'" style="width:100%;box-sizing:border-box;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:.86rem;margin-bottom:14px">'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Durata (secondi): <span id="vpp-dur-val">'+s.durata.toFixed(1)+'</span>s</div>'+
+    '<input id="vpp-dur" type="range" min="0.5" max="'+Math.max(0.5,(s.naturalDur-s.taglioInizio).toFixed(2))+'" step="0.1" value="'+s.durata+'" style="width:100%;margin-bottom:14px">'+
+    '<label style="display:flex;align-items:center;gap:8px;color:#8FA3B8;font-size:.78rem;margin-bottom:14px;cursor:pointer">'+
+      '<input id="vpp-round" type="checkbox" '+(s.radius>0?'checked':'')+'> Angoli arrotondati'+
+    '</label>'+
+    '<button id="vpp-rimuovi" style="width:100%;padding:9px 0;border-radius:8px;cursor:pointer;font-size:.8rem;font-weight:700;background:#2A1414;color:#F5A3A3;border:1px solid rgba(239,68,68,.3)">Rimuovi video in sovrimpressione</button>'
+  );
+  ov.id='vai-pip-editor';
+  ov.querySelectorAll('.vpp-ang').forEach(b=>{ b.addEventListener('click', ()=>{ vaiPipAngolo(b.getAttribute('data-d')); }); });
+  const wEl=ov.querySelector('#vpp-w'), wVal=ov.querySelector('#vpp-w-val');
+  if(wEl) wEl.addEventListener('input', function(){ s.w=parseFloat(this.value)||0.33; if(wVal) wVal.textContent=Math.round(s.w*100); _vaiDirty=true; vaiOverlayUpdate(); });
+  const tEl=ov.querySelector('#vpp-t'), tVal=ov.querySelector('#vpp-t-val');
+  if(tEl) tEl.addEventListener('input', function(){ s.t=Math.max(0, parseFloat(this.value)||0); if(tVal) tVal.textContent=s.t.toFixed(1); _vaiDirty=true; vaiTlRender(); vaiOverlayUpdate(); });
+  const durEl=ov.querySelector('#vpp-dur'), durVal=ov.querySelector('#vpp-dur-val');
+  if(durEl) durEl.addEventListener('input', function(){ s.durata=parseFloat(this.value)||3; if(durVal) durVal.textContent=s.durata.toFixed(1); delete s._frameCache; _vaiDirty=true; vaiTlRender(); vaiOverlayUpdate(); });
+  const roundEl=ov.querySelector('#vpp-round');
+  if(roundEl) roundEl.addEventListener('change', function(){ s.radius=this.checked?14:0; _vaiDirty=true; vaiOverlayUpdate(); });
+  const rimEl=ov.querySelector('#vpp-rimuovi');
+  if(rimEl) rimEl.addEventListener('click', ()=>{ vaiPipRimuovi(); });
+}
+window.vaiPipModifica=vaiPipModifica;
 
 /* Mostra all'utente quali dati dell'immobile l'AI userà come contesto */
 function vaiRenderImmRecap(){
@@ -36248,6 +36371,71 @@ function _vaiCatturaFrameInvertiti(url){
   });
 }
 window._vaiCatturaFrameInvertiti=_vaiCatturaFrameInvertiti;
+
+/* Cattura in anticipo i fotogrammi del tratto di video in sovrimpressione che serve
+   davvero (da taglioInizio per durata secondi) — stessa ragione delle clip invertite:
+   durante l'esportazione vera il canvas registra in tempo reale, quindi un secondo
+   video che si deve "seekare" fotogramma per fotogramma lo farei FUORI dalla
+   registrazione, non durante. */
+function _vaiCatturaFramePip(url, inizio, durata){
+  return new Promise((resolve)=>{
+    const v=document.createElement('video');
+    v.muted=true; v.playsInline=true; v.preload='auto'; v.src=url;
+    const frames=[]; const FW=480; const FPS=12;
+    const killer=setTimeout(()=>{ try{ v.pause(); v.remove(); }catch(e){} resolve({frames, durata:0}); }, 30000);
+    v.onloadedmetadata=async ()=>{
+      try{
+        const FH=Math.max(1, Math.round(FW*((v.videoHeight||16)/(v.videoWidth||9))));
+        const nPassi=Math.max(1, Math.round(durata*FPS));
+        for(let i=0;i<=nPassi;i++){
+          const tt=Math.min(v.duration||inizio+durata, inizio + i*(durata/nPassi));
+          await _vaiSeekAndWait(v, tt);
+          const cv=document.createElement('canvas'); cv.width=FW; cv.height=FH;
+          try{ cv.getContext('2d').drawImage(v,0,0,FW,FH); }catch(e){}
+          let img=cv; try{ img=await createImageBitmap(cv); }catch(e){}
+          frames.push({ img, w:FW, h:FH });
+        }
+      }catch(e){}
+      clearTimeout(killer);
+      try{ v.pause(); v.remove(); }catch(e){}
+      resolve({frames, durata});
+    };
+    v.onerror=()=>{ clearTimeout(killer); resolve({frames, durata:0}); };
+  });
+}
+window._vaiCatturaFramePip=_vaiCatturaFramePip;
+
+/* Disegna il video in sovrimpressione sul canvas d'esportazione, leggendo dai
+   fotogrammi già catturati (_vaiPip._frameCache) — mai un seek dal vivo qui dentro,
+   per lo stesso motivo delle clip invertite. tGlob è il tempo nel montaggio intero. */
+function _vaiDrawPip(ctx, W, H, tGlob){
+  if(!_vaiPip || !_vaiPip._frameCache) return;
+  if(tGlob<_vaiPip.t || tGlob>_vaiPip.t+_vaiPip.durata) return;
+  const frames=_vaiPip._frameCache.frames||[];
+  if(!frames.length) return;
+  const elapsed=Math.max(0, tGlob-_vaiPip.t);
+  const passoT=_vaiPip.durata/Math.max(1,frames.length-1);
+  const idx=Math.max(0, Math.min(frames.length-1, Math.round(elapsed/passoT)));
+  const fr=frames[idx];
+  const bw=_vaiPip.w*W;
+  const ar=(fr.h&&fr.w)?(fr.h/fr.w):((_vaiPip.naturalH&&_vaiPip.naturalW)?(_vaiPip.naturalH/_vaiPip.naturalW):1.78);
+  const bh=bw*ar;
+  const bx=_vaiPip.x*W, by=_vaiPip.y*H;
+  const rr=(x,y,w,h,r)=>{ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); };
+  // l'ombra si disegna PRIMA del ritaglio: un ritaglio attivo tronca anche l'ombra
+  // di ciò che disegno dentro, quindi qui sotto resterebbe invisibile.
+  ctx.save();
+  ctx.shadowColor='rgba(0,0,0,.45)'; ctx.shadowBlur=W*0.012; ctx.shadowOffsetY=W*0.004;
+  ctx.fillStyle='rgba(0,0,0,.001)';
+  if(_vaiPip.radius>0) rr(bx,by,bw,bh,Math.min(_vaiPip.radius,bw/2,bh/2)); else ctx.rect(bx,by,bw,bh);
+  ctx.fill();
+  ctx.restore();
+  ctx.save();
+  if(_vaiPip.radius>0){ rr(bx,by,bw,bh,Math.min(_vaiPip.radius,bw/2,bh/2)); ctx.clip(); }
+  try{ ctx.drawImage(fr.img, bx, by, bw, bh); }catch(e){}
+  ctx.restore();
+}
+window._vaiDrawPip=_vaiDrawPip;
 
 /* ══════════ DIVIDI LA CLIP NEL PUNTO DEL CURSORE (agosto 2026) ══════════
    Mancava: si poteva accorciare una clip dai bordi, ma non spezzarla in due nel
@@ -41462,6 +41650,11 @@ function vaiOverlayUpdate(){
   });
   if(haContatti){ html += '<div class="vai-ov-contatti">'+[tel,sito].filter(Boolean).map(_vaiEsc).join(' · ')+'</div>'; }
   frame.innerHTML=html;
+  // VIDEO IN SOVRIMPRESSIONE — un <video> vero non può vivere dentro la stringa html
+  // qui sopra: riscrivendola a ogni fotogramma lo ricreerebbe da zero, perdendo la
+  // riproduzione e sfarfallando. Lo gestisco a parte: lo stesso nodo viene solo
+  // riposizionato e riattaccato dopo il reset di frame.innerHTML.
+  try{ _vaiPipSync(frame, v); }catch(e){}
   // AUTO-ADATTAMENTO: una scritta "a una riga" (nowrap) che sfora la larghezza del video
   // resterebbe tagliata ai lati (es. "...00 Mt Dal M..."). Dopo aver disegnato, misuro
   // ogni scritta e, se il suo testo è più largo del riquadro, la rimpicciolisco con uno
@@ -41493,6 +41686,85 @@ function vaiOverlayUpdate(){
   }catch(e){}
   ov.style.display='flex';
 }
+
+/* Tiene il <video> del PiP posizionato, visibile solo nella sua finestra di tempo,
+   e con il currentTime agganciato al tempo globale del montaggio — senza mai
+   ricrearlo (vedi il commento sopra la chiamata). Lo stesso nodo DOM viene
+   riattaccato a frame a ogni ridisegno, dopo che frame.innerHTML lo stacca. */
+function _vaiPipSync(frame, v){
+  let el=window._vaiPipVideoEl;
+  if(!_vaiPip){
+    if(el){ try{ el.pause(); }catch(e){} try{ el.remove(); }catch(e){} window._vaiPipVideoEl=null; }
+    return;
+  }
+  const tGlob=(typeof _vaiTempoGlobale==='function')?_vaiTempoGlobale():null;
+  const show=(tGlob!=null) && (tGlob>=_vaiPip.t) && (tGlob<=_vaiPip.t+_vaiPip.durata);
+  if(!show){
+    if(el){ try{ el.pause(); }catch(e){} try{ el.remove(); }catch(e){} }
+    return;
+  }
+  if(!el || el._pipUrl!==_vaiPip.url){
+    if(el){ try{ el.remove(); }catch(e){} }
+    el=document.createElement('video');
+    el.id='vai-ov-pip'; el.className='vai-ov-pip';
+    el.muted=true; el.playsInline=true; el.preload='auto'; el.src=_vaiPip.url;
+    el._pipUrl=_vaiPip.url;
+    el.onmousedown=function(e){ vaiPipDragStart(e); };
+    el.ontouchstart=function(e){ vaiPipDragStart(e); };
+    window._vaiPipVideoEl=el;
+  }
+  if(el.parentNode!==frame) frame.appendChild(el);
+  el.style.position='absolute';
+  el.style.left=(_vaiPip.x*100)+'%';
+  el.style.top=(_vaiPip.y*100)+'%';
+  el.style.width=(_vaiPip.w*100)+'cqw';
+  el.style.borderRadius=(_vaiPip.radius||0)+'px';
+  el.style.boxShadow='0 6px 18px rgba(0,0,0,.45)';
+  el.style.zIndex='6';
+  el.style.cursor='grab';
+  el.style.display='block';
+  const localElapsed=Math.max(0, tGlob-_vaiPip.t)+(_vaiPip.taglioInizio||0);
+  if(Math.abs((el.currentTime||0)-localElapsed)>0.25){
+    try{ el.currentTime=Math.min(localElapsed, Math.max(0,(_vaiPip.naturalDur||localElapsed)-0.05)); }catch(e){}
+  }
+  if(v.paused || v.ended){ try{ el.pause(); }catch(e){} }
+  else { el.play().catch(()=>{}); }
+}
+window._vaiPipSync=_vaiPipSync;
+
+/* Trascinamento libero del video PiP sul video — stessa idea di vaiLogoDragStart */
+let _vaiPipDragging=false;
+function vaiPipDragStart(e){
+  if(!_vaiPip) return;
+  e.preventDefault(); e.stopPropagation();
+  _vaiPipDragging=true;
+  const _pt=(ev)=>({ x:((ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX),
+                     y:((ev.touches&&ev.touches[0])?ev.touches[0].clientY:ev.clientY) });
+  const _fr0=document.getElementById('vai-ov-frame');
+  const _r0=_fr0?_fr0.getBoundingClientRect():null;
+  const _p0=_pt(e);
+  const _presaX=_r0 ? (((_p0.x-_r0.left)/_r0.width)-(_vaiPip.x||0)) : 0;
+  const _presaY=_r0 ? (((_p0.y-_r0.top)/_r0.height)-(_vaiPip.y||0)) : 0;
+  const move=(ev)=>{
+    if(!_vaiPipDragging) return;
+    const frame=document.getElementById('vai-ov-frame'); if(!frame) return;
+    const p=_pt(ev);
+    const r=frame.getBoundingClientRect();
+    _vaiPip.x=Math.max(0, Math.min(0.9, ((p.x-r.left)/r.width)-_presaX));
+    _vaiPip.y=Math.max(0, Math.min(0.9, ((p.y-r.top)/r.height)-_presaY));
+    const el=window._vaiPipVideoEl;
+    if(el){ el.style.left=(_vaiPip.x*100)+'%'; el.style.top=(_vaiPip.y*100)+'%'; }
+  };
+  const up=()=>{
+    _vaiPipDragging=false;
+    document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up);
+    document.removeEventListener('touchmove',move); document.removeEventListener('touchend',up);
+    _vaiDirty=true;
+  };
+  document.addEventListener('mousemove',move); document.addEventListener('mouseup',up);
+  document.addEventListener('touchmove',move,{passive:false}); document.addEventListener('touchend',up);
+}
+window.vaiPipDragStart=vaiPipDragStart;
 
 /* Trascinamento libero di una scritta sul video */
 let _vaiSelScritta=null;
@@ -42749,6 +43021,47 @@ function vaiLogoBlockDrag(e, modo){
   document.addEventListener('touchmove',move,{passive:false}); document.addEventListener('touchend',up);
 }
 window.vaiLogoBlockDrag=vaiLogoBlockDrag;
+
+/* Trascinamento del blocco "video in sovrimpressione" sulla timeline — stessa
+   logica di vaiLogoBlockDrag, qui su _vaiPip.t/.durata (sempre un intervallo,
+   mai "sempre visibile" come il logo: un secondo video deve avere una durata). */
+function vaiPipBlockDrag(e, modo){
+  e.preventDefault(); e.stopPropagation();
+  if(!_vaiPip) return;
+  const timearea=document.getElementById('vai-tl-timearea'); if(!timearea) return;
+  const durGlob=(_vaiClips && _vaiClips.length)?(_vaiDurataTot()||0):0;
+  if(!(durGlob>0)) return;
+  const t0=_vaiPip.t, d0=_vaiPip.durata;
+  const maxDur=Math.max(0.5, (_vaiPip.naturalDur-_vaiPip.taglioInizio));
+  const rect0=timearea.getBoundingClientRect();
+  const xInizio=(e.touches?e.touches[0].clientX:e.clientX);
+  const secPerPx=durGlob/Math.max(1,rect0.width);
+  const move=(ev)=>{
+    const x=(ev.touches?ev.touches[0].clientX:ev.clientX);
+    const deltaSec=(x-xInizio)*secPerPx;
+    let nt=t0, nd=d0;
+    if(modo==='move'){
+      nt=Math.max(0, Math.min(durGlob-0.3, t0+deltaSec));
+      nd=Math.min(d0, durGlob-nt);
+    } else if(modo==='left'){
+      nt=Math.max(0, Math.min(t0+d0-0.3, t0+deltaSec));
+      nd=(t0+d0)-nt;
+    } else if(modo==='right'){
+      nd=Math.max(0.3, Math.min(Math.min(durGlob-t0, maxDur), d0+deltaSec));
+    }
+    _vaiPip.t=nt; _vaiPip.durata=nd;
+    vaiTlRender(); vaiOverlayUpdate();
+  };
+  const up=()=>{
+    document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up);
+    document.removeEventListener('touchmove',move); document.removeEventListener('touchend',up);
+    _vaiDirty=true; delete _vaiPip._frameCache;
+  };
+  document.addEventListener('mousemove',move); document.addEventListener('mouseup',up);
+  document.addEventListener('touchmove',move,{passive:false}); document.addEventListener('touchend',up);
+}
+window.vaiPipBlockDrag=vaiPipBlockDrag;
+
 function _vaiEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 /* Disegna la traccia timeline coi marcatori e la lista scritte sotto */
@@ -42977,7 +43290,7 @@ function vaiTlRender(){
             +'<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>'
             +arr.length+'</span>'
           : '';
-        blocchi += '<div class="vai-tl-block'+selCls+hidCls+multiCls+'" data-id="'+capo.s.id+'" data-ci="'+capo.ci+'" style="left:'+left+'%;width:'+width+'%;background:'+col+'" '+
+        blocchi += '<div class="vai-tl-block'+selCls+hidCls+multiCls+'" data-id="'+capo.s.id+'" data-ci="'+capo.ci+'" style="left:'+left+'%;width:'+width+'%;background-color:'+col+'" '+
           'onmousedown="vaiBlockDragStart(event,\''+capo.s.id+'\',\'move\','+capo.ci+')" ontouchstart="vaiBlockDragStart(event,\''+capo.s.id+'\',\'move\','+capo.ci+')" '+
           'title="'+_vaiEsc(capo.s.testo)+(arr.length>1?' — continua su '+arr.length+' clip':'')+'">'+
           '<span class="vai-tl-block-h vai-tl-block-hl" onmousedown="vaiBlockDragStart(event,\''+capo.s.id+'\',\'left\','+capo.ci+')" ontouchstart="vaiBlockDragStart(event,\''+capo.s.id+'\',\'left\','+capo.ci+')"></span>'+
@@ -43036,6 +43349,28 @@ function vaiTlRender(){
           '<span class="vai-tl-block-h vai-tl-block-hl" onmousedown="vaiLogoBlockDrag(event,\'left\')" ontouchstart="vaiLogoBlockDrag(event,\'left\')"></span>'+
           '<span class="vai-tl-block-txt">'+_vaiIc('immagine')+' Logo</span>'+
           '<span class="vai-tl-block-h vai-tl-block-hr" onmousedown="vaiLogoBlockDrag(event,\'right\')" ontouchstart="vaiLogoBlockDrag(event,\'right\')"></span>'+
+        '</div></div>';
+    }
+
+    // ── CORSIA VIDEO IN SOVRIMPRESSIONE (picture-in-picture) — stessa idea della
+    //    corsia logo: appare solo se un video PiP è stato caricato, un blocco solo
+    //    che si trascina e si accorcia come una scritta.
+    let headPip='', lanePip='';
+    if(_vaiPip){
+      const left=(_vaiPip.t/durGlob)*100;
+      const width=Math.max(2.5, (_vaiPip.durata/durGlob)*100);
+      headPip='<div class="vai-tl-hrow vai-tl-hrow-logo">'+
+        '<button class="vai-tl-hbtn vai-tl-hbtn-logo" onclick="event.stopPropagation();vaiPipModifica()" title="Modifica il video in sovrimpressione">'+
+          '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="12" width="7" height="5" rx="1" fill="currentColor" stroke="none"/></svg></button>'+
+        '<button class="vai-tl-hbtn vai-tl-hbtn-del" onclick="event.stopPropagation();vaiPipRimuovi()" title="Rimuovi"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>'+
+        '<span class="vai-tl-hlbl">Video PiP</span></div>';
+      lanePip='<div class="vai-tl-lane vai-tl-lane-logo">'+
+        '<div class="vai-tl-block vai-tl-logoblock" style="left:'+left+'%;width:'+width+'%;background:linear-gradient(90deg,#2E9B8F,#3FBFAF)" '+
+          'onmousedown="vaiPipBlockDrag(event,\'move\')" ontouchstart="vaiPipBlockDrag(event,\'move\')" ondblclick="vaiPipModifica()" '+
+          'title="Video in sovrimpressione — trascina per spostarlo o tira i bordi per la durata">'+
+          '<span class="vai-tl-block-h vai-tl-block-hl" onmousedown="vaiPipBlockDrag(event,\'left\')" ontouchstart="vaiPipBlockDrag(event,\'left\')"></span>'+
+          '<span class="vai-tl-block-txt">▣ '+_vaiEsc(_vaiPip.fileName||'Video PiP')+'</span>'+
+          '<span class="vai-tl-block-h vai-tl-block-hr" onmousedown="vaiPipBlockDrag(event,\'right\')" ontouchstart="vaiPipBlockDrag(event,\'right\')"></span>'+
         '</div></div>';
     }
 
@@ -43131,12 +43466,12 @@ function vaiTlRender(){
       '<button class="vai-tl-hbtn vai-tl-hbtn-del" onclick="event.stopPropagation();vaiVoceElimina()" title="Elimina la voce"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>'+
       '<span class="vai-tl-hlbl" onclick="event.stopPropagation();vaiVoceRinomina()" title="Clicca per rinominare">'+_vaiEsc(_vaiVoceNome||'Voce')+'</span></div>') : '';
 
-    const headers='<div class="vai-tl-headers"><div class="vai-tl-heads-testo" id="vai-tl-heads-testo">'+headText.join('')+'</div>'+headVideo+headLogo+headMusica+headVoce+'</div>';
+    const headers='<div class="vai-tl-headers"><div class="vai-tl-heads-testo" id="vai-tl-heads-testo">'+headText.join('')+'</div>'+headVideo+headLogo+headPip+headMusica+headVoce+'</div>';
     const lanesInner='<div class="vai-tl-ruler" id="vai-tl-ruler" onmousedown="vaiPlayheadDrag(event)" ontouchstart="vaiPlayheadDrag(event)">'+ruler+'</div>'+playhead+
       '<div class="vai-tl-lanes" onmousedown="vaiTrackSeek(event)" ontouchstart="vaiTrackSeek(event)">'+
       '<div class="vai-tl-lanes-testo" id="vai-tl-lanes-testo">'+laneText.join('')+'</div>'+
       (_vaiClips&&_vaiClips.length?('<div class="vai-tl-lane vai-tl-lane-video">'+laneVideo+'<div class="vai-tl-rsz" onmousedown="vaiLaneResize(event,\'video\')" title="Trascina su/giù per cambiare l\'altezza della traccia"></div></div>'):'')+
-      laneLogo+
+      laneLogo+lanePip+
       laneMusica+laneVoce+'</div>';
     /* Lo spazio di manovra in coda è un elemento SEPARATO, non un margine interno
    all'area dei tempi: le posizioni di cursore, righello e blocchi sono espresse
@@ -46284,6 +46619,15 @@ async function vaiMontaTutto(){
       }
     }
 
+    // VIDEO IN SOVRIMPRESSIONE: stessa ragione delle clip invertite qui sopra — catturo
+    // SOLO il tratto che serve (da taglioInizio per durata secondi) prima che la
+    // registrazione parta, poi in _vaiDrawPip leggo solo dalla memoria.
+    if(_vaiPip && _vaiPip.url && !_vaiPip._frameCache){
+      setS('Preparo il video in sovrimpressione…');
+      try{ _vaiPip._frameCache = await _vaiCatturaFramePip(_vaiPip.url, _vaiPip.taglioInizio||0, _vaiPip.durata||3); }
+      catch(e){ _vaiPip._frameCache = { frames:[], durata:0 }; }
+    }
+
     const rec=new MediaRecorder(stream,{ mimeType:mime, videoBitsPerSecond:10000000 });
     const chunks=[];
     rec.ondataavailable=e=>{ if(e.data&&e.data.size) chunks.push(e.data); };
@@ -46388,6 +46732,7 @@ function _vaiRenderClipSuCanvas(clip, ctx, W, H, infoCards, tOffset, startAt, tr
                 infoCards.forEach(c=> _vaiDrawInfoCard(ctx, W, H, c, tGlob));
                 const attive=scritte.filter(x=> !x.hidden && target>=x.t && target<=(x.t+(x.durata||3)) );
                 attive.forEach(s=> _vaiDrawScrittaSuCanvas(ctx, W, H, s, target) );
+                try{ _vaiDrawPip(ctx, W, H, tGlob); }catch(e){}
                 try{ _vaiDrawLogoContattiClip(ctx, W, H, logo, logoPos); }catch(e){ try{_vaiDrawLogoContatti(ctx,W,H);}catch(x){} }
                 requestAnimationFrame(step);
               };
@@ -46416,6 +46761,7 @@ function _vaiRenderClipSuCanvas(clip, ctx, W, H, infoCards, tOffset, startAt, tr
           infoCards.forEach(c=> _vaiDrawInfoCard(ctx, W, H, c, tGlob));
           const attive=scritte.filter(x=> !x.hidden && t>=x.t && t<=(x.t+(x.durata||3)) );
           attive.forEach(s=> _vaiDrawScrittaSuCanvas(ctx, W, H, s, t) );
+          try{ _vaiDrawPip(ctx, W, H, tGlob); }catch(e){}
           try{ _vaiDrawLogoContattiClip(ctx, W, H, logo, logoPos); }catch(e){ try{_vaiDrawLogoContatti(ctx,W,H);}catch(x){} }
           if(!tv.paused && !tv.ended && tv.currentTime<fineNormale) raf=requestAnimationFrame(draw);
         };
@@ -46518,6 +46864,7 @@ function _vaiRenderTransizioneSuCanvas(tvA, scritteA, logoA, logoPosA, tOffsetA,
       infoCards.forEach(c=> _vaiDrawInfoCard(ctx, W, H, c, tGlobA));
       (scritteA||[]).filter(x=>!x.hidden && tA>=x.t && tA<=(x.t+(x.durata||3))).forEach(s=> _vaiDrawScrittaSuCanvas(ctx, W, H, s, tA));
       (scritteB||[]).filter(x=>!x.hidden && tB>=x.t && tB<=(x.t+(x.durata||3))).forEach(s=> _vaiDrawScrittaSuCanvas(ctx, W, H, s, tB));
+      try{ _vaiDrawPip(ctx, W, H, tGlobA); }catch(e){}
       try{ _vaiDrawLogoContattiClip(ctx, W, H, logoA, logoPosA); }catch(e){}
       if(p<1 && !finito) raf=requestAnimationFrame(draw); else fine();
     };
@@ -52136,6 +52483,7 @@ async function pubConfrontaAI(){
     scambia:'<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.5 9a9 9 0 0114.9-3.4L23 10M1 14l4.6 4.4A9 9 0 0020.5 15"/>',
     telefono:'<rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
     logo:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
+    pip:'<rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="12" width="7" height="5" rx="1" fill="currentColor" stroke="none"/>',
     grafica:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><circle cx="17.5" cy="17.5" r="3.5"/>',
     piu:'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
     tracce:'<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="14" y2="12"/><line x1="3" y1="18" x2="14" y2="18"/><line x1="19" y1="14" x2="19" y2="22"/><line x1="15" y1="18" x2="23" y2="18"/>',
@@ -52235,6 +52583,7 @@ async function pubConfrontaAI(){
     P.elementi.innerHTML='<div class="vcc-h">Da mettere sopra il video</div><div class="vcc-griglia">'
       + tile('grafica','Grafiche','badge, inviti, contatti','vaiGraficaPanel()',"Badge, inviti all'azione, contatti e decorazioni")
       + tile('logo','Logo','posizione e durata','vaiLogoOpen()',"Carica e posiziona il logo dell'agenzia")
+      + tile('pip','Video sovrapposto','riquadro PiP','vaiPipApri()',"Un secondo video piccolo sopra il principale, come il tuo volto mentre parli")
       + '</div><div class="vcc-h">Inserisci</div>';
     sposta('vai-catalogo', P.elementi);
     /* Audio, Voce, AI */
