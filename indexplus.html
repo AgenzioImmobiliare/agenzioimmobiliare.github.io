@@ -32396,6 +32396,16 @@ function _vaiLogoPosDi(clip){
    logo (vedi sopra), con una finestra di tempo propria invece che per clip.
    {url, fileName, naturalW, naturalH, naturalDur, taglioInizio, t, durata, x, y, w, radius} */
 let _vaiPip = null;
+
+/* ─── PRIMA/DOPO ───
+   Richiesto da Enzo per mostrare una ristrutturazione: un secondo video/immagine
+   ("Dopo") che si rivela sopra il video principale ("Prima") — a tendina automatica
+   (scorrimento) o a schermo diviso fisso. Stessa idea del PiP qui sopra (overlay
+   globale sull'intero montaggio, con pre-cattura dei fotogrammi per l'export reale),
+   ma a schermo intero con un confine che avanza invece di un riquadro piccolo.
+   {url, fileName, naturalW, naturalH, naturalDur, taglioInizio, t, durata,
+    modo:'scorri'|'diviso', direzione:'orizz'|'vert', etichettaPrima, etichettaDopo} */
+let _vaiPrimaDopo = null;
 window._vaiLogoPosDi = _vaiLogoPosDi;
 
 /* Drawer "Dati casa, logo e contatti" — stessa logica del drawer Testo */
@@ -32641,6 +32651,200 @@ function vaiPipModifica(){
   if(rimEl) rimEl.addEventListener('click', ()=>{ vaiPipRimuovi(); });
 }
 window.vaiPipModifica=vaiPipModifica;
+
+/* Apre il selettore file per il video "Dopo", o la finestra di modifica se c'è già. */
+function vaiPrimaDopoApri(){
+  if(_vaiPrimaDopo){ vaiPrimaDopoModifica(); return; }
+  const inp=document.createElement('input');
+  inp.type='file'; inp.accept='video/*,image/*'; inp.style.display='none';
+  document.body.appendChild(inp);
+  inp.addEventListener('change', ()=>{ const f=inp.files&&inp.files[0]; if(f) vaiPrimaDopoCarica(f); inp.remove(); });
+  inp.click();
+}
+window.vaiPrimaDopoApri=vaiPrimaDopoApri;
+
+function vaiPrimaDopoCarica(file){
+  if(!file){ return; }
+  const eImg=file.type.startsWith('image/'), eVid=file.type.startsWith('video/');
+  if(!eImg && !eVid){ toast('Seleziona un video o una foto','error'); return; }
+  const v=document.getElementById('vai-video');
+  if(!v || !_vaiClips || !_vaiClips.length){ toast('Carica prima un video sulla timeline principale','error'); return; }
+  vaiSnapshot('aggiungi Prima/Dopo');
+  const url=URL.createObjectURL(file);
+  const ci=_vaiClipAttiva>=0?_vaiClipAttiva:0;
+  const c=_vaiClips[ci]||{};
+  const cIn=c.taglioInizio||0;
+  const offGlob=(typeof _vaiOffsetClip==='function')?_vaiOffsetClip(ci):0;
+  const localOut=(typeof _vaiRawToOutput==='function')?_vaiRawToOutput(c, Math.max(0,v.currentTime-cIn)):Math.max(0,v.currentTime-cIn);
+  const tGlob=offGlob+localOut;
+  const _pronto=(naturalW, naturalH, naturalDur)=>{
+    if(_vaiPrimaDopo && _vaiPrimaDopo.url){ try{ URL.revokeObjectURL(_vaiPrimaDopo.url); }catch(e){} }
+    _vaiPrimaDopo = {
+      url, fileName:file.name, eImg,
+      naturalW:naturalW||9, naturalH:naturalH||16, naturalDur:naturalDur||5,
+      taglioInizio:0, t:Math.round(tGlob*10)/10, durata:Math.min(5, naturalDur||5),
+      modo:'scorri', direzione:'orizz', etichettaPrima:'Prima', etichettaDopo:'Dopo'
+    };
+    _vaiDirty=true;
+    vaiTlRender(); vaiOverlayUpdate();
+    vaiPrimaDopoModifica();
+    toast('"Dopo" aggiunto','success');
+  };
+  if(eVid){
+    const tv=document.createElement('video');
+    tv.preload='metadata'; tv.muted=true; tv.src=url;
+    tv.onloadedmetadata=()=>{ _pronto(tv.videoWidth, tv.videoHeight, (isFinite(tv.duration)&&tv.duration>0)?tv.duration:5); try{ tv.remove(); }catch(e){} };
+    tv.onerror=()=>{ toast('Non riesco a leggere questo video','error'); try{ tv.remove(); }catch(e){} };
+  } else {
+    const img=new Image();
+    img.onload=()=>_pronto(img.naturalWidth, img.naturalHeight, 5);
+    img.onerror=()=>toast('Non riesco a leggere questa foto','error');
+    img.src=url;
+  }
+}
+window.vaiPrimaDopoCarica=vaiPrimaDopoCarica;
+
+function vaiPrimaDopoRimuovi(){
+  if(!_vaiPrimaDopo) return;
+  vaiSnapshot('rimuovi Prima/Dopo');
+  try{ URL.revokeObjectURL(_vaiPrimaDopo.url); }catch(e){}
+  _vaiPrimaDopo=null; _vaiDirty=true;
+  vaiTlRender(); vaiOverlayUpdate();
+  const m=document.getElementById('vai-primadopo-editor'); if(m) m.remove();
+  toast('Prima/Dopo rimosso','');
+}
+window.vaiPrimaDopoRimuovi=vaiPrimaDopoRimuovi;
+
+function vaiPrimaDopoModifica(){
+  if(!_vaiPrimaDopo){ toast('Nessun Prima/Dopo','error'); return; }
+  const s=_vaiPrimaDopo;
+  const old=document.getElementById('vai-primadopo-editor'); if(old) old.remove();
+  const ov=_vaiMiniModal(
+    '<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:10px">Prima / Dopo</div>'+
+    '<div style="color:#8FA3B8;font-size:.72rem;margin-bottom:10px">'+_vaiEsc(s.fileName||'')+(s.eImg?' — foto':' — '+s.naturalDur.toFixed(1)+'s sorgente')+'</div>'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Modalità:</div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:14px">'+
+      '<button class="vpd-modo" data-m="scorri" style="flex:1;padding:9px 0;border-radius:8px;cursor:pointer;font-size:.78rem;font-weight:700;background:'+(s.modo==='scorri'?'#C9A84C':'#13263B')+';color:'+(s.modo==='scorri'?'#1A1205':'#fff')+';border:1px solid rgba(255,255,255,.14)">↔ Scorrimento</button>'+
+      '<button class="vpd-modo" data-m="diviso" style="flex:1;padding:9px 0;border-radius:8px;cursor:pointer;font-size:.78rem;font-weight:700;background:'+(s.modo==='diviso'?'#C9A84C':'#13263B')+';color:'+(s.modo==='diviso'?'#1A1205':'#fff')+';border:1px solid rgba(255,255,255,.14)">▣ Schermo diviso</button>'+
+    '</div>'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Direzione:</div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:14px">'+
+      '<button class="vpd-dir" data-d="orizz" style="flex:1;padding:9px 0;border-radius:8px;cursor:pointer;font-size:.78rem;font-weight:700;background:'+(s.direzione==='orizz'?'#C9A84C':'#13263B')+';color:'+(s.direzione==='orizz'?'#1A1205':'#fff')+';border:1px solid rgba(255,255,255,.14)">⇄ Sinistra→Destra</button>'+
+      '<button class="vpd-dir" data-d="vert" style="flex:1;padding:9px 0;border-radius:8px;cursor:pointer;font-size:.78rem;font-weight:700;background:'+(s.direzione==='vert'?'#C9A84C':'#13263B')+';color:'+(s.direzione==='vert'?'#1A1205':'#fff')+';border:1px solid rgba(255,255,255,.14)">⇅ Alto→Basso</button>'+
+    '</div>'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Etichetta "prima":</div>'+
+    '<input id="vpd-et1" value="'+_vaiEsc(s.etichettaPrima||'')+'" maxlength="16" style="width:100%;box-sizing:border-box;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:.86rem;margin-bottom:10px">'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Etichetta "dopo":</div>'+
+    '<input id="vpd-et2" value="'+_vaiEsc(s.etichettaDopo||'')+'" maxlength="16" style="width:100%;box-sizing:border-box;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:.86rem;margin-bottom:14px">'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Inizio nel montaggio (secondi): <span id="vpd-t-val">'+s.t.toFixed(1)+'</span>s</div>'+
+    '<input id="vpd-t" type="number" min="0" step="0.1" value="'+s.t+'" style="width:100%;box-sizing:border-box;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:.86rem;margin-bottom:14px">'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Durata (secondi): <span id="vpd-dur-val">'+s.durata.toFixed(1)+'</span>s</div>'+
+    '<input id="vpd-dur" type="range" min="1" max="'+(s.eImg?10:Math.max(1,(s.naturalDur-s.taglioInizio).toFixed(2))).toString()+'" step="0.5" value="'+s.durata+'" style="width:100%;margin-bottom:14px">'+
+    '<button id="vpd-rimuovi" style="width:100%;padding:9px 0;border-radius:8px;cursor:pointer;font-size:.8rem;font-weight:700;background:#2A1414;color:#F5A3A3;border:1px solid rgba(239,68,68,.3)">Rimuovi Prima/Dopo</button>'
+  );
+  ov.id='vai-primadopo-editor';
+  ov.querySelectorAll('.vpd-modo').forEach(b=>{ b.addEventListener('click', ()=>{
+    s.modo=b.getAttribute('data-m');
+    ov.querySelectorAll('.vpd-modo').forEach(x=>{ const on=x===b; x.style.background=on?'#C9A84C':'#13263B'; x.style.color=on?'#1A1205':'#fff'; });
+    _vaiDirty=true; vaiOverlayUpdate();
+  }); });
+  ov.querySelectorAll('.vpd-dir').forEach(b=>{ b.addEventListener('click', ()=>{
+    s.direzione=b.getAttribute('data-d');
+    ov.querySelectorAll('.vpd-dir').forEach(x=>{ const on=x===b; x.style.background=on?'#C9A84C':'#13263B'; x.style.color=on?'#1A1205':'#fff'; });
+    _vaiDirty=true; vaiOverlayUpdate();
+  }); });
+  const et1=ov.querySelector('#vpd-et1'); if(et1) et1.addEventListener('input', function(){ s.etichettaPrima=this.value; _vaiDirty=true; vaiOverlayUpdate(); });
+  const et2=ov.querySelector('#vpd-et2'); if(et2) et2.addEventListener('input', function(){ s.etichettaDopo=this.value; _vaiDirty=true; vaiOverlayUpdate(); });
+  const tEl=ov.querySelector('#vpd-t'), tVal=ov.querySelector('#vpd-t-val');
+  if(tEl) tEl.addEventListener('input', function(){ s.t=Math.max(0, parseFloat(this.value)||0); if(tVal) tVal.textContent=s.t.toFixed(1); _vaiDirty=true; vaiTlRender(); vaiOverlayUpdate(); });
+  const durEl=ov.querySelector('#vpd-dur'), durVal=ov.querySelector('#vpd-dur-val');
+  if(durEl) durEl.addEventListener('input', function(){ s.durata=parseFloat(this.value)||3; if(durVal) durVal.textContent=s.durata.toFixed(1); delete s._frameCache; _vaiDirty=true; vaiTlRender(); vaiOverlayUpdate(); });
+  const rimEl=ov.querySelector('#vpd-rimuovi'); if(rimEl) rimEl.addEventListener('click', ()=>{ vaiPrimaDopoRimuovi(); });
+}
+window.vaiPrimaDopoModifica=vaiPrimaDopoModifica;
+
+/* QR CODE — link all'annuncio o al modulo contatti, utile quando il video gira anche
+   fuori dai social (schermi in agenzia, stampa). È una scritta come le altre (tipo
+   'qrcode'): x/y/w/t/durata, si sposta e ridimensiona come forma/percorso. */
+function vaiQrCodeApri(){
+  const v=document.getElementById('vai-video');
+  if(!v || !_vaiClips || !_vaiClips.length){ toast('Carica prima un video','error'); return; }
+  const old=document.getElementById('vai-qr-nuovo'); if(old) old.remove();
+  const ov=_vaiMiniModal(
+    '<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:10px">Aggiungi QR code</div>'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Indirizzo (link all\'annuncio, al modulo contatti…):</div>'+
+    '<input id="vqr-link" placeholder="https://" style="width:100%;box-sizing:border-box;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:.86rem;margin-bottom:14px">'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Etichetta sotto (opzionale):</div>'+
+    '<input id="vqr-et" placeholder="Scansiona per i dettagli" maxlength="28" style="width:100%;box-sizing:border-box;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:.86rem;margin-bottom:14px">'+
+    '<button id="vqr-crea" style="width:100%;padding:10px 0;border-radius:8px;cursor:pointer;font-size:.84rem;font-weight:700;background:#C9A84C;color:#1A1205;border:none">Inserisci</button>'
+  );
+  ov.id='vai-qr-nuovo';
+  const linkEl=ov.querySelector('#vqr-link');
+  if(linkEl) setTimeout(()=>linkEl.focus(), 50);
+  const crea=ov.querySelector('#vqr-crea');
+  if(crea) crea.addEventListener('click', ()=>{
+    const link=(linkEl?linkEl.value:'').trim();
+    if(!link){ toast('Scrivi prima un indirizzo','error'); return; }
+    vaiSnapshot('aggiungi QR code');
+    const ci=_vaiClipAttiva>=0?_vaiClipAttiva:0;
+    const c=_vaiClips[ci]||{};
+    const cIn=c.taglioInizio||0;
+    const offGlob=(typeof _vaiOffsetClip==='function')?_vaiOffsetClip(ci):0;
+    const localOut=(typeof _vaiRawToOutput==='function')?_vaiRawToOutput(c, Math.max(0,v.currentTime-cIn)):Math.max(0,v.currentTime-cIn);
+    const tGlob=offGlob+localOut;
+    const durataScelta=5;
+    const posto=(typeof _vaiTrovaPostoLibero==='function')?_vaiTrovaPostoLibero(0, tGlob, durataScelta):{traccia:0};
+    const etVal=ov.querySelector('#vqr-et');
+    const nuova=_vaiPushScrittaGlobale(tGlob, {
+      tipo:'qrcode', link, etichetta:(etVal?etVal.value:'').toString().slice(0,28),
+      color:'#ffffff', durata:durataScelta, traccia:posto.traccia, x:0.82, y:0.8, w:0.2,
+      anim:'', animOut:''
+    });
+    if(!nuova){ toast('Non riesco a inserire il QR qui — prova un altro punto','error'); return; }
+    if(_vaiClipAttiva===ci) _vaiScritte=c.scritte||[];
+    _vaiSelScritta=nuova.id; _vaiTracciaAttiva=posto.traccia; _vaiDirty=true;
+    try{ _vaiRisolviSovrapposizioni(nuova.id); }catch(e){}
+    vaiTlRender(); vaiOverlayUpdate();
+    ov.remove();
+    toast('QR inserito — puoi spostarlo o ridimensionarlo','success');
+  });
+}
+window.vaiQrCodeApri=vaiQrCodeApri;
+
+function vaiQrCodeModifica(e, id){
+  if(e){ e.preventDefault(); e.stopPropagation(); }
+  const s=_vaiScritte.find(x=>x.id===id); if(!s) return;
+  _vaiSelScritta=id; _vaiSel={type:'scritta', id};
+  const v=document.getElementById('vai-video'); if(v) v.pause();
+  const old=document.getElementById('vai-qr-editor'); if(old) old.remove();
+  const ov=_vaiMiniModal(
+    '<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:10px">Modifica QR code</div>'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Indirizzo:</div>'+
+    '<input id="vqe-link" value="'+_vaiEsc(s.link||'')+'" style="width:100%;box-sizing:border-box;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:.86rem;margin-bottom:14px">'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Etichetta sotto (opzionale):</div>'+
+    '<input id="vqe-et" value="'+_vaiEsc(s.etichetta||'')+'" maxlength="28" style="width:100%;box-sizing:border-box;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:.86rem;margin-bottom:14px">'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Colore etichetta:</div>'+
+    '<div style="display:flex;gap:8px;margin-bottom:14px">'+
+      ['#ffffff','#C9A84C','#2E9B8F','#E14D4D','#3B82F6'].map(c=>'<button class="vqe-col" data-c="'+c+'" style="width:28px;height:28px;border-radius:50%;cursor:pointer;background:'+c+';border:2px solid '+((s.color||'#ffffff')===c?'#fff':'rgba(255,255,255,.2)')+'"></button>').join('')+
+    '</div>'+
+    '<button id="vqe-rimuovi" style="width:100%;padding:9px 0;border-radius:8px;cursor:pointer;font-size:.8rem;font-weight:700;background:#2A1414;color:#F5A3A3;border:1px solid rgba(239,68,68,.3)">Elimina QR code</button>'
+  );
+  ov.id='vai-qr-editor';
+  const linkEl=ov.querySelector('#vqe-link');
+  if(linkEl) linkEl.addEventListener('input', function(){ s.link=this.value; _vaiDirty=true; vaiOverlayUpdate(); });
+  const etEl=ov.querySelector('#vqe-et');
+  if(etEl) etEl.addEventListener('input', function(){ s.etichetta=this.value; _vaiDirty=true; vaiOverlayUpdate(); });
+  ov.querySelectorAll('.vqe-col').forEach(b=>{
+    b.addEventListener('click', ()=>{
+      s.color=b.getAttribute('data-c');
+      ov.querySelectorAll('.vqe-col').forEach(x=>x.style.borderColor=(x===b)?'#fff':'rgba(255,255,255,.2)');
+      _vaiDirty=true; vaiOverlayUpdate();
+    });
+  });
+  const rim=ov.querySelector('#vqe-rimuovi');
+  if(rim) rim.addEventListener('click', ()=>{ vaiScrittaDel(id); ov.remove(); });
+}
+window.vaiQrCodeModifica=vaiQrCodeModifica;
 
 /* Mostra all'utente quali dati dell'immobile l'AI userà come contesto */
 function vaiRenderImmRecap(){
@@ -36499,6 +36703,62 @@ function _vaiDrawPip(ctx, W, H, tGlob){
   ctx.restore();
 }
 window._vaiDrawPip=_vaiDrawPip;
+
+/* Disegna il Prima/Dopo sul canvas d'esportazione: il "Dopo" (video pre-catturato come
+   il PiP, o una foto) copre l'intero fotogramma ma ritagliato solo oltre il confine —
+   quello che resta visibile sotto è il "Prima" (il video principale, già disegnato). */
+function _vaiDrawPrimaDopo(ctx, W, H, tGlob){
+  if(!_vaiPrimaDopo) return;
+  if(tGlob<_vaiPrimaDopo.t || tGlob>_vaiPrimaDopo.t+_vaiPrimaDopo.durata) return;
+  const orizz=_vaiPrimaDopo.direzione!=='vert';
+  const durataTot=Math.max(0.5, _vaiPrimaDopo.durata);
+  const elapsed=Math.max(0, tGlob-_vaiPrimaDopo.t);
+  const prog=(_vaiPrimaDopo.modo==='diviso')?0.5:Math.max(0,Math.min(1, elapsed/durataTot));
+  let img=null, iw=0, ih=0;
+  if(_vaiPrimaDopo.eImg){
+    if(_vaiPrimaDopo._img && _vaiPrimaDopo._img.complete && _vaiPrimaDopo._img.naturalWidth){ img=_vaiPrimaDopo._img; iw=img.naturalWidth; ih=img.naturalHeight; }
+  } else if(_vaiPrimaDopo._frameCache && _vaiPrimaDopo._frameCache.frames && _vaiPrimaDopo._frameCache.frames.length){
+    const frames=_vaiPrimaDopo._frameCache.frames;
+    const passoT=durataTot/Math.max(1,frames.length-1);
+    const idx=Math.max(0, Math.min(frames.length-1, Math.round(elapsed/passoT)));
+    const fr=frames[idx]; img=fr.img; iw=fr.w; ih=fr.h;
+  }
+  if(!img || !iw || !ih) return;
+  const ar=iw/ih, tr=W/H; let dw,dh,dx,dy;
+  if(ar>tr){ dh=H; dw=dh*ar; dx=(W-dw)/2; dy=0; } else { dw=W; dh=dw/ar; dx=0; dy=(H-dh)/2; }
+  ctx.save();
+  ctx.beginPath();
+  if(orizz){ ctx.rect(0, 0, W*prog, H); } else { ctx.rect(0, 0, W, H*prog); }
+  ctx.clip();
+  try{ ctx.drawImage(img, dx, dy, dw, dh); }catch(e){}
+  ctx.restore();
+  ctx.save();
+  ctx.strokeStyle='#C9A84C'; ctx.lineWidth=Math.max(2,W*0.004);
+  ctx.shadowColor='rgba(0,0,0,.5)'; ctx.shadowBlur=W*0.006;
+  ctx.beginPath();
+  if(orizz){ ctx.moveTo(W*prog,0); ctx.lineTo(W*prog,H); } else { ctx.moveTo(0,H*prog); ctx.lineTo(W,H*prog); }
+  ctx.stroke();
+  ctx.restore();
+  const fs=Math.round(W*0.034), pillH=fs*1.8, pad=fs*0.55;
+  ctx.save();
+  ctx.font='700 '+fs+'px DM Sans, sans-serif'; ctx.textBaseline='top';
+  const drawPill=(testo, suDestra)=>{
+    if(!testo) return;
+    const tw=ctx.measureText(testo).width;
+    const bx=suDestra?(W-W*0.025-tw-pad*2):W*0.025, by=H*0.025, rr=6;
+    ctx.fillStyle='rgba(10,14,20,.65)';
+    ctx.beginPath();
+    ctx.moveTo(bx+rr,by); ctx.arcTo(bx+tw+pad*2,by,bx+tw+pad*2,by+pillH,rr);
+    ctx.arcTo(bx+tw+pad*2,by+pillH,bx,by+pillH,rr); ctx.arcTo(bx,by+pillH,bx,by,rr); ctx.arcTo(bx,by,bx+tw+pad*2,by,rr);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#fff';
+    ctx.fillText(testo, bx+pad, by+pillH*0.22);
+  };
+  drawPill(_vaiPrimaDopo.etichettaPrima, false);
+  drawPill(_vaiPrimaDopo.etichettaDopo, true);
+  ctx.restore();
+}
+window._vaiDrawPrimaDopo=_vaiDrawPrimaDopo;
 
 /* ══════════ DIVIDI LA CLIP NEL PUNTO DEL CURSORE (agosto 2026) ══════════
    Mancava: si poteva accorciare una clip dai bordi, ma non spezzarla in due nel
@@ -41556,6 +41816,35 @@ function vaiOverlayUpdate(){
         (s.etichetta?('<span style="position:absolute;left:'+pxP+'%;top:'+(pyP-14)+'%;transform:translate(-50%,-50%);color:'+colP+';font:700 2.2cqw DM Sans, sans-serif;text-shadow:0 2px 6px rgba(0,0,0,.6);white-space:nowrap;pointer-events:none">'+_vaiEsc(s.etichetta)+'</span>'):'')+
         figHandlesP+
         '</div>';
+    } else if(tipo==='qrcode'){
+      // Stessa idea del canvas: un QR bianco con moduli neri (unica combinazione che
+      // garantisce la scansione), qui come griglia di <i> assolute — stesso trucco già
+      // usato altrove nel progetto per i QR (_socQrHtml), qui dentro un riquadro
+      // quadrato che segue x/y/w come le altre forme.
+      if(!s._qrMatrix || s._qrLink!==s.link){
+        try{ s._qrMatrix=QRCode.create(s.link||'https://', null); s._qrLink=s.link; }catch(e){ s._qrMatrix=null; }
+      }
+      const mQ=s._qrMatrix, nQ=mQ?mQ.length:0;
+      let celleQ='';
+      if(nQ){
+        const passoQ=100/nQ;
+        for(let r=0;r<nQ;r++) for(let c=0;c<nQ;c++){ if(mQ[r][c]) celleQ+='<i style="position:absolute;left:'+(c*passoQ)+'%;top:'+(r*passoQ)+'%;width:'+(passoQ+0.3)+'%;height:'+(passoQ+0.3)+'%;background:#0A0A0A"></i>'; }
+      }
+      const figHandlesQ = editUI
+        ? '<span class="vai-ov-ch vai-ov-ch-tl" title="Dimensione" onmousedown="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')" ontouchstart="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')"></span>'+
+          '<span class="vai-ov-ch vai-ov-ch-tr" title="Dimensione" onmousedown="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')" ontouchstart="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')"></span>'+
+          '<span class="vai-ov-ch vai-ov-ch-bl" title="Dimensione" onmousedown="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')" ontouchstart="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')"></span>'+
+          '<span class="vai-ov-ch vai-ov-ch-br" title="Dimensione" onmousedown="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')" ontouchstart="vaiScrittaResizeStart(event,\''+s.id+'\',\'fig\')"></span>'
+        : '';
+      html += '<div class="vai-ov-box'+(editUI?' sel':'')+'" data-id="'+s.id+'" '+
+        'style="left:'+anchorLeft+'%;top:'+(s.y*100)+'%;transform:'+tx+';width:'+(s.w*100)+'%;aspect-ratio:1/1" '+
+        (editUI?('ondblclick="vaiQrCodeModifica(event,\''+s.id+'\')" '):'')+handlers+'>'+
+        '<div style="position:absolute;inset:0;background:#fff;border-radius:6%;box-shadow:0 4px 14px rgba(0,0,0,.4);padding:9%;box-sizing:border-box">'+
+          '<div style="position:relative;width:100%;height:100%">'+celleQ+'</div>'+
+        '</div>'+
+        (s.etichetta?('<span style="position:absolute;left:50%;top:100%;transform:translate(-50%,8%);color:'+(s.color||'#fff')+';font:700 2.2cqw DM Sans, sans-serif;text-shadow:0 2px 6px rgba(0,0,0,.6);white-space:nowrap;pointer-events:none">'+_vaiEsc(s.etichetta)+'</span>'):'')+
+        figHandlesQ+
+        '</div>';
     } else if(tipo==='emoji'){
       // reazione emoji rilevata dal parlato: stesso rimbalzo in entrata e dissolvenza
       // in uscita del disegno sul canvas, qui in versione CSS per l'anteprima dal vivo.
@@ -41718,6 +42007,7 @@ function vaiOverlayUpdate(){
   // riproduzione e sfarfallando. Lo gestisco a parte: lo stesso nodo viene solo
   // riposizionato e riattaccato dopo il reset di frame.innerHTML.
   try{ _vaiPipSync(frame, v); }catch(e){}
+  try{ _vaiPrimaDopoSync(frame, v); }catch(e){}
   // AUTO-ADATTAMENTO: una scritta "a una riga" (nowrap) che sfora la larghezza del video
   // resterebbe tagliata ai lati (es. "...00 Mt Dal M..."). Dopo aver disegnato, misuro
   // ogni scritta e, se il suo testo è più largo del riquadro, la rimpicciolisco con uno
@@ -41794,6 +42084,70 @@ function _vaiPipSync(frame, v){
   else { el.play().catch(()=>{}); }
 }
 window._vaiPipSync=_vaiPipSync;
+
+/* Stessa idea di _vaiPipSync qui sopra (nodo persistente, mai ricreato per non perdere
+   la riproduzione), ma qui il "Dopo" copre l'INTERO fotogramma con un confine che
+   avanza (modo "scorri") o resta fermo a metà (modo "diviso"), ottenuto con un
+   clip-path sull'elemento stesso — il "Prima" è il video principale sotto, già visibile. */
+function _vaiPrimaDopoSync(frame, v){
+  let wrap=window._vaiPrimaDopoEl;
+  if(!_vaiPrimaDopo){
+    if(wrap){ try{ wrap.remove(); }catch(e){} window._vaiPrimaDopoEl=null; }
+    return;
+  }
+  const tGlob=(typeof _vaiTempoGlobale==='function')?_vaiTempoGlobale():null;
+  const show=(tGlob!=null) && (tGlob>=_vaiPrimaDopo.t) && (tGlob<=_vaiPrimaDopo.t+_vaiPrimaDopo.durata);
+  if(!show){
+    if(wrap){ try{ const m=wrap.querySelector('video'); if(m) m.pause(); }catch(e){} try{ wrap.remove(); }catch(e){} }
+    return;
+  }
+  if(!wrap || wrap._pdUrl!==_vaiPrimaDopo.url){
+    if(wrap){ try{ wrap.remove(); }catch(e){} }
+    wrap=document.createElement('div');
+    wrap.id='vai-ov-primadopo'; wrap._pdUrl=_vaiPrimaDopo.url;
+    wrap.style.cssText='position:absolute;inset:0;overflow:hidden;z-index:5;pointer-events:none';
+    const media=_vaiPrimaDopo.eImg?document.createElement('img'):document.createElement('video');
+    media.id='vai-ov-primadopo-media';
+    media.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover';
+    if(!_vaiPrimaDopo.eImg){ media.muted=true; media.playsInline=true; media.preload='auto'; }
+    media.src=_vaiPrimaDopo.url;
+    wrap.appendChild(media);
+    const divider=document.createElement('div');
+    divider.className='vai-ov-pd-divider';
+    wrap.appendChild(divider);
+    const lblP=document.createElement('span'); lblP.className='vai-ov-pd-lbl vai-ov-pd-lbl-p'; wrap.appendChild(lblP);
+    const lblD=document.createElement('span'); lblD.className='vai-ov-pd-lbl vai-ov-pd-lbl-d'; wrap.appendChild(lblD);
+    window._vaiPrimaDopoEl=wrap;
+  }
+  if(wrap.parentNode!==frame) frame.appendChild(wrap);
+  const durataTot=Math.max(0.5, _vaiPrimaDopo.durata);
+  const elapsed=Math.max(0, tGlob-_vaiPrimaDopo.t);
+  const prog = (_vaiPrimaDopo.modo==='diviso') ? 0.5 : Math.max(0, Math.min(1, elapsed/durataTot));
+  const pct=(prog*100).toFixed(2);
+  const orizz=_vaiPrimaDopo.direzione!=='vert';
+  const media=wrap.querySelector('video, img');
+  if(media){
+    media.style.clipPath = orizz ? ('inset(0 '+(100-prog*100).toFixed(2)+'% 0 0)') : ('inset(0 0 '+(100-prog*100).toFixed(2)+'% 0)');
+    if(!_vaiPrimaDopo.eImg){
+      const localElapsed=Math.max(0, elapsed)+(_vaiPrimaDopo.taglioInizio||0);
+      if(Math.abs((media.currentTime||0)-localElapsed)>0.25){
+        try{ media.currentTime=Math.min(localElapsed, Math.max(0,(_vaiPrimaDopo.naturalDur||localElapsed)-0.05)); }catch(e){}
+      }
+      if(v.paused || v.ended){ try{ media.pause(); }catch(e){} } else { media.play().catch(()=>{}); }
+    }
+  }
+  const divider=wrap.querySelector('.vai-ov-pd-divider');
+  if(divider){
+    divider.style.cssText = orizz
+      ? ('position:absolute;top:0;bottom:0;left:'+pct+'%;width:3px;margin-left:-1.5px;background:#C9A84C;box-shadow:0 0 8px rgba(201,168,76,.7)')
+      : ('position:absolute;left:0;right:0;top:'+pct+'%;height:3px;margin-top:-1.5px;background:#C9A84C;box-shadow:0 0 8px rgba(201,168,76,.7)');
+  }
+  const lblP=wrap.querySelector('.vai-ov-pd-lbl-p'), lblD=wrap.querySelector('.vai-ov-pd-lbl-d');
+  const lblCss='position:absolute;top:10px;background:rgba(10,14,20,.65);color:#fff;font:700 2.4cqw DM Sans,sans-serif;padding:.3em .7em;border-radius:999px;text-shadow:0 1px 3px rgba(0,0,0,.5)';
+  if(lblP){ lblP.textContent=_vaiPrimaDopo.etichettaPrima||''; lblP.style.cssText=lblCss+';left:10px'; lblP.style.display=_vaiPrimaDopo.etichettaPrima?'block':'none'; }
+  if(lblD){ lblD.textContent=_vaiPrimaDopo.etichettaDopo||''; lblD.style.cssText=lblCss+';right:10px'; lblD.style.display=_vaiPrimaDopo.etichettaDopo?'block':'none'; }
+}
+window._vaiPrimaDopoSync=_vaiPrimaDopoSync;
 
 /* Trascinamento libero del video PiP sul video — stessa idea di vaiLogoDragStart */
 let _vaiPipDragging=false;
@@ -43125,6 +43479,44 @@ function vaiPipBlockDrag(e, modo){
 }
 window.vaiPipBlockDrag=vaiPipBlockDrag;
 
+/* Trascinamento del blocco "Prima/Dopo" sulla timeline — stessa logica di vaiPipBlockDrag */
+function vaiPrimaDopoBlockDrag(e, modo){
+  e.preventDefault(); e.stopPropagation();
+  if(!_vaiPrimaDopo) return;
+  const timearea=document.getElementById('vai-tl-timearea'); if(!timearea) return;
+  const durGlob=(_vaiClips && _vaiClips.length)?(_vaiDurataTot()||0):0;
+  if(!(durGlob>0)) return;
+  const t0=_vaiPrimaDopo.t, d0=_vaiPrimaDopo.durata;
+  const maxDur=_vaiPrimaDopo.eImg?10:Math.max(0.5, (_vaiPrimaDopo.naturalDur-_vaiPrimaDopo.taglioInizio));
+  const rect0=timearea.getBoundingClientRect();
+  const xInizio=(e.touches?e.touches[0].clientX:e.clientX);
+  const secPerPx=durGlob/Math.max(1,rect0.width);
+  const move=(ev)=>{
+    const x=(ev.touches?ev.touches[0].clientX:ev.clientX);
+    const deltaSec=(x-xInizio)*secPerPx;
+    let nt=t0, nd=d0;
+    if(modo==='move'){
+      nt=Math.max(0, Math.min(durGlob-0.3, t0+deltaSec));
+      nd=Math.min(d0, durGlob-nt);
+    } else if(modo==='left'){
+      nt=Math.max(0, Math.min(t0+d0-0.3, t0+deltaSec));
+      nd=(t0+d0)-nt;
+    } else if(modo==='right'){
+      nd=Math.max(0.3, Math.min(Math.min(durGlob-t0, maxDur), d0+deltaSec));
+    }
+    _vaiPrimaDopo.t=nt; _vaiPrimaDopo.durata=nd;
+    vaiTlRender(); vaiOverlayUpdate();
+  };
+  const up=()=>{
+    document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up);
+    document.removeEventListener('touchmove',move); document.removeEventListener('touchend',up);
+    _vaiDirty=true; delete _vaiPrimaDopo._frameCache;
+  };
+  document.addEventListener('mousemove',move); document.addEventListener('mouseup',up);
+  document.addEventListener('touchmove',move,{passive:false}); document.addEventListener('touchend',up);
+}
+window.vaiPrimaDopoBlockDrag=vaiPrimaDopoBlockDrag;
+
 function _vaiEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 /* Disegna la traccia timeline coi marcatori e la lista scritte sotto */
@@ -43445,6 +43837,26 @@ function vaiTlRender(){
         '</div></div>';
     }
 
+    // ── CORSIA PRIMA/DOPO — stessa idea delle due sopra.
+    let headPrimaDopo='', lanePrimaDopo='';
+    if(_vaiPrimaDopo){
+      const left=(_vaiPrimaDopo.t/durGlob)*100;
+      const width=Math.max(2.5, (_vaiPrimaDopo.durata/durGlob)*100);
+      headPrimaDopo='<div class="vai-tl-hrow vai-tl-hrow-logo">'+
+        '<button class="vai-tl-hbtn vai-tl-hbtn-logo" onclick="event.stopPropagation();vaiPrimaDopoModifica()" title="Modifica Prima/Dopo">'+
+          '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><line x1="12" y1="4" x2="12" y2="20"/></svg></button>'+
+        '<button class="vai-tl-hbtn vai-tl-hbtn-del" onclick="event.stopPropagation();vaiPrimaDopoRimuovi()" title="Rimuovi"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>'+
+        '<span class="vai-tl-hlbl">Prima/Dopo</span></div>';
+      lanePrimaDopo='<div class="vai-tl-lane vai-tl-lane-logo">'+
+        '<div class="vai-tl-block vai-tl-logoblock" style="left:'+left+'%;width:'+width+'%;background:linear-gradient(90deg,#8F6E2E,#C9A84C)" '+
+          'onmousedown="vaiPrimaDopoBlockDrag(event,\'move\')" ontouchstart="vaiPrimaDopoBlockDrag(event,\'move\')" ondblclick="vaiPrimaDopoModifica()" '+
+          'title="Prima/Dopo — trascina per spostarlo o tira i bordi per la durata">'+
+          '<span class="vai-tl-block-h vai-tl-block-hl" onmousedown="vaiPrimaDopoBlockDrag(event,\'left\')" ontouchstart="vaiPrimaDopoBlockDrag(event,\'left\')"></span>'+
+          '<span class="vai-tl-block-txt">◐ '+_vaiEsc(_vaiPrimaDopo.fileName||'Prima/Dopo')+'</span>'+
+          '<span class="vai-tl-block-h vai-tl-block-hr" onmousedown="vaiPrimaDopoBlockDrag(event,\'right\')" ontouchstart="vaiPrimaDopoBlockDrag(event,\'right\')"></span>'+
+        '</div></div>';
+    }
+
     // HEADER musica: nota + nome brano (solo se c'è musica)
     const headMusica = _vaiMusica ? ('<div class="vai-tl-hrow vai-tl-hrow-musica">'+
       /* ASCOLTO DEL BRANO: interruttore unico. Triangolo = fermo (premi per sentire),
@@ -43537,12 +43949,12 @@ function vaiTlRender(){
       '<button class="vai-tl-hbtn vai-tl-hbtn-del" onclick="event.stopPropagation();vaiVoceElimina()" title="Elimina la voce"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>'+
       '<span class="vai-tl-hlbl" onclick="event.stopPropagation();vaiVoceRinomina()" title="Clicca per rinominare">'+_vaiEsc(_vaiVoceNome||'Voce')+'</span></div>') : '';
 
-    const headers='<div class="vai-tl-headers"><div class="vai-tl-heads-testo" id="vai-tl-heads-testo">'+headText.join('')+'</div>'+headVideo+headLogo+headPip+headMusica+headVoce+'</div>';
+    const headers='<div class="vai-tl-headers"><div class="vai-tl-heads-testo" id="vai-tl-heads-testo">'+headText.join('')+'</div>'+headVideo+headLogo+headPip+headPrimaDopo+headMusica+headVoce+'</div>';
     const lanesInner='<div class="vai-tl-ruler" id="vai-tl-ruler" onmousedown="vaiPlayheadDrag(event)" ontouchstart="vaiPlayheadDrag(event)">'+ruler+'</div>'+playhead+
       '<div class="vai-tl-lanes" onmousedown="vaiTrackSeek(event)" ontouchstart="vaiTrackSeek(event)">'+
       '<div class="vai-tl-lanes-testo" id="vai-tl-lanes-testo">'+laneText.join('')+'</div>'+
       (_vaiClips&&_vaiClips.length?('<div class="vai-tl-lane vai-tl-lane-video">'+laneVideo+'<div class="vai-tl-rsz" onmousedown="vaiLaneResize(event,\'video\')" title="Trascina su/giù per cambiare l\'altezza della traccia"></div></div>'):'')+
-      laneLogo+lanePip+
+      laneLogo+lanePip+lanePrimaDopo+
       laneMusica+laneVoce+'</div>';
     /* Lo spazio di manovra in coda è un elemento SEPARATO, non un margine interno
    all'area dei tempi: le posizioni di cursore, righello e blocchi sono espresse
@@ -46708,6 +47120,26 @@ async function vaiMontaTutto(fmtIdxOverride){
       catch(e){ _vaiPip._frameCache = { frames:[], durata:0 }; }
     }
 
+    // PRIMA/DOPO: stessa tecnica — video pre-catturato prima della registrazione,
+    // oppure, se è una foto, la carico una volta sola come Image pronta da disegnare.
+    if(_vaiPrimaDopo && _vaiPrimaDopo.url){
+      if(_vaiPrimaDopo.eImg && !_vaiPrimaDopo._img){
+        setS('Preparo il Prima/Dopo…');
+        try{
+          await new Promise((res,rej)=>{
+            const img=new Image();
+            img.onload=()=>{ _vaiPrimaDopo._img=img; res(); };
+            img.onerror=rej;
+            img.src=_vaiPrimaDopo.url;
+          });
+        }catch(e){}
+      } else if(!_vaiPrimaDopo.eImg && !_vaiPrimaDopo._frameCache){
+        setS('Preparo il Prima/Dopo…');
+        try{ _vaiPrimaDopo._frameCache = await _vaiCatturaFramePip(_vaiPrimaDopo.url, _vaiPrimaDopo.taglioInizio||0, _vaiPrimaDopo.durata||3); }
+        catch(e){ _vaiPrimaDopo._frameCache = { frames:[], durata:0 }; }
+      }
+    }
+
     const rec=new MediaRecorder(stream,{ mimeType:mime, videoBitsPerSecond:10000000 });
     const chunks=[];
     rec.ondataavailable=e=>{ if(e.data&&e.data.size) chunks.push(e.data); };
@@ -46853,6 +47285,7 @@ function _vaiRenderClipSuCanvas(clip, ctx, W, H, infoCards, tOffset, startAt, tr
                 const attive=scritte.filter(x=> !x.hidden && target>=x.t && target<=(x.t+(x.durata||3)) );
                 attive.forEach(s=> _vaiDrawScrittaSuCanvas(ctx, W, H, s, target) );
                 try{ _vaiDrawPip(ctx, W, H, tGlob); }catch(e){}
+                try{ _vaiDrawPrimaDopo(ctx, W, H, tGlob); }catch(e){}
                 try{ _vaiDrawLogoContattiClip(ctx, W, H, logo, logoPos); }catch(e){ try{_vaiDrawLogoContatti(ctx,W,H);}catch(x){} }
                 requestAnimationFrame(step);
               };
@@ -46882,6 +47315,7 @@ function _vaiRenderClipSuCanvas(clip, ctx, W, H, infoCards, tOffset, startAt, tr
           const attive=scritte.filter(x=> !x.hidden && t>=x.t && t<=(x.t+(x.durata||3)) );
           attive.forEach(s=> _vaiDrawScrittaSuCanvas(ctx, W, H, s, t) );
           try{ _vaiDrawPip(ctx, W, H, tGlob); }catch(e){}
+          try{ _vaiDrawPrimaDopo(ctx, W, H, tGlob); }catch(e){}
           try{ _vaiDrawLogoContattiClip(ctx, W, H, logo, logoPos); }catch(e){ try{_vaiDrawLogoContatti(ctx,W,H);}catch(x){} }
           if(!tv.paused && !tv.ended && tv.currentTime<fineNormale) raf=requestAnimationFrame(draw);
         };
@@ -46985,6 +47419,7 @@ function _vaiRenderTransizioneSuCanvas(tvA, scritteA, logoA, logoPosA, tOffsetA,
       (scritteA||[]).filter(x=>!x.hidden && tA>=x.t && tA<=(x.t+(x.durata||3))).forEach(s=> _vaiDrawScrittaSuCanvas(ctx, W, H, s, tA));
       (scritteB||[]).filter(x=>!x.hidden && tB>=x.t && tB<=(x.t+(x.durata||3))).forEach(s=> _vaiDrawScrittaSuCanvas(ctx, W, H, s, tB));
       try{ _vaiDrawPip(ctx, W, H, tGlobA); }catch(e){}
+      try{ _vaiDrawPrimaDopo(ctx, W, H, tGlobA); }catch(e){}
       try{ _vaiDrawLogoContattiClip(ctx, W, H, logoA, logoPosA); }catch(e){}
       if(p<1 && !finito) raf=requestAnimationFrame(draw); else fine();
     };
@@ -48038,6 +48473,50 @@ function _vaiDrawScrittaSuCanvas(ctx, W, H, s, t){
       ctx.globalAlpha=Math.min(1,(prog-0.1)*3);
       ctx.fillText(s.etichetta, px, py-fsIco*0.75);
       ctx.globalAlpha=1; ctx.shadowBlur=0;
+    }
+    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+    _finish(); return;
+  }
+  if(tipo==='qrcode'){
+    // Un QR che porta all'annuncio o al modulo contatti — utile quando il video gira
+    // anche fuori dai social (schermi in agenzia, stampa). Sempre moduli neri su sfondo
+    // bianco: è l'unica combinazione che garantisce la scansione, qualunque sia il
+    // colore scelto per l'etichetta sotto.
+    if(!s._qrMatrix || s._qrLink!==s.link){
+      try{ s._qrMatrix=QRCode.create(s.link||'https://', null); s._qrLink=s.link; }catch(e){ s._qrMatrix=null; }
+    }
+    const m=s._qrMatrix;
+    if(m && m.length){
+      const durataTot=Math.max(0.3, s.durata||5);
+      const tRel=(t!=null) ? Math.max(0, Math.min(durataTot, t-s.t)) : durataTot;
+      const pIn=Math.min(1, tRel/0.3);
+      const c1=1.70158, c3=c1+1;
+      const scalaIn=Math.max(0.05, 1 + c3*Math.pow(pIn-1,3) + c1*Math.pow(pIn-1,2));
+      const bw=(s.w||0.22)*W;
+      const pad=bw*0.09;
+      const n=m.length, cell=(bw-pad*2)/n;
+      ctx.save();
+      ctx.translate(ax,ay); ctx.scale(scalaIn,scalaIn); ctx.translate(-ax,-ay);
+      const bx=ax-bw/2, by=ay-bw/2;
+      ctx.fillStyle='#fff';
+      ctx.shadowColor='rgba(0,0,0,.4)'; ctx.shadowBlur=W*0.012; ctx.shadowOffsetY=W*0.003;
+      const rr=bw*0.06;
+      ctx.beginPath();
+      ctx.moveTo(bx+rr,by); ctx.arcTo(bx+bw,by,bx+bw,by+bw,rr); ctx.arcTo(bx+bw,by+bw,bx,by+bw,rr);
+      ctx.arcTo(bx,by+bw,bx,by,rr); ctx.arcTo(bx,by,bx+bw,by,rr); ctx.closePath(); ctx.fill();
+      ctx.shadowBlur=0;
+      ctx.fillStyle='#0A0A0A';
+      for(let r=0;r<n;r++) for(let c=0;c<n;c++){ if(m[r][c]) ctx.fillRect(bx+pad+c*cell, by+pad+r*cell, cell+0.6, cell+0.6); }
+      if(s.etichetta){
+        const fsEt=Math.round(W*0.028);
+        ctx.font='700 '+fsEt+'px DM Sans, sans-serif';
+        ctx.textAlign='center'; ctx.textBaseline='top';
+        ctx.fillStyle=s.color||'#fff';
+        ctx.shadowColor='rgba(0,0,0,.6)'; ctx.shadowBlur=W*0.008;
+        ctx.fillText(s.etichetta, ax, by+bw+bw*0.08);
+        ctx.shadowBlur=0;
+      }
+      ctx.restore();
     }
     ctx.textAlign='left'; ctx.textBaseline='alphabetic';
     _finish(); return;
@@ -52620,6 +53099,8 @@ async function pubConfrontaAI(){
     telefono:'<rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>',
     logo:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
     pip:'<rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="12" width="7" height="5" rx="1" fill="currentColor" stroke="none"/>',
+    primadopo:'<rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="4" width="10" height="16" fill="currentColor" stroke="none"/><line x1="12" y1="4" x2="12" y2="20"/>',
+    qrcode:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><line x1="14" y1="14" x2="14" y2="21"/><line x1="21" y1="14" x2="21" y2="21"/><line x1="14" y1="17.5" x2="21" y2="17.5"/>',
     grafica:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><circle cx="17.5" cy="17.5" r="3.5"/>',
     piu:'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
     tracce:'<line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="14" y2="12"/><line x1="3" y1="18" x2="14" y2="18"/><line x1="19" y1="14" x2="19" y2="22"/><line x1="15" y1="18" x2="23" y2="18"/>',
@@ -52720,6 +53201,8 @@ async function pubConfrontaAI(){
       + tile('grafica','Grafiche','badge, inviti, contatti','vaiGraficaPanel()',"Badge, inviti all'azione, contatti e decorazioni")
       + tile('logo','Logo','posizione e durata','vaiLogoOpen()',"Carica e posiziona il logo dell'agenzia")
       + tile('pip','Video sovrapposto','riquadro PiP','vaiPipApri()',"Un secondo video piccolo sopra il principale, come il tuo volto mentre parli")
+      + tile('primadopo','Prima / Dopo','rivela una ristrutturazione','vaiPrimaDopoApri()',"Mostra un ambiente prima e dopo: a tendina o a schermo diviso")
+      + tile('qrcode','QR code','link all\'annuncio','vaiQrCodeApri()',"Un QR che porta all'annuncio o al modulo contatti, utile anche fuori dai social")
       + '</div><div class="vcc-h">Inserisci</div>';
     sposta('vai-catalogo', P.elementi);
     /* Audio, Voce, AI */
