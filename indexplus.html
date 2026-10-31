@@ -39638,8 +39638,15 @@ function vaiApriGobbo(){
     '</div>'+
     '<div style="flex:1;display:flex;flex-direction:column;min-height:0;position:relative;background:#000">'+
       '<video id="vai-gobbo-video" autoplay muted playsinline style="flex:1;width:100%;height:100%;object-fit:cover;background:#000"></video>'+
-      '<div id="vai-gobbo-prompt" style="position:absolute;top:6%;left:5%;right:5%;max-height:46%;overflow:hidden;background:rgba(0,0,0,.45);border-radius:10px;padding:10px 14px;pointer-events:none">'+
-        '<div id="vai-gobbo-prompt-testo" style="color:#fff;font-size:19px;line-height:1.5;font-weight:600;white-space:pre-wrap"></div>'+
+      // Il riquadro è stretto e CENTRATO (non largo quasi quanto lo schermo): con un
+      // testo che corre da un bordo all'altro gli occhi devono muoversi parecchio e si
+      // vede a video. Tenendolo stretto e vicino al centro (dove di solito sta
+      // l'obiettivo della camera, in alto), lo sguardo resta quasi fermo mentre legge.
+      // Il taglio in basso ora sfuma (maschera) invece di troncare di netto una riga —
+      // capita spesso con testi lunghi o col carattere ingrandito, e un bordo netto in
+      // mezzo a una riga sembra un difetto, una dissolvenza no.
+      '<div id="vai-gobbo-prompt" style="position:absolute;top:5%;left:50%;transform:translateX(-50%);width:min(640px,86%);max-height:62%;overflow:hidden;background:rgba(0,0,0,.5);border-radius:12px;padding:14px 20px;pointer-events:none;-webkit-mask-image:linear-gradient(to bottom, #000 0%, #000 82%, transparent 100%);mask-image:linear-gradient(to bottom, #000 0%, #000 82%, transparent 100%)">'+
+        '<div id="vai-gobbo-prompt-testo" style="color:#fff;font-size:19px;line-height:1.5;font-weight:600;white-space:pre-wrap;text-align:center"></div>'+
       '</div>'+
       '<div id="vai-gobbo-anteprima" style="display:none;position:absolute;inset:0;background:#000;align-items:center;justify-content:center">'+
         '<video id="vai-gobbo-player" controls playsinline style="max-width:100%;max-height:100%"></video>'+
@@ -39657,14 +39664,11 @@ function vaiApriGobbo(){
         '<label style="color:#93A5B8;font-size:.78rem">Velocità</label><input id="vai-gobbo-velocita" type="range" min="10" max="120" value="40" style="flex:1;min-width:80px">'+
         '<label style="color:#93A5B8;font-size:.78rem">Dimensione testo</label><input id="vai-gobbo-dimensione" type="range" min="14" max="36" value="19" style="flex:1;min-width:80px">'+
       '</div>'+
-      '<div id="vai-gobbo-azioni" style="display:flex;gap:8px;flex-wrap:wrap">'+
-        '<button id="vai-gobbo-avvia-cam" class="vai-start-btn vai-start-vdi">📷 Attiva la videocamera</button>'+
-      '</div>'+
+      '<div id="vai-gobbo-azioni" style="display:flex;gap:8px;flex-wrap:wrap"></div>'+
     '</div>';
   document.body.appendChild(ov);
   _vaiGobbo={ overlay:ov, stream:null, rec:null, chunks:[], mime:'', blob:null, scrollTimer:null, registrando:false, facing:'user' };
   document.getElementById('vai-gobbo-chiudi').addEventListener('click', _vaiGobboChiudi);
-  document.getElementById('vai-gobbo-avvia-cam').addEventListener('click', _vaiGobboAvviaCamera);
   document.getElementById('vai-gobbo-scelta').addEventListener('change', function(){
     const c=cand.find(x=>x.id===this.value);
     document.getElementById('vai-gobbo-testo').value = c ? c.testo : '';
@@ -39673,6 +39677,10 @@ function vaiApriGobbo(){
   document.getElementById('vai-gobbo-testo').addEventListener('input', _vaiGobboAggiornaPrompt);
   document.getElementById('vai-gobbo-dimensione').addEventListener('input', _vaiGobboAggiornaPrompt);
   _vaiGobboAggiornaPrompt();
+  // "Fai scorrere" e la velocità servono ANCHE senza camera accesa (per provare il
+  // ritmo del testo prima di registrare, o se la camera non si attiva): li mostro
+  // subito, non solo dopo. _vaiGobboRenderControlli ridisegna tutto sempre da qui.
+  _vaiGobboRenderControlli();
 }
 
 function _vaiGobboAggiornaPrompt(){
@@ -39685,29 +39693,86 @@ function _vaiGobboAggiornaPrompt(){
 
 async function _vaiGobboAvviaCamera(){
   const g=_vaiGobbo; if(!g) return;
-  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ toast('Questo browser non permette l\'accesso alla videocamera','error'); return; }
-  try{
-    const stream=await navigator.mediaDevices.getUserMedia({ video:{ facingMode:g.facing }, audio:true });
-    g.stream=stream;
-    const v=document.getElementById('vai-gobbo-video');
-    v.srcObject=stream;
-    v.style.transform=(g.facing==='user') ? 'scaleX(-1)' : 'none';
-    v.play().catch(()=>{});
-    _vaiGobboRenderControlli();
-  }catch(e){
-    toast('Videocamera non disponibile: '+((e&&e.message)||'permesso negato'),'error');
+  _vaiGobboErroreMostra('');
+  if(!window.isSecureContext){
+    _vaiGobboErroreMostra('Il browser blocca la videocamera perché questa pagina non è aperta in modo sicuro (serve https:// — su GitHub Pages lo è già; verifica di non averla aperta come file locale).');
+    return;
   }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    _vaiGobboErroreMostra('Questo browser non permette l\'accesso alla videocamera.');
+    return;
+  }
+  const btn=document.getElementById('vai-gobbo-avvia-cam');
+  if(btn){ btn.disabled=true; btn.textContent='Attivo la videocamera…'; }
+  const prova=async (vincoli)=>navigator.mediaDevices.getUserMedia(vincoli);
+  let stream=null, ultimoErrore=null;
+  // 1° tentativo: video + audio insieme (serve l'audio per registrare la voce).
+  // 2° tentativo (SOLO se il primo fallisce): solo video — su alcuni PC il microfono
+  // risulta occupato da un'altra app e fa fallire la richiesta ANCHE per la camera,
+  // anche se la camera da sola sarebbe disponibile. Meglio una ripresa muta che niente.
+  try{
+    stream=await prova({ video:{ facingMode:g.facing }, audio:true });
+  }catch(e1){
+    ultimoErrore=e1;
+    try{
+      stream=await prova({ video:{ facingMode:g.facing } });
+      toast('Videocamera attiva, ma senza audio (il microfono non era disponibile)','info');
+    }catch(e2){ ultimoErrore=e2; }
+  }
+  if(btn){ btn.disabled=false; btn.textContent='📷 Attiva la videocamera'; }
+  if(!stream){
+    const nome=(ultimoErrore&&ultimoErrore.name)||'';
+    let msg='Videocamera non disponibile.';
+    if(nome==='NotAllowedError' || nome==='PermissionDeniedError') msg='Permesso negato: il browser (o il sistema) ha bloccato la videocamera. Controlla le autorizzazioni del sito nelle impostazioni del browser (di solito l\'icona di un lucchetto o di una videocamera vicino all\'indirizzo) e riprova.';
+    else if(nome==='NotFoundError' || nome==='DevicesNotFoundError') msg='Non trovo nessuna videocamera collegata a questo dispositivo.';
+    else if(nome==='NotReadableError' || nome==='TrackStartError') msg='La videocamera risulta occupata da un\'altra applicazione (es. un\'altra videochiamata aperta). Chiudila e riprova.';
+    else if(nome==='OverconstrainedError') msg='La videocamera di questo dispositivo non supporta l\'inquadratura richiesta. Prova "Cambia camera" oppure ricarica la pagina.';
+    else if(ultimoErrore && ultimoErrore.message) msg='Videocamera non disponibile: '+ultimoErrore.message;
+    _vaiGobboErroreMostra(msg);
+    toast(msg,'error');
+    return;
+  }
+  g.stream=stream;
+  const v=document.getElementById('vai-gobbo-video');
+  v.srcObject=stream;
+  v.style.transform=(g.facing==='user') ? 'scaleX(-1)' : 'none';
+  v.play().catch(()=>{});
+  _vaiGobboRenderControlli();
+}
+
+/* Errore ben visibile DENTRO il gobbo, non solo un toast che sparisce da solo —
+   così Enzo può leggerlo con calma (e, se serve, mandarmelo in uno screenshot). */
+function _vaiGobboErroreMostra(msg){
+  let el=document.getElementById('vai-gobbo-errore');
+  const pannello=document.getElementById('vai-gobbo-pannello');
+  if(!msg){ if(el) el.remove(); return; }
+  if(!el){
+    el=document.createElement('div');
+    el.id='vai-gobbo-errore';
+    el.style.cssText='background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#FCA5A5;border-radius:8px;padding:9px 12px;font-size:.8rem;line-height:1.4';
+    if(pannello) pannello.insertBefore(el, pannello.firstChild);
+  }
+  el.textContent='⚠️ '+msg;
 }
 
 function _vaiGobboRenderControlli(){
   const g=_vaiGobbo; if(!g) return;
   const az=document.getElementById('vai-gobbo-azioni'); if(!az) return;
-  az.innerHTML=
-    '<button id="vai-gobbo-flip" class="vai-start-btn vai-start-vdi">🔄 Cambia camera</button>'+
-    '<button id="vai-gobbo-scroll" class="vai-start-btn vai-start-vdi">'+(g.scrollTimer?'⏸ Ferma lo scorrimento':'▶️ Fai scorrere')+'</button>'+
-    (g.registrando
-      ? '<button id="vai-gobbo-stop" class="vai-start-btn vai-start-open">⏹ Ferma la registrazione</button>'
-      : '<button id="vai-gobbo-rec" class="vai-start-btn vai-start-open">⏺ Inizia a registrare</button>');
+  // "Fai scorrere" serve sempre, anche prima di accendere la camera: così si può
+  // provare il ritmo del testo in anteprima, e resta comunque il modo per farlo
+  // scorrere mentre si registra.
+  const scrollBtn='<button id="vai-gobbo-scroll" class="vai-start-btn vai-start-vdi">'+(g.scrollTimer?'⏸ Ferma lo scorrimento':'▶️ Fai scorrere')+'</button>';
+  if(!g.stream){
+    az.innerHTML='<button id="vai-gobbo-avvia-cam" class="vai-start-btn vai-start-vdi">📷 Attiva la videocamera</button>'+scrollBtn;
+  } else {
+    az.innerHTML=
+      '<button id="vai-gobbo-flip" class="vai-start-btn vai-start-vdi">🔄 Cambia camera</button>'+
+      scrollBtn+
+      (g.registrando
+        ? '<button id="vai-gobbo-stop" class="vai-start-btn vai-start-open">⏹ Ferma la registrazione</button>'
+        : '<button id="vai-gobbo-rec" class="vai-start-btn vai-start-open">⏺ Inizia a registrare</button>');
+  }
+  const cb=document.getElementById('vai-gobbo-avvia-cam'); if(cb) cb.addEventListener('click', _vaiGobboAvviaCamera);
   const fb=document.getElementById('vai-gobbo-flip'); if(fb) fb.addEventListener('click', _vaiGobboCambiaCamera);
   const sb=document.getElementById('vai-gobbo-scroll'); if(sb) sb.addEventListener('click', _vaiGobboToggleScroll);
   const rb=document.getElementById('vai-gobbo-rec'); if(rb) rb.addEventListener('click', _vaiGobboInizia);
