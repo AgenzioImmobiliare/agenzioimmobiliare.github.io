@@ -3,7 +3,7 @@
    IMPORTANTE: quando esce un aggiornamento, bumpa CACHE='lecase-vN'
    per invalidare la cache HTML/JS e forzare il telefono a scaricare il nuovo codice. */
 
-var CACHE = 'lecase-v129';            /* Osservati FB spostato dentro Caccia Annunci (01/11/2026) */
+var CACHE = 'lecase-v130';            /* 4 grafici alternativi alla tabella Obiettivi (01/11/2026) */
 var FOTO_CACHE = 'lecase-foto-v1';
 
 self.addEventListener('install', function (e) { self.skipWaiting(); });

@@ -766,7 +766,52 @@ function _objCss(){
     + '.obj-dw-bar div{height:100%}'
     + '.obj-dw-t .ts{font-size:.7rem;color:var(--text3)}'
     + '.obj-dw-vuoto{padding:12px 16px 0;font-size:.74rem;color:var(--text3);line-height:1.45}'
-    + '.obj-dw-piede{padding:10px 16px;font-size:.7rem;color:var(--text3);margin-top:auto}';
+    + '.obj-dw-piede{padding:10px 16px;font-size:.7rem;color:var(--text3);margin-top:auto}'
+    /* [1 nov 2026] 4 viste alternative alla tabella — vedi _objGrafBarre/Linee/Radiali/Griglia */
+    + '.objg-ind{padding:14px 16px;border-bottom:1px solid var(--border)}'
+    + '.objg-ind:last-child{border-bottom:none}'
+    + '.objg-ind-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px}'
+    + '.objg-ind-nome{font-size:.86rem;font-weight:800;display:flex;align-items:center;gap:7px}'
+    + '.objg-ind-nome .pall{width:8px;height:8px;border-radius:50%;flex-shrink:0}'
+    + '.objg-ind-tot{font-size:.8rem;color:var(--text2);font-variant-numeric:tabular-nums}'
+    + '.objg-ind-tot b{color:var(--text);font-size:.92rem}'
+    + '.objg-ind-tot .m{color:var(--text3)}'
+    + '.objg-bars{display:grid;grid-template-columns:repeat(12,1fr);gap:4px;height:84px}'
+    + '.objg-col{height:100%;display:flex;flex-direction:column;align-items:center}'
+    + '.objg-track{position:relative;width:100%;max-width:22px;flex:1 1 auto;min-height:0;display:flex;align-items:flex-end}'
+    + '.objg-fill{width:100%;border-radius:3px 3px 1px 1px;min-height:2px}'
+    + '.objg-tick{position:absolute;left:50%;transform:translateX(-50%);width:calc(100% + 6px);max-width:28px;height:2px}'
+    + '.objg-tick-target{background:var(--text)}'
+    + '.objg-tick-ref{border-top:2px dashed var(--text3);height:0;background:none}'
+    + '.objg-agenda{position:absolute;left:50%;transform:translateX(-50%);width:100%;max-width:22px;bottom:0;border:1.5px dashed;border-bottom:none;border-radius:3px 3px 0 0;background:none}'
+    + '.objg-col.ora .objg-track{outline:1.5px dashed var(--text3);outline-offset:3px;border-radius:4px}'
+    + '.objg-col.vuoto .objg-fill{opacity:.3}'
+    + '.objg-mese{flex:0 0 auto;font-size:.6rem;color:var(--text3);margin-top:5px;text-transform:uppercase;letter-spacing:.3px}'
+    + '.objg-delta{font-size:.74rem;font-weight:700;padding:1px 7px;border-radius:20px}'
+    + '.objg-delta.su{color:' + OBJ_T.verde + ';background:rgba(15,81,50,.1)}'
+    + '.objg-delta.giu{color:' + OBJ_T.rosso + ';background:rgba(127,29,29,.1)}'
+    + '.objg-linee-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;padding:14px 16px}'
+    + '.objg-linea-card{border:1px solid var(--border);border-radius:10px;padding:12px 14px 9px;background:var(--bg3)}'
+    + '.objg-linea-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;gap:8px}'
+    + '.objg-linea-head .pall{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:5px}'
+    + '.objg-linea-foot{display:flex;justify-content:space-between;font-size:.68rem;color:var(--text3);margin-top:3px}'
+    + '.objg-radiali-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;padding:14px 16px}'
+    + '.objg-radiale{display:flex;gap:13px;align-items:center;border:1px solid var(--border);border-radius:10px;padding:13px;background:var(--bg3)}'
+    + '.objg-radiale-body{min-width:0}'
+    + '.objg-radiale-nome{font-weight:800;font-size:.84rem;margin-bottom:2px}'
+    + '.objg-radiale-val{font-size:1.2rem;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;line-height:1.1}'
+    + '.objg-radiale-sub{font-size:.7rem;color:var(--text3);margin-top:2px}'
+    + '.objg-heat{width:100%;border-collapse:separate;border-spacing:3px;font-variant-numeric:tabular-nums;min-width:760px}'
+    + '.objg-heat th{font-size:.64rem;text-transform:uppercase;letter-spacing:.3px;color:var(--text3);font-weight:700;padding:4px 2px;text-align:center}'
+    + '.objg-heat th.sx{text-align:left;padding-left:4px}'
+    + '.objg-heat th.ora{color:var(--text)}'
+    + '.objg-heat td.nome{font-weight:700;font-size:.8rem;white-space:nowrap;padding:4px 10px 4px 4px}'
+    + '.objg-heat td.nome .n{display:flex;align-items:center;gap:6px}'
+    + '.objg-heat td.nome .pall{width:7px;height:7px;border-radius:50%;flex-shrink:0}'
+    + '.objg-cell{text-align:center;border-radius:6px;padding:6px 2px;font-weight:700;font-size:.78rem;color:var(--text);min-width:42px}'
+    + '.objg-cell.ora{outline:1.5px dashed var(--text3);outline-offset:-1.5px}'
+    + '.objg-tot{font-weight:800;background:var(--bg3);border-radius:6px;padding:6px 4px;text-align:center;font-size:.8rem}'
+    + '@media (max-width:700px){.objg-bars{grid-template-columns:repeat(6,1fr);grid-auto-rows:1fr;row-gap:10px;height:auto}}';
   document.head.appendChild(st);
 }
 
@@ -926,6 +971,192 @@ function _objGriglia(righe){
           + 'onclick="event.stopPropagation();_objVaiScala(\'' + x[0] + '\')"><span class="pall" style="background:' + OBJ_T.blu + '"></span>' + x[1] + '</button>';
       }).join('') + '</div>';
   return _gxColonna(a + ' contro ' + (a-1), 'tocca una riga per vedere il dettaglio', OBJ_T.blu, h, scala);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   4 VISTE ALTERNATIVE ALLA TABELLA ─────────────────────── [1 nov 2026]
+   Enzo: "la tabella mi viene difficile da interpretare". Gli ho mostrato
+   4 stili diversi (stessi calcoli di objRiga, solo disegnati diversamente)
+   e ha chiesto di tenerli tutti: un selettore sopra la griglia fa passare
+   dall'uno all'altro. Nessuno di questi ricalcola niente: leggono solo
+   righe, l'array di objRiga già pronto per _objGriglia.
+   ══════════════════════════════════════════════════════════════════════ */
+var _objGraf = (function(){ try{ return localStorage.getItem('objGrafico') || 'tabella'; }catch(e){ return 'tabella'; } })();
+window._objVaiGraf = function(v){
+  _objGraf = v;
+  try{ localStorage.setItem('objGrafico', v); }catch(e){}
+  _objDisegna();
+};
+
+function _objSelettoreGrafico(){
+  var opz = [['tabella','Tabella'],['barre','Barre mensili'],['linee','Andamento cumulato'],['radiali','Schede a ciambella'],['colori','Griglia a colori']];
+  return '<div class="gx-ling" style="margin:0 0 12px">' + opz.map(function(x){
+    var on = _objGraf === x[0];
+    return '<button class="gx-l' + (on ? ' on' : '') + '" style="' + (on ? 'background:' + OBJ_T.blu : '') + '" '
+      + 'onclick="_objVaiGraf(\'' + x[0] + '\')"><span class="pall" style="background:' + OBJ_T.blu + '"></span>' + x[1] + '</button>';
+  }).join('') + '</div>';
+}
+
+/* ── 1: barre mensili — un colpo d'occhio mese per mese, per indicatore ── */
+function _objGrafBarre(righe){
+  var o = _objCtx.oggi, a = _objAnno, h = '';
+  righe.forEach(function(rg){
+    var ind = objInd(rg.id), euro = !!ind.euro;
+    var tot25 = rg.prec.coperto ? objArr(rg.celle.reduce(function(s,c){ return s + c.prima; }, 0)) : null;
+    var max = 1;
+    rg.celle.forEach(function(c){ max = Math.max(max, c.fatto, c.target, rg.prec.coperto ? c.prima : 0, c.fatto + (c.agenda||0)); });
+    max = max * 1.12;
+    h += '<div class="objg-ind"><div class="objg-ind-head"><span class="objg-ind-nome" style="color:' + ind.col + '">'
+      + '<span class="pall" style="background:' + ind.col + '"></span>' + ind.nome + '</span>'
+      + '<span class="objg-ind-tot">Anno: <b>' + _objNum(rg.fattoAnno, euro, true) + '</b>'
+      + (tot25 != null ? ' <span class="m">(' + (a-1) + ': ' + _objNum(tot25, euro, true) + ')</span>' : '') + '</span></div>';
+    h += '<div class="objg-bars">';
+    rg.celle.forEach(function(c, i){
+      var vuoto = (c.stato === 'futuro');
+      var hpct = vuoto ? 0 : Math.max(2, Math.round((c.fatto / max) * 100));
+      var col = OBJ_STATO_COL[c.stato] || ind.col;
+      var tgPct = c.target > 0 ? Math.round((c.target / max) * 100) : null;
+      var refPct = rg.prec.coperto ? Math.round((c.prima / max) * 100) : null;
+      var agPct = c.agenda > 0 ? Math.round(((c.fatto + c.agenda) / max) * 100) : null;
+      var ora = (a === o.anno && c.mese === o.mese);
+      var tit = ind.nome + ' ' + OBJ_MESI3[i] + ': ' + _objNum(c.fatto, euro, true)
+        + (c.target > 0 ? (', obiettivo ' + _objNum(c.target, euro, true)) : ', nessun obiettivo')
+        + (rg.prec.coperto ? (', ' + (a-1) + ' ' + _objNum(c.prima, euro, true)) : '')
+        + (c.agenda > 0 ? (', già in agenda ' + _objNum(c.agenda, euro, true)) : '');
+      h += '<div class="objg-col' + (ora ? ' ora' : '') + (vuoto ? ' vuoto' : '') + '">'
+        + '<div class="objg-track" title="' + _esc(tit) + '">';
+      if(agPct != null) h += '<div class="objg-agenda" style="height:' + agPct + '%;border-color:' + ind.col + '"></div>';
+      if(tgPct != null) h += '<div class="objg-tick objg-tick-target" style="bottom:' + tgPct + '%"></div>';
+      if(refPct != null) h += '<div class="objg-tick objg-tick-ref" style="bottom:' + refPct + '%"></div>';
+      h += '<div class="objg-fill" style="height:' + hpct + '%;background:' + col + '"></div>'
+        + '</div><div class="objg-mese">' + OBJ_MESI3[i] + '</div></div>';
+    });
+    h += '</div></div>';
+  });
+  var leg = '<div class="obj-leg">'
+    + '<span><i style="background:' + OBJ_T.verde + '"></i>centrato</span>'
+    + '<span><i style="background:' + OBJ_T.ambra + '"></i>vicino</span>'
+    + '<span><i style="background:' + OBJ_T.rosso + '"></i>sotto</span>'
+    + '<span>senza pallino: colore dell\'indicatore (mese in corso o nessun obiettivo)</span>'
+    + '<span><i style="width:10px;height:0;border-top:2px dashed var(--text3);background:none"></i>stesso mese ' + (a-1) + '</span>'
+    + '</div>';
+  return _gxColonna('Barre mensili', 'un colpo d\'occhio mese per mese', OBJ_T.blu, h + leg);
+}
+
+/* ── 2: andamento cumulato — il totale che cresce mese dopo mese ────────── */
+function _objGrafLinee(righe){
+  var a = _objAnno, W = 240, H = 108, PAD = 6, h = '<div class="objg-linee-grid">';
+  righe.forEach(function(rg){
+    var ind = objInd(rg.id), euro = !!ind.euro;
+    var cum26 = [], cum25 = [], s26 = 0, s25 = 0, ultimoIdx = 0;
+    for(var i=0;i<12;i++){
+      var c = rg.celle[i];
+      if(c.stato === 'futuro'){ cum26.push(null); } else { s26 = objArr(s26 + c.fatto); cum26.push(s26); ultimoIdx = i; }
+      s25 = objArr(s25 + (rg.prec.coperto ? c.prima : 0));
+      cum25.push(rg.prec.coperto ? s25 : null);
+    }
+    var deltaPct = (rg.pari.coperto && rg.pari.valore > 0) ? Math.round(((rg.fattoAnno - rg.pari.valore) / rg.pari.valore) * 100) : null;
+    var maxY = Math.max(rg.targetAnno || 0, cum25[11] || 0, rg.fattoAnno || 0) * 1.08 || 1;
+    var xy = function(i, v){
+      return [PAD + (i/11) * (W-PAD*2), H - PAD - (Math.max(0, v||0) / maxY) * (H-PAD*2)];
+    };
+    var pathOf = function(arr){
+      var pts = [];
+      for(var k=0;k<arr.length;k++){ if(arr[k] == null) continue; pts.push(xy(k, arr[k])); }
+      return pts.map(function(p,k2){ return (k2===0?'M':'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ');
+    };
+    var endPt = xy(ultimoIdx, cum26[ultimoIdx]);
+    var p1 = xy(0,0), p2 = xy(11, rg.targetAnno || maxY);
+    h += '<div class="objg-linea-card"><div class="objg-linea-head"><span style="color:' + ind.col + ';font-weight:700;font-size:.85rem">'
+      + '<span class="pall" style="background:' + ind.col + '"></span>' + ind.nome + '</span>'
+      + (deltaPct != null ? ('<span class="objg-delta ' + (deltaPct >= 0 ? 'su' : 'giu') + '">' + (deltaPct >= 0 ? '▲' : '▼') + ' ' + Math.abs(deltaPct) + '%</span>') : '')
+      + '</div><svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" style="width:100%;height:auto;display:block">'
+      + (rg.targetAnno ? ('<line x1="' + p1[0] + '" y1="' + p1[1] + '" x2="' + p2[0] + '" y2="' + p2[1] + '" stroke="var(--text3)" stroke-width="1.2" stroke-dasharray="1.5,3"/>') : '')
+      + (rg.prec.coperto ? ('<path d="' + pathOf(cum25) + '" fill="none" stroke="var(--text3)" stroke-width="1.5" stroke-dasharray="4,3"/>') : '')
+      + '<path d="' + pathOf(cum26) + '" fill="none" stroke="' + ind.col + '" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>'
+      + '<circle cx="' + endPt[0].toFixed(1) + '" cy="' + endPt[1].toFixed(1) + '" r="3" fill="' + ind.col + '"/>'
+      + '</svg><div class="objg-linea-foot"><span>' + _objNum(rg.fattoAnno, euro, true) + ' a ' + OBJ_MESI3[ultimoIdx] + '</span>'
+      + '<span>' + (rg.targetAnno ? ('obiettivo ' + _objNum(rg.targetAnno, euro, true)) : 'nessun obiettivo annuo') + '</span></div></div>';
+  });
+  h += '</div>';
+  var leg = '<div class="obj-leg">'
+    + '<span><i style="width:12px;height:2px;border-radius:0;background:var(--text)"></i>' + a + '</span>'
+    + '<span><i style="width:12px;height:0;border-top:2px dashed var(--text3);background:none"></i>' + (a-1) + '</span>'
+    + '<span><i style="width:12px;height:0;border-top:2px dotted var(--text3);background:none"></i>ritmo obiettivo</span></div>';
+  return _gxColonna('Andamento cumulato', 'il totale che cresce mese dopo mese, contro l\'anno prima', OBJ_T.blu, h + leg);
+}
+
+/* ── 3: schede a ciambella — a che punto sei adesso, per indicatore ─────── */
+function _objGrafRadiali(righe){
+  var o = _objCtx.oggi, a = _objAnno, R = 30, STROKE = 7, C = 2 * Math.PI * R;
+  var h = '<div class="objg-radiali-grid">';
+  righe.forEach(function(rg){
+    var ind = objInd(rg.id), euro = !!ind.euro;
+    var cOggi = (a === o.anno) ? rg.celle[o.mese-1] : null;
+    var pct, stato, sub;
+    if(cOggi && cOggi.target > 0){
+      pct = Math.min(1, cOggi.fatto / cOggi.target);
+      stato = cOggi.stato;
+      sub = OBJ_MESI3[o.mese-1] + ': ' + _objNum(cOggi.fatto, euro) + ' / ' + _objNum(cOggi.target, euro);
+    } else if(rg.dovuto > 0){
+      pct = Math.min(1, rg.fattoAnno / rg.dovuto);
+      stato = rg.statoAnno;
+      sub = 'dovuto a oggi: ' + _objNum(rg.dovuto, euro, true);
+    } else {
+      pct = 0; stato = 'neutro';
+      sub = a > o.anno ? 'anno non iniziato' : (a === o.anno ? 'nessun obiettivo' : 'anno concluso');
+    }
+    var col = OBJ_STATO_COL[stato] || ind.col;
+    var off = (C - pct*C).toFixed(1);
+    var deltaPct = (rg.pari.coperto && rg.pari.valore > 0) ? Math.round(((rg.fattoAnno - rg.pari.valore) / rg.pari.valore) * 100) : null;
+    h += '<div class="objg-radiale"><svg width="72" height="72" viewBox="0 0 72 72">'
+      + '<circle cx="36" cy="36" r="' + R + '" fill="none" stroke="var(--border)" stroke-width="' + STROKE + '"/>'
+      + '<circle cx="36" cy="36" r="' + R + '" fill="none" stroke="' + col + '" stroke-width="' + STROKE + '" stroke-linecap="round" '
+      +   'stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + off + '" transform="rotate(-90 36 36)"/>'
+      + '<text x="36" y="40" text-anchor="middle" font-size="13" font-weight="700" fill="var(--text)">' + Math.round(pct*100) + '%</text></svg>'
+      + '<div class="objg-radiale-body"><div class="objg-radiale-nome" style="color:' + ind.col + '">' + ind.nome + '</div>'
+      + '<div class="objg-radiale-val">' + _objNum(rg.fattoAnno, euro, true) + '</div>'
+      + '<div class="objg-radiale-sub">' + sub + '</div>'
+      + (deltaPct != null ? ('<div class="objg-delta ' + (deltaPct >= 0 ? 'su' : 'giu') + '" style="margin-top:4px">' + (deltaPct >= 0 ? '▲' : '▼') + ' ' + Math.abs(deltaPct) + '% vs ' + (a-1) + '</div>') : '')
+      + '</div></div>';
+  });
+  h += '</div>';
+  var leg = '<div class="obj-leg">'
+    + '<span><i style="background:' + OBJ_T.verde + '"></i>centrato</span>'
+    + '<span><i style="background:' + OBJ_T.ambra + '"></i>vicino</span>'
+    + '<span><i style="background:' + OBJ_T.rosso + '"></i>sotto</span></div>';
+  return _gxColonna('Schede a ciambella', 'a che punto sei adesso, indicatore per indicatore', OBJ_T.blu, h + leg);
+}
+
+/* ── 4: griglia a colori — la stessa tabella, ma il colore fa il lavoro ──── */
+function _objGrafGriglia(righe){
+  var o = _objCtx.oggi, a = _objAnno;
+  var h = '<div class="obj-scroll"><table class="objg-heat"><thead><tr><th class="sx">Indicatore</th>';
+  OBJ_MESI3.forEach(function(m, i){
+    var ora = (a === o.anno && i+1 === o.mese);
+    h += '<th' + (ora ? ' class="ora"' : '') + '>' + m + '</th>';
+  });
+  h += '<th>Anno</th></tr></thead><tbody>';
+  righe.forEach(function(rg){
+    var ind = objInd(rg.id), euro = !!ind.euro;
+    h += '<tr><td class="nome"><span class="n"><span class="pall" style="background:' + ind.col + '"></span>' + ind.nome + '</span></td>';
+    rg.celle.forEach(function(c, i){
+      var vuoto = (c.stato === 'futuro');
+      var col = OBJ_STATO_COL[c.stato];
+      var bg = vuoto ? 'var(--bg3)' : (col ? ('color-mix(in srgb, ' + col + ' 20%, var(--bg2))') : ('color-mix(in srgb, ' + ind.col + ' 14%, var(--bg2))'));
+      var ora = (a === o.anno && c.mese === o.mese);
+      var tit = ind.nome + ' ' + OBJ_MESI3[i] + ': ' + _objNum(c.fatto, euro, true) + (c.target > 0 ? (' (obiettivo ' + _objNum(c.target, euro, true) + ')') : ' (nessun obiettivo)');
+      h += '<td class="objg-cell' + (ora ? ' ora' : '') + '" style="background:' + bg + '" title="' + _esc(tit) + '">' + (vuoto ? '·' : _objNum(c.fatto, euro)) + '</td>';
+    });
+    h += '<td class="objg-tot">' + _objNum(rg.fattoAnno, euro, true) + '</td></tr>';
+  });
+  h += '</tbody></table></div>';
+  var leg = '<div class="obj-leg">'
+    + '<span><i style="background:' + OBJ_T.verde + '"></i>centrato</span>'
+    + '<span><i style="background:' + OBJ_T.ambra + '"></i>vicino</span>'
+    + '<span><i style="background:' + OBJ_T.rosso + '"></i>sotto</span>'
+    + '<span><i style="background:var(--bg3)"></i>mese non ancora iniziato</span></div>';
+  return _gxColonna('Griglia a colori', 'un colore per vedere subito dove guardare', OBJ_T.blu, h + leg);
 }
 
 /* ── il dettaglio di un indicatore ────────────────────────────────────── */
@@ -1706,9 +1937,15 @@ function _objDisegna(){
   } else {
     var gci = righe[righe.length-1];
     var sel = righe.filter(function(r){ return r.id === _objSel; })[0] || righe[1];
+    var corpoGrafico = _objGraf === 'barre' ? _objGrafBarre(righe)
+      : _objGraf === 'linee' ? _objGrafLinee(righe)
+      : _objGraf === 'radiali' ? _objGrafRadiali(righe)
+      : _objGraf === 'colori' ? _objGrafGriglia(righe)
+      : _objGriglia(righe);
     h += _objAvvisoPicco()
       + _objStriscia(R, gci)
-      + _objGriglia(righe)
+      + _objSelettoreGrafico()
+      + corpoGrafico
       + _objDettaglio(sel)
       + (a === o.anno ? _objPipeline(R) : '')
       + _objScarti(R);
