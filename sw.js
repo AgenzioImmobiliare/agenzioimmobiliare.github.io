@@ -3,7 +3,7 @@
    IMPORTANTE: quando esce un aggiornamento, bumpa CACHE='lecase-vN'
    per invalidare la cache HTML/JS e forzare il telefono a scaricare il nuovo codice. */
 
-var CACHE = 'lecase-v136';            /* Proposta: nuovo esito "Controproposta dal venditore", resta in trattativa invece di tornare Attivo (02/11/2026) */
+var CACHE = 'lecase-v137';            /* Scheda immobile: compilazione automatica dell'indirizzo via Nominatim (02/11/2026) */
 var FOTO_CACHE = 'lecase-foto-v1';
 
 self.addEventListener('install', function (e) { self.skipWaiting(); });
