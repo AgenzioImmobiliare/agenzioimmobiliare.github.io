@@ -224,6 +224,7 @@ function openAttivita(idxOrId){
     var el=document.getElementById(id); if(el) el.value='';
   });
   var clienteEl=document.getElementById('att-cliente'); if(clienteEl) clienteEl.value='';
+  var telEl=document.getElementById('att-telefono'); if(telEl) telEl.value='';
   var scadEl=document.getElementById('att-scadenza'); if(scadEl) scadEl.value='';
   var dataInsEl=document.getElementById('att-data-ins'); if(dataInsEl) dataInsEl.value=today();
 
@@ -270,7 +271,7 @@ function openAttivita(idxOrId){
     var g=function(id,val){ var el=document.getElementById(id); if(el) el.value=val||''; };
     g('att-tipo',a.tipo); g('att-stato',a.stato); g('att-agente',a.agente);
     g('att-oggetto',a.oggetto); g('att-cliente',a.cliente);
-    g('att-scadenza',a.scadenza); g('att-data-ins',a.dataIns);
+    g('att-telefono',a.tel); g('att-scadenza',a.scadenza); g('att-data-ins',a.dataIns);
     if(a.immRef!==undefined && a.immRef!==''){
       var imIdx=parseInt(a.immRef);
       var imEdit=D.immobili[imIdx];
@@ -280,6 +281,23 @@ function openAttivita(idxOrId){
 
   openModal('modal-attivita');
 }
+
+/* [2 nov 2026] Se il nome scritto in "Cliente / Contatto" corrisponde (anche
+   senza maiuscole) a un cliente già in rubrica, propone il suo telefono —
+   ma solo se il campo Telefono è ancora vuoto: non sovrascrive mai un numero
+   scritto a mano (es. un contatto non in rubrica, come nello screenshot di
+   Enzo: "CHIAMARE... 3355320808" finiva nell'Oggetto proprio perché qui non
+   c'era un campo telefono a sé). */
+function attClienteCambiato(){
+  var nomeEl=document.getElementById('att-cliente');
+  var telEl=document.getElementById('att-telefono');
+  if(!nomeEl || !telEl || telEl.value.trim()) return;
+  var nome=(nomeEl.value||'').trim().toLowerCase();
+  if(!nome) return;
+  var cli=(D.clienti||[]).find(function(c){ return c && (c.nome||'').trim().toLowerCase()===nome; });
+  if(cli && (cli.tel||cli.telefono)) telEl.value=cli.tel||cli.telefono;
+}
+try{ window.attClienteCambiato=attClienteCambiato; }catch(e){}
 
 function saveAttivita(){
   _attEnsure();
@@ -310,6 +328,7 @@ function saveAttivita(){
     oggetto:  oggetto,
     immRef:   g('att-immobile'),
     cliente:  g('att-cliente'),
+    tel:      g('att-telefono'),
     dataIns:  g('att-data-ins')||today()
   };
 
