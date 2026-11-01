@@ -2405,4 +2405,18 @@ window.objGrigliaConsole = function(anno){
   return t;
 };
 
+/* [2 nov 2026] mobObiettiviWidget() nel monolite (la card "Obiettivi della
+   settimana" in cima alla Home del telefono) cercava questi nomi su window
+   e non li trovava mai — tutto questo file vive dentro un'unica IIFE, quindi
+   objContesto/OBJ_SETT/objSettimana/objInd/_objNum restavano privati anche
+   se dichiarati senza "var"/"let" in testa. Risultato: la card non compariva
+   MAI, con o senza obiettivi dell'anno impostati. Li espongo qui, apposta
+   per quel widget (window.objDashboard, usato dal desktop, già funzionava
+   perché gira nello stesso scope di questo file). */
+window.objContesto = objContesto;
+window.objSettimana = objSettimana;
+window.objInd = objInd;
+window._objNum = _objNum;
+window.OBJ_SETT = OBJ_SETT;
+
 })();

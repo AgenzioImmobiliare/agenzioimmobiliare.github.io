@@ -52655,7 +52655,16 @@ function mobObiettiviWidget(){
   try{ ctx = objContesto(); }catch(e){ return ''; }
   var ws = OBJ_SETT.map(function(id){ return objSettimana(id, ctx); });
   var conObiettivo = ws.some(function(w){ return w.target > 0; });
-  if(!conObiettivo) return '';
+  if(!conObiettivo){
+    /* [2 nov 2026] Prima, senza obiettivi dell'anno impostati, qui non
+       compariva nulla — una sezione che sparisce non stimola nessuno.
+       Ora invita a impostarli, sempre visibile in home, così c'è sempre
+       qualcosa che spinge ad agire appena si apre l'app. */
+    return '<div class="mh-obj-card" onclick="apriObiettivi()" style="background:linear-gradient(135deg,#EFF6FF,#F5F3FF);border-color:#BFDBFE">'
+      + '<div class="mh-obj-head"><span class="mh-obj-badge" style="background:#2563EB">🎯</span><span class="mh-obj-title">Imposta i tuoi obiettivi dell\'anno</span><span class="mh-obj-arrow">›</span></div>'
+      + '<div style="font-size:.74rem;color:#475569;line-height:1.4">Da qui vedrai ogni settimana quanto ti manca per raggiungerli — bastano 2 minuti per impostarli.</div>'
+      + '</div>';
+  }
   var nSett = (function(d){
     var t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
     var g = t.getUTCDay() || 7; t.setUTCDate(t.getUTCDate() + 4 - g);
@@ -67621,7 +67630,7 @@ try{
   // a riscaricarlo. Usa la stessa data del badge versione, es. '20260702'.
   // [25 set 2026] Ogni index.js passa il suo ?v= ai file che carica
   // (.view/.mobile/.report): alzare _MOD_V basta per TUTTI i moduli.
-  const _MOD_V = '20261101B';
+  const _MOD_V = '20261102A';
   const moduli = [
     ['Richieste', './src/modules/richieste/index.js?v=' + _MOD_V],
     ['Clienti',   './src/modules/clienti/index.js?v=' + _MOD_V],
@@ -67694,6 +67703,12 @@ try{
       if(sez === 'calendario' && typeof renderCal === 'function') renderCal();
       /* aggiorno comunque i badge che potrebbero dipendere dai moduli */
       if(typeof updateBadges === 'function') try{ updateBadges(); }catch(e){}
+      /* [2 nov 2026] Sul telefono la Home si disegna PRIMA che il modulo
+         Obiettivi sia pronto (i moduli si caricano dopo il monolite): il
+         widget "Obiettivi della settimana" restava invisibile per tutta la
+         sessione finché non si usciva da Home e si tornava indietro a mano.
+         Ora che tutti i moduli sono caricati, ridisegno la Home una volta. */
+      if(typeof window.mobRefresh==='function') try{ window.mobRefresh(); }catch(e){}
     } catch(e){ console.warn('[REFACTOR] post-load render:', e); }
     var mancanti = esiti.filter(function(x){ return !x.ok; }).map(function(x){ return x.nome; });
     var caricati = esiti.length - mancanti.length;
