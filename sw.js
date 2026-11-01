@@ -3,7 +3,7 @@
    IMPORTANTE: quando esce un aggiornamento, bumpa CACHE='lecase-vN'
    per invalidare la cache HTML/JS e forzare il telefono a scaricare il nuovo codice. */
 
-var CACHE = 'lecase-v134';            /* Video Social: tolto il riquadro progetti che restava sopra l'editor, miniatura non più nera (02/11/2026) */
+var CACHE = 'lecase-v135';            /* Scheda immobile: documenti a categorie a comparsa, scadenza mandato bloccata con Rinnova Mandato, campo Banca di riferimento sul mutuo (02/11/2026) */
 var FOTO_CACHE = 'lecase-foto-v1';
 
 self.addEventListener('install', function (e) { self.skipWaiting(); });

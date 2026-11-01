@@ -1107,6 +1107,12 @@ body.dark-mode .fselect:has(option[value=""]:checked){ background:var(--bg3); co
 .doc-cat-label{display:flex;align-items:center;gap:6px;font-size:0.67rem;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px;padding:4px 8px;border-radius:6px;}
 .doc-cat-items-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;}
 @media(max-width:700px){.doc-cat-items-grid{grid-template-columns:1fr;}}
+/* [2 nov 2026] Categorie a comparsa: ogni gruppo si apre/chiude al tocco
+   dell'intestazione, con frazione "fatti/totale" e freccia come indizio. */
+.doc-cat-frac{margin-left:auto;font-weight:700;letter-spacing:0;text-transform:none;font-size:0.72rem;opacity:.85;flex-shrink:0;}
+.doc-cat-chev{display:flex;align-items:center;transition:transform .15s;flex-shrink:0;}
+.doc-cat-group.collapsed .doc-cat-chev{transform:rotate(-90deg);}
+.doc-cat-group.collapsed .doc-cat-items-grid{display:none;}
 /* Checklist items */
 .doc-check-item{display:flex;align-items:flex-start;gap:10px;padding:7px 10px;border-radius:8px;background:#F8FAFC;border:1.5px solid #E2E8F0;transition:all .18s;position:relative;margin-bottom:4px;cursor:pointer;}
 .doc-check-item:hover{border-color:#93C5FD;background:#EFF6FF;transform:translateX(2px);}
@@ -1119,6 +1125,25 @@ body.dark-mode .fselect:has(option[value=""]:checked){ background:var(--bg3); co
 .doc-check-item.done label strong{color:#15803D;}
 .doc-check-item.done .doc-check-badge{opacity:1;transform:scale(1);}
 .doc-check-badge{font-size:0.6rem;font-weight:800;color:#15803D;background:#DCFCE7;border:1px solid #86EFAC;padding:2px 6px;border-radius:8px;white-space:nowrap;margin-left:auto;flex-shrink:0;opacity:0;transform:scale(.7);transition:all .2s;align-self:flex-start;margin-top:2px;}
+
+/* [2 nov 2026] Scheda immobile, Incarico & Mandato: card "cronologia
+   protagonista" che sostituisce il campo scadenza una volta registrato. */
+.mnd-card{background:#fff;border:1.5px solid #E2E8F0;border-radius:12px;padding:16px;}
+.mnd-head{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
+.mnd-head-t{font-size:0.92rem;font-weight:800;color:var(--text);margin-right:auto;}
+.mnd-badge{display:inline-flex;align-items:center;gap:5px;font-size:0.68rem;font-weight:800;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.3px;}
+.mnd-badge.attivo{color:var(--green-l);background:var(--green-pale);}
+.mnd-badge.scad{color:var(--red-l);background:var(--red-pale);}
+.mnd-tl{position:relative;padding-left:26px;}
+.mnd-tl::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:#E2E8F0;}
+.mnd-tl-item{position:relative;padding-bottom:16px;}
+.mnd-tl-item:last-child{padding-bottom:0;}
+.mnd-tl-item .dot{position:absolute;left:-26px;top:1px;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;}
+.mnd-tl-item .dot svg{width:9px;height:9px;}
+.mnd-tl-item .when{font-size:0.72rem;color:var(--text4);font-weight:600;font-family:'Inter',sans-serif;}
+.mnd-tl-item .what{font-size:0.85rem;font-weight:700;color:var(--text);margin-top:1px;}
+.mnd-tl-item .sub{font-size:0.77rem;color:var(--text3);margin-top:1px;}
+.mnd-actions{display:flex;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid #E2E8F0;flex-wrap:wrap;}
 /* Preview panel (right) */
 .doc-preview-title{font-size:0.7rem;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:4px;}
 .doc-preview-headline{font-size:1.05rem;font-weight:800;color:white;margin-bottom:14px;line-height:1.3;}
@@ -10351,6 +10376,9 @@ body.dark-mode #mobile-app{ background:var(--bg)!important; color:var(--text); }
 :where(body.dark-mode) .doc-check-item.done label strong{color:#8DECB1}
 :where(body.dark-mode) .doc-check-badge{color:#8DECB1;background:rgba(44,237,110,.16);border-color:var(--hb-bordo)}
 :where(body.dark-mode) .doc-check-progress{background:var(--border)}
+:where(body.dark-mode) .mnd-card{background:var(--hb-card);border-color:var(--hb-bordo)}
+:where(body.dark-mode) .mnd-tl::before{background:var(--hb-bordo)}
+:where(body.dark-mode) .mnd-actions{border-top-color:var(--hb-bordo)}
 :where(body.dark-mode) .doc-check-progress-fill{background:linear-gradient(90deg,var(--brand),var(--green-l))}
 :where(body.dark-mode) .fatt-voce-row{background:var(--bg3)}
 :where(body.dark-mode) .fatt-voce-descr{background:var(--hb-card);color:var(--text)}
@@ -16784,9 +16812,9 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
         </div>
 
         <!-- Gruppo A: Catasto -->
-        <div class="doc-cat-group">
-          <div class="doc-cat-label" style="background:#EFF6FF;color:#1D4ED8"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2 20h20"/><path d="M6 20V10M10 20V10M14 20V10M18 20V10"/><path d="M2 10h20"/><path d="M4 7l8-4 8 4"/></svg>️ Catasto &amp; Provenienza</div>
-          <div class="doc-cat-items-grid">
+        <div class="doc-cat-group" id="dc-cat-0">
+          <div class="doc-cat-label" style="background:#EFF6FF;color:#1D4ED8;cursor:pointer" onclick="toggleDocCat(0)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2 20h20"/><path d="M6 20V10M10 20V10M14 20V10M18 20V10"/><path d="M2 10h20"/><path d="M4 7l8-4 8 4"/></svg>️ Catasto &amp; Provenienza<span class="doc-cat-frac" id="dc-cat-frac-0">0/4</span><span class="doc-cat-chev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></div>
+          <div class="doc-cat-items-grid" id="dc-cat-body-0">
           <div class="doc-check-item" id="dc-wrap-0" onclick="document.getElementById('dc-0').click()">
             <input type="checkbox" id="dc-0" onchange="updateDocCheck(0)" onclick="event.stopPropagation()">
             <label for="dc-0"><strong>Atto di proprietà / Rogito</strong><span>Documento che attesta la titolarità</span></label>
@@ -16811,9 +16839,9 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
         </div>
 
         <!-- Gruppo B: Urbanistica -->
-        <div class="doc-cat-group">
-          <div class="doc-cat-label" style="background:#F0FDFA;color:#065F46"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2 20h20"/><path d="M6 20V10M18 20V10"/><path d="M2 10h20"/><path d="M12 4v6"/><path d="M6 7l6-3 6 3"/></svg>️ Urbanistica &amp; Agibilità</div>
-          <div class="doc-cat-items-grid">
+        <div class="doc-cat-group" id="dc-cat-1">
+          <div class="doc-cat-label" style="background:#F0FDFA;color:#065F46;cursor:pointer" onclick="toggleDocCat(1)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M2 20h20"/><path d="M6 20V10M18 20V10"/><path d="M2 10h20"/><path d="M12 4v6"/><path d="M6 7l6-3 6 3"/></svg>️ Urbanistica &amp; Agibilità<span class="doc-cat-frac" id="dc-cat-frac-1">0/4</span><span class="doc-cat-chev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></div>
+          <div class="doc-cat-items-grid" id="dc-cat-body-1">
           <div class="doc-check-item" id="dc-wrap-3" onclick="document.getElementById('dc-3').click()">
             <input type="checkbox" id="dc-3" onchange="updateDocCheck(3)" onclick="event.stopPropagation()">
             <label for="dc-3"><strong>Certificato di conformità urbanistica</strong><span>Abitabilità / agibilità</span></label>
@@ -16838,9 +16866,9 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
         </div>
 
         <!-- Gruppo C: Energia & Condominio -->
-        <div class="doc-cat-group">
-          <div class="doc-cat-label" style="background:#FFFBEB;color:#92400E"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Energia &amp; Condominio</div>
-          <div class="doc-cat-items-grid">
+        <div class="doc-cat-group" id="dc-cat-2">
+          <div class="doc-cat-label" style="background:#FFFBEB;color:#92400E;cursor:pointer" onclick="toggleDocCat(2)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Energia &amp; Condominio<span class="doc-cat-frac" id="dc-cat-frac-2">0/3</span><span class="doc-cat-chev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></div>
+          <div class="doc-cat-items-grid" id="dc-cat-body-2">
           <div class="doc-check-item" id="dc-wrap-4" onclick="document.getElementById('dc-4').click()">
             <input type="checkbox" id="dc-4" onchange="updateDocCheck(4)" onclick="event.stopPropagation()">
             <label for="dc-4"><strong>APE — Attestato di Prestazione Energetica</strong><span>Classe energetica — obbligatoria per la vendita</span></label>
@@ -16860,9 +16888,9 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
         </div>
 
         <!-- Gruppo D: Civile & Ipoteche -->
-        <div class="doc-cat-group" style="margin-bottom:0">
-          <div class="doc-cat-label" style="background:#F5F3FF;color:#5B21B6"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 2v20M4 9l8-7 8 7M3 15h6l-3 6z"/><path d="M21 15h-6l3 6z"/></svg>️ Stato Civile &amp; Ipoteche</div>
-          <div class="doc-cat-items-grid">
+        <div class="doc-cat-group" id="dc-cat-3" style="margin-bottom:0">
+          <div class="doc-cat-label" style="background:#F5F3FF;color:#5B21B6;cursor:pointer" onclick="toggleDocCat(3)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 2v20M4 9l8-7 8 7M3 15h6l-3 6z"/><path d="M21 15h-6l3 6z"/></svg>️ Stato Civile &amp; Ipoteche<span class="doc-cat-frac" id="dc-cat-frac-3">0/4</span><span class="doc-cat-chev"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span></div>
+          <div class="doc-cat-items-grid" id="dc-cat-body-3">
           <div class="doc-check-item" id="dc-wrap-7" onclick="document.getElementById('dc-7').click()">
             <input type="checkbox" id="dc-7" onchange="updateDocCheck(7)" onclick="event.stopPropagation()">
             <label for="dc-7"><strong>Certificato matrimoniale / stato civile</strong><span>Per venditori coniugati o comunità beni</span></label>
@@ -17055,9 +17083,26 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
     <div class="frow"><label class="flabel">Data Inizio Mandato</label>
       <input class="finput" id="im-inc-inizio" type="date">
     </div>
-    <div class="frow"><label class="flabel">Data Scadenza Mandato <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></label>
+    <div class="frow" id="im-inc-fine-row"><label class="flabel">Data Scadenza Mandato <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></label>
       <div style="width:100%"><input class="finput" id="im-inc-fine" type="date" onchange="checkIncaricoScadenza()" style="width:100%">
         <span id="im-inc-warn" style="font-size:0.78rem;margin-top:4px;display:block"></span>
+      </div>
+    </div>
+
+    <!-- [2 nov 2026] Una volta registrata la prima scadenza (im.incFine non vuoto),
+         il campo sopra resta nascosto e la scadenza si vede/cambia solo da qui:
+         card con cronologia + pulsante "Rinnova Mandato", come il programma
+         della concorrenza mostrato da Enzo. Lo storico dei rinnovi vive in
+         im.incStorico (vedi _imMandatoAspetto/saveImmobile). -->
+    <div class="frow fcol" id="im-mand-wrap" style="display:none;grid-column:1/-1">
+      <label class="flabel">Scadenza Mandato</label>
+      <div class="mnd-card">
+        <div class="mnd-head"><span class="mnd-badge" id="mnd-badge"></span><span class="mnd-head-t" id="mnd-head-t"></span></div>
+        <div class="mnd-tl" id="mnd-tl"></div>
+        <div class="mnd-actions">
+          <button type="button" class="btn btn-primary btn-sm" onclick="apriRinnovoMandato()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0115-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 01-15 6.7L3 16"/></svg> Rinnova Mandato</button>
+          <button type="button" class="btn btn-outline btn-sm" id="mnd-non-rinn-btn" onclick="nonRinnovareMandato()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg> Non Rinnovare</button>
+        </div>
       </div>
     </div>
 
@@ -17646,6 +17691,33 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 
   </div></div>
   <div class="mfoot"><button class="btn btn-outline" onclick="closeModal('modal-immobile')">Annulla</button><button class="btn btn-primary" onclick="saveImmobile()" title="Ctrl+S per salvataggio rapido"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Salva Immobile</button></div>
+</div></div>
+
+<!-- RINNOVO MANDATO — apribile da "Rinnova Mandato" nella scheda immobile.
+     Modal secondario (si apre sopra modal-immobile, stesso sistema overlay):
+     non tocca D.editIdx, non è in primaryModals di closeModal(). -->
+<div class="overlay" id="modal-rinnovo-mandato"><div class="modal" style="max-width:440px">
+  <div class="mhead"><h2>Rinnovo Mandato</h2><button class="mclose" onclick="closeModal('modal-rinnovo-mandato')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+  <div class="mbody">
+    <div class="frow"><label class="flabel">Tipo Mandato</label>
+      <select class="fselect" id="rm-tipo"><option value="">— da indicare —</option><option>in esclusiva</option><option>non esclusiva</option></select>
+    </div>
+    <div class="frow"><label class="flabel">Durata rinnovo</label>
+      <select class="fselect" id="rm-durata" onchange="_rmAggiornaData()">
+        <option value="3">3 mesi</option>
+        <option value="6" selected>6 mesi</option>
+        <option value="12">12 mesi</option>
+      </select>
+    </div>
+    <div style="background:var(--brand-pale,#EFF6FF);border:1px solid var(--border);border-radius:9px;padding:10px 12px;font-size:0.82rem;margin-bottom:14px">Nuova scadenza: <strong id="rm-nuova-data" data-iso="">—</strong></div>
+    <div class="frow"><label class="flabel">Nuovo prezzo incarico (€) <span style="font-size:0.7rem;opacity:.7">(opzionale)</span></label>
+      <input class="finput" id="rm-prezzo" inputmode="decimal" placeholder="Lascia vuoto per non cambiarlo">
+    </div>
+    <div class="frow fcol"><label class="flabel">Note rinnovo</label>
+      <textarea class="ftextarea" id="rm-note" rows="2" placeholder="Note sul rinnovo…"></textarea>
+    </div>
+  </div>
+  <div class="mfoot"><button class="btn btn-outline" onclick="closeModal('modal-rinnovo-mandato')">Annulla</button><button class="btn btn-primary" onclick="confermaRinnovoMandato()">Rinnova Mandato</button></div>
 </div></div>
 
 <!-- RICHIESTA -->
@@ -18917,6 +18989,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
           </label>
         </div>
         <div class="frow" id="pim-mutuo-wrap" style="display:none"><label class="flabel">Delibera attesa entro</label><input class="finput" id="pim-mutuo-data" type="date"></div>
+        <div class="frow" id="pim-mutuo-banca-wrap" style="display:none"><label class="flabel">Banca di riferimento</label><input class="finput" id="pim-mutuo-banca" placeholder="Es. Intesa Sanpaolo"></div>
         <!-- [9 set 2026] Caso diverso dal mutuo e con rischio opposto: qui
              l'immobile NON è impegnato. Il venditore ha accettato riservandosi
              di prendere una proposta migliore se arriva mentre il mutuo è in
@@ -19349,7 +19422,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.2nov-FIXPROGETTI';
+var APP_VERSION = 'v.2nov-MANDATO';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -28394,6 +28467,33 @@ function getDocsChecklist(){
   }
   return obj;
 }
+/* [2 nov 2026] Categorie a comparsa: a quale gruppo appartiene ogni id di
+   DOCS_LABELS/dc-N, nello stesso ordine in cui compaiono nel modulo. */
+const DOC_CATS=[{id:0,items:[0,6,1,2]},{id:1,items:[3,5,12,11]},{id:2,items:[4,8,9]},{id:3,items:[7,10,13,14]}];
+function toggleDocCat(id){
+  const el=document.getElementById('dc-cat-'+id);
+  if(el) el.classList.toggle('collapsed');
+}
+function updateDocCatProgress(){
+  DOC_CATS.forEach(function(cat){
+    let done=0;
+    cat.items.forEach(function(i){const el=document.getElementById('dc-'+i);if(el&&el.checked)done++;});
+    const frac=document.getElementById('dc-cat-frac-'+cat.id);
+    if(frac) frac.textContent=done+'/'+cat.items.length;
+  });
+}
+/* Apre di default solo le categorie con qualcosa ancora da raccogliere:
+   va chiamata una sola volta all'apertura della scheda (non ad ogni
+   spunta), altrimenti una categoria si chiuderebbe da sola sotto le dita
+   dell'agente appena segna l'ultimo documento. */
+function _initDocCatCollapse(){
+  DOC_CATS.forEach(function(cat){
+    let done=0;
+    cat.items.forEach(function(i){const el=document.getElementById('dc-'+i);if(el&&el.checked)done++;});
+    const group=document.getElementById('dc-cat-'+cat.id);
+    if(group) group.classList.toggle('collapsed', done===cat.items.length);
+  });
+}
 function setDocsChecklist(obj){
   for(let i=0;i<DOCS_LABELS.length;i++){
     const el=document.getElementById('dc-'+i);
@@ -28403,6 +28503,7 @@ function setDocsChecklist(obj){
     if(wrap) wrap.classList.toggle('done',val);
   }
   updateDocProgress();
+  _initDocCatCollapse();
 }
 function updateDocCheck(i){
   const el=document.getElementById('dc-'+i);
@@ -28431,6 +28532,7 @@ function updateDocProgress(){
   const circ=138.2;
   if(ring) ring.style.strokeDashoffset=circ-(circ*pct/100);
   if(ringPct) ringPct.textContent=pct+'%';
+  updateDocCatProgress();
 }
 function toggleAllDocs(val){
   for(let i=0;i<DOCS_LABELS.length;i++){
@@ -29695,6 +29797,127 @@ function checkIncaricoScadenza(){
   else if(diff<=30){ warn.innerHTML=' Scadenza tra '+diff+' giorni!'; warn.style.color='var(--orange)'; warn.style.display='block'; }
   else { warn.style.display='none'; }
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   [2 nov 2026] INCARICO & MANDATO — scadenza bloccata dopo la prima
+   registrazione, rinnovo tracciato con storico (im.incStorico).
+   Prima: "Data Scadenza Mandato" era un campo data sempre scrivibile,
+   quindi bastava una disattenzione per cambiare la scadenza senza
+   lasciare traccia di quando/perché. Ora, una volta che im.incFine è
+   stato salvato una prima volta, il campo si nasconde e resta solo
+   la card con cronologia + pulsante "Rinnova Mandato" (richiesto da
+   Enzo sul modello del programma della concorrenza che ha mandato).
+   window._imMandStoricoBozza tiene la bozza di storico per la sessione
+   di modifica in corso: saveImmobile() (immobili.view.js) la legge e la
+   scrive in im.incStorico solo al Salva, così un rinnovo confermato ma
+   poi annullato chiudendo il modulo senza salvare non lascia traccia. ══ */
+var _ICO_MND_RINNOVO='<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0115-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 01-15 6.7L3 16"/></svg>';
+var _ICO_MND_X='<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>';
+var _ICO_MND_FLAG='<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>';
+var _ICO_MND_DOC='<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+
+function _imMandatoAspetto(im){
+  window._imMandStoricoBozza = (im && Array.isArray(im.incStorico)) ? JSON.parse(JSON.stringify(im.incStorico)) : [];
+  var locked = !!(im && im.incFine);
+  var rowEdit=document.getElementById('im-inc-fine-row');
+  var wrap=document.getElementById('im-mand-wrap');
+  if(rowEdit) rowEdit.style.display = locked ? 'none' : '';
+  if(wrap) wrap.style.display = locked ? '' : 'none';
+  if(locked) _imMandRender();
+}
+try{ window._imMandatoAspetto=_imMandatoAspetto; }catch(e){}
+
+function _imMandRender(){
+  var fineEl=document.getElementById('im-inc-fine');
+  var fine=fineEl?fineEl.value:'';
+  var oggi=today();
+  var scaduto = !!(fine && fine<oggi);
+  var badge=document.getElementById('mnd-badge');
+  if(badge){ badge.className='mnd-badge '+(scaduto?'scad':'attivo'); badge.textContent=scaduto?'Scaduto':'Attivo'; }
+  var headT=document.getElementById('mnd-head-t');
+  var confVal=(document.getElementById('im-conf')||{}).value||'';
+  if(headT) headT.textContent=(confVal?confVal.charAt(0).toUpperCase()+confVal.slice(1):'Mandato')+(fine?' · scade '+fmtD(fine):'');
+  var tl=document.getElementById('mnd-tl');
+  if(tl){
+    var storico=window._imMandStoricoBozza||[];
+    var righe=storico.map(function(s){
+      var ico=s.tipo==='rinnovo'?_ICO_MND_RINNOVO:(s.tipo==='non_rinnovo'?_ICO_MND_X:_ICO_MND_FLAG);
+      var col=s.tipo==='rinnovo'?'#2563EB':(s.tipo==='non_rinnovo'?'#DC2626':'#D97706');
+      var cosa=s.tipo==='rinnovo'?('Rinnovo mandato'+(s.mesi?' (+'+s.mesi+' mesi)':'')):(s.tipo==='non_rinnovo'?'Segnato "Non rinnovare"':'Acquisizione incarico');
+      var sub=[];
+      if(s.scadenza) sub.push('nuova scadenza '+fmtD(s.scadenza));
+      if(s.prezzoNuovo) sub.push('nuovo prezzo incarico');
+      if(s.note) sub.push(s.note);
+      return '<div class="mnd-tl-item"><span class="dot" style="background:'+col+'">'+ico+'</span><div class="when">'+fmtD(s.data)+'</div><div class="what">'+cosa+'</div>'+(sub.length?'<div class="sub">'+sub.join(' · ')+'</div>':'')+'</div>';
+    });
+    var ggMan=fine?_incaricoGiorniMancanti(fine):null;
+    righe.push('<div class="mnd-tl-item"><span class="dot" style="background:'+(scaduto?'#DC2626':'#2563EB')+'">'+_ICO_MND_DOC+'</span><div class="when">'+(fine?fmtD(fine):'—')+'</div><div class="what">Scadenza mandato</div>'+(fine?('<div class="sub">'+(scaduto?'Scaduto':'tra '+ggMan+' giorni')+'</div>'):'')+'</div>');
+    tl.innerHTML=righe.join('');
+  }
+}
+
+function apriRinnovoMandato(){
+  var confEl=document.getElementById('im-conf'), rmTipo=document.getElementById('rm-tipo');
+  if(rmTipo) rmTipo.value=(confEl&&confEl.value)||'';
+  var rmDur=document.getElementById('rm-durata'); if(rmDur) rmDur.value='6';
+  var rmPrezzo=document.getElementById('rm-prezzo'); if(rmPrezzo) rmPrezzo.value='';
+  var rmNote=document.getElementById('rm-note'); if(rmNote) rmNote.value='';
+  _rmAggiornaData();
+  openModal('modal-rinnovo-mandato');
+}
+try{ window.apriRinnovoMandato=apriRinnovoMandato; }catch(e){}
+
+function _rmAggiornaData(){
+  var fineEl=document.getElementById('im-inc-fine');
+  var fine=fineEl?fineEl.value:'';
+  var oggi=today();
+  var base=(fine && fine>=oggi)?fine:oggi;
+  var mesi=parseInt((document.getElementById('rm-durata')||{}).value,10)||6;
+  var d=new Date(base+'T00:00:00');
+  d.setMonth(d.getMonth()+mesi);
+  var iso=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  var out=document.getElementById('rm-nuova-data');
+  if(out){ out.textContent=fmtD(iso); out.dataset.iso=iso; }
+}
+try{ window._rmAggiornaData=_rmAggiornaData; }catch(e){}
+
+function confermaRinnovoMandato(){
+  _rmAggiornaData();
+  var mesi=parseInt((document.getElementById('rm-durata')||{}).value,10)||6;
+  var nuovaIso=(document.getElementById('rm-nuova-data')||{}).dataset?.iso||'';
+  if(!nuovaIso) return;
+  var fineEl=document.getElementById('im-inc-fine');
+  var prezzoNuovo=(document.getElementById('rm-prezzo')||{}).value?.trim()||'';
+  var note=(document.getElementById('rm-note')||{}).value?.trim()||'';
+  var tipoSel=document.getElementById('rm-tipo');
+  window._imMandStoricoBozza = window._imMandStoricoBozza||[];
+  window._imMandStoricoBozza.push({tipo:'rinnovo',data:today(),mesi:mesi,scadenza:nuovaIso,prezzoNuovo:prezzoNuovo,note:note});
+  if(fineEl){ fineEl.value=nuovaIso; fineEl.dispatchEvent(new Event('change',{bubbles:true})); }
+  if(tipoSel && tipoSel.value){
+    var ce=document.getElementById('im-conf');
+    if(ce){ ce.value=tipoSel.value; ce.dispatchEvent(new Event('change',{bubbles:true})); }
+  }
+  if(prezzoNuovo){
+    var n=(typeof parseCurrStr==='function')?parseCurrStr(prezzoNuovo):parseFloat(prezzoNuovo);
+    if(n>0 && typeof setNum==='function'){ setNum('im-prezzo', n); var pe=document.getElementById('im-prezzo'); if(pe) pe.dispatchEvent(new Event('change',{bubbles:true})); }
+  }
+  closeModal('modal-rinnovo-mandato');
+  _imMandRender();
+  showToast(' Rinnovo registrato — ricordati di salvare l\'immobile','','');
+}
+try{ window.confermaRinnovoMandato=confermaRinnovoMandato; }catch(e){}
+
+function nonRinnovareMandato(){
+  dlgConfirm('Segnare questo mandato come "Non rinnovare"? La scadenza resta quella già registrata, serve solo a ricordare la decisione presa con il proprietario.','','Non rinnovare il mandato').then(function(ok){
+    if(!ok) return;
+    window._imMandStoricoBozza = window._imMandStoricoBozza||[];
+    window._imMandStoricoBozza.push({tipo:'non_rinnovo',data:today()});
+    _imMandRender();
+    showToast(' Segnato — ricordati di salvare l\'immobile','','');
+  });
+}
+try{ window.nonRinnovareMandato=nonRinnovareMandato; }catch(e){}
+
 // =========================================================
 // STATISTICHE GENERALI
 // =========================================================
@@ -31519,10 +31742,13 @@ function openPraticaImm(immIdx){
      non toglie la spunta a una casella. */
   (function(){
     var ck=document.getElementById('pim-mutuo'), wr=document.getElementById('pim-mutuo-wrap'), dt=document.getElementById('pim-mutuo-data');
+    var wrB=document.getElementById('pim-mutuo-banca-wrap'), bc=document.getElementById('pim-mutuo-banca');
     var on=!!(p && p.mutuoSubordinata);
     if(ck) ck.checked=on;
     if(wr) wr.style.display=on?'':'none';
+    if(wrB) wrB.style.display=on?'':'none';
     if(dt) dt.value=(p && p.mutuoDelibera)||'';
+    if(bc) bc.value=(p && p.mutuoBanca)||'';
     var rs=document.getElementById('pim-riserva');
     if(rs) rs.checked=!!(p && p.riservaMigliorOfferta);
     var at=document.getElementById('pim-acq-tipo');   if(at) at.value=(p && p.acqTipo)||'';
@@ -31624,7 +31850,7 @@ function _pimRenderStorico(p){
   var righe=st.slice().reverse().map(function(x){
     var e=ETI[String(x.esito||'')]||['Archiviata','#64748B','#F1F5F9','#CBD5E1'];
     var cond=[];
-    if(x.mutuoSubordinata) cond.push('era subordinata al mutuo'+(x.mutuoDelibera?' (delibera attesa entro il '+dat(x.mutuoDelibera)+')':''));
+    if(x.mutuoSubordinata) cond.push('era subordinata al mutuo'+(x.mutuoBanca?' ('+E(x.mutuoBanca)+')':'')+(x.mutuoDelibera?' (delibera attesa entro il '+dat(x.mutuoDelibera)+')':''));
     if(x.riservaMigliorOfferta) cond.push('accettata salvo miglior offerta');
     return '<div style="display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border-top:1px solid var(--border);flex-wrap:wrap">'
       + '<div style="flex:1;min-width:190px">'
@@ -31646,10 +31872,14 @@ function _pimRenderStorico(p){
 try{ window._pimRenderStorico=_pimRenderStorico; }catch(e){}
 
 function _pimMutuoToggle(){
-  var ck=document.getElementById('pim-mutuo'), wr=document.getElementById('pim-mutuo-wrap');
+  var ck=document.getElementById('pim-mutuo'), wr=document.getElementById('pim-mutuo-wrap'), wrB=document.getElementById('pim-mutuo-banca-wrap');
   if(!ck||!wr) return;
   wr.style.display=ck.checked?'':'none';
-  if(!ck.checked){ var dt=document.getElementById('pim-mutuo-data'); if(dt) dt.value=''; }
+  if(wrB) wrB.style.display=ck.checked?'':'none';
+  if(!ck.checked){
+    var dt=document.getElementById('pim-mutuo-data'); if(dt) dt.value='';
+    var bc=document.getElementById('pim-mutuo-banca'); if(bc) bc.value='';
+  }
 }
 try{ window._pimMutuoToggle=_pimMutuoToggle; }catch(e){}
 
@@ -32778,6 +33008,7 @@ function savePraticaImm(){
          sei mesi non ricostruisci più. */
       mutuoSubordinata: !!(document.getElementById('pim-mutuo')||{}).checked,
       mutuoDelibera: g('pim-mutuo-data'),
+      mutuoBanca: g('pim-mutuo-banca'),
       riservaMigliorOfferta: !!(document.getElementById('pim-riserva')||{}).checked,
       dataAccettazione:g('pim-data-acc'), dataPreliminare:g('pim-data-prel'),
       esito:esitoProp, archiviato:today()
@@ -32839,6 +33070,7 @@ function savePraticaImm(){
     clausole:propRifiutataOScaduta?'':g('pim-clausole'),
     mutuoSubordinata: propRifiutataOScaduta ? false : !!(document.getElementById('pim-mutuo')||{}).checked,
     mutuoDelibera: propRifiutataOScaduta ? '' : g('pim-mutuo-data'),
+    mutuoBanca: propRifiutataOScaduta ? '' : g('pim-mutuo-banca'),
     riservaMigliorOfferta: propRifiutataOScaduta ? false : !!(document.getElementById('pim-riserva')||{}).checked,
     acqTipo:       propRifiutataOScaduta ? '' : g('pim-acq-tipo'),
     acqMutuo:      propRifiutataOScaduta ? false : !!(document.getElementById('pim-acq-mutuo')||{}).checked,
@@ -67996,7 +68228,7 @@ try{
   // a riscaricarlo. Usa la stessa data del badge versione, es. '20260702'.
   // [25 set 2026] Ogni index.js passa il suo ?v= ai file che carica
   // (.view/.mobile/.report): alzare _MOD_V basta per TUTTI i moduli.
-  const _MOD_V = '20261102E';
+  const _MOD_V = '20261102F';
   const moduli = [
     ['Richieste', './src/modules/richieste/index.js?v=' + _MOD_V],
     ['Clienti',   './src/modules/clienti/index.js?v=' + _MOD_V],
@@ -75151,7 +75383,7 @@ try{
   };
 
   /* ── PRATICA ─────────────────────────────────────────────────────── */
-  var VEND_SOLO = ['pim-perc-v', 'pim-perc-a', 'pim-mutuo', 'pim-mutuo-wrap', 'pim-acq-tipo', 'pim-acq-mutuo', 'pim-notaio', 'pim-prel-wrap', 'pim-banner-vademecum'];
+  var VEND_SOLO = ['pim-perc-v', 'pim-perc-a', 'pim-mutuo', 'pim-mutuo-wrap', 'pim-mutuo-banca-wrap', 'pim-acq-tipo', 'pim-acq-mutuo', 'pim-notaio', 'pim-prel-wrap', 'pim-banner-vademecum'];
   var ETICHETTE = [   /* [id del campo, vendita, affitto] */
     ['pim-venditore', 'Proprietario / Venditore', 'Proprietario / Locatore'],
     ['pim-tel-v', 'Telefono Venditore', 'Telefono Locatore'],
@@ -75188,7 +75420,7 @@ try{
     mod.classList.toggle('aff', aff);
     VEND_SOLO.forEach(function(id){
       var el = $(id); if(!el) return;
-      var box = (id === 'pim-mutuo-wrap' || id === 'pim-prel-wrap' || id === 'pim-banner-vademecum') ? el : (el.closest('.frow') || el);
+      var box = (id === 'pim-mutuo-wrap' || id === 'pim-mutuo-banca-wrap' || id === 'pim-prel-wrap' || id === 'pim-banner-vademecum') ? el : (el.closest('.frow') || el);
       box.classList.add('vend-solo');
     });
     ETICHETTE.forEach(function(e){ testoEtichetta(etichettaDi(e[0]), aff ? e[2] : e[1]); });
