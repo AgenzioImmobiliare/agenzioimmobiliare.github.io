@@ -19340,7 +19340,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.1nov-DASHVISTE';
+var APP_VERSION = 'v.1nov-GOBBOMOB';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -52022,6 +52022,14 @@ function pers_applyPalette(idx){
       <div class="mob-more-icon" style="background:linear-gradient(135deg,#DBEAFE,#BFDBFE);color:#1D4ED8;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg></div>
       <span>Documenti</span>
     </button>
+    <!-- [1 nov 2026] Gobbo per registrare, anche da telefono: versione semplificata
+         dentro al gestionale (niente Marketing Hub — quello è pensato per PC).
+         Legge un testo libero mentre scorre sopra l'anteprima della camera e
+         registra; alla fine si salva/condivide col telefono stesso. -->
+    <button class="mob-more-item" data-mob-section="gobbo" onclick="mobMoreClose();if(typeof mobApriGobbo==='function')mobApriGobbo()">
+      <div class="mob-more-icon" style="background:linear-gradient(135deg,#FCE7F3,#FBCFE8);color:#BE185D;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg></div>
+      <span>Gobbo per registrare</span>
+    </button>
   </div>
   <div style="padding:2px 4px 4px;">
     <button onclick="mobMoreClose();doLogout()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;background:#FEF2F2;border:1px solid #FECACA;border-radius:12px;color:#DC2626;font-weight:700;font-size:0.86rem;font-family:inherit;cursor:pointer;margin-top:4px;">
@@ -52893,6 +52901,12 @@ function mobRenderHome(){
   }
   html += '</div>';
 
+  /* [1 nov 2026] Obiettivi della settimana — spostati SUBITO sotto il saluto,
+     prima ancora di "Da fare oggi" e dei riquadri: Enzo aveva chiesto di
+     vederli appena apre l'app, e sotto a una lista di richiami anche solo
+     di 8 righe restavano fuori dalla prima schermata. */
+  html += mobObiettiviWidget();
+
   /* 2 — KPI cards */
   /* [2 ott 2026] Planning di oggi (blocco PLANNING SETTIMANALE) */
   try{ if(typeof window.plMobHome === 'function') html += window.plMobHome(); }catch(_pl){}
@@ -52913,11 +52927,6 @@ function mobRenderHome(){
   html += '<div class="mh-kpi-lbl">Impegni 7gg</div>';
   html += '</div>';
   html += '</div>';
-
-  /* [30 ott 2026] Obiettivi della settimana — versione compatta, subito sotto i KPI,
-     come sulla dashboard desktop (lì accanto alla mappa). Vuota se non c'è un
-     obiettivo fissato per il mese: in quel caso non occupa spazio. */
-  html += mobObiettiviWidget();
 
   /* 3 — Impegni di oggi */
   html += '<div class="mh-sh">';
@@ -57683,6 +57692,274 @@ try{ window.mobManutenzione=mobManutenzione; window.mobManutChiudi=mobManutChiud
 function mobMoreGoto(sec){
   mobMoreClose();
   if(typeof mobShow === 'function') mobShow(sec);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   [1 nov 2026] GOBBO PER REGISTRARE — versione telefono
+   Enzo aveva già questa funzione nel Marketing Hub (indexplus.html, pensato
+   per PC): un testo che scorre sopra l'anteprima della camera, mentre si
+   registra. Qui è la stessa idea ma semplificata e tutta dentro al
+   gestionale, per usarla dal telefono senza passare dal Marketing Hub:
+   - niente "Parti da" (le idee del Piano Social vivono solo nel Marketing
+     Hub, qui c'è solo testo libero);
+   - alla fine non entra in un montaggio: si salva/condivide col telefono
+     stesso (navigator.share, se il telefono lo offre — altrimenti scarica
+     il file). Il Marketing Hub ha un montaggio vero e proprio; qui no. */
+let _mobGobbo = null;
+
+window.mobApriGobbo = function(){
+  if(_mobGobbo){ mobToast('Il gobbo è già aperto'); return; }
+  var ov = document.createElement('div');
+  ov.id = 'mob-gobbo';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:100001;background:#05080C;display:flex;flex-direction:column';
+  ov.innerHTML =
+    '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#0D1B2A;border-bottom:1px solid rgba(255,255,255,.1);flex:0 0 auto">' +
+      '<div style="color:#fff;font-weight:800;font-size:.92rem">🎤 Gobbo per registrare</div>' +
+      '<button id="mob-gobbo-chiudi" style="background:transparent;border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:8px;padding:7px 12px;font-weight:700;font-size:.82rem;cursor:pointer">Chiudi</button>' +
+    '</div>' +
+    '<div style="flex:1;display:flex;flex-direction:column;min-height:0;position:relative;background:#000">' +
+      '<video id="mob-gobbo-video" autoplay muted playsinline style="flex:1;width:100%;height:100%;object-fit:cover;background:#000"></video>' +
+      '<div id="mob-gobbo-prompt" style="position:absolute;top:4%;left:50%;transform:translateX(-50%);width:90%;max-height:48%;overflow:hidden;background:rgba(0,0,0,.55);border-radius:12px;padding:12px 16px;pointer-events:none;-webkit-mask-image:linear-gradient(to bottom, #000 0%, #000 82%, transparent 100%);mask-image:linear-gradient(to bottom, #000 0%, #000 82%, transparent 100%)">' +
+        '<div id="mob-gobbo-prompt-testo" style="color:#fff;font-size:18px;line-height:1.5;font-weight:600;white-space:pre-wrap;text-align:center"></div>' +
+      '</div>' +
+      '<div id="mob-gobbo-anteprima" style="display:none;position:absolute;inset:0;background:#000;align-items:center;justify-content:center">' +
+        '<video id="mob-gobbo-player" controls playsinline style="max-width:100%;max-height:100%"></video>' +
+      '</div>' +
+    '</div>' +
+    '<div id="mob-gobbo-pannello" style="background:#0D1B2A;border-top:1px solid rgba(255,255,255,.1);padding:10px 12px;display:flex;flex-direction:column;gap:9px;max-height:40vh;overflow:auto;flex:0 0 auto">' +
+      '<textarea id="mob-gobbo-testo" placeholder="Scrivi o incolla qui il testo da leggere…" style="width:100%;min-height:62px;background:#152233;color:#fff;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:9px;font-size:.92rem;font-family:inherit;resize:vertical"></textarea>' +
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+        '<label style="color:#93A5B8;font-size:.74rem;flex:0 0 auto">Velocità</label><input id="mob-gobbo-velocita" type="range" min="10" max="120" value="40" style="flex:1;min-width:70px">' +
+      '</div>' +
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">' +
+        '<label style="color:#93A5B8;font-size:.74rem;flex:0 0 auto">Testo</label><input id="mob-gobbo-dimensione" type="range" min="14" max="30" value="18" style="flex:1;min-width:70px">' +
+      '</div>' +
+      '<div id="mob-gobbo-azioni" style="display:flex;gap:8px;flex-wrap:wrap"></div>' +
+    '</div>';
+  document.body.appendChild(ov);
+  _mobGobbo = { overlay:ov, stream:null, rec:null, chunks:[], mime:'', blob:null, scrollTimer:null, registrando:false, facing:'user' };
+  document.getElementById('mob-gobbo-chiudi').addEventListener('click', _mobGobboChiudi);
+  document.getElementById('mob-gobbo-testo').addEventListener('input', _mobGobboAggiornaPrompt);
+  document.getElementById('mob-gobbo-dimensione').addEventListener('input', _mobGobboAggiornaPrompt);
+  _mobGobboAggiornaPrompt();
+  _mobGobboRenderControlli();
+};
+
+function _mobGobboAggiornaPrompt(){
+  if(!_mobGobbo) return;
+  var testo = (document.getElementById('mob-gobbo-testo')||{}).value || '';
+  var dim = (document.getElementById('mob-gobbo-dimensione')||{}).value || 18;
+  var el = document.getElementById('mob-gobbo-prompt-testo');
+  if(el){ el.textContent = testo; el.style.fontSize = dim+'px'; }
+}
+
+async function _mobGobboAvviaCamera(){
+  var g = _mobGobbo; if(!g) return;
+  _mobGobboErroreMostra('');
+  if(!window.isSecureContext){
+    _mobGobboErroreMostra('Il browser blocca la videocamera perché questa pagina non è aperta in modo sicuro (serve https://).');
+    return;
+  }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    _mobGobboErroreMostra('Questo browser non permette l\'accesso alla videocamera.');
+    return;
+  }
+  var btn = document.getElementById('mob-gobbo-avvia-cam');
+  if(btn){ btn.disabled = true; btn.textContent = 'Attivo la videocamera…'; }
+  var prova = function(vincoli){ return navigator.mediaDevices.getUserMedia(vincoli); };
+  var stream = null, ultimoErrore = null;
+  try{
+    stream = await prova({ video:{ facingMode:g.facing }, audio:true });
+  }catch(e1){
+    ultimoErrore = e1;
+    try{
+      stream = await prova({ video:{ facingMode:g.facing } });
+      mobToast('Videocamera attiva, ma senza audio (il microfono non era disponibile)');
+    }catch(e2){ ultimoErrore = e2; }
+  }
+  if(btn){ btn.disabled = false; btn.textContent = '📷 Attiva la videocamera'; }
+  if(!stream){
+    var nome = (ultimoErrore && ultimoErrore.name) || '';
+    var msg = 'Videocamera non disponibile.';
+    if(nome === 'NotAllowedError' || nome === 'PermissionDeniedError') msg = 'Permesso negato: controlla che il browser del telefono abbia il permesso di usare la videocamera (impostazioni del telefono o del browser) e riprova.';
+    else if(nome === 'NotFoundError' || nome === 'DevicesNotFoundError') msg = 'Non trovo nessuna videocamera su questo telefono.';
+    else if(nome === 'NotReadableError' || nome === 'TrackStartError') msg = 'La videocamera risulta occupata da un\'altra app. Chiudila e riprova.';
+    else if(nome === 'OverconstrainedError') msg = 'Prova "Cambia camera" oppure ricarica la pagina.';
+    else if(ultimoErrore && ultimoErrore.message) msg = 'Videocamera non disponibile: ' + ultimoErrore.message;
+    _mobGobboErroreMostra(msg);
+    mobToast(msg);
+    return;
+  }
+  g.stream = stream;
+  var v = document.getElementById('mob-gobbo-video');
+  v.srcObject = stream;
+  v.style.transform = (g.facing === 'user') ? 'scaleX(-1)' : 'none';
+  v.play().catch(function(){});
+  _mobGobboRenderControlli();
+}
+
+function _mobGobboErroreMostra(msg){
+  var el = document.getElementById('mob-gobbo-errore');
+  var pannello = document.getElementById('mob-gobbo-pannello');
+  if(!msg){ if(el) el.remove(); return; }
+  if(!el){
+    el = document.createElement('div');
+    el.id = 'mob-gobbo-errore';
+    el.style.cssText = 'background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.4);color:#FCA5A5;border-radius:8px;padding:8px 10px;font-size:.78rem;line-height:1.4';
+    if(pannello) pannello.insertBefore(el, pannello.firstChild);
+  }
+  el.textContent = '⚠️ ' + msg;
+}
+
+function _mobGobboRenderControlli(){
+  var g = _mobGobbo; if(!g) return;
+  var az = document.getElementById('mob-gobbo-azioni'); if(!az) return;
+  var btnStyle = 'flex:1;min-width:120px;padding:12px 10px;border-radius:10px;border:none;font-weight:700;font-size:.84rem;font-family:inherit;cursor:pointer';
+  var scrollBtn = '<button id="mob-gobbo-scroll" style="'+btnStyle+';background:#1E3A5F;color:#fff">'+(g.scrollTimer ? '⏸ Ferma lo scorrimento' : '▶️ Fai scorrere')+'</button>';
+  if(!g.stream){
+    az.innerHTML = '<button id="mob-gobbo-avvia-cam" style="'+btnStyle+';background:#1D4ED8;color:#fff">📷 Attiva la videocamera</button>' + scrollBtn;
+  } else {
+    az.innerHTML =
+      '<button id="mob-gobbo-flip" style="'+btnStyle+';background:#1E3A5F;color:#fff">🔄 Cambia camera</button>' +
+      scrollBtn +
+      (g.registrando
+        ? '<button id="mob-gobbo-stop" style="'+btnStyle+';background:#DC2626;color:#fff">⏹ Ferma</button>'
+        : '<button id="mob-gobbo-rec" style="'+btnStyle+';background:#DC2626;color:#fff">⏺ Registra</button>');
+  }
+  var cb = document.getElementById('mob-gobbo-avvia-cam'); if(cb) cb.addEventListener('click', _mobGobboAvviaCamera);
+  var fb = document.getElementById('mob-gobbo-flip'); if(fb) fb.addEventListener('click', _mobGobboCambiaCamera);
+  var sb = document.getElementById('mob-gobbo-scroll'); if(sb) sb.addEventListener('click', _mobGobboToggleScroll);
+  var rb = document.getElementById('mob-gobbo-rec'); if(rb) rb.addEventListener('click', _mobGobboInizia);
+  var stb = document.getElementById('mob-gobbo-stop'); if(stb) stb.addEventListener('click', _mobGobboFerma);
+}
+
+function _mobGobboCambiaCamera(){
+  var g = _mobGobbo; if(!g || !g.stream) return;
+  g.facing = (g.facing === 'user') ? 'environment' : 'user';
+  g.stream.getTracks().forEach(function(t){ t.stop(); });
+  g.stream = null;
+  _mobGobboAvviaCamera();
+}
+
+function _mobGobboToggleScroll(){
+  var g = _mobGobbo; if(!g) return;
+  var box = document.getElementById('mob-gobbo-prompt');
+  var btn = document.getElementById('mob-gobbo-scroll');
+  if(g.scrollTimer){
+    clearInterval(g.scrollTimer); g.scrollTimer = null;
+    if(btn) btn.textContent = '▶️ Fai scorrere';
+    return;
+  }
+  if(btn) btn.textContent = '⏸ Ferma lo scorrimento';
+  g.scrollTimer = setInterval(function(){
+    var vEl = document.getElementById('mob-gobbo-velocita');
+    var v = Number((vEl && vEl.value) || 40);
+    if(box){
+      box.scrollTop += v/10;
+      if(box.scrollTop + box.clientHeight >= box.scrollHeight){ clearInterval(g.scrollTimer); g.scrollTimer = null; if(btn) btn.textContent = '▶️ Fai scorrere'; }
+    }
+  }, 100);
+}
+
+function _mobGobboMime(){
+  if(!window.MediaRecorder || !MediaRecorder.isTypeSupported) return '';
+  var tipi = ['video/mp4;codecs=h264,aac', 'video/mp4', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+  for(var i=0;i<tipi.length;i++) if(MediaRecorder.isTypeSupported(tipi[i])) return tipi[i];
+  return '';
+}
+
+function _mobGobboInizia(){
+  var g = _mobGobbo; if(!g || !g.stream) return;
+  if(!window.MediaRecorder){ mobToast('Questo browser non sa registrare video'); return; }
+  var mime = _mobGobboMime();
+  try{
+    g.rec = mime ? new MediaRecorder(g.stream, { mimeType:mime }) : new MediaRecorder(g.stream);
+    g.mime = mime || 'video/webm';
+  }catch(e){ mobToast('Non riesco ad avviare la registrazione: ' + ((e && e.message) || e)); return; }
+  g.chunks = [];
+  g.rec.ondataavailable = function(e){ if(e.data && e.data.size) g.chunks.push(e.data); };
+  g.rec.onstop = _mobGobboRegistrazioneFinita;
+  g.rec.start();
+  g.registrando = true;
+  if(!g.scrollTimer) _mobGobboToggleScroll();
+  _mobGobboRenderControlli();
+  mobToast('Registrazione avviata');
+}
+
+function _mobGobboFerma(){
+  var g = _mobGobbo; if(!g || !g.rec) return;
+  try{ g.rec.stop(); }catch(e){}
+  g.registrando = false;
+}
+
+function _mobGobboRegistrazioneFinita(){
+  var g = _mobGobbo; if(!g) return;
+  var blob = new Blob(g.chunks, { type: g.mime || 'video/webm' });
+  g.blob = blob;
+  var url = URL.createObjectURL(blob);
+  var player = document.getElementById('mob-gobbo-player');
+  if(player) player.src = url;
+  var ant = document.getElementById('mob-gobbo-anteprima'); if(ant) ant.style.display = 'flex';
+  if(g.scrollTimer){ clearInterval(g.scrollTimer); g.scrollTimer = null; }
+  var az = document.getElementById('mob-gobbo-azioni');
+  if(az) az.innerHTML =
+    '<button id="mob-gobbo-salva" style="flex:1;min-width:120px;padding:12px 10px;border-radius:10px;border:none;font-weight:700;font-size:.84rem;font-family:inherit;cursor:pointer;background:#16A34A;color:#fff">✅ Salva / condividi</button>' +
+    '<button id="mob-gobbo-rifai" style="flex:1;min-width:120px;padding:12px 10px;border-radius:10px;border:none;font-weight:700;font-size:.84rem;font-family:inherit;cursor:pointer;background:#1E3A5F;color:#fff">↩️ Rifai</button>';
+  var sv = document.getElementById('mob-gobbo-salva'); if(sv) sv.addEventListener('click', _mobGobboSalva);
+  var rb = document.getElementById('mob-gobbo-rifai'); if(rb) rb.addEventListener('click', _mobGobboRifai);
+}
+
+function _mobGobboRifai(){
+  var g = _mobGobbo; if(!g) return;
+  g.blob = null; g.chunks = [];
+  var ant = document.getElementById('mob-gobbo-anteprima'); if(ant) ant.style.display = 'none';
+  var player = document.getElementById('mob-gobbo-player');
+  if(player){ try{ if(player.src) URL.revokeObjectURL(player.src); }catch(e){} player.removeAttribute('src'); }
+  _mobGobboRenderControlli();
+}
+
+/* [1 nov 2026] Niente montaggio sul telefono (quello resta nel Marketing
+   Hub, sul PC): qui il video finito si condivide/salva col telefono stesso
+   — la condivisione nativa, se il telefono la offre, porta dritti a
+   WhatsApp, Galleria, Instagram ecc.; altrimenti scarica il file. */
+async function _mobGobboSalva(){
+  var g = _mobGobbo; if(!g || !g.blob) return;
+  var ext = /mp4/.test(g.mime || '') ? 'mp4' : 'webm';
+  var nomeFile = 'gobbo-' + Date.now() + '.' + ext;
+  try{
+    var file = new File([g.blob], nomeFile, { type: g.mime || 'video/webm' });
+    if(navigator.canShare && navigator.canShare({ files:[file] })){
+      try{
+        await navigator.share({ files:[file], title:'Video registrato' });
+        mobToast('Video condiviso');
+        _mobGobboChiudi();
+        return;
+      }catch(e){
+        if(e && e.name === 'AbortError') return; /* utente ha annullato: resta sulla schermata */
+      }
+    }
+  }catch(e){}
+  /* Riserva: scarica il file (finisce nella cartella Download del telefono) */
+  var url = URL.createObjectURL(g.blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = nomeFile;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  mobToast('Video scaricato');
+  _mobGobboChiudi();
+}
+
+function _mobGobboChiudi(){
+  var g = _mobGobbo; if(!g) return;
+  try{ if(g.rec && g.registrando) g.rec.stop(); }catch(e){}
+  try{ if(g.stream) g.stream.getTracks().forEach(function(t){ t.stop(); }); }catch(e){}
+  if(g.scrollTimer) clearInterval(g.scrollTimer);
+  try{
+    var player = document.getElementById('mob-gobbo-player');
+    if(player && player.src) URL.revokeObjectURL(player.src);
+  }catch(e){}
+  try{ g.overlay.remove(); }catch(e){}
+  _mobGobbo = null;
 }
 /* Aggiorna i badge numerici sulle voci del menu "Altro" */
 function _mobUpdateMoreBadges(){
