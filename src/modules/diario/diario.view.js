@@ -28,6 +28,62 @@ function _diaOraOra(){
 
 function _diaEsc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+/* Parole che fanno sospettare un possibile incarico o un richiamo da non
+   perdere: se compaiono nella nota, la voce viene proposta/segnata "da
+   seguire" da sola, invece di lasciare che Enzo se ne ricordi a mente. */
+var _DIA_KEYWORDS = [
+  'vorrebbe vendere','vuole vendere','pensa di vendere','pensano di vendere','deve vendere',
+  'vorrebbe comprare','vuole comprare','cerca casa','cerca un immobile','cerca appartamento',
+  'da richiamare','richiamare','ricontattare','risentire',
+  'interessato','interessata','interessati',
+  'mi ha chiesto','vuole informazioni','chiede informazioni','chiedere informazioni',
+  'far valutare','vuole valutare','valutazione gratuita',
+  'vuole disdire','disdetta'
+];
+function _diaRilevaDaSeguire(testo){
+  var t=(testo||'').toLowerCase();
+  return _DIA_KEYWORDS.some(function(k){ return t.indexOf(k)>=0; });
+}
+function _diaDataSeguireDefault(giorni){
+  var d=new Date(); d.setDate(d.getDate()+(giorni||3));
+  return d.toISOString().slice(0,10);
+}
+
+/* ══════════════════ DETTATURA VOCALE (Web Speech API) ══════════════════
+   Un microfono sulla voce rapida e nel modal: utile mentre si è appena
+   finita una chiamata o si è in macchina. Un solo riconoscimento alla
+   volta: avviarne uno ferma quello precedente. */
+var _diaRec=null, _diaRecTarget=null;
+function diaDettatura(targetId, btnId){
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ showToast('Il browser non supporta la dettatura vocale. Usa Chrome o Edge.','','#D97706'); return; }
+  var btn=document.getElementById(btnId);
+  if(_diaRec && _diaRecTarget===targetId){ try{ _diaRec.stop(); }catch(e){} return; } // clic di nuovo = ferma
+  if(_diaRec){ try{ _diaRec.stop(); }catch(e){} }
+  var rec=new SR();
+  rec.lang='it-IT'; rec.interimResults=false; rec.continuous=true;
+  _diaRec=rec; _diaRecTarget=targetId;
+  if(btn){ btn.style.background='#DC2626'; btn.style.color='#fff'; btn.style.borderColor='#DC2626'; btn.title='Sto ascoltando — clicca per fermare'; }
+  rec.onresult=function(ev){
+    var txt='';
+    for(var i=ev.resultIndex;i<ev.results.length;i++){ if(ev.results[i].isFinal) txt+=ev.results[i][0].transcript; }
+    txt=txt.trim();
+    if(txt){
+      var el=document.getElementById(targetId);
+      if(el){ el.value=(el.value&&el.value.trim()?el.value.trim()+' ':'')+txt; }
+    }
+  };
+  rec.onerror=function(ev){
+    console.warn('[Diario] dettatura KO', ev.error);
+    if(ev.error==='not-allowed') showToast('Permesso microfono negato dal browser','','#DC2626');
+  };
+  rec.onend=function(){
+    if(btn){ btn.style.background=''; btn.style.color=''; btn.style.borderColor=''; btn.title='Dettatura vocale'; }
+    if(_diaRecTarget===targetId){ _diaRec=null; _diaRecTarget=null; }
+  };
+  try{ rec.start(); }catch(e){ showToast('Non riesco ad avviare il microfono: '+((e&&e.message)||e),'','#DC2626'); }
+}
+
 /* Crea/aggiorna/rimuove il promemoria in Appuntamenti (D.eventi, tipo
    'Promemoria') collegato a una voce di diario segnata "da seguire".
    L'id dell'evento resta su entry._promemoriaEvId per ritrovarlo in seguito. */
@@ -77,13 +133,15 @@ function renderDiario(){
   var oggi=today();
   var aperte=D.diario.filter(function(v){return v&&v.daSeguire&&!v.fatto;});
   var scadute=aperte.filter(function(v){return v.dataSeguire&&v.dataSeguire<=oggi;}).length;
+  var incarichi=D.diario.filter(function(v){return v&&v.portoIncarico;}).length;
 
   var statEl=document.getElementById('dia-stat-cards');
   if(statEl){
     statEl.innerHTML =
       '<div class="card" style="padding:12px 14px"><div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;color:#64748B">Voci totali</div><div style="font-size:1.5rem;font-weight:900;color:#0F172A">'+D.diario.length+'</div></div>'+
       '<div class="card" style="padding:12px 14px"><div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;color:#64748B">Da seguire aperte</div><div style="font-size:1.5rem;font-weight:900;color:'+(aperte.length>0?'#D97706':'#0F172A')+'">'+aperte.length+'</div></div>'+
-      '<div class="card" style="padding:12px 14px"><div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;color:#64748B">Scadute o di oggi</div><div style="font-size:1.5rem;font-weight:900;color:'+(scadute>0?'#DC2626':'#15803D')+'">'+scadute+'</div></div>';
+      '<div class="card" style="padding:12px 14px"><div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;color:#64748B">Scadute o di oggi</div><div style="font-size:1.5rem;font-weight:900;color:'+(scadute>0?'#DC2626':'#15803D')+'">'+scadute+'</div></div>'+
+      '<div class="card" style="padding:12px 14px"><div style="font-size:0.68rem;font-weight:700;text-transform:uppercase;color:#64748B">Diventate incarico 🎯</div><div style="font-size:1.5rem;font-weight:900;color:'+(incarichi>0?'#15803D':'#0F172A')+'">'+incarichi+'</div></div>';
   }
 
   var perGiorno={};
@@ -103,6 +161,7 @@ function renderDiario(){
           var seg = !v.daSeguire ? '' : (v.fatto
             ? chip('✓ Seguito','#F0FDF4','#15803D','#BBF7D0')
             : chip('⏰ Da seguire'+(v.dataSeguire?' il '+fmtD(v.dataSeguire):''), (v.dataSeguire&&v.dataSeguire<=oggi)?'#FEF2F2':'#FFFBEB', (v.dataSeguire&&v.dataSeguire<=oggi)?'#DC2626':'#D97706', (v.dataSeguire&&v.dataSeguire<=oggi)?'#FECACA':'#FDE68A'));
+          var incChip = v.portoIncarico ? chip('🎯 Ha portato un incarico','#F0FDF4','#15803D','#BBF7D0') : '';
           return '<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">'+
             '<div style="width:46px;flex-shrink:0;font-size:0.76rem;font-weight:700;color:#64748B;padding-top:1px">'+_diaEsc(v.ora||'')+'</div>'+
             '<div style="flex:1;min-width:0">'+
@@ -110,11 +169,13 @@ function renderDiario(){
               '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">'+
                 chip(v.cliente?('👤 '+_diaEsc(v.cliente)):'', '#EFF6FF','#1D4ED8','#BFDBFE')+
                 chip(v.immTitolo?('🏠 '+_diaEsc(v.immTitolo)):'', '#F5F3FF','#7C3AED','#DDD6FE')+
-                seg+
+                seg+incChip+
               '</div>'+
             '</div>'+
             '<div style="display:flex;gap:4px;flex-shrink:0;align-items:flex-start">'+
               (v.daSeguire&&!v.fatto?('<button class="btn btn-sm btn-outline" onclick="diaSegnaFatto(\''+v.id+'\')" title="Segna come seguita">✓</button>'):'')+
+              '<button class="btn btn-sm btn-outline" onclick="diaTrasformaInNotizia(\''+v.id+'\')" title="Trasforma in Notizia (lead)">📇</button>'+
+              '<button class="btn btn-sm '+(v.portoIncarico?'btn-primary':'btn-outline')+'" onclick="diaTogglePortoIncarico(\''+v.id+'\')" title="Ha portato un incarico?">🎯</button>'+
               '<button class="btn btn-sm btn-outline" onclick="openDiarioModal(\''+v.id+'\')" title="Modifica">✎</button>'+
               '<button class="btn btn-sm btn-outline" onclick="delDiario(\''+v.id+'\')" title="Elimina">🗑</button>'+
             '</div>'+
@@ -138,11 +199,17 @@ function diaQuickSave(){
   var testo=el?el.value.trim():'';
   if(!testo) return;
   _diaEnsure();
-  D.diario.push({ id:genUUID(), data:today(), ora:_diaOraOra(), testo:testo, cliente:'', immRef:'', immTitolo:'', daSeguire:false, dataSeguire:'', fatto:false, _promemoriaEvId:'', _modificata:Date.now() });
+  var v={ id:genUUID(), data:today(), ora:_diaOraOra(), testo:testo, cliente:'', immRef:'', immTitolo:'', daSeguire:false, dataSeguire:'', fatto:false, portoIncarico:false, _promemoriaEvId:'', _modificata:Date.now() };
+  var autoSeguire = _diaRilevaDaSeguire(testo);
+  if(autoSeguire){ v.daSeguire=true; v.dataSeguire=_diaDataSeguireDefault(3); }
+  _diaSyncPromemoria(v);
+  D.diario.push(v);
   saveD();
   if(el){ el.value=''; el.focus(); }
   renderDiario();
-  showToast('Nota salvata nel diario','','#15803D');
+  showToast(autoSeguire
+    ? 'Nota salvata — sembra un possibile lead: l\'ho segnata "da seguire" entro il '+fmtD(v.dataSeguire)+' (correggi se non serve)'
+    : 'Nota salvata nel diario','','#15803D');
 }
 function diaQuickKey(ev){
   if(ev && ev.key==='Enter' && !ev.shiftKey){ ev.preventDefault(); diaQuickSave(); }
@@ -153,6 +220,7 @@ function openDiarioModal(idOrUndefined){
   _diaEnsure();
   D.editDiarioId = (typeof idOrUndefined==='string') ? idOrUndefined : null;
   var v = D.editDiarioId ? D.diario.find(function(x){return x&&x.id===D.editDiarioId;}) : null;
+  _diaAutoSeguireGiaSuggerito = false; // una sola proposta automatica per apertura del modal
 
   clearModal('modal-diario');
   var mt=document.getElementById('mt-dia'); if(mt) mt.textContent = v?'Modifica voce di diario':'Nuova voce di diario';
@@ -181,6 +249,21 @@ function openDiarioModal(idOrUndefined){
   setTimeout(function(){ var t=document.getElementById('dia-testo'); if(t) t.focus(); }, 50);
 }
 
+/* Una sola proposta automatica per apertura del modal: se Enzo la toglie
+   apposta, non gliela rimettiamo mentre continua a scrivere. */
+var _diaAutoSeguireGiaSuggerito=false;
+function _diaAutoSeguireSuTesto(){
+  if(_diaAutoSeguireGiaSuggerito) return;
+  var chk=document.getElementById('dia-seguire');
+  if(!chk || chk.checked) return;
+  var testo=(document.getElementById('dia-testo')||{}).value||'';
+  if(!_diaRilevaDaSeguire(testo)) return;
+  _diaAutoSeguireGiaSuggerito=true;
+  chk.checked=true;
+  _diaToggleSeguireFields();
+  showToast('Sembra un possibile lead: ho spuntato "da seguire" — correggi se non serve','','#D97706');
+}
+
 function _diaToggleSeguireFields(){
   var on=(document.getElementById('dia-seguire')||{}).checked;
   var box=document.getElementById('dia-seguire-data-row');
@@ -207,7 +290,7 @@ function saveDiarioModal(){
 
   var v = D.editDiarioId ? D.diario.find(function(x){return x&&x.id===D.editDiarioId;}) : null;
   var isNew = !v;
-  if(isNew){ v={ id:genUUID(), _promemoriaEvId:'', fatto:false }; }
+  if(isNew){ v={ id:genUUID(), _promemoriaEvId:'', fatto:false, portoIncarico:false }; }
 
   v.data = g('dia-data')||today();
   v.ora = g('dia-ora')||_diaOraOra();
@@ -259,6 +342,40 @@ function delDiario(id){
   });
 }
 
+/* Segna/toglie che questa nota ha portato davvero a un incarico — a mano,
+   confermato da Enzo: nessun collegamento automatico può essere affidabile
+   quanto dirlo lui stesso. Serve per la statistica di conversione. */
+function diaTogglePortoIncarico(id){
+  _diaEnsure();
+  var v=D.diario.find(function(x){return x&&x.id===id;});
+  if(!v) return;
+  v.portoIncarico=!v.portoIncarico;
+  saveD();
+  renderDiario();
+  showToast(v.portoIncarico?'Segnata: ha portato un incarico 🎯':'Tolto il collegamento con l\'incarico','','#15803D');
+}
+
+/* Porta una voce di diario nel registro Notizie (la pipeline vera dei lead:
+   Da Contattare → Contattato → ...), precompilata, lasciando a Enzo il
+   controllo finale prima di salvare — stesso schema di "crea Richiesta da
+   Visita" già usato altrove nel gestionale. */
+function diaTrasformaInNotizia(id){
+  _diaEnsure();
+  var v=D.diario.find(function(x){return x&&x.id===id;});
+  if(!v) return;
+  try{ if(typeof go==='function') go('notizie'); }catch(e){}
+  setTimeout(function(){
+    if(typeof openNotizia!=='function'){ showToast('Modulo Notizie non ancora caricato: riprova tra un istante','','#D97706'); return; }
+    openNotizia();
+    var g=function(fid,val){ var e=document.getElementById(fid); if(e) e.value=val; };
+    g('not-nome', v.cliente||'');
+    g('not-note', v.testo+(v.immTitolo?(' — immobile collegato: '+v.immTitolo):''));
+    g('not-fonte', 'Diario');
+    g('not-data', v.data||today());
+    showToast('Notizia precompilata dal diario: completa e salva','','#7C3AED');
+  }, 120);
+}
+
 /* ══════════ REPORT ATTIVITÀ (Giorno / Settimana / Mese) ══════════
    Un'unica pagina con selettore di periodo: aggrega Appuntamenti (D.eventi),
    Visite (D.visite) e Diario (D.diario) nell'intervallo scelto e apre lo
@@ -293,16 +410,24 @@ function _rdRange(){
   return { da:da.toISOString().slice(0,10), al:al.toISOString().slice(0,10), label:label };
 }
 
-function rdGenera(){
-  var r=_rdRange();
-  var nowFull=new Date().toLocaleString('it-IT');
-
+/* Appuntamenti + Visite + Diario nell'intervallo r.da..r.al, ordinati —
+   condiviso tra la stampa (rdGenera) e l'export CSV (rdExportCSV). */
+function _rdDati(r){
   var eventi=(D.eventi||[]).filter(function(e){return e&&e.data&&e.data>=r.da&&e.data<=r.al;})
     .sort(function(a,b){ return (a.data+(a.ora||'')).localeCompare(b.data+(b.ora||'')); });
   var visite=(D.visite||[]).filter(function(v){return v&&v.data&&v.data>=r.da&&v.data<=r.al;})
     .sort(function(a,b){ return (a.data+(a.ora||'')).localeCompare(b.data+(b.ora||'')); });
   var diario=(D.diario||[]).filter(function(v){return v&&v.data&&v.data>=r.da&&v.data<=r.al;})
     .sort(function(a,b){ return (a.data+(a.ora||'')).localeCompare(b.data+(b.ora||'')); });
+  return { eventi:eventi, visite:visite, diario:diario };
+}
+
+function rdGenera(){
+  var r=_rdRange();
+  var nowFull=new Date().toLocaleString('it-IT');
+
+  var dati=_rdDati(r), eventi=dati.eventi, visite=dati.visite, diario=dati.diario;
+  var incarichiNelPeriodo=diario.filter(function(v){return v.portoIncarico;}).length;
 
   var th=function(t){ return '<th style="padding:5px 8px;text-align:left;font-size:8px;font-weight:700;text-transform:uppercase;color:#6B7280;border-bottom:1px solid #E5E7EB">'+t+'</th>'; };
   var td=function(t){ return '<td style="padding:5px 8px;font-size:9px;color:#111827;border-bottom:1px solid #F1F5F9;vertical-align:top">'+_diaEsc(t||'—')+'</td>'; };
@@ -319,6 +444,7 @@ function rdGenera(){
 
   var rigDia = diario.map(function(v){
     var seg = v.daSeguire ? (v.fatto?'Seguita':('Da seguire'+(v.dataSeguire?' il '+fmtD(v.dataSeguire):''))) : '';
+    if(v.portoIncarico) seg = (seg?seg+' · ':'')+'🎯 Incarico';
     return '<tr>'+td(fmtD(v.data))+td(v.ora)+td(v.testo)+td(v.cliente)+td(v.immTitolo)+td(seg)+'</tr>';
   }).join('') || '<tr><td colspan="6" style="padding:10px;text-align:center;color:#9CA3AF;font-size:9px">Nessuna voce di diario nel periodo</td></tr>';
 
@@ -339,10 +465,11 @@ function rdGenera(){
       +'</div>'
     +'</div>'
 
-    +'<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">'
+    +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">'
       +'<div style="padding:9px 12px;border-radius:7px;background:#EFF6FF;border:1px solid #BFDBFE;text-align:center"><div style="font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#2563EB;margin-bottom:2px">Appuntamenti</div><div style="font-size:22px;font-weight:900;color:#1D4ED8;line-height:1">'+eventi.length+'</div></div>'
       +'<div style="padding:9px 12px;border-radius:7px;background:#F0FDF4;border:1px solid #BBF7D0;text-align:center"><div style="font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#15803D;margin-bottom:2px">Visite</div><div style="font-size:22px;font-weight:900;color:#15803D;line-height:1">'+visite.length+'</div></div>'
       +'<div style="padding:9px 12px;border-radius:7px;background:#FFF7ED;border:1px solid #FED7AA;text-align:center"><div style="font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#C2410C;margin-bottom:2px">Voci di Diario</div><div style="font-size:22px;font-weight:900;color:#C2410C;line-height:1">'+diario.length+'</div></div>'
+      +'<div style="padding:9px 12px;border-radius:7px;background:#F0FDF4;border:1px solid #BBF7D0;text-align:center"><div style="font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#15803D;margin-bottom:2px">Diventate incarico 🎯</div><div style="font-size:22px;font-weight:900;color:#15803D;line-height:1">'+incarichiNelPeriodo+'</div></div>'
     +'</div>'
 
     +'<div style="font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:#374151;border-bottom:2px solid #1D4ED8;padding-bottom:3px;margin-bottom:6px">Appuntamenti ('+eventi.length+')</div>'
@@ -380,8 +507,45 @@ function rdGenera(){
   win.document.open(); win.document.write(html); win.document.close(); win.focus();
 }
 
+/* Esporta lo stesso periodo in un CSV (Appuntamenti + Visite + Diario in
+   un'unica tabella, colonna "Tipo" a distinguerle) — per chi al posto della
+   stampa vuole i numeri in un foglio Excel. */
+function rdExportCSV(){
+  var r=_rdRange();
+  var dati=_rdDati(r), eventi=dati.eventi, visite=dati.visite, diario=dati.diario;
+
+  var righe=[['Tipo','Data','Ora','Titolo/Nota','Cliente','Dettaglio']];
+  eventi.forEach(function(e){ righe.push(['Appuntamento', fmtD(e.data), e.ora||'', e.titolo||'', e.cliente||'', e.note||'']); });
+  visite.forEach(function(v){
+    var immO=(D.immobili||[])[parseInt(v.immRef)];
+    var immTxt = immO ? ('('+(immO.ref||v.immRef)+') '+(immO.comune||'')) : '';
+    righe.push(['Visita', fmtD(v.data), v.ora||'', immTxt, v.cliente||'', (v.esito||'')+(v.feedback?(' — '+v.feedback):(v.note?(' — '+v.note):''))]);
+  });
+  diario.forEach(function(v){
+    var seg = v.daSeguire ? (v.fatto?'Seguita':('Da seguire'+(v.dataSeguire?' il '+fmtD(v.dataSeguire):''))) : '';
+    if(v.portoIncarico) seg = (seg?seg+' · ':'')+'Ha portato un incarico';
+    righe.push(['Diario', fmtD(v.data), v.ora||'', v.testo||'', v.cliente||'', seg]);
+  });
+
+  var csv='﻿'+righe.map(function(row){
+    return row.map(function(cell){
+      var s=String(cell==null?'':cell).replace(/"/g,'""');
+      return /[;"\n]/.test(s) ? ('"'+s+'"') : s;
+    }).join(';');
+  }).join('\r\n');
+
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url; a.download='report-attivita-'+r.da+'_'+r.al+'.csv';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+  showToast('CSV esportato','','#15803D');
+}
+
 Object.assign(window, {
-  _diaEnsure, renderDiario, diaQuickSave, diaQuickKey, openDiarioModal, saveDiarioModal,
-  _diaToggleSeguireFields, diaSegnaFatto, delDiario, rdInit, rdGenera,
+  _diaEnsure, renderDiario, diaQuickSave, diaQuickKey, diaDettatura, openDiarioModal, saveDiarioModal,
+  _diaToggleSeguireFields, _diaAutoSeguireSuTesto, diaSegnaFatto, delDiario,
+  diaTogglePortoIncarico, diaTrasformaInNotizia, rdInit, rdGenera, rdExportCSV,
 });
-export { renderDiario, openDiarioModal, saveDiarioModal, rdInit, rdGenera };
+export { renderDiario, openDiarioModal, saveDiarioModal, rdInit, rdGenera, rdExportCSV };
