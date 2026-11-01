@@ -3179,6 +3179,21 @@ input[type=range].vai-seek::-webkit-slider-thumb{-webkit-appearance:none;width:1
 .vai-prj-dup:hover{background:rgba(46,155,143,.18);color:#A7F3D0}
 .vai-prj-del:hover{background:#3A1A1A}
 .vai-prj-empty{text-align:center;color:#9FB4C8;font-size:.84rem;padding:30px 10px}
+/* [2 nov 2026] Progetti salvati in anteprima sulla schermata iniziale, stile CapCut */
+.vai-progetti-recenti{margin:0 0 18px}
+.vai-pr-tit{font-size:.8rem;font-weight:700;color:#9FB4C8;margin-bottom:10px;display:flex;align-items:center;gap:7px}
+.vai-pr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:12px}
+.vai-pr-card{background:#1A2330;border:1px solid rgba(255,255,255,.055);border-radius:10px;overflow:hidden;cursor:pointer;transition:border-color .12s,transform .12s;position:relative}
+.vai-pr-card:hover{border-color:#10B981;transform:translateY(-2px)}
+.vai-pr-thumb{position:relative;width:100%;aspect-ratio:9/16;background:#0D1420;display:flex;align-items:center;justify-content:center;color:#3A4A5C;font-size:1.7rem}
+.vai-pr-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.vai-pr-dur{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.65);color:#fff;font-size:.66rem;font-weight:700;padding:1px 6px;border-radius:5px}
+.vai-pr-del{position:absolute;top:6px;right:6px;background:rgba(0,0,0,.55);border:none;color:#FCA5A5;font-size:.82rem;cursor:pointer;padding:5px 7px;border-radius:7px;opacity:0;transition:opacity .12s}
+.vai-pr-card:hover .vai-pr-del{opacity:1}
+.vai-pr-del:hover{background:#3A1A1A}
+.vai-pr-nome{font-size:.8rem;font-weight:700;color:#E8EDF2;padding:8px 10px 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vai-pr-meta{font-size:.68rem;color:#9FB4C8;padding:0 10px 9px}
+@media (hover:none){ .vai-pr-del{opacity:1} }
 .vai-social-gen{width:100%;background:linear-gradient(135deg,#7C3AED,#EC4899);color:#fff;border:none;font-weight:700;margin-top:4px}
 .vai-social-gen:hover:not(:disabled){opacity:.92}
 .vai-social-gen:disabled{opacity:.6;cursor:wait}
@@ -7389,6 +7404,12 @@ Un caro saluto,
         <div style="font-weight:700;color:var(--navy);margin-top:10px">Carica un video</div>
         <div style="font-size:.78rem;color:var(--text3);margin-top:4px">Trascina qui o clicca per scegliere · MP4, MOV, WebM · resta sul tuo dispositivo</div>
       </div>
+
+      <!-- [2 nov 2026] Progetti già salvati, in anteprima qui sotto (stile CapCut):
+           Enzo non voleva dover aprire "Apri un progetto" per vederli — vedi
+           vaiRenderProgettiRecenti(). Visibile solo sulla schermata iniziale
+           (nessuna clip caricata) e solo se esiste almeno un progetto salvato. -->
+      <div id="vai-progetti-recenti" class="vai-progetti-recenti" style="display:none"></div>
 
       <div id="vai-player-wrap" class="vai-player-wrap" style="display:none">
        <!-- Overlay animato durante l'esportazione video -->
@@ -30764,6 +30785,8 @@ function vaiInit(){
   try{ _vaiAutoSaveAvvia(); }catch(e){}
   // pulisco eventuali scritte sovrapposte già presenti (create prima di questo controllo)
   try{ _vaiRisolviSovrapposizioni(); }catch(e){}
+  // progetti salvati in anteprima, se si entra qui a schermo "vuoto" (nessuna clip)
+  try{ if(typeof vaiRenderProgettiRecenti==='function') vaiRenderProgettiRecenti(); }catch(e){}
 }
 
 /* ══════════ ETICHETTA DI UN IMMOBILE NELLE TENDINE (agosto 2026) ══════════
@@ -41117,6 +41140,7 @@ function vaiReset(){
   try{ if(typeof vaiMusicaRenderInfo==='function') vaiMusicaRenderInfo(); }catch(e){}
   vaiTlRender(); vaiOverlayUpdate();
   if(typeof vaiClipsRender==='function') vaiClipsRender();
+  try{ if(typeof vaiRenderProgettiRecenti==='function') vaiRenderProgettiRecenti(); }catch(e){}
 }
 
 /* Esci dal progetto video: se ci sono modifiche non salvate, chiede se salvare. */
@@ -45331,6 +45355,11 @@ function _vaiCostruisciRecordProgetto(nome){
   return {
     id:_vaiProgettoId || ('prj_'+Date.now()),
     nome, aggiornato:Date.now(),
+    /* [2 nov 2026] Miniatura per l'anteprima dei progetti in home (stile CapCut):
+       riuso quella già pronta della prima clip (_vaiGenThumbClip la calcola comunque
+       per il montaggio), così non rigenero nulla apposta qui. I progetti salvati
+       prima di questa modifica restano senza — mostrano l'icona segnaposto. */
+    thumb: (_vaiClips[0] && _vaiClips[0].thumb) || null,
     immId: _vaiImm ? (D.immobili||[]).indexOf(_vaiImm) : -1,
     immFirma: _vaiImm ? _vaiImmFirma(_vaiImm) : null,
     /* DATI CASA SCRITTI A MANO — aggiunti al salvataggio (agosto 2026).
@@ -45410,6 +45439,45 @@ function _vaiAutoSaveAvvia(){
     }catch(e){ console.warn('[VAI] autosalvataggio KO', e); }
   }, 5*60*1000);
 }
+
+/* [2 nov 2026] Anteprima dei progetti salvati sulla schermata iniziale (stile
+   CapCut): niente più bisogno di aprire "Apri un progetto" per vederli — una
+   griglia di miniature appare da sola sotto l'area di caricamento. Visibile
+   solo quando non c'è un progetto in lavorazione (nessuna clip caricata). */
+async function vaiRenderProgettiRecenti(){
+  const box=document.getElementById('vai-progetti-recenti');
+  if(!box) return;
+  if(_vaiClips && _vaiClips.length){ box.style.display='none'; box.innerHTML=''; return; }
+  let progetti=[];
+  try{ progetti=await _vaiIDBAll(); }catch(e){ console.warn('[VAI] progetti recenti KO', e); box.style.display='none'; return; }
+  if(!progetti.length){ box.style.display='none'; box.innerHTML=''; return; }
+  progetti.sort((a,b)=>(b.aggiornato||0)-(a.aggiornato||0));
+  const card=(p)=>{
+    const data=new Date(p.aggiornato||0).toLocaleDateString('it-IT',{day:'2-digit',month:'short'});
+    const nClip=(p.clips||[]).length;
+    const durata=(p.clips||[]).reduce((s,c)=>s+(c.durata||0),0);
+    const mm=Math.floor(durata/60), ss=Math.round(durata%60);
+    const dur=durata>0 ? (mm+':'+String(ss).padStart(2,'0')) : '';
+    return '<div class="vai-pr-card" onclick="vaiCaricaProgetto(\''+p.id+'\')" title="'+_vaiEsc(p.nome||'Senza nome')+' — tocca per aprire">'
+      + '<div class="vai-pr-thumb">'+(p.thumb ? '<img src="'+p.thumb+'" alt="">' : _vaiIc('ciak'))+(dur ? '<span class="vai-pr-dur">'+dur+'</span>' : '')+'</div>'
+      + '<button class="vai-pr-del" onclick="event.stopPropagation();vaiEliminaProgettoRapido(\''+p.id+'\')" title="Elimina">'+_vaiIc('cestino')+'</button>'
+      + '<div class="vai-pr-nome">'+_vaiEsc(p.nome||'Senza nome')+'</div>'
+      + '<div class="vai-pr-meta">'+nClip+' clip · '+data+'</div>'
+      + '</div>';
+  };
+  box.innerHTML = '<div class="vai-pr-tit">'+_vaiIc('cartella')+' I tuoi progetti ('+progetti.length+')</div>'
+    + '<div class="vai-pr-grid">' + progetti.map(card).join('') + '</div>';
+  box.style.display='block';
+}
+window.vaiRenderProgettiRecenti=vaiRenderProgettiRecenti;
+
+/* Elimina rapida dalla griglia di anteprima (stesso avviso del pannello completo) */
+async function vaiEliminaProgettoRapido(id){
+  if(!confirm('Eliminare definitivamente questo progetto?')) return;
+  try{ await _vaiIDBDel(id); toast('Progetto eliminato','success'); vaiRenderProgettiRecenti(); }
+  catch(e){ toast('Eliminazione non riuscita','error'); }
+}
+window.vaiEliminaProgettoRapido=vaiEliminaProgettoRapido;
 
 /* Mostra l'elenco dei progetti salvati in un modale */
 async function vaiProgettiPanel(){
