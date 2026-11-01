@@ -14450,8 +14450,17 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
       <!-- 7. Cliente / Contatto -->
       <div class="frow">
         <label class="flabel">Nome Cliente / Contatto</label>
-        <input class="finput" id="att-cliente" placeholder="Es. Mario Rossi" list="att-clienti-dl" autocomplete="off">
+        <input class="finput" id="att-cliente" placeholder="Es. Mario Rossi" list="att-clienti-dl" autocomplete="off" onchange="attClienteCambiato()">
         <datalist id="att-clienti-dl"></datalist>
+      </div>
+
+      <!-- 7b. Telefono — [2 nov 2026] mancava: per "Telefonata" il numero finiva
+           scritto a mano dentro "Oggetto". Si compila da solo se il nome sopra
+           corrisponde a un cliente in rubrica (senza sovrascrivere se già scritto
+           a mano), e resta comunque modificabile per contatti non in rubrica. -->
+      <div class="frow">
+        <label class="flabel">Telefono</label>
+        <input class="finput" id="att-telefono" type="tel" placeholder="Es. 335 1234567">
       </div>
 
       <!-- 8. Data inserimento (nascosta, auto) -->
@@ -19452,7 +19461,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.2nov-INDIRIZZO';
+var APP_VERSION = 'v.2nov-ATTTEL';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -68365,7 +68374,7 @@ try{
   // a riscaricarlo. Usa la stessa data del badge versione, es. '20260702'.
   // [25 set 2026] Ogni index.js passa il suo ?v= ai file che carica
   // (.view/.mobile/.report): alzare _MOD_V basta per TUTTI i moduli.
-  const _MOD_V = '20261102G';
+  const _MOD_V = '20261102H';
   const moduli = [
     ['Richieste', './src/modules/richieste/index.js?v=' + _MOD_V],
     ['Clienti',   './src/modules/clienti/index.js?v=' + _MOD_V],
