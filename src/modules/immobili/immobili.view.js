@@ -461,6 +461,12 @@ function saveImmobile(){
       incStoricoFinale=[{tipo:'acquisizione',data:g('im-inc-inizio')||today(),scadenza:nuovaFineInc}];
     }
     const incRinnoviFinale=incStoricoFinale.filter(s=>s&&s.tipo==='rinnovo').length;
+    /* [2 nov 2026] Coordinate scelte dalla compilazione automatica
+       dell'indirizzo in questa apertura del modulo (campi nascosti
+       im-lat/im-lng) — lette qui una sola volta, usate più sotto. */
+    const _indLatNuovo=parseFloat(g('im-lat'));
+    const _indLngNuovo=parseFloat(g('im-lng'));
+    const _indHaScelta=!isNaN(_indLatNuovo)&&!isNaN(_indLngNuovo);
     const im={
       ref:g('im-ref'),rifAgenzia:g('im-rif-agenzia').trim().toUpperCase()||'',stato:g('im-stato')||'attivo',tipo:g('im-tipo'),
       incarico:g('im-inc'),conferimento:g('im-conf'),
@@ -528,11 +534,17 @@ function saveImmobile(){
       /* [3 set 2026] COORDINATE. Come per i dati catastali, il record viene
          sostituito per intero: lat e lng non erano fra i campi ricostruiti,
          quindi un immobile geocodificato perdeva il suo punto sulla mappa
-         alla prima modifica del prezzo. Non hanno una casella nel modulo,
-         quindi si riportano dal record vecchio così com'erano. */
-      lat: (oldIm && oldIm.lat!==undefined) ? oldIm.lat : undefined,
-      lng: (oldIm && oldIm.lng!==undefined) ? oldIm.lng : undefined,
-      _posApprox: (oldIm && oldIm._posApprox) ? true : undefined,
+         alla prima modifica del prezzo. Si riportano dal record vecchio così
+         com'erano.
+         [2 nov 2026] Ora hanno due caselle nascoste (im-lat/im-lng), riempite
+         dalla compilazione automatica dell'indirizzo (imIndirizzoScegli() in
+         index.html): se presenti vincono sul valore vecchio — è una scelta
+         fresca e precisa — altrimenti si ricade sul record precedente come
+         prima. Una scelta fresca azzera anche _posApprox: non è più una
+         posizione approssimata dal comune, ma la via esatta scelta. */
+      lat: _indHaScelta ? _indLatNuovo : ((oldIm && oldIm.lat!==undefined) ? oldIm.lat : undefined),
+      lng: _indHaScelta ? _indLngNuovo : ((oldIm && oldIm.lng!==undefined) ? oldIm.lng : undefined),
+      _posApprox: _indHaScelta ? undefined : ((oldIm && oldIm._posApprox) ? true : undefined),
       mkt:{
         cartelloImm:document.getElementById('im-mkt-cartello-imm')?.checked||false,
         cartelloAg:document.getElementById('im-mkt-cartello-ag')?.checked||false,

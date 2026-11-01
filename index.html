@@ -1144,6 +1144,16 @@ body.dark-mode .fselect:has(option[value=""]:checked){ background:var(--bg3); co
 .mnd-tl-item .what{font-size:0.85rem;font-weight:700;color:var(--text);margin-top:1px;}
 .mnd-tl-item .sub{font-size:0.77rem;color:var(--text3);margin-top:1px;}
 .mnd-actions{display:flex;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid #E2E8F0;flex-wrap:wrap;}
+
+/* [2 nov 2026] Suggerimenti indirizzo (Nominatim) nella scheda immobile. */
+.ind-sugg{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1.5px solid #CBD5E1;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.14);z-index:40;max-height:260px;overflow-y:auto;display:none;}
+.ind-sugg.show{display:block;}
+.ind-sugg-item{padding:9px 12px;font-size:0.82rem;color:var(--text2);cursor:pointer;border-top:1px solid #F1F5F9;}
+.ind-sugg-item:first-child{border-top:none;}
+.ind-sugg-item:hover{background:#EFF6FF;}
+.ind-sugg-item b{color:var(--text);font-weight:700;display:block;font-size:0.84rem;}
+.ind-sugg-item span{color:var(--text4);font-size:0.74rem;}
+.ind-sugg-loading,.ind-sugg-empty{padding:10px 12px;font-size:0.78rem;color:var(--text4);}
 /* Preview panel (right) */
 .doc-preview-title{font-size:0.7rem;font-weight:800;letter-spacing:1.4px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:4px;}
 .doc-preview-headline{font-size:1.05rem;font-weight:800;color:white;margin-bottom:14px;line-height:1.3;}
@@ -10379,6 +10389,9 @@ body.dark-mode #mobile-app{ background:var(--bg)!important; color:var(--text); }
 :where(body.dark-mode) .mnd-card{background:var(--hb-card);border-color:var(--hb-bordo)}
 :where(body.dark-mode) .mnd-tl::before{background:var(--hb-bordo)}
 :where(body.dark-mode) .mnd-actions{border-top-color:var(--hb-bordo)}
+:where(body.dark-mode) .ind-sugg{background:var(--hb-card);border-color:var(--hb-bordo)}
+:where(body.dark-mode) .ind-sugg-item{border-top-color:var(--hb-bordo)}
+:where(body.dark-mode) .ind-sugg-item:hover{background:var(--brand-pale,rgba(37,99,235,.12))}
 :where(body.dark-mode) .doc-check-progress-fill{background:linear-gradient(90deg,var(--brand),var(--green-l))}
 :where(body.dark-mode) .fatt-voce-row{background:var(--bg3)}
 :where(body.dark-mode) .fatt-voce-descr{background:var(--hb-card);color:var(--text)}
@@ -16927,8 +16940,19 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
     <div class="frow"><label class="flabel">Zona / Frazione / Contrada</label>
       <input class="finput" id="im-zona" placeholder="Es. Centro storico, Lungomare...">
     </div>
-    <div class="frow" style="grid-column:1/-1"><label class="flabel">Indirizzo Completo</label>
-      <input class="finput" id="im-indirizzo" placeholder="Via, numero civico">
+    <div class="frow" style="grid-column:1/-1;position:relative"><label class="flabel">Indirizzo Completo</label>
+      <!-- [2 nov 2026] Compilazione automatica indirizzo via Nominatim (stesso
+           servizio già usato da "Geocodifica indirizzi"): mentre scrivi,
+           suggerisce vie reali e alla scelta riempie Comune/Zona e salva subito
+           lat/lng nei campi nascosti sotto, senza aspettare la geocodifica in
+           batch. Se non scegli un suggerimento, il testo libero resta comunque
+           valido come oggi. -->
+      <input class="finput" id="im-indirizzo" placeholder="Scrivi via e civico — compare un elenco di indirizzi" autocomplete="off"
+        oninput="imIndirizzoAutocomplete(this.value)"
+        onfocus="if(this.value.trim().length>=5) imIndirizzoAutocomplete(this.value)"
+        onblur="setTimeout(imIndirizzoNascondiSuggerimenti,180)">
+      <div id="im-indirizzo-sugg" class="ind-sugg"></div>
+      <input type="hidden" class="finput" id="im-lat"><input type="hidden" class="finput" id="im-lng">
     </div>
 
     <!-- ═══ 3-BIS. DATI CATASTALI ═══ -->
@@ -19428,7 +19452,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.2nov-CONTROPROP';
+var APP_VERSION = 'v.2nov-INDIRIZZO';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -29234,6 +29258,95 @@ function dashRenderMap(){
     el._dashRO.observe(el);
   }
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   [2 nov 2026] COMPILAZIONE AUTOMATICA INDIRIZZO (scheda immobile).
+   Stesso servizio gratuito (Nominatim/OpenStreetMap) già usato sotto da
+   "Geocodifica indirizzi" in batch, ma qui in diretta mentre si scrive:
+   mostra un elenco di vie reali, e alla scelta riempie Comune/Zona e salva
+   subito lat/lng nei campi nascosti im-lat/im-lng (letti da saveImmobile()
+   in immobili.view.js — se vuoti, il vecchio valore resta invariato grazie
+   ad aggiornaRecord(), quindi editare altri campi non cancella mai una
+   posizione già salvata).
+   Rispetta la policy di Nominatim (max 1 richiesta/sec): debounce di 550ms
+   mentre si scrive, e un'attesa minima fra una chiamata e l'altra. ═══ */
+var _indSuggTimer=null, _indSuggCtrl=null, _indSuggUltimaChiamata=0, _indSuggRisultati=[];
+function imIndirizzoAutocomplete(val){
+  clearTimeout(_indSuggTimer);
+  val=(val||'').trim();
+  if(val.length<5){ imIndirizzoNascondiSuggerimenti(); return; }
+  _indSuggTimer=setTimeout(function(){ _indIndirizzoCerca(val); }, 550);
+}
+try{ window.imIndirizzoAutocomplete=imIndirizzoAutocomplete; }catch(e){}
+
+async function _indIndirizzoCerca(val){
+  var box=document.getElementById('im-indirizzo-sugg'); if(!box) return;
+  if(_indSuggCtrl){ try{ _indSuggCtrl.abort(); }catch(_e){} }
+  var attesa=Math.max(0, 1100-(Date.now()-_indSuggUltimaChiamata));
+  if(attesa>0) await new Promise(function(r){ setTimeout(r,attesa); });
+  var comune=(document.getElementById('im-comune')||{}).value||'';
+  var query=[val, comune, 'Italia'].filter(Boolean).join(', ');
+  box.innerHTML='<div class="ind-sugg-loading"> Ricerca indirizzi…</div>';
+  box.classList.add('show');
+  _indSuggCtrl=(typeof AbortController!=='undefined')?new AbortController():null;
+  var timer=_indSuggCtrl?setTimeout(function(){ try{_indSuggCtrl.abort();}catch(_e){} },8000):null;
+  _indSuggUltimaChiamata=Date.now();
+  try{
+    var url='https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=5&countrycodes=it&accept-language=it&q='+encodeURIComponent(query);
+    var fetchOpt={ headers:{ 'Accept':'application/json' } };
+    if(_indSuggCtrl) fetchOpt.signal=_indSuggCtrl.signal;
+    var r=await fetch(url, fetchOpt);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    var arr=await r.json();
+    /* la risposta potrebbe arrivare dopo che l'utente ha già cambiato query:
+       se nel frattempo il campo è tornato troppo corto o vuoto, ignora */
+    var inp=document.getElementById('im-indirizzo');
+    if(!inp || inp.value.trim().length<5) return;
+    _indSuggRisultati=Array.isArray(arr)?arr:[];
+    if(!_indSuggRisultati.length){
+      box.innerHTML='<div class="ind-sugg-empty">Nessun indirizzo trovato — puoi comunque scriverlo a mano.</div>';
+      return;
+    }
+    box.innerHTML=_indSuggRisultati.map(function(x,i){ return '<div class="ind-sugg-item" onmousedown="imIndirizzoScegli('+i+')">'+_indEtichetta(x)+'</div>'; }).join('');
+  }catch(e){
+    if(e && e.name==='AbortError') return; // superata da una ricerca più recente
+    box.innerHTML='<div class="ind-sugg-empty">Ricerca indirizzi non disponibile al momento.</div>';
+  }finally{
+    if(timer) clearTimeout(timer);
+  }
+}
+function _indEtichetta(x){
+  var a=x.address||{};
+  var via=[a.road,a.house_number].filter(Boolean).join(' ')||String(x.display_name||'').split(',')[0];
+  var loc=[a.suburb||a.village||a.hamlet,a.city||a.town||a.municipality].filter(Boolean).join(', ');
+  return '<b>'+_indEsc(via)+'</b>'+(loc?'<span>'+_indEsc(loc)+'</span>':'');
+}
+function _indEsc(s){ return String(s==null?'':s).replace(/</g,'&lt;'); }
+function imIndirizzoScegli(i){
+  var x=_indSuggRisultati[i]; if(!x) return;
+  var a=x.address||{};
+  var via=[a.road,a.house_number].filter(Boolean).join(' ');
+  var comune=a.city||a.town||a.village||a.municipality||'';
+  var zona=a.suburb||a.hamlet||a.neighbourhood||'';
+  if(zona && comune && zona.toLowerCase()===comune.toLowerCase()) zona='';
+  var maiusc=(typeof nomeConMaiuscole==='function')?nomeConMaiuscole:(function(s){return s;});
+  var elI=document.getElementById('im-indirizzo'); if(elI && via) elI.value=via;
+  var elC=document.getElementById('im-comune'); if(elC && comune) elC.value=maiusc(comune);
+  var elZ=document.getElementById('im-zona'); if(elZ && zona && !elZ.value.trim()) elZ.value=maiusc(zona);
+  var lat=parseFloat(x.lat), lng=parseFloat(x.lon);
+  if(!isNaN(lat) && !isNaN(lng)){
+    var elLat=document.getElementById('im-lat'); if(elLat) elLat.value=Math.round(lat*1000000)/1000000;
+    var elLng=document.getElementById('im-lng'); if(elLng) elLng.value=Math.round(lng*1000000)/1000000;
+  }
+  imIndirizzoNascondiSuggerimenti();
+  try{ if(typeof showToast==='function') showToast(' Indirizzo selezionato — posizione salvata','','#15803D'); }catch(_t){}
+}
+try{ window.imIndirizzoScegli=imIndirizzoScegli; }catch(e){}
+function imIndirizzoNascondiSuggerimenti(){
+  var box=document.getElementById('im-indirizzo-sugg');
+  if(box){ box.classList.remove('show'); box.innerHTML=''; }
+}
+try{ window.imIndirizzoNascondiSuggerimenti=imIndirizzoNascondiSuggerimenti; }catch(e){}
 
 // ─── Geocoding via OpenStreetMap Nominatim ───
 var _dashGeocodeRunning = false;
@@ -68252,7 +68365,7 @@ try{
   // a riscaricarlo. Usa la stessa data del badge versione, es. '20260702'.
   // [25 set 2026] Ogni index.js passa il suo ?v= ai file che carica
   // (.view/.mobile/.report): alzare _MOD_V basta per TUTTI i moduli.
-  const _MOD_V = '20261102F';
+  const _MOD_V = '20261102G';
   const moduli = [
     ['Richieste', './src/modules/richieste/index.js?v=' + _MOD_V],
     ['Clienti',   './src/modules/clienti/index.js?v=' + _MOD_V],
