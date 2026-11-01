@@ -14445,8 +14445,11 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 <div class="section" id="sec-diario">
   <div class="print-header"><div class="ph-wrap"><div class="ph-agency">Le case dalla A allo Z.io</div><div class="ph-line2"><span class="ph-agent">Agente: Vincenzo Carnicelli</span><span class="ph-date" id="pd-diario"></span></div><div class="ph-section">Diario</div></div></div>
 
-  <!-- Voce rapida: scrivi e premi Invio, resta tutto qui senza apertura di finestre -->
+  <!-- Voce rapida: scrivi e premi Invio, resta tutto qui senza apertura di finestre.
+       [2 nov 2026] Campo data sempre visibile (non solo "oggi"): per recuperare
+       notizie di giorni passati senza dover aprire "+ Dettagli" ogni volta. -->
   <div class="card" style="padding:12px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start">
+    <input class="finput" id="dia-quick-data" type="date" title="Data della nota — cambiala se stai recuperando un giorno passato, poi ricordati di rimetterla su oggi" style="flex-shrink:0;width:134px">
     <textarea id="dia-quick-testo" class="ftextarea" rows="1" placeholder="Scrivi qui una nota al volo (Invio per salvare)… es. «Chiamato il sig. Russo, vorrebbe vendere in Via Roma»" style="flex:1;resize:none;min-height:38px" onkeydown="diaQuickKey(event)"></textarea>
     <button class="btn btn-outline" id="dia-mic-quick" onclick="diaDettatura('dia-quick-testo','dia-mic-quick')" title="Dettatura vocale" style="flex-shrink:0">🎤</button>
     <button class="btn btn-primary" onclick="diaQuickSave()" style="flex-shrink:0">Salva</button>
