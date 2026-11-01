@@ -5066,7 +5066,8 @@ const _SYNC_KEYS = [
   'analisiAtti','fascicoli','f24','obiettivi','ceVoci','ceSezioni','costiFissi',
   'openHouse','openHouseCheck','ricercheCatastali','valAnnunci','valRegole','planning','valAtti','acquisizioni','acqTesti','prestazioni','rubricaDaHub',
   'condivisioni',   /* [18 ott 2026, sera] cosa il titolare condivide con ciascun collega */
-  'immValutazione'  /* [20 ott 2026] schede immobile "in valutazione", nascoste fino all'incarico (Acquisizioni) */
+  'immValutazione', /* [20 ott 2026] schede immobile "in valutazione", nascoste fino all'incarico (Acquisizioni) */
+  'diario'          /* [1 nov 2026] Diario giornaliero: note libere del giorno + promemoria collegati */
   /* "profili" NON va qui: ogni collega ha un archivio separato (vedi sopra),
      mentre i Profili devono essere UGUALI per tutti — vivono in gestionale/profili
      come _adm_users, non in D. Vedi _profiliGlobali più sotto. */
@@ -6331,7 +6332,7 @@ async function _cloudPullUserData(){
             partitario:'renderPartitario', provvigioni:'renderProvvigioni',
             fatture:'renderFatture', notizie:'renderNotizie', agenti:'renderAgenti',
             'caccia-annunci':'caRenderAnnunci', osservati:'renderOsservati',
-            'agenda-pipeline':'renderAgendaPipeline', calendario:'renderCal'
+            'agenda-pipeline':'renderAgendaPipeline', calendario:'renderCal', diario:'renderDiario'
           };
           var fn = _rmap[sec];
           if(fn && typeof window[fn]==='function'){ window[fn](); }
@@ -7194,6 +7195,7 @@ function _ensureDArrays(){
   if(!Array.isArray(D.clientiFattura)) D.clientiFattura = [];
   if(!Array.isArray(D.leadsWeb))      D.leadsWeb = [];
   if(!Array.isArray(D.timeline))     D.timeline = [];
+  if(!Array.isArray(D.diario))       D.diario = [];
 }
 
 /* ════════════════════════════════════════════════════════════════════
@@ -12458,6 +12460,8 @@ body.dark-mode :is([style^="color: #64748B" i],[style*=";color: #64748B" i],[sty
       <a class="sb-item" data-go="agenda-pipeline" onclick="sbGo('agenda-pipeline')">Agenda &amp; Pipeline</a>
       <a class="sb-item" data-go="calendario" onclick="sbGo('calendario')">Appuntamenti<span class="sb-badge is-danger empty" id="nb-cal">0</span></a>
       <a class="sb-item" data-go="attivita" onclick="sbGo('attivita')">Attività<span class="sb-badge is-warn empty" id="nb-att">0</span></a>
+      <!-- [1 nov 2026] Diario: note libere del giorno (notizie, contatti) prima di perderle -->
+      <a class="sb-item" data-go="diario" onclick="sbGo('diario')">Diario<span class="sb-badge is-danger empty" id="nb-diario">0</span></a>
       <a class="sb-item" href="#" onclick="event.preventDefault();apriPlanning();" title="Clienti e immobili: chi stai trascurando, cosa non si muove">Planning settimanale</a>
     </div>
 
@@ -12547,6 +12551,8 @@ body.dark-mode :is([style^="color: #64748B" i],[style*=";color: #64748B" i],[sty
     <div class="sb-children" data-sb-children="moduli" style="display:none">
       <a class="sb-item" data-go="report-visite" onclick="sbGo('report-visite')">Report Visite</a>
       <a class="sb-item" data-go="report-capo-agenzia" onclick="sbGo('report-capo-agenzia')">Report Capo Agenzia</a>
+      <!-- [1 nov 2026] Report per il broker: Appuntamenti + Visite + Diario, periodo a scelta -->
+      <a class="sb-item" data-go="report-diario" onclick="sbGo('report-diario')">Report Attività</a>
       <a class="sb-item" data-go="report-clienti" onclick="sbGo('report-clienti')">Report Clienti</a>
       <a class="sb-item" data-go="report-immobili-gestione" onclick="sbGo('report-immobili-gestione')">Report Immobili in Gestione</a>
       <a class="sb-item" data-go="report-agenti" onclick="sbGo('report-agenti')">Report Agenti</a>
@@ -14429,6 +14435,134 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
         Salva Attività
       </button>
     </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     DIARIO GIORNALIERO — note libere del giorno (notizie, contatti,
+     promemoria) prima che si perdano. [1 nov 2026]
+     ════════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-diario">
+  <div class="print-header"><div class="ph-wrap"><div class="ph-agency">Le case dalla A allo Z.io</div><div class="ph-line2"><span class="ph-agent">Agente: Vincenzo Carnicelli</span><span class="ph-date" id="pd-diario"></span></div><div class="ph-section">Diario</div></div></div>
+
+  <!-- Voce rapida: scrivi e premi Invio, resta tutto qui senza apertura di finestre -->
+  <div class="card" style="padding:12px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start">
+    <textarea id="dia-quick-testo" class="ftextarea" rows="1" placeholder="Scrivi qui una nota al volo (Invio per salvare)… es. «Chiamato il sig. Russo, vorrebbe vendere in Via Roma»" style="flex:1;resize:none;min-height:38px" onkeydown="diaQuickKey(event)"></textarea>
+    <button class="btn btn-primary" onclick="diaQuickSave()" style="flex-shrink:0">Salva</button>
+    <button class="btn btn-outline" onclick="openDiarioModal()" title="Aggiungi con cliente/immobile collegato o promemoria" style="flex-shrink:0">+ Dettagli</button>
+  </div>
+
+  <div id="dia-stat-cards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px"></div>
+
+  <div class="filter-bar">
+    <div class="search-box"><span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+      <input class="f-input" id="f-dia-q" placeholder="Cerca nel diario..." oninput="renderDiario()">
+    </div>
+    <label style="display:flex;align-items:center;gap:6px;font-size:0.82rem;color:var(--text2);white-space:nowrap">
+      <input type="checkbox" id="f-dia-seguire" onchange="renderDiario()"> Solo da seguire
+    </label>
+    <input class="f-input" id="f-dia-dal" type="date" title="Dal" onchange="renderDiario()" style="max-width:130px">
+    <input class="f-input" id="f-dia-al" type="date" title="Al" onchange="renderDiario()" style="max-width:130px">
+  </div>
+
+  <div id="dia-lista"></div>
+</div>
+
+<!-- MODAL NUOVA/MODIFICA VOCE DI DIARIO -->
+<div class="overlay" id="modal-diario">
+  <div class="modal" style="max-width:560px">
+    <div class="mhead" style="background:linear-gradient(135deg,#1E3A5F,#2563EB);border-bottom:none;padding:0;overflow:hidden">
+      <div style="padding:16px 22px;display:flex;align-items:center;justify-content:space-between">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:34px;height:34px;background:rgba(255,255,255,.15);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+          </div>
+          <div>
+            <h2 id="mt-dia" style="color:white;font-size:1rem;font-weight:800;margin:0">Nuova voce di diario</h2>
+            <div style="font-size:0.7rem;color:rgba(255,255,255,.6);margin-top:1px">Libera, oppure collegata a un cliente o immobile</div>
+          </div>
+        </div>
+        <button class="mclose" onclick="closeModal('modal-diario')" style="color:rgba(255,255,255,.8);background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="mbody"><div class="fgrid">
+
+      <div class="frow fcol" style="grid-column:1/-1">
+        <label class="flabel">Nota *</label>
+        <textarea class="ftextarea" id="dia-testo" rows="4" placeholder="Cosa è successo, chi hai sentito, cosa potrebbe portare un incarico…"></textarea>
+      </div>
+
+      <div class="frow">
+        <label class="flabel">Data</label>
+        <input class="finput" id="dia-data" type="date">
+      </div>
+      <div class="frow">
+        <label class="flabel">Ora</label>
+        <input class="finput" id="dia-ora" type="time">
+      </div>
+
+      <div class="frow">
+        <label class="flabel">Cliente / Contatto</label>
+        <input class="finput" id="dia-cliente" placeholder="Es. Mario Rossi" list="dia-clienti-dl" autocomplete="off">
+        <datalist id="dia-clienti-dl"></datalist>
+      </div>
+      <div class="frow">
+        <label class="flabel">Immobile collegato</label>
+        <select class="fselect" id="dia-immobile">
+          <option value="">— Nessun immobile —</option>
+        </select>
+      </div>
+
+      <div class="frow fcol" style="grid-column:1/-1">
+        <label style="display:flex;align-items:center;gap:7px;font-size:0.86rem;font-weight:600;color:var(--text);cursor:pointer">
+          <input type="checkbox" id="dia-seguire" onchange="_diaToggleSeguireFields()"> Da seguire — crea un promemoria in Appuntamenti
+        </label>
+      </div>
+      <div class="frow" id="dia-seguire-data-row" style="display:none;grid-column:1/-1">
+        <label class="flabel">Richiamare/seguire il</label>
+        <input class="finput" id="dia-data-seguire" type="date" style="max-width:200px">
+      </div>
+
+    </div></div>
+    <div class="mfoot" style="justify-content:space-between">
+      <button class="btn btn-outline" onclick="closeModal('modal-diario')">Annulla</button>
+      <button class="btn btn-primary" onclick="saveDiarioModal()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        Salva
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════
+     REPORT ATTIVITÀ — Appuntamenti + Visite + Diario, periodo a scelta,
+     da consegnare al broker. [1 nov 2026]
+     ════════════════════════════════════════════════════════════════════ -->
+<div class="section" id="sec-report-diario">
+  <div class="print-header"><div class="ph-wrap"><div class="ph-agency">Le case dalla A allo Z.io</div><div class="ph-line2"><span class="ph-agent">Agente: Vincenzo Carnicelli</span><span class="ph-date" id="pd-report-diario"></span></div><div class="ph-section">Report Attività</div></div></div>
+
+  <div class="card" style="padding:18px 20px;max-width:560px">
+    <div style="font-size:0.84rem;color:var(--text2);margin-bottom:14px">Riepilogo di Appuntamenti, Visite e Diario in un periodo, pronto da stampare o salvare in PDF per il broker.</div>
+    <div class="fgrid">
+      <div class="frow">
+        <label class="flabel">Periodo</label>
+        <select class="fselect" id="rd-periodo">
+          <option value="giorno">Giorno</option>
+          <option value="settimana">Settimana</option>
+          <option value="mese">Mese</option>
+        </select>
+      </div>
+      <div class="frow">
+        <label class="flabel">Data di riferimento</label>
+        <input class="finput" id="rd-data" type="date">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="rdGenera()" style="margin-top:8px;width:100%;justify-content:center">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Genera e stampa
+    </button>
   </div>
 </div>
 
@@ -28036,7 +28170,7 @@ function go(sec){
   const fabStack=document.getElementById('fab-stack');
   if(fabStack){ fabStack.style.display='none'; }  // FAB stack disabilitato
   /* [7 ott 2026] aggiunte le sezioni che comparivano col nome tecnico ("osservati", "tasse-f24"…) */
-  const titles={osservati:'Annunci osservati','tasse-f24':'Tasse e F24',guida:'Guida & Manuale','analisi-atti':'Analisi Atti AI','verifica-doc':'Verifica Documenti','strumenti-incarico':'Strumenti incarico',dashboard:'Dashboard',calendario:'Appuntamenti',attivita:'Attività','agenda-pipeline':'Agenda & Pipeline',clienti:'Clienti','scheda-cliente':'Scheda Cliente',immobili:'Immobili','scheda-immobile':'Scheda Immobile',richieste:'Richieste',abbinamento:'Abbinamento',visite:'Registro Visite',pratiche:' Gestione Pratiche',calcolatore:'Calcolatore Acquisto Casa',informatori:'Informatori',incarichi:'Incarichi',statistiche:'Statistiche Generali',analytics:'Statistiche & Analytics',immobiliare:'Statistiche Immobiliare.it',backup:' Backup & Ripristino',partitario:'Partitario','report-visite':'Report Visite Mensili','report-capo-agenzia':'Report Capo Agenzia','caccia-annunci':'Caccia Annunci Privati',notizie:'Ricerca Notizie & Leads',provvigioni:' Gestione Provvigioni',fatture:' Registro Fatture','incassi-nf':' Incassi Non Fatturabili',mappa:'Mappa Immobili','lead-web':'Lead Web & Gestione Mail','report-clienti':'Report Clienti','report-immobili-gestione':'Report Immobili in Gestione','report-agenti':'Report Agenti','report-informatori':'Report Informatori','report-richieste':'Report Richieste','report-pratiche':'Report Pratiche','report-incarichi':'Report Incarichi'};
+  const titles={osservati:'Annunci osservati','tasse-f24':'Tasse e F24',guida:'Guida & Manuale','analisi-atti':'Analisi Atti AI','verifica-doc':'Verifica Documenti','strumenti-incarico':'Strumenti incarico',dashboard:'Dashboard',calendario:'Appuntamenti',attivita:'Attività','agenda-pipeline':'Agenda & Pipeline',clienti:'Clienti','scheda-cliente':'Scheda Cliente',immobili:'Immobili','scheda-immobile':'Scheda Immobile',richieste:'Richieste',abbinamento:'Abbinamento',visite:'Registro Visite',pratiche:' Gestione Pratiche',calcolatore:'Calcolatore Acquisto Casa',informatori:'Informatori',incarichi:'Incarichi',statistiche:'Statistiche Generali',analytics:'Statistiche & Analytics',immobiliare:'Statistiche Immobiliare.it',backup:' Backup & Ripristino',partitario:'Partitario','report-visite':'Report Visite Mensili','report-capo-agenzia':'Report Capo Agenzia','caccia-annunci':'Caccia Annunci Privati',notizie:'Ricerca Notizie & Leads',provvigioni:' Gestione Provvigioni',fatture:' Registro Fatture','incassi-nf':' Incassi Non Fatturabili',mappa:'Mappa Immobili','lead-web':'Lead Web & Gestione Mail','report-clienti':'Report Clienti','report-immobili-gestione':'Report Immobili in Gestione','report-agenti':'Report Agenti','report-informatori':'Report Informatori','report-richieste':'Report Richieste','report-pratiche':'Report Pratiche','report-incarichi':'Report Incarichi',diario:'Diario','report-diario':'Report Attività'};
   document.getElementById('page-title').textContent=titles[sec]||sec;
   curSection=sec;
   if(sec==='calendario'){const n=new Date();D.calY=n.getFullYear();D.calM=n.getMonth();}
@@ -28065,7 +28199,8 @@ function go(sec){
     'report-incarichi':'reportIncarichiRender',
     'analisi-atti':'renderAnalisiAtti',
     'tasse-f24':'renderTasseF24',
-    'verifica-doc':'verificaDocEntry'
+    'verifica-doc':'verificaDocEntry',
+    diario:'renderDiario', 'report-diario':'rdInit'
   };
   /* Casi speciali con logica propria */
   if(sec === 'scheda-cliente'){ if(D.schedaCliIdx!==null){ var f=_R('renderSchedaCliente'); if(f) f(D.schedaCliIdx); } }
@@ -28596,6 +28731,10 @@ function updateBadges(){
   }
   const nbInf=document.getElementById('nb-inf');
   if(nbInf) nbInf.textContent=D.informatori.length;
+  const oggiDia=today();
+  const diaScadute=(D.diario||[]).filter(v=>v&&v.daSeguire&&!v.fatto&&v.dataSeguire&&v.dataSeguire<=oggiDia).length;
+  const nbDia=document.getElementById('nb-diario');
+  if(nbDia){nbDia.textContent=diaScadute;nbDia.style.display=diaScadute>0?'':'none';}
 
   // ── Menu rapido (ngb-*): specchio degli stessi valori ───────────
   const _ngb = function(id, val, hide0) {
@@ -48645,11 +48784,11 @@ var _adm_sec_map = {
   'sec-immobili':        { nav: ['immobili','mappa','richieste','abbinamento','terreni'],                    divs: ['sec-immobili','sec-mappa','sec-richieste','sec-abbinamento','sec-scheda-immobile','sec-terreni'] },
   'sec-pratiche':        { nav: ['pratiche','incarichi','strumenti-incarico'],                       divs: ['sec-pratiche','sec-incarichi','sec-strumenti-incarico'] },
   'sec-clienti':         { nav: ['clienti','informatori'],                                         divs: ['sec-clienti','sec-informatori','sec-scheda-cliente'] },
-  'sec-agenda-pipeline': { nav: ['calendario','agenda-pipeline','attivita'],                       divs: ['sec-calendario','sec-agenda-pipeline','sec-attivita'] },
+  'sec-agenda-pipeline': { nav: ['calendario','agenda-pipeline','attivita','diario'],               divs: ['sec-calendario','sec-agenda-pipeline','sec-attivita','sec-diario'] },
   'sec-provvigioni':     { nav: ['provvigioni','fatture','incassi-nf','partitario','tasse-f24'],               divs: ['sec-provvigioni','sec-fatture','sec-partitario','sec-tasse-f24'] },
   'sec-caccia-annunci':  { nav: ['caccia-annunci','osservati','notizie','marketing'],                          divs: ['sec-caccia-annunci','sec-osservati','sec-notizie','sec-marketing'] },
   'sec-lead-web':        { nav: ['lead-web'],                                                      divs: ['sec-lead-web'] },
-  'sec-statistiche':     { nav: ['statistiche','analytics','immobiliare','visite','report-visite','report-capo-agenzia','report-clienti','report-immobili-gestione','report-agenti','report-informatori','report-richieste','report-pratiche','report-incarichi'],     divs: ['sec-statistiche','sec-analytics','sec-immobiliare','sec-visite','sec-report-clienti','sec-report-immobili-gestione','sec-report-agenti','sec-report-informatori','sec-report-richieste','sec-report-pratiche','sec-report-incarichi'] },
+  'sec-statistiche':     { nav: ['statistiche','analytics','immobiliare','visite','report-visite','report-capo-agenzia','report-clienti','report-immobili-gestione','report-agenti','report-informatori','report-richieste','report-pratiche','report-incarichi','report-diario'],     divs: ['sec-statistiche','sec-analytics','sec-immobiliare','sec-visite','sec-report-clienti','sec-report-immobili-gestione','sec-report-agenti','sec-report-informatori','sec-report-richieste','sec-report-pratiche','sec-report-incarichi','sec-report-diario'] },
   'sec-tools':           { nav: ['calcolatore','analisi-atti','verifica-doc','backup','guida'],                                          divs: ['sec-calcolatore','sec-analisi-atti','sec-verifica-doc','sec-backup','sec-guida'] }
 };
 
@@ -58955,19 +59094,20 @@ window.addEventListener('appinstalled', function(){
 
   /* ─── Mappa sezione → padre sidebar (per attivazione automatica) ─── */
   var SB_PARENT = {
-    dashboard:'oggi', 'agenda-pipeline':'oggi', calendario:'oggi',
+    dashboard:'oggi', 'agenda-pipeline':'oggi', calendario:'oggi', diario:'oggi',
     clienti:'anagrafiche', immobili:'anagrafiche', informatori:'anagrafiche', mappa:'anagrafiche', 'provvigioni-agenti':'anagrafiche',
     abbinamento:'trattative', richieste:'trattative', pratiche:'trattative', incarichi:'trattative',
     statistiche:'numeri', analytics:'numeri', visite:'numeri', provvigioni:'numeri', fatture:'numeri', 'incassi-nf':'numeri', partitario:'numeri',
     marketing:'strumenti', notizie:'strumenti', calcolatore:'strumenti', backup:'strumenti', 'lead-web':'strumenti',
     'report-visite':'moduli', 'report-capo-agenzia':'moduli',
     'report-clienti':'moduli','report-immobili-gestione':'moduli','report-agenti':'moduli',
-    'report-informatori':'moduli','report-richieste':'moduli','report-pratiche':'moduli','report-incarichi':'moduli'
+    'report-informatori':'moduli','report-richieste':'moduli','report-pratiche':'moduli','report-incarichi':'moduli',
+    'report-diario':'moduli'
   };
 
   /* ─── Etichette amichevoli per sezioni (search + recenti) ─── */
   var SECTION_LABELS = {
-    dashboard:'Dashboard', 'agenda-pipeline':'Agenda & Pipeline', calendario:'Appuntamenti',
+    dashboard:'Dashboard', 'agenda-pipeline':'Agenda & Pipeline', calendario:'Appuntamenti', diario:'Diario',
     clienti:'Clienti', immobili:'Immobili', informatori:'Informatori', mappa:'Mappa',
     abbinamento:'Richieste & Abbinamento', visite:'Visite', pratiche:'Pratiche', incarichi:'Incarichi',
     statistiche:'Statistiche', provvigioni:'Provvigioni', fatture:'Fatture', 'incassi-nf':'Incassi NF', partitario:'Partitario',
@@ -58976,7 +59116,8 @@ window.addEventListener('appinstalled', function(){
     'lead-web':'Lead Web & Analytics',
     'report-clienti':'Report Clienti','report-immobili-gestione':'Report Immobili in Gestione',
     'report-agenti':'Report Agenti','report-informatori':'Report Informatori',
-    'report-richieste':'Report Richieste','report-pratiche':'Report Pratiche','report-incarichi':'Report Incarichi'
+    'report-richieste':'Report Richieste','report-pratiche':'Report Pratiche','report-incarichi':'Report Incarichi',
+    'report-diario':'Report Attività'
   };
 
   /* ─── ACCORDION SIDEBAR ─── */
@@ -67449,7 +67590,7 @@ try{
   // a riscaricarlo. Usa la stessa data del badge versione, es. '20260702'.
   // [25 set 2026] Ogni index.js passa il suo ?v= ai file che carica
   // (.view/.mobile/.report): alzare _MOD_V basta per TUTTI i moduli.
-  const _MOD_V = '20261027J';
+  const _MOD_V = '20261101A';
   const moduli = [
     ['Richieste', './src/modules/richieste/index.js?v=' + _MOD_V],
     ['Clienti',   './src/modules/clienti/index.js?v=' + _MOD_V],
@@ -67484,6 +67625,8 @@ try{
     /* [25 ott 2026] Scansione documenti (camscanner): fotografa, unisce in
        un PDF, carica su Firebase Storage, prova a leggerli con l'AI. */
     ['Scanner',   './src/modules/scanner/index.js?v=' + _MOD_V],
+    /* [1 nov 2026] Diario giornaliero + Report Attività per il broker. */
+    ['Diario',    './src/modules/diario/index.js?v=' + _MOD_V],
   ];
   /* [16 set 2026] CONTEGGIO VERO. Prima la riga finale diceva sempre
      "Tutti i 20 moduli caricati": ogni import ha il suo catch, quindi il
