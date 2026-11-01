@@ -650,7 +650,6 @@ function objCalcola(anno, ctx){
    Riquadri e "da qui a fine anno" sono diventati la striscia di sintesi. */
 
 var _objVista = 'panoramica';     // panoramica | regole | storico | vita
-var _objScala = 'mesi';           // mesi | trimestri
 var _objSel = 'incarichi';        // indicatore aperto nel dettaglio
 var _objAnno = objAnnoCorrente();
 var _objStAnno = null;            // anno mostrato nello Storico
@@ -888,13 +887,6 @@ function _objAvvisoPicco(){
 }
 
 /* ── la griglia ───────────────────────────────────────────────────────── */
-function _objPeriodiScala(){
-  if(_objScala === 'trimestri') return [
-    {et:'1° trim.', sot:'Gen-Mar', mesi:[1,2,3]}, {et:'2° trim.', sot:'Apr-Giu', mesi:[4,5,6]},
-    {et:'3° trim.', sot:'Lug-Set', mesi:[7,8,9]}, {et:'4° trim.', sot:'Ott-Dic', mesi:[10,11,12]}];
-  return OBJ_MESI3.map(function(n, i){ return {et:n, sot:'', mesi:[i+1]}; });
-}
-
 function _objCella(fatto, target, prima, stato, euro, extra){
   var tit = (extra && extra.title ? ' title="' + _esc(extra.title) + '"' : '');
   var pr = '<div class="p">' + (prima === null ? '&nbsp;' : _objAa(_objAnno-1) + ' ' + _objNum(prima, euro)) + '</div>';
@@ -919,80 +911,30 @@ function _objStatoPeriodo(fatto, target, mesi, anno, oggi, soglia){
   return objValuta(fatto, target, soglia).fascia;
 }
 
-function _objGriglia(righe){
-  var o = _objCtx.oggi, per = _objPeriodiScala(), a = _objAnno;
-  var soglia = (objLeggi(a) || objPredefinito(a)).sogliaLinea;
-  var h = '<div class="obj-scroll"><table class="obj-gr' + (_objScala === 'trimestri' ? ' q' : '') + '"><thead><tr>'
-    + '<th class="sx">Indicatore</th>';
-  per.forEach(function(p){
-    var ora = (a === o.anno && p.mesi.indexOf(o.mese) >= 0);
-    h += '<th' + (ora ? ' class="ora"' : '') + '>' + p.et + (p.sot ? '<div style="font-weight:500;font-size:0.6rem">' + p.sot + '</div>' : '') + '</th>';
-  });
-  h += '<th>Anno</th></tr></thead><tbody>';
-  righe.forEach(function(rg){
-    var ind = objInd(rg.id), euro = !!ind.euro;
-    var sel = (rg.id === _objSel);
-    var reg = rg.target.modo === 'annuo' ? 'annuo a mano' : _objRegolaTesto(rg.target.regola, true) + ' sul ' + _objAa(a-1);
-    h += '<tr class="riga' + (sel ? ' sel' : '') + '" style="color:' + ind.col + '" onclick="_objApri(\'' + rg.id + '\')">'
-      + '<td class="nome"><div class="n"><span class="pall" style="background:' + ind.col + '"></span>' + ind.nome + '</div>'
-      + '<div class="r">' + reg + '</div></td>';
-    per.forEach(function(p){
-      var f = 0, t = 0, pr = 0, ag = 0, mano = false;
-      p.mesi.forEach(function(m){
-        var c = rg.celle[m-1];
-        f += c.fatto; t += c.target; pr += c.prima; ag += c.agenda; if(c.mano) mano = true;
-      });
-      var stato = (p.mesi.length === 1) ? rg.celle[p.mesi[0]-1].stato : _objStatoPeriodo(f, t, p.mesi, a, o, soglia);
-      var title = ind.nome + ' ' + (p.sot || p.et) + ' ' + a + ': fatto ' + _objNum(f, euro, true)
-        + ', obiettivo ' + _objNum(t, euro, true) + ', ' + (a-1) + ' ' + _objNum(pr, euro, true)
-        + (mano ? ' (scritto a mano nello Storico)' : '') + (ag ? ' · in agenda ' + _objNum(ag, euro, true) : '');
-      h += '<td>' + _objCella(f, t, rg.prec.coperto ? pr : null, stato, euro, {mano:mano, agenda:ag, title:title}) + '</td>';
-    });
-    h += '<td class="anno">' + _objCella(rg.fattoAnno, rg.targetAnno, rg.pari.coperto ? rg.pari.valore : null,
-              rg.statoAnno, euro,
-              {title: ind.nome + ' ' + a + ': fatto ' + _objNum(rg.fattoAnno, euro, true) + ' su ' + _objNum(rg.targetAnno, euro, true)
-                      + (a === o.anno ? ' (dovuto a oggi ' + _objNum(rg.dovuto, euro, true) + '); ' + (a-1) + ' alla stessa data '
-                                        : '; ' + (a-1) + ' ') + _objNum(rg.pari.valore, euro, true)})
-      + '</td></tr>';
-  });
-  h += '</tbody></table></div>';
-  var leg = function(bg, bd, t, tratt){
-    return '<span><i style="background:' + bg + ';border-color:' + bd + (tratt ? ';border-style:dashed' : '') + '"></i>' + t + '</span>';
-  };
-  h += '<div class="obj-leg">'
-    + leg('rgba(15,81,50,.09)', 'rgba(15,81,50,.28)', 'centrato')
-    + leg('rgba(180,83,9,.09)', 'rgba(180,83,9,.30)', 'vicino (dal ' + (objNum(soglia) || 90) + '%)')
-    + leg('rgba(127,29,29,.08)', 'rgba(127,29,29,.28)', 'sotto')
-    + leg('transparent', 'var(--text3)', 'mese in corso', true)
-    + '<span>sotto ogni numero: obiettivo e stesso periodo del ' + (a-1) + '</span>'
-    + '<span><i style="width:6px;height:6px;border-radius:50%;background:var(--text3)"></i>scritto a mano</span>'
-    + '</div>';
-  var scala = '<div class="gx-ling" style="margin-left:auto">'
-    + [['mesi','Mesi'],['trimestri','Trimestri']].map(function(x){
-        var on = _objScala === x[0];
-        return '<button class="gx-l' + (on ? ' on' : '') + '" style="padding:4px 10px;font-size:0.74rem;' + (on ? 'background:' + OBJ_T.blu : '') + '" '
-          + 'onclick="event.stopPropagation();_objVaiScala(\'' + x[0] + '\')"><span class="pall" style="background:' + OBJ_T.blu + '"></span>' + x[1] + '</button>';
-      }).join('') + '</div>';
-  return _gxColonna(a + ' contro ' + (a-1), 'tocca una riga per vedere il dettaglio', OBJ_T.blu, h, scala);
-}
-
 /* ══════════════════════════════════════════════════════════════════════
-   4 VISTE ALTERNATIVE ALLA TABELLA ─────────────────────── [1 nov 2026]
-   Enzo: "la tabella mi viene difficile da interpretare". Gli ho mostrato
-   4 stili diversi (stessi calcoli di objRiga, solo disegnati diversamente)
-   e ha chiesto di tenerli tutti: un selettore sopra la griglia fa passare
-   dall'uno all'altro. Nessuno di questi ricalcola niente: leggono solo
-   righe, l'array di objRiga già pronto per _objGriglia.
-   ══════════════════════════════════════════════════════════════════════ */
-var _objGraf = (function(){ try{ return localStorage.getItem('objGrafico') || 'tabella'; }catch(e){ return 'tabella'; } })();
+   4 GRAFICI, CON MESE/TRIMESTRE/ANNO ─────────────────────── [1-2 nov 2026]
+   Enzo: "la tabella mi viene difficile da interpretare" → sostituita da 4
+   stili diversi (stessi calcoli di objRiga, solo disegnati diversamente).
+   Poi: "elimina la tabella, aggiungi mensile/trimestrale/annuale alle
+   altre". _objPeriodoAggregato riusa objPeriodi() (già pronta altrove nel
+   file, con "mensile/trimestrale/annuale") e la stessa logica di giudizio
+   (_objStatoPeriodo) che usava la vecchia tabella — nessun ricalcolo nuovo. */
+var _objGraf = (function(){ try{ var v = localStorage.getItem('objGrafico'); return (v && v !== 'tabella') ? v : 'barre'; }catch(e){ return 'barre'; } })();
 window._objVaiGraf = function(v){
   _objGraf = v;
   try{ localStorage.setItem('objGrafico', v); }catch(e){}
   _objDisegna();
 };
 
+var _objPer = (function(){ try{ return localStorage.getItem('objPeriodo') || 'mensile'; }catch(e){ return 'mensile'; } })();
+window._objVaiPeriodo = function(p){
+  _objPer = p;
+  try{ localStorage.setItem('objPeriodo', p); }catch(e){}
+  _objDisegna();
+};
+
 function _objSelettoreGrafico(){
-  var opz = [['tabella','Tabella'],['barre','Barre mensili'],['linee','Andamento cumulato'],['radiali','Schede a ciambella'],['colori','Griglia a colori']];
+  var opz = [['barre','Barre mensili'],['linee','Andamento cumulato'],['radiali','Schede a ciambella'],['colori','Griglia a colori']];
   return '<div class="gx-ling" style="margin:0 0 12px">' + opz.map(function(x){
     var on = _objGraf === x[0];
     return '<button class="gx-l' + (on ? ' on' : '') + '" style="' + (on ? 'background:' + OBJ_T.blu : '') + '" '
@@ -1000,29 +942,68 @@ function _objSelettoreGrafico(){
   }).join('') + '</div>';
 }
 
+/* Pillole Mensile/Trimestrale/Annuale, da passare come "destra" di _gxColonna
+   nell'intestazione di ciascun grafico — stesso posto dov'era Mesi/Trimestri
+   nella vecchia tabella. */
+function _objSelettorePeriodo(){
+  var opz = [['mensile','Mensile'],['trimestrale','Trimestrale'],['annuale','Annuale']];
+  return '<div class="gx-ling" style="margin-left:auto">' + opz.map(function(x){
+    var on = _objPer === x[0];
+    return '<button class="gx-l' + (on ? ' on' : '') + '" style="padding:4px 10px;font-size:0.74rem;' + (on ? 'background:' + OBJ_T.blu : '') + '" '
+      + 'onclick="event.stopPropagation();_objVaiPeriodo(\'' + x[0] + '\')"><span class="pall" style="background:' + OBJ_T.blu + '"></span>' + x[1] + '</button>';
+  }).join('') + '</div>';
+}
+
+/* Un periodo (uno o più mesi, da objPeriodi) sommato: stessa somma e stesso
+   giudizio (stato) che faceva la vecchia tabella per le colonne Trimestri. */
+function _objPeriodoAggregato(rg, periodo){
+  var f = 0, t = 0, pr = 0, ag = 0, mano = false;
+  periodo.mesi.forEach(function(m){
+    var c = rg.celle[m-1];
+    f += c.fatto; t += c.target; pr += c.prima; ag += c.agenda; if(c.mano) mano = true;
+  });
+  var o = _objCtx.oggi, a = _objAnno;
+  var soglia = (objLeggi(a) || objPredefinito(a)).sogliaLinea;
+  var stato = (periodo.mesi.length === 1) ? rg.celle[periodo.mesi[0]-1].stato : _objStatoPeriodo(f, t, periodo.mesi, a, o, soglia);
+  return {fatto: objArr(f), target: objArr(t), prima: objArr(pr), agenda: objArr(ag), mano: mano, stato: stato, mesi: periodo.mesi, etichetta: periodo.etichetta};
+}
+
+/* Nome del livello per objPeriodi(), dal valore del selettore period (che usa
+   gli stessi tre nomi di objPeriodi: mensile/trimestrale/annuale). */
+function _objPeriodi(){ return objPeriodi(_objPer); }
+
 /* ── 1: barre mensili — un colpo d'occhio mese per mese, per indicatore ── */
+/* Etichetta compatta di un periodo per gli assi (objPeriodi dà nomi più
+   lunghi, pensati per un elenco: "Gennaio", "Q1 · Gen-Mar", "Anno intero"). */
+function _objEtichBreve(et){
+  if(_objPer === 'trimestrale'){ var i = et.indexOf(' · '); return i >= 0 ? et.slice(0, i) : et; }
+  if(_objPer === 'annuale') return 'Anno';
+  return et.slice(0, 3);
+}
+
 function _objGrafBarre(righe){
-  var o = _objCtx.oggi, a = _objAnno, h = '';
+  var o = _objCtx.oggi, a = _objAnno, periodi = _objPeriodi(), n = periodi.length, h = '';
   righe.forEach(function(rg){
     var ind = objInd(rg.id), euro = !!ind.euro;
     var tot25 = rg.prec.coperto ? objArr(rg.celle.reduce(function(s,c){ return s + c.prima; }, 0)) : null;
+    var celle = periodi.map(function(p){ return _objPeriodoAggregato(rg, p); });
     var max = 1;
-    rg.celle.forEach(function(c){ max = Math.max(max, c.fatto, c.target, rg.prec.coperto ? c.prima : 0, c.fatto + (c.agenda||0)); });
+    celle.forEach(function(c){ max = Math.max(max, c.fatto, c.target, rg.prec.coperto ? c.prima : 0, c.fatto + (c.agenda||0)); });
     max = max * 1.12;
     h += '<div class="objg-ind"><div class="objg-ind-head"><span class="objg-ind-nome" style="color:' + ind.col + '">'
       + '<span class="pall" style="background:' + ind.col + '"></span>' + ind.nome + '</span>'
       + '<span class="objg-ind-tot">Anno: <b>' + _objNum(rg.fattoAnno, euro, true) + '</b>'
       + (tot25 != null ? ' <span class="m">(' + (a-1) + ': ' + _objNum(tot25, euro, true) + ')</span>' : '') + '</span></div>';
-    h += '<div class="objg-bars">';
-    rg.celle.forEach(function(c, i){
+    h += '<div class="objg-bars" style="grid-template-columns:repeat(' + n + ',1fr)">';
+    celle.forEach(function(c){
       var vuoto = (c.stato === 'futuro');
       var hpct = vuoto ? 0 : Math.max(2, Math.round((c.fatto / max) * 100));
       var col = OBJ_STATO_COL[c.stato] || ind.col;
       var tgPct = c.target > 0 ? Math.round((c.target / max) * 100) : null;
       var refPct = rg.prec.coperto ? Math.round((c.prima / max) * 100) : null;
       var agPct = c.agenda > 0 ? Math.round(((c.fatto + c.agenda) / max) * 100) : null;
-      var ora = (a === o.anno && c.mese === o.mese);
-      var tit = ind.nome + ' ' + OBJ_MESI3[i] + ': ' + _objNum(c.fatto, euro, true)
+      var ora = (a === o.anno && c.mesi.indexOf(o.mese) >= 0);
+      var tit = ind.nome + ' ' + c.etichetta + ': ' + _objNum(c.fatto, euro, true)
         + (c.target > 0 ? (', obiettivo ' + _objNum(c.target, euro, true)) : ', nessun obiettivo')
         + (rg.prec.coperto ? (', ' + (a-1) + ' ' + _objNum(c.prima, euro, true)) : '')
         + (c.agenda > 0 ? (', già in agenda ' + _objNum(c.agenda, euro, true)) : '');
@@ -1032,7 +1013,7 @@ function _objGrafBarre(righe){
       if(tgPct != null) h += '<div class="objg-tick objg-tick-target" style="bottom:' + tgPct + '%"></div>';
       if(refPct != null) h += '<div class="objg-tick objg-tick-ref" style="bottom:' + refPct + '%"></div>';
       h += '<div class="objg-fill" style="height:' + hpct + '%;background:' + col + '"></div>'
-        + '</div><div class="objg-mese">' + OBJ_MESI3[i] + '</div></div>';
+        + '</div><div class="objg-mese">' + _objEtichBreve(c.etichetta) + '</div></div>';
     });
     h += '</div></div>';
   });
@@ -1040,28 +1021,30 @@ function _objGrafBarre(righe){
     + '<span><i style="background:' + OBJ_T.verde + '"></i>centrato</span>'
     + '<span><i style="background:' + OBJ_T.ambra + '"></i>vicino</span>'
     + '<span><i style="background:' + OBJ_T.rosso + '"></i>sotto</span>'
-    + '<span>senza pallino: colore dell\'indicatore (mese in corso o nessun obiettivo)</span>'
-    + '<span><i style="width:10px;height:0;border-top:2px dashed var(--text3);background:none"></i>stesso mese ' + (a-1) + '</span>'
+    + '<span>senza pallino: colore dell\'indicatore (periodo in corso o nessun obiettivo)</span>'
+    + '<span><i style="width:10px;height:0;border-top:2px dashed var(--text3);background:none"></i>stesso periodo ' + (a-1) + '</span>'
     + '</div>';
-  return _gxColonna('Barre mensili', 'un colpo d\'occhio mese per mese', OBJ_T.blu, h + leg);
+  return _gxColonna('Barre', 'un colpo d\'occhio periodo per periodo', OBJ_T.blu, h + leg, _objSelettorePeriodo());
 }
 
-/* ── 2: andamento cumulato — il totale che cresce mese dopo mese ────────── */
+/* ── 2: andamento cumulato — il totale che cresce periodo dopo periodo ──── */
 function _objGrafLinee(righe){
-  var a = _objAnno, W = 240, H = 108, PAD = 6, h = '<div class="objg-linee-grid">';
+  var a = _objAnno, periodi = _objPeriodi(), n = periodi.length, W = 240, H = 108, PAD = 6, h = '<div class="objg-linee-grid">';
   righe.forEach(function(rg){
     var ind = objInd(rg.id), euro = !!ind.euro;
-    var cum26 = [], cum25 = [], s26 = 0, s25 = 0, ultimoIdx = 0;
-    for(var i=0;i<12;i++){
-      var c = rg.celle[i];
-      if(c.stato === 'futuro'){ cum26.push(null); } else { s26 = objArr(s26 + c.fatto); cum26.push(s26); ultimoIdx = i; }
+    var celle = periodi.map(function(p){ return _objPeriodoAggregato(rg, p); });
+    /* parto da zero (prima del primo periodo) così la linea mostra sempre
+       la crescita vera, anche con un solo periodo (vista Annuale). */
+    var cum26 = [0], cum25 = [rg.prec.coperto ? 0 : null], s26 = 0, s25 = 0, ultimoIdx = 0;
+    celle.forEach(function(c, i){
+      if(c.stato === 'futuro'){ cum26.push(null); } else { s26 = objArr(s26 + c.fatto); cum26.push(s26); ultimoIdx = i + 1; }
       s25 = objArr(s25 + (rg.prec.coperto ? c.prima : 0));
       cum25.push(rg.prec.coperto ? s25 : null);
-    }
+    });
     var deltaPct = (rg.pari.coperto && rg.pari.valore > 0) ? Math.round(((rg.fattoAnno - rg.pari.valore) / rg.pari.valore) * 100) : null;
-    var maxY = Math.max(rg.targetAnno || 0, cum25[11] || 0, rg.fattoAnno || 0) * 1.08 || 1;
+    var maxY = Math.max(rg.targetAnno || 0, cum25[n] || 0, rg.fattoAnno || 0) * 1.08 || 1;
     var xy = function(i, v){
-      return [PAD + (i/11) * (W-PAD*2), H - PAD - (Math.max(0, v||0) / maxY) * (H-PAD*2)];
+      return [PAD + (n > 0 ? i/n : 0) * (W-PAD*2), H - PAD - (Math.max(0, v||0) / maxY) * (H-PAD*2)];
     };
     var pathOf = function(arr){
       var pts = [];
@@ -1069,7 +1052,7 @@ function _objGrafLinee(righe){
       return pts.map(function(p,k2){ return (k2===0?'M':'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1); }).join(' ');
     };
     var endPt = xy(ultimoIdx, cum26[ultimoIdx]);
-    var p1 = xy(0,0), p2 = xy(11, rg.targetAnno || maxY);
+    var p1 = xy(0,0), p2 = xy(n, rg.targetAnno || maxY);
     h += '<div class="objg-linea-card"><div class="objg-linea-head"><span style="color:' + ind.col + ';font-weight:700;font-size:.85rem">'
       + '<span class="pall" style="background:' + ind.col + '"></span>' + ind.nome + '</span>'
       + (deltaPct != null ? ('<span class="objg-delta ' + (deltaPct >= 0 ? 'su' : 'giu') + '">' + (deltaPct >= 0 ? '▲' : '▼') + ' ' + Math.abs(deltaPct) + '%</span>') : '')
@@ -1078,7 +1061,7 @@ function _objGrafLinee(righe){
       + (rg.prec.coperto ? ('<path d="' + pathOf(cum25) + '" fill="none" stroke="var(--text3)" stroke-width="1.5" stroke-dasharray="4,3"/>') : '')
       + '<path d="' + pathOf(cum26) + '" fill="none" stroke="' + ind.col + '" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>'
       + '<circle cx="' + endPt[0].toFixed(1) + '" cy="' + endPt[1].toFixed(1) + '" r="3" fill="' + ind.col + '"/>'
-      + '</svg><div class="objg-linea-foot"><span>' + _objNum(rg.fattoAnno, euro, true) + ' a ' + OBJ_MESI3[ultimoIdx] + '</span>'
+      + '</svg><div class="objg-linea-foot"><span>' + _objNum(rg.fattoAnno, euro, true) + ' a oggi</span>'
       + '<span>' + (rg.targetAnno ? ('obiettivo ' + _objNum(rg.targetAnno, euro, true)) : 'nessun obiettivo annuo') + '</span></div></div>';
   });
   h += '</div>';
@@ -1086,21 +1069,29 @@ function _objGrafLinee(righe){
     + '<span><i style="width:12px;height:2px;border-radius:0;background:var(--text)"></i>' + a + '</span>'
     + '<span><i style="width:12px;height:0;border-top:2px dashed var(--text3);background:none"></i>' + (a-1) + '</span>'
     + '<span><i style="width:12px;height:0;border-top:2px dotted var(--text3);background:none"></i>ritmo obiettivo</span></div>';
-  return _gxColonna('Andamento cumulato', 'il totale che cresce mese dopo mese, contro l\'anno prima', OBJ_T.blu, h + leg);
+  return _gxColonna('Andamento cumulato', 'il totale che cresce nel tempo, contro l\'anno prima', OBJ_T.blu, h + leg, _objSelettorePeriodo());
 }
 
 /* ── 3: schede a ciambella — a che punto sei adesso, per indicatore ─────── */
 function _objGrafRadiali(righe){
   var o = _objCtx.oggi, a = _objAnno, R = 30, STROKE = 7, C = 2 * Math.PI * R;
+  /* "a che punto sei ADESSO": nel periodo che contiene oggi (mese o
+     trimestre corrente). Nella vista Annuale non c'è un "periodo corrente"
+     più piccolo dell'anno: resta il passo-obiettivo già calcolato da objRiga
+     (rg.dovuto / rg.fattoAnno), come prima di avere mensile/trimestrale. */
+  var periodoCorrente = null;
+  if(_objPer !== 'annuale' && a === o.anno){
+    periodoCorrente = _objPeriodi().filter(function(p){ return p.mesi.indexOf(o.mese) >= 0; })[0] || null;
+  }
   var h = '<div class="objg-radiali-grid">';
   righe.forEach(function(rg){
     var ind = objInd(rg.id), euro = !!ind.euro;
-    var cOggi = (a === o.anno) ? rg.celle[o.mese-1] : null;
+    var cOggi = periodoCorrente ? _objPeriodoAggregato(rg, periodoCorrente) : null;
     var pct, stato, sub;
     if(cOggi && cOggi.target > 0){
       pct = Math.min(1, cOggi.fatto / cOggi.target);
       stato = cOggi.stato;
-      sub = OBJ_MESI3[o.mese-1] + ': ' + _objNum(cOggi.fatto, euro) + ' / ' + _objNum(cOggi.target, euro);
+      sub = cOggi.etichetta + ': ' + _objNum(cOggi.fatto, euro) + ' / ' + _objNum(cOggi.target, euro);
     } else if(rg.dovuto > 0){
       pct = Math.min(1, rg.fattoAnno / rg.dovuto);
       stato = rg.statoAnno;
@@ -1128,27 +1119,28 @@ function _objGrafRadiali(righe){
     + '<span><i style="background:' + OBJ_T.verde + '"></i>centrato</span>'
     + '<span><i style="background:' + OBJ_T.ambra + '"></i>vicino</span>'
     + '<span><i style="background:' + OBJ_T.rosso + '"></i>sotto</span></div>';
-  return _gxColonna('Schede a ciambella', 'a che punto sei adesso, indicatore per indicatore', OBJ_T.blu, h + leg);
+  return _gxColonna('Schede a ciambella', 'a che punto sei adesso, indicatore per indicatore', OBJ_T.blu, h + leg, _objSelettorePeriodo());
 }
 
 /* ── 4: griglia a colori — la stessa tabella, ma il colore fa il lavoro ──── */
 function _objGrafGriglia(righe){
-  var o = _objCtx.oggi, a = _objAnno;
-  var h = '<div class="obj-scroll"><table class="objg-heat"><thead><tr><th class="sx">Indicatore</th>';
-  OBJ_MESI3.forEach(function(m, i){
-    var ora = (a === o.anno && i+1 === o.mese);
-    h += '<th' + (ora ? ' class="ora"' : '') + '>' + m + '</th>';
+  var o = _objCtx.oggi, a = _objAnno, periodi = _objPeriodi(), n = periodi.length;
+  var h = '<div class="obj-scroll"><table class="objg-heat" style="min-width:' + Math.max(300, n*72+150) + 'px"><thead><tr><th class="sx">Indicatore</th>';
+  periodi.forEach(function(p){
+    var ora = (a === o.anno && p.mesi.indexOf(o.mese) >= 0);
+    h += '<th' + (ora ? ' class="ora"' : '') + '>' + _objEtichBreve(p.etichetta) + '</th>';
   });
   h += '<th>Anno</th></tr></thead><tbody>';
   righe.forEach(function(rg){
     var ind = objInd(rg.id), euro = !!ind.euro;
     h += '<tr><td class="nome"><span class="n"><span class="pall" style="background:' + ind.col + '"></span>' + ind.nome + '</span></td>';
-    rg.celle.forEach(function(c, i){
+    periodi.forEach(function(p){
+      var c = _objPeriodoAggregato(rg, p);
       var vuoto = (c.stato === 'futuro');
       var col = OBJ_STATO_COL[c.stato];
       var bg = vuoto ? 'var(--bg3)' : (col ? ('color-mix(in srgb, ' + col + ' 20%, var(--bg2))') : ('color-mix(in srgb, ' + ind.col + ' 14%, var(--bg2))'));
-      var ora = (a === o.anno && c.mese === o.mese);
-      var tit = ind.nome + ' ' + OBJ_MESI3[i] + ': ' + _objNum(c.fatto, euro, true) + (c.target > 0 ? (' (obiettivo ' + _objNum(c.target, euro, true) + ')') : ' (nessun obiettivo)');
+      var ora = (a === o.anno && p.mesi.indexOf(o.mese) >= 0);
+      var tit = ind.nome + ' ' + c.etichetta + ': ' + _objNum(c.fatto, euro, true) + (c.target > 0 ? (' (obiettivo ' + _objNum(c.target, euro, true) + ')') : ' (nessun obiettivo)');
       h += '<td class="objg-cell' + (ora ? ' ora' : '') + '" style="background:' + bg + '" title="' + _esc(tit) + '">' + (vuoto ? '·' : _objNum(c.fatto, euro)) + '</td>';
     });
     h += '<td class="objg-tot">' + _objNum(rg.fattoAnno, euro, true) + '</td></tr>';
@@ -1158,8 +1150,8 @@ function _objGrafGriglia(righe){
     + '<span><i style="background:' + OBJ_T.verde + '"></i>centrato</span>'
     + '<span><i style="background:' + OBJ_T.ambra + '"></i>vicino</span>'
     + '<span><i style="background:' + OBJ_T.rosso + '"></i>sotto</span>'
-    + '<span><i style="background:var(--bg3)"></i>mese non ancora iniziato</span></div>';
-  return _gxColonna('Griglia a colori', 'un colore per vedere subito dove guardare', OBJ_T.blu, h + leg);
+    + '<span><i style="background:var(--bg3)"></i>periodo non ancora iniziato</span></div>';
+  return _gxColonna('Griglia a colori', 'un colore per vedere subito dove guardare', OBJ_T.blu, h + leg, _objSelettorePeriodo());
 }
 
 /* ── il dettaglio di un indicatore ────────────────────────────────────── */
@@ -1873,7 +1865,6 @@ window.objEsportaExcel = function(){
 /* ── finestra ──────────────────────────────────────────────────────────── */
 
 window._objVaiVista = function(v){ _objVista = v; _objDisegna(); };
-window._objVaiScala = function(s){ _objScala = s; _objDisegna(); };
 window._objApri = function(id){ _objSel = id; _objDisegna(); };
 window._objVaiStAnno = function(y){ _objStAnno = +y; _objDisegna(); };
 window._objCambiaAnno = function(a){ _objAnno = +a; _objStAnno = null; _objDisegna(); };
@@ -1940,11 +1931,10 @@ function _objDisegna(){
   } else {
     var gci = righe[righe.length-1];
     var sel = righe.filter(function(r){ return r.id === _objSel; })[0] || righe[1];
-    var corpoGrafico = _objGraf === 'barre' ? _objGrafBarre(righe)
-      : _objGraf === 'linee' ? _objGrafLinee(righe)
+    var corpoGrafico = _objGraf === 'linee' ? _objGrafLinee(righe)
       : _objGraf === 'radiali' ? _objGrafRadiali(righe)
       : _objGraf === 'colori' ? _objGrafGriglia(righe)
-      : _objGriglia(righe);
+      : _objGrafBarre(righe);
     h += _objAvvisoPicco()
       + _objStriscia(R, gci)
       + _objSelettoreGrafico()
