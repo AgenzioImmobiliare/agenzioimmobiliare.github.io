@@ -19043,6 +19043,12 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
              come le altre due — archivia e libera l'immobile — ma nello storico
              resta scritto cosa è successo davvero. -->
         <option value="superata">Superata da una proposta migliore → immobile torna Attivo</option>
+        <!-- [2 nov 2026] Il caso chiesto da Enzo: il venditore non accetta ma
+             non rifiuta nemmeno, rilancia con condizioni diverse. A differenza
+             di rifiutata/scaduta/superata, la pratica NON torna ad Attivo: la
+             trattativa continua, resta in fase Proposta pronta per il nuovo
+             giro. Vedi propControproposta in savePraticaImm(). -->
+        <option value="controproposta">Controproposta dal venditore → resta in trattativa</option>
           </select>
         </div>
         <!-- [1 ott 2026] Le due date che mancavano per seguire la trattativa
@@ -19422,7 +19428,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.2nov-MANDATO';
+var APP_VERSION = 'v.2nov-CONTROPROP';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -31846,7 +31852,8 @@ function _pimRenderStorico(p){
   function dat(d){ return (d && typeof fmtD==='function') ? fmtD(d) : (d||''); }
   var ETI={ rifiutata:['Rifiutata','#DC2626','#FEF2F2','#FECACA'],
             scaduta:['Scaduta','#B45309','#FFFBEB','#FDE68A'],
-            superata:['Superata da una migliore','#6D28D9','#F5F3FF','#DDD6FE'] };
+            superata:['Superata da una migliore','#6D28D9','#F5F3FF','#DDD6FE'],
+            controproposta:['Controproposta dal venditore','#1D4ED8','#EFF6FF','#BFDBFE'] };
   var righe=st.slice().reverse().map(function(x){
     var e=ETI[String(x.esito||'')]||['Archiviata','#64748B','#F1F5F9','#CBD5E1'];
     var cond=[];
@@ -32642,6 +32649,14 @@ function onEsitoPropChange(){
     warn.innerHTML='La proposta verrà <strong>archiviata come superata</strong> (il venditore ne ha accettata una migliore). '
       + 'L\'immobile tornerà <strong>Attivo</strong> e la provvigione nata da questa proposta verrà tolta. '
       + 'Salvare per confermare, poi inserisci la nuova proposta nella stessa pratica.';
+  } else if(v==='controproposta'){
+    /* [2 nov 2026] A differenza di rifiutata/scaduta/superata: qui l'immobile
+       NON torna Attivo, resta in trattativa — è il venditore che rilancia,
+       non una proposta morta. */
+    warn.style.display='block';
+    warn.style.background='#EFF6FF'; warn.style.border='1px solid #BFDBFE'; warn.style.color='#1D4ED8';
+    warn.innerHTML=' La proposta attuale verrà <strong>archiviata nello storico</strong> (scrivi le nuove condizioni del venditore in "Note Proposta" o "Clausole" prima di salvare). '
+      + 'L\'immobile <strong>resta in trattativa</strong>, non torna Attivo. Salva, poi inserisci qui sopra i termini della nuova proposta (anche con lo stesso acquirente).';
   } else if(v==='accettata'){
     warn.style.display='block';
     warn.style.background='#F0FDF4'; warn.style.border='1px solid #BBF7D0'; warn.style.color='#166534';
@@ -32926,6 +32941,13 @@ function savePraticaImm(){
   const qv=0, qa=0, inc=0; // provvigioni gestite separatamente
   const esitoProp=g('pim-esito-prop');
   const propRifiutataOScaduta=_pimCurStage==='proposta' && (esitoProp==='rifiutata'||esitoProp==='scaduta'||esitoProp==='superata');
+  /* [2 nov 2026] Controproposta: il venditore non accetta ma rilancia con
+     condizioni diverse. Si archivia e si azzerano i campi come per
+     rifiutata/scaduta/superata (propArchiviata, sotto) — ma NON è una
+     proposta morta: la pratica resta in fase Proposta invece di tornare ad
+     Acquisizione (vedi statoFinale più sotto), pronta per il nuovo giro. */
+  const propControproposta=_pimCurStage==='proposta' && esitoProp==='controproposta';
+  const propArchiviata=propRifiutataOScaduta||propControproposta;
   const propAccettata=_pimCurStage==='proposta' && esitoProp==='accettata';
 
   // ── Validazione campi obbligatori in tab Proposta ──
@@ -32957,7 +32979,7 @@ function savePraticaImm(){
      visita" / "Salva lo stesso" (scelta di Enzo: avviso + riga nel Da
      sistemare). Non richiede di nuovo se la proposta era gia' salvata con
      lo stesso acquirente: li' resta la riga del Da sistemare. */
-  if(_pimCurStage==='proposta' && !propRifiutataOScaduta && typeof window.aeControllaProposta==='function'){
+  if(_pimCurStage==='proposta' && !propArchiviata && typeof window.aeControllaProposta==='function'){
     const _pPrima=_pimPratIdx>=0?D.pratiche[_pimPratIdx]:null;
     const _acqN=(g('pim-acquirente')||'').trim();
     const _giaSalvata=!!(_pPrima && _pPrima.stato==='proposta' && String(_pPrima.acquirente||'').trim().toUpperCase()===_acqN.toUpperCase());
@@ -32995,8 +33017,8 @@ function savePraticaImm(){
   const existingP=_pimPratIdx>=0?D.pratiche[_pimPratIdx]:null;
   const storicoProposte=existingP?.storicoProposte||[];
 
-  // If proposta rifiutata/scaduta: archive it and revert to acquisizione
-  if(propRifiutataOScaduta){
+  // Se la proposta è rifiutata/scaduta/superata/controproposta: archivia
+  if(propArchiviata){
     const _nuovaArch={
       acquirente:g('pim-acquirente'),telA:g('pim-tel-a'),
       dprop:g('pim-dprop'),importoProp:getNum('pim-importo-prop'),
@@ -33038,7 +33060,7 @@ function savePraticaImm(){
         });
       }
       D.provvigioni.splice(provPropIdx,1);
-      showToast(' Proposta eliminata — provvigione e pagamenti rimossi','','');
+      showToast(propControproposta?' Proposta archiviata — provvigione da ricalcolare sul nuovo giro':' Proposta eliminata — provvigione e pagamenti rimossi','','');
     }
   }
 
@@ -33059,37 +33081,37 @@ function savePraticaImm(){
     mandato:g('pim-mandato'),dataAcq:g('pim-data-acq'),scad:g('pim-scad'),
     prezzoRich:getNum('pim-prezzo-rich'),percV:_pimPercStr('v'),noteAcq:g('pim-note-acq'),
     impV:getNum('pim-imp-v')||'',fissoV:g('pim-fisso-v')==='1',
-    // proposta (only keep current if not archived)
-    acqRef:propRifiutataOScaduta?'':g('pim-acq-ref'),
-    acquirente:propRifiutataOScaduta?'':g('pim-acquirente'),
-    telA:propRifiutataOScaduta?'':g('pim-tel-a'),
-    dprop:propRifiutataOScaduta?'':g('pim-dprop'),
-    importoProp:propRifiutataOScaduta?0:getNum('pim-importo-prop'),
-    caparra:propRifiutataOScaduta?0:getNum('pim-caparra'),
-    scadProp:propRifiutataOScaduta?'':g('pim-scad-prop'),
-    clausole:propRifiutataOScaduta?'':g('pim-clausole'),
-    mutuoSubordinata: propRifiutataOScaduta ? false : !!(document.getElementById('pim-mutuo')||{}).checked,
-    mutuoDelibera: propRifiutataOScaduta ? '' : g('pim-mutuo-data'),
-    mutuoBanca: propRifiutataOScaduta ? '' : g('pim-mutuo-banca'),
-    riservaMigliorOfferta: propRifiutataOScaduta ? false : !!(document.getElementById('pim-riserva')||{}).checked,
-    acqTipo:       propRifiutataOScaduta ? '' : g('pim-acq-tipo'),
-    acqMutuo:      propRifiutataOScaduta ? false : !!(document.getElementById('pim-acq-mutuo')||{}).checked,
-    acqMutuoGreen: propRifiutataOScaduta ? false : !!(document.getElementById('pim-acq-green')||{}).checked,
-    acqConsap:     propRifiutataOScaduta ? false : !!(document.getElementById('pim-acq-consap')||{}).checked,
-    percA:propRifiutataOScaduta?'':_pimPercStr('a'),
-    impA:propRifiutataOScaduta?'':(getNum('pim-imp-a')||''),
-    fissoA:propRifiutataOScaduta?false:g('pim-fisso-a')==='1',
-    noteProp:propRifiutataOScaduta?'':g('pim-note-prop'),
+    // proposta (only keep current if not archived — archiviata include anche la controproposta: vedi propArchiviata)
+    acqRef:propArchiviata?'':g('pim-acq-ref'),
+    acquirente:propArchiviata?'':g('pim-acquirente'),
+    telA:propArchiviata?'':g('pim-tel-a'),
+    dprop:propArchiviata?'':g('pim-dprop'),
+    importoProp:propArchiviata?0:getNum('pim-importo-prop'),
+    caparra:propArchiviata?0:getNum('pim-caparra'),
+    scadProp:propArchiviata?'':g('pim-scad-prop'),
+    clausole:propArchiviata?'':g('pim-clausole'),
+    mutuoSubordinata: propArchiviata ? false : !!(document.getElementById('pim-mutuo')||{}).checked,
+    mutuoDelibera: propArchiviata ? '' : g('pim-mutuo-data'),
+    mutuoBanca: propArchiviata ? '' : g('pim-mutuo-banca'),
+    riservaMigliorOfferta: propArchiviata ? false : !!(document.getElementById('pim-riserva')||{}).checked,
+    acqTipo:       propArchiviata ? '' : g('pim-acq-tipo'),
+    acqMutuo:      propArchiviata ? false : !!(document.getElementById('pim-acq-mutuo')||{}).checked,
+    acqMutuoGreen: propArchiviata ? false : !!(document.getElementById('pim-acq-green')||{}).checked,
+    acqConsap:     propArchiviata ? false : !!(document.getElementById('pim-acq-consap')||{}).checked,
+    percA:propArchiviata?'':_pimPercStr('a'),
+    impA:propArchiviata?'':(getNum('pim-imp-a')||''),
+    fissoA:propArchiviata?false:g('pim-fisso-a')==='1',
+    noteProp:propArchiviata?'':g('pim-note-prop'),
     /* [13 ott 2026] Prima: propAccettata vale solo nella linguetta Proposta,
        quindi ogni Salva dalla linguetta Vendita riscriveva l'esito come
        "in_corso" su pratiche già accettate e rogitate. Ora conta la tendina,
        qualunque sia la linguetta. */
-    esitoProp:propRifiutataOScaduta?'':(esitoProp==='accettata'?'accettata':'in_corso'),
+    esitoProp:propArchiviata?'':(esitoProp==='accettata'?'accettata':'in_corso'),
     /* [1 ott 2026] Si scrive '' (mai undefined) quando la proposta salta:
        aggiornaRecord tiene i campi vecchi, e una data di accettazione rimasta
        appesa farebbe sembrare accettata la proposta successiva. */
-    dataAccettazione:(propRifiutataOScaduta||(_pimCurStage==='proposta'&&!propAccettata))?'':g('pim-data-acc'),
-    dataPreliminare:(propRifiutataOScaduta||(_pimCurStage==='proposta'&&!propAccettata))?'':g('pim-data-prel'),
+    dataAccettazione:(propArchiviata||(_pimCurStage==='proposta'&&!propAccettata))?'':g('pim-data-acc'),
+    dataPreliminare:(propArchiviata||(_pimCurStage==='proposta'&&!propAccettata))?'':g('pim-data-prel'),
     storicoProposte,
     // vendita
     importo:getNum('pim-importo-vend')||getNum('pim-importo-prop'),
@@ -33103,7 +33125,7 @@ function savePraticaImm(){
     vendRef:im.clienteRef||'', zona:im.zona||'', indir:im.indirizzo||''
   };
   /* [1 ott 2026] affitto: provvigione pattuita, decorrenza, registrazione */
-  try{ if(typeof affPraticaLeggi==='function') Object.assign(p, affPraticaLeggi(propRifiutataOScaduta)); }catch(_af){ console.warn('[Affitto] lettura pratica KO:', _af); }
+  try{ if(typeof affPraticaLeggi==='function') Object.assign(p, affPraticaLeggi(propArchiviata)); }catch(_af){ console.warn('[Affitto] lettura pratica KO:', _af); }
 
   /* ─── TIMELINE: pratica creata o stato cambiato ─── */
   try{
@@ -33224,12 +33246,14 @@ function savePraticaImm(){
      salvati (campi della proposta vuoti, esito "In corso", storico
      aggiornato). Prima restava la vecchia proposta sullo schermo e un
      secondo Salva la archiviava di nuovo. */
-  if(propRifiutataOScaduta){
+  if(propArchiviata){
     try{ openPraticaImm(_pimImmIdx); switchPratStage('proposta'); }catch(_ro){ console.warn('[Pratica] ricarica dopo archivio KO:', _ro); }
   }
 
   // Toast with context
-  if(propRifiutataOScaduta){
+  if(propControproposta){
+    showToast(' Proposta archiviata — pratica resta in trattativa, inserisci il nuovo giro',null,'');
+  } else if(propRifiutataOScaduta){
     showToast(' Proposta archiviata — Immobile tornato Attivo per nuove proposte',null,'');
   } else if(propAccettata){
     showToast(window._pimAff?' Proposta accettata! Compila la fase Contratto quando si firma.':' Proposta accettata! Compila la fase Vendita/Rogito per finalizzare.',null,'');
@@ -74652,7 +74676,7 @@ try{
       else if(m.indexOf('ritiro') >= 0) es.ritiro++;
       else es.altro++;
     });
-    var sp = {rifiutata:0, scaduta:0, superata:0};
+    var sp = {rifiutata:0, scaduta:0, superata:0, controproposta:0};
     RF.forEach(function(r){
       (r.prat && Array.isArray(r.prat.storicoProposte) ? r.prat.storicoProposte : []).forEach(function(x){
         if(!x) return;
@@ -74660,14 +74684,18 @@ try{
         if(sp[x.esito] !== undefined) sp[x.esito]++;
       });
     });
-    var maxE = Math.max(1, es.nonRinn, es.revoca, es.ritiro, es.altro, sp.rifiutata, sp.scaduta, sp.superata);
+    var maxE = Math.max(1, es.nonRinn, es.revoca, es.ritiro, es.altro, sp.rifiutata, sp.scaduta, sp.superata, sp.controproposta);
     var esiti = barraH('Non rinnovati', es.nonRinn, maxE, '#EA580C', '<b>' + es.nonRinn + '</b>')
       + barraH('Revocati o disdetti', es.revoca, maxE, '#DC2626', '<b>' + es.revoca + '</b>')
       + barraH('Ritirati dal mercato', es.ritiro, maxE, '#64748B', '<b>' + es.ritiro + '</b>')
       + barraH('Altro', es.altro, maxE, '#94A3B8', '<b>' + es.altro + '</b>')
       + barraH('Proposte rifiutate', sp.rifiutata, maxE, '#F59E0B', '<b>' + sp.rifiutata + '</b>')
       + barraH('Proposte scadute', sp.scaduta, maxE, '#F59E0B', '<b>' + sp.scaduta + '</b>')
-      + barraH('Proposte superate', sp.superata, maxE, '#8B5CF6', '<b>' + sp.superata + '</b>');
+      + barraH('Proposte superate', sp.superata, maxE, '#8B5CF6', '<b>' + sp.superata + '</b>')
+      /* [2 nov 2026] controproposta non è una proposta "persa" come le altre
+         (la trattativa continua), ma vale tenerne il conto qui: dice quante
+         trattative hanno avuto un botta e risposta sul prezzo. */
+      + barraH('Controproposte dal venditore', sp.controproposta, maxE, '#2563EB', '<b>' + sp.controproposta + '</b>');
 
     var icoStat = '<line x1="4" y1="20" x2="20" y2="20"/><line x1="7" y1="16" x2="7" y2="10"/><line x1="12" y1="16" x2="12" y2="6"/><line x1="17" y1="16" x2="17" y2="12"/>';
     return kpi
