@@ -12876,6 +12876,17 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6"/><path d="m15.5 7.5 3 3L22 7l-3-3"/></svg> Nuova acquisizione <span id="dash-acq-num"></span>
 </button>
     </div>
+    <!-- [2 nov 2026] Vista Personale/Agenzia: filtra i numeri della Dashboard
+         per chi ha fatto l'affare (_agenteDi/_agenteCorrente). "Team" verrà
+         quando Enzo avrà colleghi da seguire — non ora. -->
+    <div class="dt-vista-row">
+      <span class="dt-vista-lbl">Vista</span>
+      <div class="dash-vista" role="tablist">
+        <button type="button" id="dash-vista-personale" class="dv-btn" onclick="dashSetVista('personale')" title="Solo i tuoi affari">Personale</button>
+        <button type="button" id="dash-vista-agenzia" class="dv-btn" onclick="dashSetVista('agenzia')" title="Tutta l'agenzia">Agenzia</button>
+      </div>
+      <span id="dash-vista-avviso" style="display:none">Per vedere qui i tuoi numeri personali, collegati alla tua scheda in <a href="#" onclick="event.preventDefault();provTab('agenti',true);go('provvigioni');">Agenti</a>.</span>
+    </div>
     <div class="dt-numeri">
     <button type="button" class="dt-k" onclick="go('clienti')" title="Apri i clienti"><span class="et"><i style="background:#2563EB"></i>Clienti</span><span class="val" id="sv-cli">0</span><span class="sot">in rubrica</span></button>
     <button type="button" class="dt-k" onclick="go('immobili')" title="Apri gli immobili"><span class="et"><i style="background:#059669"></i>Immobili attivi</span><span class="val" id="sv-imm">0</span><span class="sot">in portafoglio</span></button>
@@ -12898,6 +12909,14 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
     #dash-acq-num:empty{display:none}
     #dash-acq-num{background:#fff;color:color-mix(in srgb,var(--brand,#EA580C) 75%,#000);font-weight:900;font-size:.74rem;border-radius:20px;padding:2px 8px;line-height:1.3}
     #dash-acq-num.ferma{background:#FEF3C7;color:#92400E}
+    .dt-vista-row{display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap}
+    .dt-vista-lbl{font-size:.74rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px}
+    .dash-vista{display:inline-flex;background:var(--bg3,#F1F5F9);border-radius:10px;padding:3px;gap:2px}
+    .dash-vista .dv-btn{border:none;background:transparent;font-family:inherit;font-size:.82rem;font-weight:700;color:var(--text3);padding:6px 14px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s}
+    .dash-vista .dv-btn:hover{color:var(--text)}
+    .dash-vista .dv-btn.is-active{background:var(--bg,#fff);color:var(--brand,#EA580C);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+    #dash-vista-avviso{font-size:.76rem;color:var(--text3)}
+    #dash-vista-avviso a{color:var(--brand,#EA580C);font-weight:700;text-decoration:none}
   </style>
   <style>
   #dash-testata{margin-bottom:16px;font-family:inherit}
@@ -17000,6 +17019,16 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
     </div>
     <div class="frow"><label class="flabel">Rif. Pratica</label>
       <input class="finput" id="im-pratica-ref" placeholder="Lascia vuoto se non ancora aperta">
+    </div>
+    <!-- [2 nov 2026] Interruttore rapido sullo stesso sistema di condivisione
+         titolare→colleghi già esistente (Amministrazione → Condivisione):
+         qui segna l'immobile come sempre visibile a tutti i colleghi, senza
+         dover configurare le eccezioni una per una da quel pannello. -->
+    <div class="frow fcol" style="grid-column:1/-1">
+      <label style="display:flex;align-items:center;gap:8px;font-size:0.86rem;font-weight:600;color:var(--text);cursor:pointer">
+        <input type="checkbox" id="im-condiviso"> Condividi con i colleghi (sola lettura)
+      </label>
+      <div style="font-size:0.74rem;color:var(--text4);margin-top:3px;margin-left:24px">Lo vedranno nella loro pagina "Dall'agenzia", senza proprietario, note interne o documenti.</div>
     </div>
 
     <!-- ═══ 4. INCARICO & MANDATO ═══ -->
@@ -28780,18 +28809,21 @@ function updateBadges(){
   if (nfTile) nfTile.style.display = _nfVisible ? '' : 'none';
 
   // ── KPI dashboard ──────────────────────────────────────────────
+  /* [2 nov 2026] Clienti e Richieste non hanno un campo "agente": restano
+     condivisi, non si filtrano per vista. Immobili, Proposte, Venduti e
+     Provvigioni invece sì, via _dashAgenteMio(). */
   document.getElementById('sv-cli').textContent=D.clienti.length;
-  document.getElementById('sv-imm').textContent=D.immobili.filter(i=>(i.stato||'').toLowerCase()==='attivo').length;
+  document.getElementById('sv-imm').textContent=D.immobili.filter(i=>(i.stato||'').toLowerCase()==='attivo'&&_dashAgenteMio(i)).length;
   document.getElementById('sv-rich').textContent=D.richieste.length;
-  document.getElementById('sv-prat').textContent=D.pratiche.filter(p=>p.stato==='proposta').length;
+  document.getElementById('sv-prat').textContent=D.pratiche.filter(p=>p.stato==='proposta'&&_dashAgenteMio(p)).length;
   const svVend=document.getElementById('sv-venduti');
   /* [8 set 2026] Stessa fonte degli altri conteggi. */
-  if(svVend) svVend.textContent=D.immobili.filter((im,ix)=>((typeof statoImmobileEff==='function')?statoImmobileEff(im,ix):(im.stato||'').toLowerCase())==='venduto').length;
+  if(svVend) svVend.textContent=D.immobili.filter((im,ix)=>((typeof statoImmobileEff==='function')?statoImmobileEff(im,ix):(im.stato||'').toLowerCase())==='venduto'&&_dashAgenteMio(im)).length;
   /* [7 ott 2026] Prima sommava p.inc delle pratiche, un campo che nessun
      modulo scrive: il riquadro diceva sempre €0. Ora conta gli incassi veri
      delle provvigioni, con la stessa regola della pagina Provvigioni. */
   const inc=(D.provvigioni||[]).reduce((s,p)=>{
-    if(!p||p.eliminata) return s;
+    if(!p||p.eliminata||!_dashAgenteMio(p)) return s;
     const X=(typeof window._provIncassiLati==='function')?window._provIncassiLati(p):null;
     return s+(X?(X.iv+X.ia):0);
   },0);
@@ -28801,8 +28833,39 @@ function updateBadges(){
 }
 
 // ===== DASHBOARD =====
+/* [2 nov 2026] Vista Personale/Agenzia: filtra la Dashboard per chi ha
+   fatto l'affare, riusando il risolutore già esistente per lo split
+   provvigioni (_agenteDi/_agenteCorrente — niente di nuovo lato dati).
+   "personale" = solo i record dell'agente collegato all'utente loggato;
+   "agenzia" = tutto l'archivio, come oggi. Senza un agente collegato
+   (_agenteCorrente()===null) non si filtra nulla: meglio mostrare tutto
+   che mostrare un vuoto che sembra un errore. */
+let _dashVista=(function(){ try{ return localStorage.getItem('dashVista')==='agenzia'?'agenzia':'personale'; }catch(e){ return 'personale'; } })();
+function _dashAgenteMio(rec){
+  if(_dashVista!=='personale') return true;
+  const io=(typeof _agenteCorrente==='function')?_agenteCorrente():null;
+  if(!io) return true;
+  const a=(typeof _agenteDi==='function')?_agenteDi(rec):null;
+  return !!(a && a.uuid && a.uuid===io.uuid);
+}
+function dashSetVista(v){
+  _dashVista=(v==='agenzia')?'agenzia':'personale';
+  try{ localStorage.setItem('dashVista', _dashVista); }catch(e){}
+  _dashVistaSyncUI();
+  updateBadges();
+  renderDash();
+}
+function _dashVistaSyncUI(){
+  const bp=document.getElementById('dash-vista-personale'), ba=document.getElementById('dash-vista-agenzia');
+  if(bp) bp.classList.toggle('is-active', _dashVista==='personale');
+  if(ba) ba.classList.toggle('is-active', _dashVista==='agenzia');
+  const avviso=document.getElementById('dash-vista-avviso');
+  if(avviso) avviso.style.display=(_dashVista==='personale' && !((typeof _agenteCorrente==='function')?_agenteCorrente():null)) ? '' : 'none';
+}
+window.dashSetVista=dashSetVista;
 function renderDash(){
   updateBadges();
+  _dashVistaSyncUI();
   // ── Hero header ──
   const og=today();
   const nomeGiorno=['Domenica','Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'][new Date().getDay()];
@@ -28813,26 +28876,26 @@ function renderDash(){
   const dhProp=document.getElementById('dh-proposte');
   const dhVend=document.getElementById('dh-venduti');
   const dhVis=document.getElementById('dh-visite');
-  if(dhProp) dhProp.textContent=D.pratiche.filter(p=>p.stato==='proposta').length;
+  if(dhProp) dhProp.textContent=D.pratiche.filter(p=>p.stato==='proposta'&&_dashAgenteMio(p)).length;
   /* [8 set 2026] Qui il confronto era anche SENZA minuscolo: un immobile
      salvato come "Venduto" non veniva contato. */
-  if(dhVend) dhVend.textContent=D.immobili.filter((im,ix)=>((typeof statoImmobileEff==='function')?statoImmobileEff(im,ix):(im.stato||'').toLowerCase())==='venduto').length;
-  if(dhVis) dhVis.textContent=D.visite.length;
+  if(dhVend) dhVend.textContent=D.immobili.filter((im,ix)=>((typeof statoImmobileEff==='function')?statoImmobileEff(im,ix):(im.stato||'').toLowerCase())==='venduto'&&_dashAgenteMio(im)).length;
+  if(dhVis) dhVis.textContent=D.visite.filter(_dashAgenteMio).length;
   // Quick tags
   const tagsEl=document.getElementById('dash-hero-tags');
   if(tagsEl){
     const tags=[];
-    const scadMandati=D.immobili.filter(im=>{if(!im.incFine)return false;const d=new Date(im.incFine+'T00:00:00');const now=new Date();const d7=new Date();d7.setDate(d7.getDate()+7);return d>=now&&d<=d7;}).length;
+    const scadMandati=D.immobili.filter(im=>{if(!im.incFine||!_dashAgenteMio(im))return false;const d=new Date(im.incFine+'T00:00:00');const now=new Date();const d7=new Date();d7.setDate(d7.getDate()+7);return d>=now&&d<=d7;}).length;
     /* [22 ott 2026] le cose di oggi sono pulsanti: portano dove si sistemano */
     if(scadMandati>0) tags.push(`<button type="button" class="dt-chip" onclick="go('immobili')" title="Incarichi che scadono nei prossimi 7 giorni"><i style="background:#DC2626"></i><b>${scadMandati}</b> ${scadMandati>1?'mandati':'mandato'} in scadenza</button>`);
     const appOggi=D.eventi.filter(e=>{
-      if(!e || !e.data || e._readOnly) return false;
+      if(!e || !e.data || e._readOnly || !_dashAgenteMio(e)) return false;
       /* [3 set 2026] Copre anche i giorni intermedi di ferie/corsi: prima,
          dal secondo giorno in poi, il contatore diceva zero impegni. */
       return _evCopreGiorno(e, og);
     }).length;
     if(appOggi>0) tags.push(`<button type="button" class="dt-chip" onclick="go('calendario')" title="Apri l'agenda"><i style="background:#4F46E5"></i><b>${appOggi}</b> ${appOggi>1?'appuntamenti':'appuntamento'} oggi</button>`);
-    const propAccettate=D.pratiche.filter(p=>p.esitoProp==='accettata'&&p.stato==='proposta').length;
+    const propAccettate=D.pratiche.filter(p=>p.esitoProp==='accettata'&&p.stato==='proposta'&&_dashAgenteMio(p)).length;
     if(propAccettate>0) tags.push(`<button type="button" class="dt-chip" onclick="go('pratiche')" title="Apri le pratiche"><i style="background:#059669"></i><b>${propAccettate}</b> ${propAccettate>1?'proposte accettate — pronte':'proposta accettata — pronta'} per rogito</button>`);
     tagsEl.innerHTML=tags.length ? tags.join('') : '<span class="dt-chip calmo"><i style="background:#94A3B8"></i>Niente di urgente oggi</span>';
   }
@@ -28848,7 +28911,7 @@ function renderDash(){
     return e;
   });
   const prox=_evDash.filter(e=>{
-    if(!e || !e.data || e._readOnly) return false;
+    if(!e || !e.data || e._readOnly || !_dashAgenteMio(e)) return false;
     if(typeof isEvVendutoOrArchiviato==='function' && isEvVendutoOrArchiviato(e)) return false;
     // normalizza data (rimuove eventuali T..., trim spazi, gestisce slash invece di trattini)
     let d=String(e.data||'').trim().substring(0,10).replace(/\//g,'-');
@@ -28879,8 +28942,8 @@ function renderDash(){
   // ── Scadenze ──
   const f30=new Date();f30.setDate(f30.getDate()+30);
   const statiChiusi=['venduto','vendita','revoca','archiviata'];
-  const scadPrat=D.pratiche.filter(p=>{if(!p.scad)return false;if(statiChiusi.includes(p.stato||''))return false;const d=new Date(p.scad+'T00:00:00');return d>=new Date()&&d<=f30;});
-  const scadImm=D.immobili.filter((im,i)=>{if(!im.incFine)return false;if(calcolaStatoImmobile(i)!=='attivo')return false;const d=new Date(im.incFine+'T00:00:00');return d>=new Date()&&d<=f30;});
+  const scadPrat=D.pratiche.filter(p=>{if(!p.scad||!_dashAgenteMio(p))return false;if(statiChiusi.includes(p.stato||''))return false;const d=new Date(p.scad+'T00:00:00');return d>=new Date()&&d<=f30;});
+  const scadImm=D.immobili.filter((im,i)=>{if(!im.incFine||!_dashAgenteMio(im))return false;if(calcolaStatoImmobile(i)!=='attivo')return false;const d=new Date(im.incFine+'T00:00:00');return d>=new Date()&&d<=f30;});
   const totScad=scadPrat.length+scadImm.length;
   var _elScadCt=document.getElementById('dash-scad-ct'); if(_elScadCt) _elScadCt.textContent=totScad+' in scadenza';
   const _icoDoc='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>';
@@ -28889,11 +28952,12 @@ function renderDash(){
     const itemsImm=scadImm.map(im=>`<div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);align-items:center"><div style="width:36px;height:36px;border-radius:8px;background:#EF444422;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#EF4444">${_icoHome}</div><div><div style="font-weight:700;font-size:0.88rem">${im.tipo||'Immobile'} — ${im.comune||''}</div><div style="font-size:0.76rem;color:var(--red-l);font-weight:600">Scad. incarico: ${fmtD(im.incFine)}</div></div></div>`);
   var _elScad=document.getElementById('dash-scad'); if(_elScad) _elScad.innerHTML=totScad?[...itemsImm,...itemsPrat].join(''):'<div class="empty-state" style="padding:20px"><div class="empty-icon" style="font-size:1.8rem">✅</div><p>Nessuna scadenza imminente</p></div>';
   // ── Ultimi immobili ──
-  const ult=D.immobili.slice(-4).reverse();
+  const ult=D.immobili.filter(_dashAgenteMio).slice(-4).reverse();
   document.getElementById('dash-imm').innerHTML=ult.length?'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'+ult.map(im=>`<div class="imm-card" style="cursor:default"><div class="imm-photo">${im.foto?`<img src="${im.foto}" style="width:100%;height:100%;object-fit:cover">`:''}</div><div class="imm-body"><div class="imm-price">${im.prezzo?fmtE(im.prezzo):'—'}</div><div style="font-size:0.78rem;color:var(--text3);margin-top:2px">${im.tipo||''} · ${im.comune||''}</div></div></div>`).join('')+'</div>':'<div class="empty-state" style="padding:20px"><p>Nessun immobile</p></div>';
   // ── Grafico pratiche per stato (barre colorate) ──
-  const stati={};D.pratiche.forEach(p=>{stati[p.stato]=(stati[p.stato]||0)+1;});
-  const tot=D.pratiche.length;
+  const pratDash=D.pratiche.filter(_dashAgenteMio);
+  const stati={};pratDash.forEach(p=>{stati[p.stato]=(stati[p.stato]||0)+1;});
+  const tot=pratDash.length;
   const statiColors={acquisizione:'#3B82F6',proposta:'#F59E0B',vendita:'#10B981',revoca:'#EF4444'};
   const statiIcons={acquisizione:'',proposta:'',vendita:'',revoca:''};
   document.getElementById('dash-chart').innerHTML=tot?
@@ -67630,7 +67694,7 @@ try{
   // a riscaricarlo. Usa la stessa data del badge versione, es. '20260702'.
   // [25 set 2026] Ogni index.js passa il suo ?v= ai file che carica
   // (.view/.mobile/.report): alzare _MOD_V basta per TUTTI i moduli.
-  const _MOD_V = '20261102A';
+  const _MOD_V = '20261102B';
   const moduli = [
     ['Richieste', './src/modules/richieste/index.js?v=' + _MOD_V],
     ['Clienti',   './src/modules/clienti/index.js?v=' + _MOD_V],
@@ -78819,6 +78883,11 @@ body.dark-mode #modal-prov .mbody{background:transparent}
     (Array.isArray(D.immobili) ? D.immobili : []).forEach(function(im, i){
       if(!im || im._eliminato || im.eliminato) return;
       var dentro = statoImm(im, i) === 'attivo' ? imp.cat.immAttivi : imp.cat.immAltri;
+      /* [2 nov 2026] Interruttore rapido sulla scheda (im.condiviso): vale
+         per tutti i colleghi, come un "anche questo" automatico — ma
+         un'eccezione "tranne questo" per QUESTO collega resta più forte
+         (si controlla dopo, come già succedeva per piuImm/menoImm). */
+      if(im.condiviso) dentro = true;
       if(im.uuid && imp.piuImm.indexOf(im.uuid) >= 0) dentro = true;
       if(im.uuid && imp.menoImm.indexOf(im.uuid) >= 0) dentro = false;
       if(dentro) out.immobili.push(immPulito(im, i));
@@ -78826,6 +78895,7 @@ body.dark-mode #modal-prov .mbody{background:transparent}
     (Array.isArray(D.clienti) ? D.clienti : []).forEach(function(c, i){
       if(!c || c.eliminato || c._eliminato) return;
       var dentro = imp.cat.clienti && c.archiviato !== true && richiesteDi(c, i).length > 0;
+      if(c.condiviso && c.archiviato !== true) dentro = true;
       if(c.uuid && imp.piuCli.indexOf(c.uuid) >= 0) dentro = true;
       if(c.uuid && imp.menoCli.indexOf(c.uuid) >= 0) dentro = false;
       if(dentro) out.clienti.push(cliPulito(c, i));

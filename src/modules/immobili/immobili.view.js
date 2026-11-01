@@ -55,6 +55,10 @@ function openImmobileModal(idx){
   ['mare','centro','stazione','scuole','banca','supermercato','chiesa','farmacia','posta','ospedale','stadio'].forEach(k=>{const el=document.getElementById('im-dist-'+k);if(el)el.value='';});
   // Reset marketing
   ['cartello-imm','cartello-ag','cartella','open-house','immobiliare','idealista','casait','subito','trovacasa','tecnocasa','facebook','instagram','whatsapp','newsletter','giornalino','volantini','passaparola','vetrina'].forEach(k=>{const el=document.getElementById('im-mkt-'+k);if(el)el.checked=false;});
+  // [2 nov 2026] Interruttore "Condividi con i colleghi": a differenza delle
+  // caselle marketing sopra, va RIPRISTINATO in modifica (sotto, se idx!==undefined)
+  // — è un'impostazione reale, non lasciarla sempre spenta la cancellerebbe da sola.
+  const _condReset=document.getElementById('im-condiviso');if(_condReset)_condReset.checked=false;
   const mktNoteEl=document.getElementById('im-mkt-note');if(mktNoteEl)mktNoteEl.value='';
   const vincNoteEl=document.getElementById('im-vincoli-note');if(vincNoteEl)vincNoteEl.value='';
   const vincRes=document.getElementById('vincoli-result');if(vincRes){vincRes.style.display='none';vincRes.innerHTML='';}
@@ -118,6 +122,7 @@ function openImmobileModal(idx){
       /* [28 set 2026] indice di prestazione energetica dell'APE */
       epgl:'im-epgl'};
     Object.entries(fs).forEach(([k,id])=>{const el=document.getElementById(id);if(el&&im[k]!==undefined)el.value=im[k]||'';});
+    const _condEdit=document.getElementById('im-condiviso');if(_condEdit)_condEdit.checked=!!im.condiviso;
     updateValBadge(im.valutazione||5);
     aggiornaStatoBadgeImmobile(idx); // stato calcolato dalla pratica
     onAgenteImmChange(); // popola select agenzie
@@ -469,6 +474,10 @@ function saveImmobile(){
          c'è si tiene il valore già salvato invece di cancellarlo */
       epgl:gcat('im-epgl',oldIm&&oldIm.epgl),
       agenteRef,
+      /* [2 nov 2026] Interruttore rapido di condivisione coi colleghi (si
+         appoggia al sistema titolare→colleghi già esistente, vedi contenuto()
+         nel blocco "CONDIVISIONE CON I COLLEGHI" del monolite). */
+      condiviso:document.getElementById('im-condiviso')?.checked||false,
       valutazione:parseInt(g('im-valutazione'))||5,
       dataIns:g('im-data-ins'),data:g('im-data'),note:g('im-note'),descrizione:g('im-descr'),
       linkPortale:g('im-link-portale'),
