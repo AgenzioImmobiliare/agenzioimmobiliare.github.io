@@ -14448,11 +14448,12 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
   <!-- Voce rapida: scrivi e premi Invio, resta tutto qui senza apertura di finestre -->
   <div class="card" style="padding:12px 14px;margin-bottom:14px;display:flex;gap:10px;align-items:flex-start">
     <textarea id="dia-quick-testo" class="ftextarea" rows="1" placeholder="Scrivi qui una nota al volo (Invio per salvare)… es. «Chiamato il sig. Russo, vorrebbe vendere in Via Roma»" style="flex:1;resize:none;min-height:38px" onkeydown="diaQuickKey(event)"></textarea>
+    <button class="btn btn-outline" id="dia-mic-quick" onclick="diaDettatura('dia-quick-testo','dia-mic-quick')" title="Dettatura vocale" style="flex-shrink:0">🎤</button>
     <button class="btn btn-primary" onclick="diaQuickSave()" style="flex-shrink:0">Salva</button>
     <button class="btn btn-outline" onclick="openDiarioModal()" title="Aggiungi con cliente/immobile collegato o promemoria" style="flex-shrink:0">+ Dettagli</button>
   </div>
 
-  <div id="dia-stat-cards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px"></div>
+  <div id="dia-stat-cards" style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px"></div>
 
   <div class="filter-bar">
     <div class="search-box"><span class="search-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
@@ -14490,8 +14491,10 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
     <div class="mbody"><div class="fgrid">
 
       <div class="frow fcol" style="grid-column:1/-1">
-        <label class="flabel">Nota *</label>
-        <textarea class="ftextarea" id="dia-testo" rows="4" placeholder="Cosa è successo, chi hai sentito, cosa potrebbe portare un incarico…"></textarea>
+        <label class="flabel" style="display:flex;align-items:center;justify-content:space-between">Nota *
+          <button type="button" class="btn btn-sm btn-outline" id="dia-mic-modal" onclick="diaDettatura('dia-testo','dia-mic-modal')" title="Dettatura vocale">🎤 Detta</button>
+        </label>
+        <textarea class="ftextarea" id="dia-testo" rows="4" placeholder="Cosa è successo, chi hai sentito, cosa potrebbe portare un incarico…" onblur="_diaAutoSeguireSuTesto()"></textarea>
       </div>
 
       <div class="frow">
@@ -14562,6 +14565,10 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
     <button class="btn btn-primary" onclick="rdGenera()" style="margin-top:8px;width:100%;justify-content:center">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
       Genera e stampa
+    </button>
+    <button class="btn btn-outline" onclick="rdExportCSV()" style="margin-top:8px;width:100%;justify-content:center">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Esporta CSV
     </button>
   </div>
 </div>
@@ -37870,13 +37877,17 @@ function renderFollowUp(){
      30 giorni fissi, massimo 5 nomi. */
   try{ if(typeof ctInvalida==='function') ctInvalida(); }catch(_e){}
   const clientiDormenti=(typeof ctDaRichiamare==='function')?ctDaRichiamare():[];
-  const tot=fuList.length+clientiDormenti.length;
+  // [1 nov 2026] Voci di Diario segnate "da seguire" e scadute/di oggi: stesso
+  // posto dove Enzo già guarda ogni mattina, invece di un riquadro a parte.
+  const diaList=(D.diario||[]).filter(v=>v&&v.daSeguire&&!v.fatto&&v.dataSeguire&&v.dataSeguire<=og)
+    .sort((a,b)=>(a.dataSeguire||'').localeCompare(b.dataSeguire||''));
+  const tot=fuList.length+clientiDormenti.length+diaList.length;
   const badge=document.getElementById('dash-fu-badge');
   if(badge) badge.textContent=tot;
   if(badge) badge.style.background=tot>0?'var(--red-l)':'var(--green-l)';
   const el=document.getElementById('dash-followup');
   if(!el) return;
-  if(!fuList.length&&!clientiDormenti.length){
+  if(!fuList.length&&!clientiDormenti.length&&!diaList.length){
     el.innerHTML='<div class="empty-state" style="padding:18px"><div class="empty-icon"></div><p>Nessun cliente da richiamare oggi</p></div>';
     return;
   }
@@ -37912,6 +37923,23 @@ function renderFollowUp(){
         <button onclick="ctApri('${_e(v.uuid)}','contatto')" style="padding:5px 10px;background:#EFF6FF;color:#2563EB;border:1px solid #BFDBFE;border-radius:7px;font-size:0.76rem;font-weight:700;cursor:pointer">Registra</button>
         <button onclick="openSchedaCliente(${i})" style="padding:5px 10px;background:#EFF6FF;color:#2563EB;border:1px solid #BFDBFE;border-radius:7px;font-size:0.76rem;font-weight:700;cursor:pointer"> Scheda</button>
       </div>`;}).join('')}
+    </div>`;
+  }
+  if(diaList.length){
+    const _d=(typeof _ctEsc==='function')?_ctEsc:(t=>String(t||''));
+    html+=`<div style="font-size:0.72rem;font-weight:800;color:#C2410C;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">📔 Diario da seguire (${diaList.length})</div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">
+    ${diaList.map(v=>{
+      const scad=v.dataSeguire<og;
+      const anteprima=(v.testo||'').slice(0,80)+((v.testo||'').length>80?'…':'');
+      return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:${scad?'var(--alert-red-bg,#FEF2F2)':'#FFF7ED'};border:1.5px solid ${scad?'var(--alert-red-border,#FCA5A5)':'#FED7AA'};border-radius:9px">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700;font-size:0.88rem;color:var(--text)">${_d(v.cliente)||'Nota libera'}</div>
+          <div style="font-size:0.75rem;color:var(--text2)">${_d(anteprima)} · ${fmtD(v.dataSeguire)}</div>
+        </div>
+        <button onclick="openDiarioModal('${_d(v.id)}')" style="padding:5px 10px;background:#FFF7ED;color:#C2410C;border:1px solid #FED7AA;border-radius:7px;font-size:0.76rem;font-weight:700;cursor:pointer">Apri</button>
+      </div>`;
+    }).join('')}
     </div>`;
   }
   el.innerHTML=html;
@@ -67590,7 +67618,7 @@ try{
   // a riscaricarlo. Usa la stessa data del badge versione, es. '20260702'.
   // [25 set 2026] Ogni index.js passa il suo ?v= ai file che carica
   // (.view/.mobile/.report): alzare _MOD_V basta per TUTTI i moduli.
-  const _MOD_V = '20261101A';
+  const _MOD_V = '20261101B';
   const moduli = [
     ['Richieste', './src/modules/richieste/index.js?v=' + _MOD_V],
     ['Clienti',   './src/modules/clienti/index.js?v=' + _MOD_V],
