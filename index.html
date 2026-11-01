@@ -7976,6 +7976,10 @@ body.force-mobile{ overflow:hidden; }
   display:inline-flex; align-items:center; justify-content:center;
   box-shadow:0 1px 3px rgba(16,185,129,0.4);
   flex:0 0 auto;
+  /* [1 nov 2026] Prima era pensato solo per un "v13" fisso: con la vera
+     APP_VERSION (più lunga, es. "v.1nov-DASHVISTE") tronca con "…" invece
+     di spingere fuori schermo gli altri pulsanti dell'intestazione. */
+  max-width:118px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
 #mob-agency{
   /* [MOB-HDR] Montserrat: largo e squadrato, taglio da insegna. Lora
@@ -19348,6 +19352,13 @@ try{
     setTimeout(function(){
       var b=document.getElementById('app-version-badge');
       if(b && !b.textContent) b.textContent = APP_VERSION;
+      /* [1 nov 2026] Il badge versione del telefono (#mob-build-badge) era
+         rimasto fermo su "v13" scritto a mano nell'HTML: non lo aggiornava
+         nessuno. Da qui in poi segue la stessa APP_VERSION del badge
+         desktop (vedi anche applyBranding più sotto, che lo aggiorna anche
+         ad ogni cambio di agenzia). */
+      var mb=document.getElementById('mob-build-badge');
+      if(mb){ mb.textContent = APP_VERSION; mb.title = APP_VERSION; }
     }, 300);
   });
 }catch(e){}
@@ -51132,6 +51143,8 @@ function applyConfig(cfg){
   /* Badge versione app (per capire al volo se il deploy è aggiornato) */
   var elVer = document.getElementById('app-version-badge');
   if(elVer && typeof APP_VERSION !== 'undefined'){ elVer.textContent = APP_VERSION; }
+  var elMobVer = document.getElementById('mob-build-badge');
+  if(elMobVer && typeof APP_VERSION !== 'undefined'){ elMobVer.textContent = APP_VERSION; elMobVer.title = APP_VERSION; }
 
   // Login — card sinistra
   var elLoginTitle = document.getElementById('brand-login-title');
@@ -51849,7 +51862,7 @@ function pers_applyPalette(idx){
            fra loro e la stessa altezza: prima il badge aveva un margine suo
            e il fulmine era 40px contro i 38px del monitor. -->
       <div class="mob-hdr-actions">
-        <span id="mob-build-badge">v13</span>
+        <span id="mob-build-badge"></span>
         <button id="mob-quick-access-btn" class="mob-icon-btn mob-icon-btn-gold" onclick="mobGoQuickAccess()" title="Accesso rapido" aria-label="Accesso rapido">
           <svg viewBox="0 0 24 24" fill="currentColor" style="width:21px;height:21px;filter:drop-shadow(0 1px 1px rgba(0,0,0,0.18));">
             <path d="M13 2L4.09 12.97a1 1 0 00.78 1.64H11l-1.13 8.13a.5.5 0 00.91.34L19.91 11a1 1 0 00-.78-1.64H13l1.13-7.07a.5.5 0 00-.91-.34L13 2z"/>
