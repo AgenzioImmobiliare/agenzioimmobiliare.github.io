@@ -102,6 +102,13 @@ function openImmobileModal(idx){
     document.getElementById('im-ref').value=String(maxRef+1).padStart(4,'0');
     document.getElementById('im-data-ins').value=today();
     aggiornaStatoBadgeImmobile(undefined); // nuovo → sempre attivo
+    /* [2 nov 2026] nuovo immobile: scadenza mandato non ancora registrata,
+       mostra il campo editabile (vedi _imMandatoAspetto in index.html).
+       Azzera anche la checklist documenti: clearModal() non tocca le
+       checkbox, altrimenti restavano spuntate quelle dell'immobile aperto
+       in precedenza. */
+    try{ if(typeof window._imMandatoAspetto==='function') window._imMandatoAspetto(null); }catch(_mnd){ console.warn('[Mandato] aspetto KO:', _mnd); }
+    try{ if(typeof setDocsChecklist==='function') setDocsChecklist({}); }catch(_dc){ console.warn('[Documenti] reset checklist KO:', _dc); }
   }
   if(idx!==undefined){
     if(!D.immobili[idx].uuid) D.immobili[idx].uuid=genUUID();
@@ -122,6 +129,11 @@ function openImmobileModal(idx){
       /* [28 set 2026] indice di prestazione energetica dell'APE */
       epgl:'im-epgl'};
     Object.entries(fs).forEach(([k,id])=>{const el=document.getElementById(id);if(el&&im[k]!==undefined)el.value=im[k]||'';});
+    /* [2 nov 2026] scadenza mandato già registrata → mostra la card bloccata
+       con cronologia e "Rinnova Mandato" invece del campo data (vedi
+       _imMandatoAspetto in index.html); sotto, im-inc-fine ha già il valore
+       vero appena assegnato dal loop qui sopra. */
+    try{ if(typeof window._imMandatoAspetto==='function') window._imMandatoAspetto(im); }catch(_mnd){ console.warn('[Mandato] aspetto KO:', _mnd); }
     const _condEdit=document.getElementById('im-condiviso');if(_condEdit)_condEdit.checked=!!im.condiviso;
     updateValBadge(im.valutazione||5);
     aggiornaStatoBadgeImmobile(idx); // stato calcolato dalla pratica
@@ -434,10 +446,26 @@ function saveImmobile(){
         _cliUuid = D.clienti[_r].uuid;
       }
     }
+    /* [2 nov 2026] Scadenza mandato: la bozza di storico accumulata dal
+       pulsante "Rinnova Mandato" (window._imMandStoricoBozza, popolata in
+       index.html) è la fonte di verità per questa apertura del modulo; se
+       mancante (modulo aperto senza passare da _imMandatoAspetto) si parte
+       da quello già salvato. Alla primissima registrazione di una scadenza
+       (nessuno storico, campo appena compilato) si registra da sola la voce
+       "Acquisizione incarico", così la card bloccata che si vedrà alla
+       prossima apertura ha sempre almeno un evento. */
+    const nuovaFineInc=g('im-inc-fine');
+    let incStoricoFinale=Array.isArray(window._imMandStoricoBozza)?window._imMandStoricoBozza.slice()
+      :((oldIm&&Array.isArray(oldIm.incStorico))?oldIm.incStorico.slice():[]);
+    if(nuovaFineInc && !incStoricoFinale.length){
+      incStoricoFinale=[{tipo:'acquisizione',data:g('im-inc-inizio')||today(),scadenza:nuovaFineInc}];
+    }
+    const incRinnoviFinale=incStoricoFinale.filter(s=>s&&s.tipo==='rinnovo').length;
     const im={
       ref:g('im-ref'),rifAgenzia:g('im-rif-agenzia').trim().toUpperCase()||'',stato:g('im-stato')||'attivo',tipo:g('im-tipo'),
       incarico:g('im-inc'),conferimento:g('im-conf'),
-      incInizio:g('im-inc-inizio'),incFine:g('im-inc-fine'),
+      incInizio:g('im-inc-inizio'),incFine:nuovaFineInc,
+      incStorico:incStoricoFinale,incRinnovi:incRinnoviFinale,
       incPerc:g('im-inc-perc'),incImp:getNum('im-inc-imp')||g('im-inc-imp'),
       prezzo:nuovoPrezzo||0,
       locali:g('im-locali'),cucina:g('im-cucina'),
