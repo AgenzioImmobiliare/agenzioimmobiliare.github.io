@@ -26401,6 +26401,73 @@ async function _settEventiAI(lista){
     return n;
   }catch(e){ console.warn('[Social] testi eventi AI KO:', e); return 0; }
 }
+
+/* ── B2 · ROTAZIONE SETTIMANALE IMMOBILI [2 nov 2026] ──
+   settEventi() (sopra) mette in piano un post SOLO quando un immobile
+   cambia (nuovo, venduto, proposta, ribasso): un immobile fermo, senza
+   cambiamenti, non torna mai in vetrina. Questa è la parte che mancava,
+   chiesta da Enzo: ogni settimana rimette in piano N immobili ATTIVI anche
+   senza nessun cambiamento, per dargli visibilità — a rotazione, scegliendo
+   sempre quelli rimasti più indietro (mai proposti prima, poi i più vecchi),
+   così nel tempo passano tutti e nessuno resta dimenticato in portafoglio.
+   Il "quando" di ogni immobile si ricorda in D.settimana.immRotazione
+   (chiave immobile → timestamp), separato da immVisti (quello di settEventi,
+   che serve a un altro scopo: rilevare i cambiamenti). */
+function _settRotazioneCandidati(n){
+  const s=_settData();
+  if(!s.immRotazione || typeof s.immRotazione!=='object') s.immRotazione={};
+  const L=(Array.isArray(D.immobili)?D.immobili:[]).filter(im=>String(im&&im.stato||'').toLowerCase()==='attivo');
+  if(!L.length) return [];
+  /* non riproporre un immobile già in piano per la rotazione e non ancora uscito */
+  const giaInPiano=new Set(s.idee.filter(x=>x && x.rotazione && !x.fatta && !x.archiviata).map(x=>x.rotazione.imm));
+  const scored=L.map(im=>{ const k=_settImmKey(im); return k ? { im, k, ultimo:s.immRotazione[k]||0 } : null; })
+    .filter(x=>x && !giaInPiano.has(x.k));
+  scored.sort((a,b)=>a.ultimo-b.ultimo);   // mai proposti (0) prima, poi i più vecchi
+  return scored.slice(0, n).map(x=>x.im);
+}
+function _settIdeaRotazione(im, id){
+  const tipo=String(im.tipo||'Immobile').trim(), comune=String(im.comune||'').trim();
+  const dove=[im.zona, comune].filter(Boolean).join(', ');
+  const car=[im.mq?im.mq+' m²':'', im.locali?im.locali+' locali':'', im.camere?im.camere+(+im.camere===1?' camera':' camere'):'', im.bagni?im.bagni+(+im.bagni===1?' bagno':' bagni'):''].filter(Boolean).join(' · ');
+  const pr=_settNumP(im.prezzo);
+  const tags=[comune?_settTag(comune):'', '#Cilento', '#casa', '#immobiliare', '#FRIMM'].filter(Boolean);
+  const ig='Ancora disponibile: '+tipo.toLowerCase()+(dove?' a '+dove:'')+'.\n'+(car?car+'\n':'')+(pr?_settEuro(pr)+'\n':'')+'\nSe ti era piaciuta o conosci chi la cerca, scrivimi.';
+  const fb='Ti ricordo questa '+tipo.toLowerCase()+(dove?' a '+dove:'')+(car?' ('+car+')':'')+'.'+(pr?'\nPrezzo: '+_settEuro(pr):'')+'\n\nÈ ancora in vendita: se conosci qualcuno interessato, inoltragli questo post.';
+  const tt='Ancora in vendita'+(comune?' a '+comune:'')+(pr?' · '+_settEuro(pr):'');
+  /* riusa la riga del link annuncio con la stessa regola di un immobile "nuovo": l'annuncio è attivo, il clic ha senso */
+  const link=_settLinkRiga(im,'nuovo');
+  return {
+    id, filone:'immobili', formato:'Post',
+    rotazione:{ imm:_settImmKey(im), ref:im.ref||'', il:Date.now() },
+    titolo:'In vetrina questa settimana: '+tipo+(comune?' a '+comune:'')+(im.ref?' (Ref. '+im.ref+')':''),
+    perche:'Rotazione settimanale per dare visibilità al portafoglio'+(dove?' · '+dove:''),
+    scaletta:[],
+    testi:{ ig:ig+link+'\n\n'+tags.join(' '), fb:fb+link+'\n\n'+tags.slice(0,3).join(' '), tt:tt+' '+tags.slice(0,4).join(' '), yt:'' },
+    pubbl:{}, prog:{}, dove:['ig','fb','tt'], verificare:[], verificato:true,
+    fatta:false, archiviata:false, creata:Date.now(), testiAI:false
+  };
+}
+/* mette in piano gli immobili di turno (non richiede l'AI: testi pronti e già buoni da soli) */
+function settRotazioneSettimanale(n){
+  n=n||2;
+  const s=_settData();
+  if(!s.immRotazione || typeof s.immRotazione!=='object') s.immRotazione={};
+  const candidati=_settRotazioneCandidati(n);
+  if(!candidati.length) return [];
+  const occ=_settOccupati(), nuove=[];
+  candidati.forEach(im=>{
+    const k=_settImmKey(im); if(!k) return;
+    const id='rot_'+k.replace(/[^A-Za-z0-9]/g,'').slice(0,40)+'_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+    const idea=_settIdeaRotazione(im, id);
+    _settAssegnaQuando(idea, occ);
+    nuove.push(idea);
+    s.immRotazione[k]=Date.now();
+  });
+  if(nuove.length){ s.idee=nuove.concat(s.idee); saveData(D); }
+  return nuove;
+}
+window.settRotazioneSettimanale=settRotazioneSettimanale;
+
 /* "Crea la grafica" di un evento: Studio Social con immobile, foto ed etichetta */
 function settEventoGrafica(id){
   const x=_settTrova(id); if(!x || !x.evento) return;
@@ -26444,6 +26511,18 @@ async function settAutomatico(){
       s.autoProvato=Date.now(); saveData(D);
       toast('Preparo da solo i social di questa settimana…','');
       await settGeneraIdee(true);
+    }
+    /* [2 nov 2026] Rotazione settimanale immobili: non serve l'AI (testi già
+       pronti), basta che "Prepara la settimana da sola" sia acceso. Un'unica
+       volta a settimana, come le idee sopra e le storie sotto. */
+    if(O.auto && (s.ultimaRotazione||0)<lun && (Date.now()-(s.autoRotazioneProvato||0))>6*3600000){
+      s.autoRotazioneProvato=Date.now();
+      const nuoveRot=settRotazioneSettimanale(2);
+      s.ultimaRotazione=Date.now(); saveData(D);
+      if(nuoveRot.length){
+        toast(nuoveRot.length===1 ? 'Un immobile in vetrina questa settimana nel Piano Social' : nuoveRot.length+' immobili in vetrina questa settimana nel Piano Social','success');
+        if(currentSection==='settimana') settRender();
+      }
     }
     /* [8 ott 2026] Piano Social: anche le 5 storie della settimana */
     if(O.auto && proxy && !_settStGenerando && (s.ultimeStorie||0)<lun && (Date.now()-(s.autoStorieProvato||0))>6*3600000){
