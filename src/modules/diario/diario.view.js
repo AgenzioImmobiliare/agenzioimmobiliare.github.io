@@ -113,6 +113,11 @@ function _diaSyncPromemoria(entry){
 /* ══════════════════════════ ELENCO ══════════════════════════ */
 function renderDiario(){
   _diaEnsure();
+  // Il campo data della voce rapida parte su "oggi" ma resta quello che Enzo
+  // ha scelto l'ultima volta (utile per registrare più note dello stesso
+  // giorno passato una di seguito) — lo riporto a oggi solo se è vuoto.
+  var qd=document.getElementById('dia-quick-data');
+  if(qd && !qd.value) qd.value=today();
   var q=((document.getElementById('f-dia-q')||{}).value||'').toLowerCase().trim();
   var soloSeguire=(document.getElementById('f-dia-seguire')||{}).checked;
   var dal=(document.getElementById('f-dia-dal')||{}).value||'';
@@ -199,7 +204,12 @@ function diaQuickSave(){
   var testo=el?el.value.trim():'';
   if(!testo) return;
   _diaEnsure();
-  var v={ id:genUUID(), data:today(), ora:_diaOraOra(), testo:testo, cliente:'', immRef:'', immTitolo:'', daSeguire:false, dataSeguire:'', fatto:false, portoIncarico:false, _promemoriaEvId:'', _modificata:Date.now() };
+  // [2 nov 2026] Data scelta nella voce rapida (può essere un giorno passato,
+  // per recuperare notizie non ancora annotate): se manca o non è valida,
+  // uso oggi — mai una voce senza data.
+  var dEl=document.getElementById('dia-quick-data');
+  var data=(dEl && /^\d{4}-\d{2}-\d{2}$/.test(dEl.value)) ? dEl.value : today();
+  var v={ id:genUUID(), data:data, ora:_diaOraOra(), testo:testo, cliente:'', immRef:'', immTitolo:'', daSeguire:false, dataSeguire:'', fatto:false, portoIncarico:false, _promemoriaEvId:'', _modificata:Date.now() };
   var autoSeguire = _diaRilevaDaSeguire(testo);
   if(autoSeguire){ v.daSeguire=true; v.dataSeguire=_diaDataSeguireDefault(3); }
   _diaSyncPromemoria(v);
@@ -207,9 +217,10 @@ function diaQuickSave(){
   saveD();
   if(el){ el.value=''; el.focus(); }
   renderDiario();
+  var quandoTxt = (data!==today()) ? (' del '+fmtD(data)) : '';
   showToast(autoSeguire
-    ? 'Nota salvata — sembra un possibile lead: l\'ho segnata "da seguire" entro il '+fmtD(v.dataSeguire)+' (correggi se non serve)'
-    : 'Nota salvata nel diario','','#15803D');
+    ? ('Nota'+quandoTxt+' salvata — sembra un possibile lead: l\'ho segnata "da seguire" entro il '+fmtD(v.dataSeguire)+' (correggi se non serve)')
+    : ('Nota'+quandoTxt+' salvata nel diario'),'','#15803D');
 }
 function diaQuickKey(ev){
   if(ev && ev.key==='Enter' && !ev.shiftKey){ ev.preventDefault(); diaQuickSave(); }
