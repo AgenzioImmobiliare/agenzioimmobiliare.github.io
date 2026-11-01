@@ -12496,7 +12496,6 @@ body.dark-mode :is([style^="color: #64748B" i],[style*=";color: #64748B" i],[sty
       <a class="sb-item" data-go="incarichi" onclick="sbGo('incarichi')">Incarichi<span class="sb-badge is-danger empty" id="nb-inc">0</span></a>
       <a class="sb-item" href="#" onclick="event.preventDefault();apriValutazioni();" title="Valutazioni professionali: quotazioni OMI, comparabili, coefficienti">Valutazioni</a>
       <a class="sb-item" href="#" onclick="event.preventDefault();apriOpenHouse();" title="Open House: preparazione del kit, registro ingressi, report al proprietario">Open House</a>
-      <a class="sb-item" data-go="osservati" onclick="sbGo('osservati')">Osservati FB<span class="sb-badge is-warn empty" id="nb-oss">0</span></a>
     </div>
 
     <!-- ④ NUMERI -->
@@ -13997,32 +13996,6 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 </script>
 
 
-<!-- PRATICHE -->
-<div class="section" id="sec-osservati">
-  <div style="max-width:none;margin:0"><!-- [7 ott 2026] a tutta larghezza come le altre pagine -->
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;flex-wrap:wrap">
-      <div style="flex:1;min-width:200px">
-        <h2 style="margin:0;font-size:1.3rem;font-weight:800;color:var(--text1);display:flex;align-items:center;gap:9px">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1877F2" stroke-width="2"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
-          Annunci osservati
-        </h2>
-        <div style="font-size:0.82rem;color:var(--text3);margin-top:2px">Tieni traccia degli annunci dei privati visti su Facebook e mercatini, e seguine l'evoluzione fino al contatto.</div>
-      </div>
-      <button class="btn btn-primary" onclick="if(typeof openOsservatoModal==='function')openOsservatoModal()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Nuovo annuncio
-      </button>
-    </div>
-    <div id="oss-filtri" style="display:flex;gap:7px;flex-wrap:wrap;margin:14px 0">
-      <button class="oss-fbtn" data-f="" onclick="ossSetFiltro('')" style="padding:6px 13px;border-radius:20px;border:1.5px solid var(--brand);background:var(--brand);color:#fff;font-size:0.8rem;font-weight:700;cursor:pointer">Tutti</button>
-      <button class="oss-fbtn" data-f="da_contattare" onclick="ossSetFiltro('da_contattare')" style="padding:6px 13px;border-radius:20px;border:1.5px solid #E2E8F0;background:#fff;color:#475569;font-size:0.8rem;font-weight:700;cursor:pointer">Da contattare</button>
-      <button class="oss-fbtn" data-f="in_trattativa" onclick="ossSetFiltro('in_trattativa')" style="padding:6px 13px;border-radius:20px;border:1.5px solid #E2E8F0;background:#fff;color:#475569;font-size:0.8rem;font-weight:700;cursor:pointer">In trattativa</button>
-      <button class="oss-fbtn" data-f="numero_ottenuto" onclick="ossSetFiltro('numero_ottenuto')" style="padding:6px 13px;border-radius:20px;border:1.5px solid #E2E8F0;background:#fff;color:#475569;font-size:0.8rem;font-weight:700;cursor:pointer">Numero ottenuto</button>
-      <button class="oss-fbtn" data-f="perso" onclick="ossSetFiltro('perso')" style="padding:6px 13px;border-radius:20px;border:1.5px solid #E2E8F0;background:#fff;color:#475569;font-size:0.8rem;font-weight:700;cursor:pointer">Persi</button>
-    </div>
-    <div id="oss-lista"></div>
-  </div>
-</div>
 
 <div class="section" id="sec-pratiche">
   <div class="print-header"><div class="ph-wrap"><div class="ph-agency">Le case dalla A allo Z.io</div><div class="ph-line2"><span class="ph-agent">Agente: Vincenzo Carnicelli</span><span class="ph-date" id="pd-prat"></span></div><div class="ph-section">Gestione Pratiche — Proposte</div></div></div>
@@ -16247,6 +16220,11 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 
   <div class="gx-cards" id="ca-cards"></div>
 
+  <!-- [1 nov 2026] Tutto quello che segue riguarda la ricerca sui portali
+       (configurazione, AI, modi, pipeline): visibile solo nelle schede
+       Pipeline/Lista. Osservati FB (annunci di privati visti su Facebook)
+       ha il suo blocco a parte più sotto, #ca-vista-osservati. -->
+  <div id="ca-vista-ricerca">
   <!-- CONFIGURA RICERCA -->
   <div class="gx-col">
     <div class="gx-head" style="color:#1E3A8A">
@@ -16464,6 +16442,37 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
     <div id="ca-annunci-stats" style="padding:8px 16px;border-bottom:1px solid var(--border);background:white;display:flex;gap:14px;flex-wrap:wrap;align-items:center"></div>
     <div id="ca-riverifica" style="display:none;padding:0 16px;margin-top:12px"></div>
     <div id="ca-annunci-list"></div>
+  </div>
+  </div><!-- /ca-vista-ricerca -->
+
+  <!-- [1 nov 2026] OSSERVATI FB — spostato qui dal menu laterale (prima era
+       una pagina a sé, "Osservati FB" sotto Trattative): stessi dati e
+       stesse funzioni di prima (renderOsservati, ossSetFiltro, D.osservatiFb),
+       solo raggiungibile da una scheda di Caccia Annunci invece che dal
+       menu, perché concettualmente è la stessa caccia — solo su Facebook
+       invece che sui portali. -->
+  <div id="ca-vista-osservati" style="display:none">
+    <div class="gx-col">
+      <div class="gx-head" style="color:#1877F2;flex-wrap:wrap;gap:8px">
+        <span class="t" style="display:flex;align-items:center;gap:8px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
+          Osservati FB
+        </span>
+        <button class="btn btn-primary btn-sm" style="margin-left:auto" onclick="if(typeof openOsservatoModal==='function')openOsservatoModal()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nuovo annuncio
+        </button>
+      </div>
+      <div style="padding:12px 16px 0;font-size:0.82rem;color:var(--text3)">Tieni traccia degli annunci dei privati visti su Facebook e mercatini, e seguine l'evoluzione fino al contatto.</div>
+      <div id="oss-filtri" style="display:flex;gap:7px;flex-wrap:wrap;padding:12px 16px">
+        <button class="oss-fbtn" data-f="" onclick="ossSetFiltro('')" style="padding:6px 13px;border-radius:20px;border:1.5px solid var(--brand);background:var(--brand);color:#fff;font-size:0.8rem;font-weight:700;cursor:pointer">Tutti</button>
+        <button class="oss-fbtn" data-f="da_contattare" onclick="ossSetFiltro('da_contattare')" style="padding:6px 13px;border-radius:20px;border:1.5px solid #E2E8F0;background:#fff;color:#475569;font-size:0.8rem;font-weight:700;cursor:pointer">Da contattare</button>
+        <button class="oss-fbtn" data-f="in_trattativa" onclick="ossSetFiltro('in_trattativa')" style="padding:6px 13px;border-radius:20px;border:1.5px solid #E2E8F0;background:#fff;color:#475569;font-size:0.8rem;font-weight:700;cursor:pointer">In trattativa</button>
+        <button class="oss-fbtn" data-f="numero_ottenuto" onclick="ossSetFiltro('numero_ottenuto')" style="padding:6px 13px;border-radius:20px;border:1.5px solid #E2E8F0;background:#fff;color:#475569;font-size:0.8rem;font-weight:700;cursor:pointer">Numero ottenuto</button>
+        <button class="oss-fbtn" data-f="perso" onclick="ossSetFiltro('perso')" style="padding:6px 13px;border-radius:20px;border:1.5px solid #E2E8F0;background:#fff;color:#475569;font-size:0.8rem;font-weight:700;cursor:pointer">Persi</button>
+      </div>
+      <div id="oss-lista"></div>
+    </div>
   </div>
 
 </div><!-- /sec-caccia-annunci -->
@@ -19340,7 +19349,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.1nov-GOBBOMOB';
+var APP_VERSION = 'v.1nov-OSSERVATICA';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -43618,7 +43627,9 @@ function caToggleEspandi(cartId){
 }
 function caSetView(v){
   _caView=v;
-  /* [18 set 2026] le due viste sono pillole in testata, come nelle altre pagine */
+  /* [18 set 2026] le due viste sono pillole in testata, come nelle altre pagine.
+     [1 nov 2026] aggiunta la terza, Osservati FB: niente scraping portali,
+     mostra/nasconde i due blocchi #ca-vista-ricerca / #ca-vista-osservati. */
   try{ caRenderLinguette(); }catch(e){}
   var bp=document.getElementById('ca-view-pipeline');
   var bl=document.getElementById('ca-view-lista');
@@ -43626,7 +43637,17 @@ function caSetView(v){
   if(bp){bp.style.background=v==='pipeline'?'#4F46E5':'white';bp.style.color=v==='pipeline'?'white':'var(--text2)';}
   if(bl){bl.style.background=v==='lista'?'#4F46E5':'white';bl.style.color=v==='lista'?'white':'var(--text2)';}
   if(fl) fl.style.display=v==='lista'?'':'none';
-  caRenderAnnunci();
+  var vr=document.getElementById('ca-vista-ricerca');
+  var vo=document.getElementById('ca-vista-osservati');
+  if(v==='osservati'){
+    if(vr) vr.style.display='none';
+    if(vo) vo.style.display='';
+    try{ renderOsservati(); }catch(e){}
+  } else {
+    if(vr) vr.style.display='';
+    if(vo) vo.style.display='none';
+    caRenderAnnunci();
+  }
 }
 
 /* [18 set 2026] testata nello stile comune: pillole delle viste e riquadri
@@ -43635,11 +43656,11 @@ function caRenderLinguette(){
   var el = document.getElementById('ca-ling');
   if(!el) return;
   var col = '#1E3A8A';
-  el.innerHTML = [['pipeline','Pipeline'], ['lista','Lista']].map(function(v){
+  el.innerHTML = [['pipeline','Pipeline'], ['lista','Lista'], ['osservati','Osservati FB']].map(function(v){
     var on = (_caView === v[0]);
     return '<button class="gx-l' + (on ? ' on' : '') + '" style="' + (on ? 'background:' + col : '') + '" '
       + 'onclick="caSetView(\'' + v[0] + '\')"><span class="pall" style="background:' + col + '"></span>'
-      + v[1] + '</button>';
+      + v[1] + (v[0]==='osservati' ? '<span class="sb-badge is-warn empty" id="nb-oss" style="margin-left:6px">0</span>' : '') + '</button>';
   }).join('');
 }
 function caRenderCards(){
