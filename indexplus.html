@@ -34677,6 +34677,12 @@ function vaiClipsRender(){
   const descrBox=document.getElementById('vai-clip-descr');
   const infoBox=document.getElementById('vai-clips-info');
   if(!_vaiClips.length){ strip.innerHTML=''; if(aiBar)aiBar.style.display='none'; if(descrBox)descrBox.style.display='none'; if(infoBox)infoBox.textContent=''; return; }
+  /* [2 nov 2026] Appena ci sono clip, la griglia "I tuoi progetti" (schermata
+     iniziale) va nascosta: questo è il punto per cui passano TUTTI i modi di
+     caricare un video (file, immobile, clip, gobbo, apertura di un progetto
+     salvato) — un solo posto invece di un controllo in ciascuno. Senza
+     questo, restava visibile sopra l'editor appena aperto. */
+  try{ if(typeof vaiRenderProgettiRecenti==='function') vaiRenderProgettiRecenti(); }catch(e){}
   try{ _vaiImpaginaPresto(); }catch(e){}   // misura lo schermo e divide fra anteprima e timeline
   if(aiBar) aiBar.style.display='flex';
   if(descrBox) descrBox.style.display='block';
@@ -45321,8 +45327,14 @@ function _vaiPromptCustom(titolo, valoreDefault){
 }
 
 /* Costruisce il record da salvare (usato sia dal salvataggio manuale che da quello automatico) */
-function _vaiCostruisciRecordProgetto(nome){
+async function _vaiCostruisciRecordProgetto(nome){
   if(_vaiClipAttiva>=0 && _vaiClipAttiva<_vaiClips.length){ _vaiClips[_vaiClipAttiva].scritte=_vaiScritte; }
+  /* [2 nov 2026] La miniatura della prima clip si genera in background,
+     in coda con quelle di tutte le altre clip (_vaiThumbQueue): se si
+     salva subito dopo aver caricato il video, "thumb" poteva non essere
+     ancora pronto e il progetto restava con l'anteprima nera. Aspetto
+     che la coda sia svuotata prima di leggerlo. */
+  try{ await _vaiThumbQueue; }catch(e){}
   const clips=_vaiClips.map(c=>({
     id:c.id, nome:c.nome, durata:c.durata, ambiente:c.ambiente,
     fit:c.fit||'contain', blob:c.file||null,
@@ -45397,7 +45409,7 @@ async function _vaiSalvaConNome(nome, silenzioso){
   const status=document.getElementById('vai-export-status');
   if(status && !silenzioso) status.textContent='Salvo il progetto…';
   try{
-    const rec=_vaiCostruisciRecordProgetto(nome);
+    const rec=await _vaiCostruisciRecordProgetto(nome);
     await _vaiIDBPut(rec);
     _vaiProgettoId=rec.id; _vaiProgettoNome=nome; _vaiDirty=false;
     if(status) status.textContent='✓ Progetto salvato: '+nome;
@@ -45450,6 +45462,12 @@ async function vaiRenderProgettiRecenti(){
   if(_vaiClips && _vaiClips.length){ box.style.display='none'; box.innerHTML=''; return; }
   let progetti=[];
   try{ progetti=await _vaiIDBAll(); }catch(e){ console.warn('[VAI] progetti recenti KO', e); box.style.display='none'; return; }
+  /* [2 nov 2026] Tra l'inizio di questa funzione e qui si è aspettato
+     l'IndexedDB: se nel frattempo è partito un progetto (es. aprendone uno
+     dalla griglia stessa — vaiReset() chiama questa funzione PRIMA che le
+     clip siano ricaricate, e questa chiamata può finire DOPO), ricontrollo,
+     altrimenti il riquadro ricompare sopra l'editor appena aperto. */
+  if(_vaiClips && _vaiClips.length){ box.style.display='none'; box.innerHTML=''; return; }
   if(!progetti.length){ box.style.display='none'; box.innerHTML=''; return; }
   progetti.sort((a,b)=>(b.aggiornato||0)-(a.aggiornato||0));
   const card=(p)=>{
