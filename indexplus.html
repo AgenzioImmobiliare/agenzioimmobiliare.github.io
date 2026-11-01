@@ -7932,6 +7932,10 @@ Un caro saluto,
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="14" y2="12"/><line x1="3" y1="18" x2="14" y2="18"/><line x1="19" y1="14" x2="19" y2="20"/><line x1="16" y1="17" x2="22" y2="17"/></svg><span class="vai-icobtn-lbl">Traccia</span></button>
               <button class="btn btn-sm vai-tl-graf vai-icobtn" onclick="vaiGraficaPanel()" title="Aggiungi badge, inviti all'azione, contatti e decorazioni">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 2a10 10 0 100 20 2.5 2.5 0 002-4 2.5 2.5 0 012-4 10 10 0 00-6-12z"/></svg><span class="vai-icobtn-lbl">Grafica</span></button>
+              <!-- [2 nov 2026] "Scrivi cosa vuoi": richiesta libera all'AI, inserita
+                   esattamente nel punto della timeline in cui si trova il video ora. -->
+              <button class="btn btn-sm vai-icobtn" onclick="vaiGraficaAI()" title="Scrivi cosa vuoi inserire qui (es. &quot;un grafico degli abitanti di Agropoli&quot;) e l'AI lo crea" style="background:linear-gradient(135deg,#C9A84C,#EC4899);color:#1A1205;border:none">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.9L12 3z"/><path d="M19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15z"/></svg><span class="vai-icobtn-lbl">Scrivi cosa vuoi</span></button>
               <button id="vai-tl-beat-toggle" class="btn btn-outline btn-sm vai-icobtn" onclick="vaiToggleBeat()" title="Mostra o nascondi le battute del tempo della musica sulla timeline (come CapCut)">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span class="vai-icobtn-lbl">Battute</span></button>
               <button class="btn btn-outline btn-sm vai-icobtn" onclick="vaiSincronizzaBeat()" title="Allinea automaticamente i cambi di clip ai colpi di ritmo della musica — un clic, montaggio a tempo">
@@ -34873,8 +34877,13 @@ function vaiGraficaDragStart(e){
   document.addEventListener('touchmove',move,{passive:false}); document.addEventListener('touchend',up);
 }
 
-/* Inserisce un elemento grafico come scritta speciale */
-function vaiGraficaAdd(key, i){
+/* Inserisce un elemento grafico come scritta speciale.
+   [2 nov 2026] tExplicit: secondo in cui inserirla, se diverso da dove si
+   trova ora il video — usato da vaiGraficaAI() per inserire esattamente nel
+   punto in cui l'agente si trovava quando ha scritto la richiesta (la
+   risposta dell'AI arriva con un piccolo ritardo, nel frattempo il video
+   potrebbe essere stato spostato). */
+function vaiGraficaAdd(key, i, tExplicit){
   const v=document.getElementById('vai-video'); if(!v) return;
   const g=VAI_GRAFICHE[key][i]; if(!g) return;
   let testo=g.testo||'';
@@ -34886,7 +34895,7 @@ function vaiGraficaAdd(key, i){
     testo=(g.icona?'':'')+val;
   }
   const nuova=_vaiScrittaDefault({
-    t:Math.round(v.currentTime*10)/10,
+    t:Math.round((tExplicit!=null?tExplicit:v.currentTime)*10)/10,
     durata:3,
     testo:testo,
     tipo:g.tipo||(key==='badge'?'badge':key==='cta'?'cta':key==='contatto'?'contatto':'testo'),
@@ -34909,6 +34918,166 @@ function vaiGraficaAdd(key, i){
   vaiGraficaClose();
   toast('Grafica aggiunta','success');
 }
+try{ window.vaiGraficaAdd=vaiGraficaAdd; }catch(e){}
+
+/* ══════════════════════════════════════════════════════════════════════
+   [2 nov 2026] GRAFICA CON L'AI — scatola "scrivi cosa vuoi" accanto alla
+   timeline: l'agente scrive una richiesta libera (es. "un grafico degli
+   abitanti di Agropoli") e viene inserita nel punto esatto in cui si
+   trovava il video. Riusa il proxy AI già configurato in "Genera con AI"
+   (stesso usato per gli annunci di testo) — nessuna nuova infrastruttura.
+   Tre esiti possibili, decisi dall'AI:
+     1) un elemento della libreria VAI_GRAFICHE già pronta (badge, CTA,
+        contatto…), quando la richiesta corrisponde anche solo vagamente;
+     2) un grafico a barre vero e proprio, disegnato al volo su un canvas
+        e inserito come tipo:'immagine' — riusa l'intero sistema di
+        sovrapposizione immagine già maturo (trascina, ridimensiona, export
+        identico all'anteprima), senza bisogno di insegnare al renderer un
+        tipo di scrittura nuovo;
+     3) un titolo/testo breve, per richieste generiche non numeriche.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* Disegna un grafico a barre su un canvas fuori schermo e lo restituisce
+   come immagine (data URL) pronta per diventare una sovrapposizione. */
+function vaiGraficoDisegna(dati){
+  const barre=(dati.barre||[]).slice(0,5).filter(b=>b&&b.etichetta!=null&&isFinite(parseFloat(b.valore)));
+  if(!barre.length) return null;
+  const W=900, H=760;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d');
+  // sfondo scuro arrotondato, stesso stile della UI di Video Social
+  const r=28;
+  ctx.fillStyle='#0D1B2A';
+  ctx.beginPath();
+  ctx.moveTo(r,0); ctx.arcTo(W,0,W,H,r); ctx.arcTo(W,H,0,H,r); ctx.arcTo(0,H,0,0,r); ctx.arcTo(0,0,W,0,r); ctx.closePath(); ctx.fill();
+  // titolo + sottotitolo
+  ctx.textAlign='left'; ctx.fillStyle='#E8EDF2';
+  ctx.font='700 46px "DM Sans",sans-serif';
+  ctx.fillText(String(dati.titolo||'').slice(0,44), 48, 84);
+  if(dati.sottotitolo){
+    ctx.font='500 26px "DM Sans",sans-serif'; ctx.fillStyle='#8CA0B3';
+    ctx.fillText(String(dati.sottotitolo).slice(0,70), 48, 124);
+  }
+  // barre
+  const plotTop=180, plotBottom=H-110, plotLeft=60, plotRight=W-60;
+  const n=barre.length, gap=28;
+  const barW=(plotRight-plotLeft-gap*(n-1))/n;
+  const max=Math.max.apply(null, barre.map(b=>parseFloat(b.valore)))||1;
+  const colori=['#C9A84C','#0EA5E9','#EC4899','#10B981','#7C3AED'];
+  barre.forEach((b,i)=>{
+    const val=parseFloat(b.valore);
+    const bh=Math.max(6, (val/max)*(plotBottom-plotTop));
+    const x=plotLeft+i*(barW+gap);
+    const y=plotBottom-bh;
+    const col=colori[i%colori.length];
+    ctx.fillStyle=col;
+    const rb=10;
+    ctx.beginPath();
+    ctx.moveTo(x,y+rb); ctx.arcTo(x,y,x+rb,y,rb); ctx.arcTo(x+barW,y,x+barW,y+rb,rb); ctx.lineTo(x+barW,plotBottom); ctx.lineTo(x,plotBottom); ctx.closePath(); ctx.fill();
+    // valore sopra la barra
+    ctx.textAlign='center'; ctx.fillStyle='#E8EDF2';
+    ctx.font='700 30px "DM Sans",sans-serif';
+    ctx.fillText(_vaiGraficoFmtNum(val), x+barW/2, y-16);
+    // etichetta sotto la barra (va a capo su due righe se lunga)
+    ctx.font='500 22px "DM Sans",sans-serif'; ctx.fillStyle='#A9B8C6';
+    const parole=String(b.etichetta).split(' ');
+    let riga1=parole[0]||'', riga2='';
+    for(let k=1;k<parole.length;k++){
+      if(ctx.measureText(riga1+' '+parole[k]).width < barW+30 && !riga2){ riga1+=' '+parole[k]; }
+      else riga2+=(riga2?' ':'')+parole[k];
+    }
+    ctx.fillText(riga1, x+barW/2, plotBottom+32);
+    if(riga2) ctx.fillText(riga2, x+barW/2, plotBottom+58);
+  });
+  // linea di base
+  ctx.strokeStyle='rgba(255,255,255,.14)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(plotLeft-10, plotBottom+0.5); ctx.lineTo(plotRight+10, plotBottom+0.5); ctx.stroke();
+  return { src: cv.toDataURL('image/png'), ratio: W/H };
+}
+function _vaiGraficoFmtNum(v){
+  const n=Math.round(v*10)/10;
+  return Math.abs(n)>=1000 ? n.toLocaleString('it-IT') : String(n).replace('.',',');
+}
+
+/* Inserisce il grafico disegnato come sovrapposizione immagine, allo stesso
+   modo di una foto importata — riusa trascinamento/ridimensionamento/export. */
+function vaiGraficoInserisci(dati, tIns){
+  const g=vaiGraficoDisegna(dati);
+  if(!g){ toast('Non sono riuscito a leggere i dati del grafico','error'); return false; }
+  const trFoto=(typeof _trFoto!=='undefined')?_trFoto:0;
+  const nuova=_vaiScrittaDefault({
+    t:Math.round(tIns*10)/10, durata:4, testo:'', sotto:'',
+    tipo:'immagine', src:g.src, imgRatio:g.ratio,
+    x:0.5, y:0.5, w:0.82,
+    traccia:trFoto,
+    anim:'slideUp', animOut:'fade',
+    fisso:true
+  });
+  _vaiScritte.push(nuova);
+  _vaiSelScritta=nuova.id;
+  vaiTlRender(); vaiOverlayUpdate();
+  return true;
+}
+
+/* Punto d'ingresso della casella "Scrivi cosa vuoi", chiamato dal pulsante
+   vicino alla timeline. */
+async function vaiGraficaAI(){
+  const v=document.getElementById('vai-video');
+  if(!v||!v.src){ toast('Carica prima una clip','error'); return; }
+  const proxyUrl=(typeof aiGetProxy==='function')?aiGetProxy():'';
+  if(!proxyUrl){ toast('Configura prima il proxy AI in "Genera con AI"','error'); if(typeof vaiAvvisaProxy==='function') vaiAvvisaProxy(); return; }
+  const richiesta=await _vaiPromptCustom('✨ Scrivi cosa vuoi inserire', '');
+  if(!richiesta) return;
+  // secondo esatto in cui si trovava il video quando l'agente ha scritto la
+  // richiesta: la risposta dell'AI arriva con un piccolo ritardo, nel
+  // frattempo il video potrebbe muoversi (play automatico, trascinamento…).
+  const tIns=Math.round(v.currentTime*10)/10;
+
+  const elenco=[];
+  Object.keys(VAI_GRAFICHE).forEach(key=>{
+    (VAI_GRAFICHE[key]||[]).forEach((g,i)=>{ elenco.push(key+'|'+i+': "'+g.label+'"'); });
+  });
+  const sys='Sei l\'assistente grafico di Video Social, l\'editor di reel di un\'agenzia immobiliare italiana ("Le case dalla A allo Z.io", Agropoli, Cilento). '+
+    'L\'agente scrive una richiesta libera per UN elemento grafico da inserire nel video nel punto in cui si trova ora. Rispondi SOLO con un JSON valido, senza backtick né testo attorno, in uno di questi tre modi:\n\n'+
+    '1) Se la richiesta corrisponde (anche solo vagamente) a una di queste grafiche già pronte, è SEMPRE la scelta migliore quando calza — elenco "chiave|indice: nome":\n'+elenco.join('\n')+'\n'+
+    'Rispondi: {"tipo":"preset","chiave":"<chiave>","indice":<indice numerico>}\n\n'+
+    '2) Se la richiesta chiede un grafico/dato numerico (es. abitanti, andamento prezzi, confronto fra valori) e NESSUna grafica pronta sopra calza: componi tu i dati per un grafico a barre, con numeri reali e plausibili se li conosci (max 5 barre). Se è una stima o una cifra che può essere datata, dillo nel sottotitolo (es. "stima ISTAT 2024").\n'+
+    'Rispondi: {"tipo":"grafico","titolo":"<titolo breve, max 40 caratteri>","sottotitolo":"<fonte/anno, opzionale>","barre":[{"etichetta":"<breve>","valore":<numero>}]}\n\n'+
+    '3) Se non è né l\'uno né l\'altro (richiesta generica di titolo/testo): {"tipo":"testo","testo":"<breve>","sotto":"<sottotitolo opzionale>"}';
+
+  toast('✨ Sto creando la grafica…','','');
+  try{
+    const resp=await aiFetch(proxyUrl, { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:(typeof aiModel==='function'?aiModel():'claude-sonnet-4-6'), max_tokens:700, system:sys, messages:[{role:'user',content:richiesta}] }) }, 30000);
+    const data=await resp.json();
+    if(data.error||data.type==='error') throw new Error((data.error&&(data.error.message||data.error))||'Errore API');
+    const txt=(data.content||[]).map(b=>b.text||'').join('').trim();
+    const parsed=(typeof faiParseJSON==='function')?faiParseJSON(txt):(function(){ try{ return JSON.parse(txt); }catch(e){ const m=txt.match(/\{[\s\S]*\}/); return m?JSON.parse(m[0]):null; } })();
+    if(!parsed || !parsed.tipo) throw new Error('risposta non interpretabile');
+
+    if(parsed.tipo==='preset' && VAI_GRAFICHE[parsed.chiave] && VAI_GRAFICHE[parsed.chiave][parsed.indice]){
+      vaiGraficaAdd(parsed.chiave, parsed.indice, tIns);
+      toast('✨ Grafica inserita','success');
+    } else if(parsed.tipo==='grafico' && Array.isArray(parsed.barre) && parsed.barre.length){
+      if(vaiGraficoInserisci(parsed, tIns)) toast('✨ Grafico inserito','success');
+    } else if(parsed.tipo==='testo'){
+      const nuova=(typeof _vaiScrittaAI==='function')
+        ? _vaiScrittaAI({ t:tIns, durata:3, testo:parsed.testo||richiesta, sotto:parsed.sotto||'' })
+        : _vaiScrittaDefault({ t:tIns, durata:3, testo:(parsed.testo||richiesta).slice(0,40), sotto:(parsed.sotto||'').slice(0,60) });
+      _vaiScritte.push(nuova);
+      _vaiSelScritta=nuova.id;
+      vaiTlRender(); vaiOverlayUpdate();
+      toast('✨ Testo inserito','success');
+    } else {
+      throw new Error('formato risposta inatteso');
+    }
+    _vaiDirty=true;
+    if(typeof logAdd==='function') logAdd('✨','Grafica AI', richiesta.slice(0,60));
+  }catch(e){
+    toast('Errore: '+e.message,'error');
+  }
+}
+try{ window.vaiGraficaAI=vaiGraficaAI; }catch(e){}
 
 /* ═══════════════ VOCE NARRANTE (Web Speech API) ═══════════════ */
 let _vaiVoci=[];
