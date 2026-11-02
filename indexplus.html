@@ -3426,6 +3426,10 @@ input[type=range].vai-ms-rng-mini{max-width:78px}
 .vai-cc-video:fullscreen .vai-controls{flex-shrink:0;width:100%;max-width:900px;margin:0 auto 10px}
 .vai-stage-wrap:fullscreen{display:flex;align-items:center;justify-content:center;background:#000;width:100vw;height:100vh}
 .vai-stage-wrap:-webkit-full-screen{display:flex;align-items:center;justify-content:center;background:#000;width:100vw;height:100vh}
+/* [2 nov 2026] Schermo intero sull'intero laboratorio CapCut (clip + video +
+   Dettagli), non solo sul video: così il pannello delle proprietà resta
+   visibile e usabile anche a schermo intero. */
+#vai-capcut:fullscreen,#vai-capcut:-webkit-full-screen{width:100vw;height:100vh;background:#0B0F14;padding:8px;box-sizing:border-box}
 .vai-tl-rsz{position:absolute;left:0;right:0;bottom:-3px;height:8px;cursor:ns-resize;z-index:20}
 @keyframes vaiLeakPulse{0%,100%{opacity:.55}50%{opacity:.9}}
 .vai-tl-rsz::after{content:'';position:absolute;left:50%;bottom:3px;transform:translateX(-50%);width:34px;height:3px;border-radius:2px;background:rgba(255,255,255,.15);transition:background .12s}
@@ -40595,12 +40599,15 @@ function vaiFullscreen(){
   const v=document.getElementById('vai-video');
   // mando in fullscreen il pannello video COMPLETO (.vai-cc-video), che include i controlli
   // (play, barra di scorrimento, formato): così restano visibili anche a schermo intero.
-  // [2 nov 2026, richiesta chiara di Enzo] SOLO il video — non l'intero laboratorio: clip,
-  // Dettagli/Progetto e la linea del tempo restano fuori. L'unico pannello che deve
-  // comunque vedersi sopra, se è aperto, è #vai-txt-editor (Testo/Foto): per questo
-  // vive dentro .vai-cc-video (vedi _vaiOpenTextEditor), non per via dello schermo intero.
   const box=document.querySelector('.vai-cc-video');
-  const target=box||stage||v;
+  /* [2 nov 2026] Nella disposizione CapCut il pannello Dettagli (proprietà
+     dell'elemento selezionato, a destra) è un FRATELLO di .vai-cc-video, non
+     un suo discendente: lo schermo intero del solo video lo faceva sparire
+     (l'API Fullscreen mostra solo l'elemento scelto e ciò che ha dentro).
+     Qui si va a schermo intero sull'INTERO laboratorio (#vai-capcut: clip +
+     video + proprietà), così resta tutto visibile e usabile. */
+  const capcut=document.body.classList.contains('vai-cc2') ? document.getElementById('vai-capcut') : null;
+  const target=capcut||box||stage||v;
   if(!target){ return; }
   try{
     if(document.fullscreenElement){
