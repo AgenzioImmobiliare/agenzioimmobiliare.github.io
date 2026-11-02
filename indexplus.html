@@ -2820,12 +2820,16 @@ body.hub-buio .ov-ag-pill.ok,body.hub-buio .ov-us-st.ok{background:rgba(52,211,1
 .vai-ov-sotto[contenteditable]{outline:none;cursor:text;min-width:20px}
 .vai-ov-sotto[contenteditable]:focus{outline:none}
 /* toolbar fluttuante stile Canva sopra la scritta selezionata */
-.vai-ov-ftb{position:absolute;left:50%;bottom:calc(100% + 14px);transform:translateX(-50%);display:flex;flex-direction:column;gap:8px;background:#141C27;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:11px 12px;box-shadow:0 10px 30px rgba(0,0,0,.55);z-index:20;width:344px;pointer-events:auto;cursor:default}
+.vai-ov-ftb{position:absolute;left:50%;bottom:calc(100% + 14px);transform:translateX(-50%);display:flex;flex-direction:column;gap:9px;background:#141C27;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 13px;box-shadow:0 10px 30px rgba(0,0,0,.55);z-index:20;width:360px;pointer-events:auto;cursor:default}
 .vai-ov-ftb.flip{bottom:auto;top:calc(100% + 14px)}
 .vai-ftb-ang{min-width:46px;text-align:center;font-size:12px;font-weight:700;color:#E8EEF5;background:rgba(255,255,255,.08);border-radius:7px;padding:4px 7px;cursor:pointer;user-select:none}
 .vai-ftb-ang:hover{background:rgba(255,255,255,.16)}
-.vai-ftb-row{display:flex;align-items:center;justify-content:flex-start;gap:5px;flex-wrap:nowrap}
-.vai-ftb-lbl{font-size:.64rem;font-weight:700;color:#7C8794;text-transform:uppercase;letter-spacing:.6px;width:52px;flex-shrink:0}
+.vai-ftb-row{display:flex;align-items:center;justify-content:flex-start;gap:6px;flex-wrap:nowrap}
+.vai-ftb-lbl{font-size:.64rem;font-weight:700;color:#7C8794;text-transform:uppercase;letter-spacing:.6px;width:60px;flex-shrink:0}
+/* [2 nov 2026] linea sottile fra gruppi di comandi (aspetto del testo / effetti e
+   movimento / rotazione): tanti controlli uno sopra l'altro si leggevano come un
+   unico blocco confuso — questi tagli leggeri li raggruppano a colpo d'occhio */
+.vai-ftb-div{height:1px;background:rgba(255,255,255,.08);margin:1px 0}
 .vai-ov-ftb::after{content:'';position:absolute;left:50%;top:100%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#141C27}
 .vai-ov-ftb.flip::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:#141C27}
 .vai-ftb-b{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;background:transparent;border:none;color:#C7D0DB;border-radius:7px;cursor:pointer;font-size:.84rem;font-family:inherit;padding:0;transition:background .12s}
@@ -35038,12 +35042,14 @@ async function vaiGraficaAI(){
     (VAI_GRAFICHE[key]||[]).forEach((g,i)=>{ elenco.push(key+'|'+i+': "'+g.label+'"'); });
   });
   const sys='Sei l\'assistente grafico di Video Social, l\'editor di reel di un\'agenzia immobiliare italiana ("Le case dalla A allo Z.io", Agropoli, Cilento). '+
-    'L\'agente scrive una richiesta libera per UN elemento grafico da inserire nel video nel punto in cui si trova ora. Rispondi SOLO con un JSON valido, senza backtick né testo attorno, in uno di questi tre modi:\n\n'+
+    'L\'agente scrive una richiesta libera per UN elemento grafico da inserire nel video nel punto in cui si trova ora. Rispondi SOLO con un JSON valido, senza backtick né testo attorno, in uno di questi quattro modi:\n\n'+
     '1) Se la richiesta corrisponde (anche solo vagamente) a una di queste grafiche già pronte, è SEMPRE la scelta migliore quando calza — elenco "chiave|indice: nome":\n'+elenco.join('\n')+'\n'+
     'Rispondi: {"tipo":"preset","chiave":"<chiave>","indice":<indice numerico>}\n\n'+
     '2) Se la richiesta chiede un grafico/dato numerico (es. abitanti, andamento prezzi, confronto fra valori) e NESSUna grafica pronta sopra calza: componi tu i dati per un grafico a barre, con numeri reali e plausibili se li conosci (max 5 barre). Se è una stima o una cifra che può essere datata, dillo nel sottotitolo (es. "stima ISTAT 2024").\n'+
     'Rispondi: {"tipo":"grafico","titolo":"<titolo breve, max 40 caratteri>","sottotitolo":"<fonte/anno, opzionale>","barre":[{"etichetta":"<breve>","valore":<numero>}]}\n\n'+
-    '3) Se non è né l\'uno né l\'altro (richiesta generica di titolo/testo): {"tipo":"testo","testo":"<breve>","sotto":"<sottotitolo opzionale>"}';
+    '3) Se l\'agente vuole VERE PAROLE scritte a video (un titolo, una frase, una scritta con un messaggio): {"tipo":"testo","testo":"<breve>","sotto":"<sottotitolo opzionale>"}\n\n'+
+    '4) Se la richiesta è un\'animazione/decorazione visiva (es. un disegno, una forma che si muove, un\'illustrazione, un filtro) che NON è fra le grafiche pronte elencate sopra e NON è un grafico dati: NON inventare un testo di scuse e NON usare l\'opzione 3 per spiegare che non si può fare — rispondi invece\n'+
+    '{"tipo":"non_disponibile","motivo":"<una riga che spiega cosa manca, es. \'nessuna grafica di un arcobaleno animato fra quelle pronte\'>"}';
 
   toast('✨ Sto creando la grafica…','','');
   try{
@@ -35068,6 +35074,14 @@ async function vaiGraficaAI(){
       _vaiSelScritta=nuova.id;
       vaiTlRender(); vaiOverlayUpdate();
       toast('✨ Testo inserito','success');
+    } else if(parsed.tipo==='non_disponibile'){
+      /* [2 nov 2026] Prima, per una richiesta come "disegna un arcobaleno",
+         l'AI finiva nell'opzione 3 (testo) e scriveva lei stessa un messaggio
+         tipo "Effetto non disponibile" — che il codice inseriva fedelmente
+         come SCRITTA VERA sul video, confondendo chi la leggeva (sembrava un
+         errore del programma). Ora l'AI ha un\'opzione dedicata per dirlo, e
+         qui lo mostriamo come avviso — niente viene inserito nel video. */
+      toast('Nessun effetto pronto per questa richiesta'+(parsed.motivo?(': '+parsed.motivo):'')+'. Prova un\'altra idea, oppure aggiungilo a mano da Elementi/Stile.','error');
     } else {
       throw new Error('formato risposta inatteso');
     }
@@ -42535,6 +42549,7 @@ function vaiOverlayUpdate(){
   try{ _vaiPipSync(frame, v); }catch(e){}
   try{ _vaiPrimaDopoSync(frame, v); }catch(e){}
   try{ _vaiFxOverlaySync(frame); }catch(e){}
+  try{ _vaiFtbClampSync(frame); }catch(e){}
   // AUTO-ADATTAMENTO: una scritta "a una riga" (nowrap) che sfora la larghezza del video
   // resterebbe tagliata ai lati (es. "...00 Mt Dal M..."). Dopo aver disegnato, misuro
   // ogni scritta e, se il suo testo è più largo del riquadro, la rimpicciolisco con uno
@@ -42878,6 +42893,8 @@ function _vaiFloatToolbar(s){
         '</span>'+
       '</div>'
     ) : '')+
+    // separatore: da qui in giù sono animazione/movimento, non più aspetto del testo
+    '<div class="vai-ftb-div"></div>'+
     // riga 5: effetti ingresso/uscita + prova + elimina
     '<div class="vai-ftb-row">'+
       '<span class="vai-ftb-lbl">Effetti</span>'+
@@ -42897,6 +42914,8 @@ function _vaiFloatToolbar(s){
       fxSel+
       (s.colorFx ? ('<span class="vai-ftb-sep"></span>'+fxPal) : '')+
     '</div>'+
+    // separatore: posizione/rotazione, un gruppo a sé
+    '<div class="vai-ftb-div"></div>'+
     // riga 7: rotazione — frecce grosse per i 15°, gradi fini per la rifinitura, numero al
     // centro (cliccabile per raddrizzare) e pulsante "Dritta". La maniglia sul video resta.
     '<div class="vai-ftb-row">'+
@@ -42910,6 +42929,28 @@ function _vaiFloatToolbar(s){
     '</div>'+
     '</div>';
 }
+/* [2 nov 2026] La barra fluttuante segue l'elemento selezionato, ma .vai-stage
+   (il riquadro del video) ha overflow:hidden — su un video verticale stretto,
+   vicino ai bordi la barra usciva dal riquadro e quella parte spariva (si
+   "nascondeva dentro la finestra del video", come segnalato). Qui, dopo ogni
+   ridisegno, la sposto lateralmente quanto basta per restare SEMPRE dentro i
+   bordi dello stage — una correzione via margin-left, che si somma a
+   qualunque transform sia già applicato (es. la scala di una scritta
+   rimpicciolita) senza doverlo ricalcolare. */
+function _vaiFtbClampSync(frame){
+  const ftb=frame.querySelector('.vai-ov-ftb');
+  if(!ftb) return;
+  ftb.style.marginLeft='0px';
+  const stage=frame.closest('.vai-stage')||document.querySelector('.vai-stage');
+  if(!stage) return;
+  const MARGINE=8;
+  const rs=stage.getBoundingClientRect(), rt=ftb.getBoundingClientRect();
+  let corr=0;
+  if(rt.left<rs.left+MARGINE) corr=(rs.left+MARGINE)-rt.left;
+  else if(rt.right>rs.right-MARGINE) corr=(rs.right-MARGINE)-rt.right;
+  if(corr) ftb.style.marginLeft=corr.toFixed(1)+'px';
+}
+window._vaiFtbClampSync=_vaiFtbClampSync;
 function vaiFtbToggle(id, campo){ const s=_vaiScritte.find(x=>x.id===id); if(!s) return; s[campo]=!s[campo]; vaiOverlayUpdate(); if(typeof vaiInspectorRender==='function') vaiInspectorRender(); }
 function vaiFtbSet(id, campo, val){ const s=_vaiScritte.find(x=>x.id===id); if(!s) return; s[campo]=val; vaiOverlayUpdate(); if(typeof vaiInspectorRender==='function') vaiInspectorRender(); }
 /* Rotazione a scatti di 15° dalla barra strumenti: la maniglia sul video resta, ma così
