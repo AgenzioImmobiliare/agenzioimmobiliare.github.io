@@ -47802,9 +47802,551 @@ function _vaiFinestraToVideoBlob(opts){
 
     const attesaFont = (document.fonts && document.fonts.load) ?
       Promise.all([document.fonts.load('54px "DM Serif Display"'), document.fonts.load('italic 54px "DM Serif Display"')]).catch(()=>{}) : Promise.resolve();
-    const attesaIcone = Promise.all(icone.map(img=> (img && !img.complete) ? new Promise(res=>{ img.onload=res; img.onerror=res; }) : Promise.resolve()));
+    // addEventListener invece di onload/onerror: evita che due icone uguali nello
+    // stesso elenco si sovrascrivano il gestore a vicenda e restino in attesa per
+    // sempre (bug scoperto nel "Tour dati", qui corretto per sicurezza).
+    const attesaIcone = Promise.all(icone.map(img=> (img && !img.complete) ? new Promise(res=>{
+      img.addEventListener('load', res, {once:true}); img.addEventListener('error', res, {once:true});
+    }) : Promise.resolve()));
     Promise.all([attesaFont, attesaIcone]).then(pronto).catch(pronto);
   });
+}
+
+/* Registra un canvas già pronto come breve video — motore comune, usato dai
+   tre nuovi stili qui sotto (prima era ripetuto uguale in ogni funzione). */
+function _vaiRecordCanvasToBlob(cv, sec, paint, thumbT){
+  return new Promise((resolve,reject)=>{
+    if(typeof MediaRecorder==='undefined' || !HTMLCanvasElement.prototype.captureStream){
+      reject(new Error('no-recorder')); return;
+    }
+    paint(0);
+    const stream=cv.captureStream(30);
+    const mime = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4'
+               : MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9'
+               : 'video/webm';
+    const rec=new MediaRecorder(stream,{mimeType:mime, videoBitsPerSecond:9000000});
+    const chunks=[]; rec.ondataavailable=e=>{ if(e.data&&e.data.size) chunks.push(e.data); };
+    let thumb=null;
+    rec.onstop=()=>resolve({ blob:new Blob(chunks,{type:mime}), mime, thumb:thumb||cv.toDataURL('image/jpeg',0.82) });
+    rec.start();
+    const t0=performance.now(), ms=sec*1000;
+    (function loop(){
+      const t=(performance.now()-t0)/1000;
+      paint(Math.min(t,sec));
+      if(!thumb && t>=(thumbT!=null?thumbT:sec*0.6)) thumb=cv.toDataURL('image/jpeg',0.82);
+      if(t>=sec){ rec.stop(); return; }
+      requestAnimationFrame(loop);
+    })();
+  });
+}
+/* Disegna il contorno di un rettangolo che si "traccia" progressivamente
+   (0=niente, 1=tutto il perimetro) — stesso principio della forma che si
+   disegna in "Crea animazione qui", qui applicato alle stanze della pianta. */
+function _vaiTracciaRettangolo(ctx, x, y, w, h, progresso){
+  const perim=2*(w+h), target=Math.max(0,Math.min(1,progresso))*perim;
+  const lati=[[x,y,x+w,y],[x+w,y,x+w,y+h],[x+w,y+h,x,y+h],[x,y+h,x,y]];
+  let fatto=0;
+  ctx.beginPath();
+  for(const [x1,y1,x2,y2] of lati){
+    const lung=Math.hypot(x2-x1,y2-y1);
+    if(fatto>=target) break;
+    const rimane=target-fatto;
+    const f=Math.min(1, rimane/lung);
+    ctx.moveTo(x1,y1);
+    ctx.lineTo(x1+(x2-x1)*f, y1+(y2-y1)*f);
+    fatto+=lung;
+  }
+  ctx.stroke();
+}
+/* precarica font e icone prima di disegnare il primo fotogramma registrato */
+function _vaiPrecaricaFontIcone(fontSpecs, icone){
+  const attesaFont = (document.fonts && document.fonts.load) ?
+    Promise.all(fontSpecs.map(f=>document.fonts.load(f))).catch(()=>{}) : Promise.resolve();
+  // addEventListener invece di onload/onerror: la STESSA icona può comparire più
+  // volte nell'elenco (es. "locali" e "camere" usano entrambe l'icona 'letto') —
+  // con onload= ogni assegnazione successiva sovrascriveva la precedente e la
+  // prima promessa restava in attesa per sempre (bloccava tutta la generazione).
+  const attesaIcone = Promise.all((icone||[]).map(img=> (img && !img.complete) ? new Promise(res=>{
+    img.addEventListener('load', res, {once:true}); img.addEventListener('error', res, {once:true});
+  }) : Promise.resolve()));
+  return Promise.all([attesaFont, attesaIcone]);
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   [2 nov 2026] TRE NUOVI STILI DI SCHEDA — stesso principio delle due di
+   sopra (canvas animato → video → clip vera nel montaggio) ma con
+   contenuto e TAVOLOZZA diverse, come chiesto da Enzo: una planimetria in
+   stile progetto (blueprint), una mappa stilizzata del territorio, un
+   "tour" che scorre i dati della casa. Tutte e tre, quando c'è un
+   immobile selezionato nel progetto, si riempiono da sole con mq, locali,
+   camere, bagni, prezzo — senza dati inventati, solo quelli veri della
+   scheda immobile. ══════════════════════════════════════════════════ */
+
+/* PLANIMETRIA ANIMATA — stile "blueprint": sfondo blu notte, reticolo
+   tecnico, stanze che si tracciano una dopo l'altra come un progetto. */
+function _vaiPlanimetriaToVideoBlob(opts){
+  const sec=Math.max(2.5, Math.min(7, opts.sec||4));
+  const BG='#0B1420', LINEA='#8ECBFF', GRID='rgba(142,203,255,.07)', TESTO='#DCEEFF';
+  const W=720, H=1280;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d');
+  const titolo=(opts.titolo||'Pianta dell\'immobile').trim();
+  const mq=opts.mq?String(opts.mq):'';
+  const ease=(p)=> p<0.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
+  const clamp01=(p)=>Math.max(0,Math.min(1,p));
+  const seg=(t,start,dur)=>clamp01((t-start)/dur);
+
+  // elenco stanze dai dati veri della casa (euristica semplice, non la pianta reale)
+  const stanze=['Soggiorno','Cucina'];
+  const nCamere=Math.max(1, Math.min(5, parseInt(opts.camere,10)||2));
+  for(let i=1;i<=nCamere;i++) stanze.push(nCamere>1?('Camera '+i):'Camera');
+  const nBagni=Math.max(1, Math.min(3, parseInt(opts.bagni,10)||1));
+  for(let i=1;i<=nBagni;i++) stanze.push(nBagni>1?('Bagno '+i):'Bagno');
+  const elenco=stanze.slice(0,8);
+
+  // layout a griglia: 2 colonne, righe quante servono, dentro un\'area fissa
+  const areaX=60, areaY=260, areaW=600, areaH=760;
+  const cols=2, rows=Math.ceil(elenco.length/cols);
+  const padR=10;
+  const celle=elenco.map((nome,i)=>{
+    const c=i%cols, r=Math.floor(i/cols);
+    const cw=(areaW-padR)/cols, ch=(areaH-padR*(rows-1))/rows;
+    return { nome, x:areaX+c*(cw+padR), y:areaY+r*(ch+padR), w:cw, h:ch };
+  });
+  const durPerStanza=0.5, iniziaA=0.55, finePiante=iniziaA+elenco.length*durPerStanza*0.6+durPerStanza;
+
+  let thumb=null;
+  const paint=(t)=>{
+    ctx.fillStyle=BG; ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle=GRID; ctx.lineWidth=1;
+    for(let x=0;x<W;x+=28){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+    for(let y=0;y<H;y+=28){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+    const eTit=ease(seg(t,0,0.45));
+    ctx.save(); ctx.globalAlpha=eTit;
+    ctx.fillStyle=LINEA; ctx.font='600 15px "JetBrains Mono", monospace'; ctx.textAlign='center';
+    ctx.fillText('— P I A N T A —', W/2, 110+(1-eTit)*10);
+    ctx.fillStyle=TESTO; ctx.font='700 34px "JetBrains Mono", monospace';
+    ctx.fillText(titolo.toUpperCase(), W/2, 160+(1-eTit)*10);
+    ctx.restore();
+
+    ctx.strokeStyle=LINEA; ctx.lineWidth=2.4; ctx.lineJoin='round';
+    celle.forEach((cel,i)=>{
+      const start=iniziaA+i*durPerStanza*0.6;
+      const p=ease(seg(t,start,durPerStanza));
+      if(p<=0) return;
+      ctx.save();
+      ctx.shadowColor='rgba(142,203,255,.45)'; ctx.shadowBlur=6;
+      _vaiTracciaRettangolo(ctx, cel.x, cel.y, cel.w, cel.h, p);
+      ctx.restore();
+      if(p>=0.96){
+        const eLab=ease(seg(t,start+durPerStanza*0.85,0.3));
+        ctx.save(); ctx.globalAlpha=eLab;
+        ctx.fillStyle=TESTO; ctx.font='500 15px "JetBrains Mono", monospace'; ctx.textAlign='center';
+        ctx.fillText(cel.nome, cel.x+cel.w/2, cel.y+cel.h/2+5);
+        ctx.restore();
+      }
+    });
+
+    if(mq){
+      const eMq=ease(seg(t,finePiante,0.4));
+      if(eMq>0){
+        ctx.save(); ctx.globalAlpha=eMq;
+        ctx.fillStyle=LINEA; ctx.font='800 46px "JetBrains Mono", monospace'; ctx.textAlign='center';
+        ctx.fillText(mq+' mq', W/2, areaY+areaH+70+(1-eMq)*12);
+        ctx.restore();
+      }
+    }
+    if(!thumb && t>=Math.min(sec-0.3, finePiante+0.5)) thumb=cv.toDataURL('image/jpeg',0.82);
+  };
+  return _vaiPrecaricaFontIcone(['600 15px "JetBrains Mono"','700 34px "JetBrains Mono"','500 15px "JetBrains Mono"','800 46px "JetBrains Mono"'])
+    .then(()=>_vaiRecordCanvasToBlob(cv, sec, paint, Math.min(sec-0.3, finePiante+0.5)));
+}
+
+/* MAPPA DEL TERRITORIO — stile "Emerald & Slate": sfondo ardesia scura,
+   finestra bianca con una mappa stilizzata dentro, uno spillo dorato che
+   cade con un rimbalzo e lascia un'increspatura. Non è una mappa reale/
+   georeferenziata: per quella Enzo ha già "Mappa zona" (Fabbrica grafiche)
+   con le distanze vere da OpenStreetMap — questa è la versione sempre
+   pronta, senza programmi da accendere. */
+function _vaiMappaToVideoBlob(opts){
+  const sec=Math.max(2.5, Math.min(6, opts.sec||3.6));
+  const ARDESIA='#2B3438', SMERALDO='#2F6F5E', ORO='#C9A84C', TESTO='#E7EEEC';
+  const W=720, H=1280;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d');
+  const comune=(opts.comune||'Il Cilento').trim();
+  const etichetta=(opts.etichetta||'Posizione strategica').trim();
+  const ease=(p)=> p<0.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
+  const bounce=(p)=>{ p=Math.max(0,Math.min(1,p)); return 1-Math.pow(1-p,2)*Math.cos(p*9); };
+  const clamp01=(p)=>Math.max(0,Math.min(1,p));
+  const seg=(t,start,dur)=>clamp01((t-start)/dur);
+
+  const wx=60, wy=250, ww=600, wh=640, r=20;
+  const pinX=wx+ww/2, pinYTarget=wy+wh*0.52, pinYStart=wy-80;
+  let thumb=null;
+  const paint=(t)=>{
+    ctx.fillStyle=ARDESIA; ctx.fillRect(0,0,W,H);
+
+    const eTit=ease(seg(t,0,0.4));
+    ctx.save(); ctx.globalAlpha=eTit;
+    ctx.fillStyle=TESTO; ctx.font='700 32px "DM Sans", sans-serif'; ctx.textAlign='center';
+    ctx.fillText(comune.toUpperCase(), W/2, 160+(1-eTit)*12);
+    ctx.restore();
+
+    const eWin=ease(seg(t,0.2,0.4));
+    ctx.save(); ctx.globalAlpha=eWin;
+    ctx.translate(wx+ww/2, wy+wh/2); ctx.scale(0.92+0.08*eWin,0.92+0.08*eWin); ctx.translate(-(wx+ww/2),-(wy+wh/2));
+    ctx.shadowColor='rgba(0,0,0,.35)'; ctx.shadowBlur=36; ctx.shadowOffsetY=18;
+    ctx.fillStyle='#fff';
+    if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(wx,wy,ww,wh,r); ctx.fill(); } else ctx.fillRect(wx,wy,ww,wh);
+    ctx.shadowColor='transparent';
+    // terreno stilizzato dentro la finestra
+    ctx.save();
+    if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(wx,wy,ww,wh,r); ctx.clip(); }
+    ctx.fillStyle='#EAF1ED'; ctx.fillRect(wx,wy,ww,wh);
+    ctx.fillStyle='#D7E6DD';
+    ctx.fillRect(wx, wy+wh*0.15, ww, wh*0.18);
+    ctx.fillRect(wx, wy+wh*0.62, ww, wh*0.22);
+    ctx.strokeStyle='rgba(47,111,94,.35)'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(wx+40, wy+wh*0.78); ctx.lineTo(wx+ww-40, wy+wh*0.32); ctx.stroke();
+    ctx.restore();
+    ctx.restore();
+
+    if(eWin<0.85){ if(!thumb && t>=Math.min(sec-0.3,1.4)) thumb=cv.toDataURL('image/jpeg',0.82); return; }
+
+    // increspatura: parte quando lo spillo atterra, si allarga e sfuma
+    const eAtt=seg(t,0.75,0.35);
+    if(eAtt>=1){
+      const eRip=seg(t,1.1,0.9);
+      if(eRip>0 && eRip<1.6){
+        ctx.save();
+        ctx.globalAlpha=Math.max(0,.5-eRip*0.4);
+        ctx.strokeStyle=SMERALDO; ctx.lineWidth=3;
+        ctx.beginPath(); ctx.arc(pinX, pinYTarget, 14+eRip*60, 0, Math.PI*2); ctx.stroke();
+        ctx.restore();
+      }
+    }
+    // spillo che cade con un piccolo rimbalzo all'arrivo
+    const pCaduta=ease(Math.min(1,eAtt));
+    const pY = eAtt<1 ? (pinYStart+(pinYTarget-pinYStart)*pCaduta) : (pinYTarget - 10*Math.max(0,Math.sin((eAtt-1)*14))*Math.exp(-(eAtt-1)*6));
+    ctx.save();
+    ctx.fillStyle=ORO;
+    ctx.beginPath(); ctx.arc(pinX, pY, 15, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(pinX, pY, 6, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+
+    if(eAtt>=1){
+      const eLab=ease(seg(t,1.15,0.35));
+      if(eLab>0){
+        ctx.save(); ctx.globalAlpha=eLab;
+        ctx.fillStyle='#2B3438'; ctx.font='700 22px "DM Sans", sans-serif'; ctx.textAlign='center';
+        ctx.fillText(etichetta, pinX, wy+wh-40+(1-eLab)*10);
+        ctx.restore();
+      }
+    }
+    if(!thumb && t>=Math.min(sec-0.3,2)) thumb=cv.toDataURL('image/jpeg',0.82);
+  };
+  return _vaiPrecaricaFontIcone(['700 32px "DM Sans"','700 22px "DM Sans"'])
+    .then(()=>_vaiRecordCanvasToBlob(cv, sec, paint, Math.min(sec-0.3,2)));
+}
+
+/* TOUR DEI DATI — la finestra app (stesso "chrome" della Finestra
+   immobile) ma con accento verde smeraldo e dentro una lista di dati veri
+   della casa che scorrono uno alla volta, invece di foto+prezzo+indirizzo. */
+function _vaiTourDatiToVideoBlob(opts){
+  const sec=Math.max(3, Math.min(7, opts.sec||4.2));
+  const CREAM='#EFF6F1', NAVY='#13302A', VERDE='#1F6F54', GREY='#D7E6DE';
+  const W=720, H=1280;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d');
+  const titolo=(opts.titolo||'Tour della casa').trim();
+  const righe=[];
+  if(opts.mq) righe.push({ic:'mq', testo:opts.mq+' mq'});
+  if(opts.locali) righe.push({ic:'letto', testo:opts.locali+' locali'});
+  if(opts.camere) righe.push({ic:'letto', testo:opts.camere+(opts.camere==1?' camera':' camere')});
+  if(opts.bagni) righe.push({ic:'bagno', testo:opts.bagni+(opts.bagni==1?' bagno':' bagni')});
+  if(opts.piano) righe.push({ic:'ascensore', testo:'Piano '+opts.piano});
+  if(opts.prezzo) righe.push({ic:'euro', testo:opts.prezzo});
+  if(!righe.length) righe.push({ic:'casa', testo:'I dati della casa'});
+  const icone=righe.map(r=>_vaiSvgComeImg(r.ic, VERDE));
+  const ease=(p)=> p<0.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
+  const clamp01=(p)=>Math.max(0,Math.min(1,p));
+  const seg=(t,start,dur)=>ease(clamp01((t-start)/dur));
+
+  let thumb=null;
+  const paint=(t)=>{
+    ctx.fillStyle=CREAM; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(31,111,84,.06)';
+    for(let y=40;y<H;y+=40) for(let x=40;x<W;x+=40){ ctx.beginPath(); ctx.arc(x,y,1.6,0,Math.PI*2); ctx.fill(); }
+
+    const eTit=seg(t,0,0.4);
+    ctx.save(); ctx.globalAlpha=eTit;
+    ctx.fillStyle=NAVY; ctx.font='48px "DM Serif Display", Georgia, serif'; ctx.textAlign='center';
+    ctx.fillText(titolo, W/2, 140+(1-eTit)*14);
+    ctx.restore();
+
+    const wx=60, wy=220, ww=600, wh=760, r=20;
+    const eWin=seg(t,0.2,0.4);
+    ctx.save(); ctx.globalAlpha=eWin;
+    ctx.translate(wx+ww/2, wy+wh/2); ctx.scale(0.92+0.08*eWin,0.92+0.08*eWin); ctx.translate(-(wx+ww/2),-(wy+wh/2));
+    ctx.shadowColor='rgba(0,0,0,.14)'; ctx.shadowBlur=30; ctx.shadowOffsetY=16;
+    ctx.fillStyle='#fff';
+    if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(wx,wy,ww,wh,r); ctx.fill(); } else ctx.fillRect(wx,wy,ww,wh);
+    ctx.shadowColor='transparent';
+    ctx.save();
+    if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(wx,wy,ww,54,[r,r,0,0]); ctx.clip(); }
+    ctx.fillStyle=VERDE; ctx.fillRect(wx,wy,ww,54);
+    ctx.restore();
+    ctx.fillStyle='#fff'; ctx.font='700 16px "DM Sans", sans-serif'; ctx.textAlign='center';
+    ctx.fillText('SCHEDA TECNICA', wx+ww/2, wy+33);
+    ctx.restore();
+
+    if(eWin>=0.9){
+      const rh=(wh-54-30)/Math.max(1,righe.length);
+      righe.forEach((rg,i)=>{
+        const start=0.65+i*0.28;
+        const e=seg(t,start,0.3);
+        if(e<=0) return;
+        const ry=wy+54+15+i*rh;
+        ctx.save(); ctx.globalAlpha=e;
+        const dx=(1-e)*40;
+        ctx.fillStyle=GREY;
+        if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(wx+24+dx, ry, ww-48, rh-10, 10); ctx.fill(); }
+        const img=icone[i];
+        if(img && img.complete && img.naturalWidth){ try{ ctx.drawImage(img, wx+40+dx, ry+(rh-10)/2-15, 30, 30); }catch(err){} }
+        ctx.fillStyle=NAVY; ctx.font='700 24px "DM Sans", sans-serif'; ctx.textAlign='left';
+        ctx.fillText(rg.testo, wx+84+dx, ry+(rh-10)/2+9);
+        ctx.restore();
+      });
+    }
+    if(!thumb && t>=Math.min(sec-0.3, 1.8)) thumb=cv.toDataURL('image/jpeg',0.82);
+  };
+  return _vaiPrecaricaFontIcone(['48px "DM Serif Display"'], icone)
+    .then(()=>_vaiRecordCanvasToBlob(cv, sec, paint, Math.min(sec-0.3,1.8)));
+}
+
+/* CALENDARIO PRENOTAZIONE VISITE — stile "Navy & Cream": sfondo blu notte,
+   tessera crema con i giorni che si accendono uno alla volta, pulsante
+   dorato che pulsa piano per farsi notare. */
+function _vaiCalendarioToVideoBlob(opts){
+  const sec=Math.max(3, Math.min(6, opts.sec||4));
+  const NAVY='#0D1B2A', CREMA='#F5F1E8', ORO='#C9A84C', TESTO='#1A1205';
+  const W=720, H=1280;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d');
+  const titolo=(opts.titolo||'Prenota la tua visita').trim();
+  const cta=(opts.cta||'Prenota una visita').trim();
+  const giorni=['LUN','MAR','MER','GIO','VEN','SAB','DOM'];
+  const ease=(p)=> p<0.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
+  const clamp01=(p)=>Math.max(0,Math.min(1,p));
+  const seg=(t,start,dur)=>clamp01((t-start)/dur);
+
+  const wx=60, wy=360, ww=600, wh=360, r=20;
+  let thumb=null;
+  const paint=(t)=>{
+    ctx.fillStyle=NAVY; ctx.fillRect(0,0,W,H);
+
+    const eTit=ease(seg(t,0,0.4));
+    ctx.save(); ctx.globalAlpha=eTit;
+    ctx.fillStyle='#fff'; ctx.font='48px "DM Serif Display", Georgia, serif'; ctx.textAlign='center';
+    ctx.fillText(titolo, W/2, 220+(1-eTit)*14);
+    ctx.restore();
+
+    const eCard=ease(seg(t,0.2,0.4));
+    ctx.save(); ctx.globalAlpha=eCard;
+    ctx.translate(wx+ww/2, wy+wh/2); ctx.scale(0.9+0.1*eCard,0.9+0.1*eCard); ctx.translate(-(wx+ww/2),-(wy+wh/2));
+    ctx.shadowColor='rgba(0,0,0,.4)'; ctx.shadowBlur=30; ctx.shadowOffsetY=14;
+    ctx.fillStyle=CREMA;
+    if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(wx,wy,ww,wh,r); ctx.fill(); } else ctx.fillRect(wx,wy,ww,wh);
+    ctx.shadowColor='transparent';
+    ctx.restore();
+
+    if(eCard>=0.9){
+      const colW=ww/7;
+      for(let i=0;i<7;i++){
+        const cx=wx+colW*i+colW/2, cy=wy+90;
+        ctx.save();
+        ctx.fillStyle=TESTO; ctx.font='600 15px "DM Sans", sans-serif'; ctx.textAlign='center';
+        ctx.fillText(giorni[i], cx, cy);
+        ctx.restore();
+        // il giorno si "accende" con un cerchio dorato che passa in sequenza
+        const eAcc=seg(t,0.65+i*0.12,0.3);
+        if(eAcc>0 && eAcc<1){
+          ctx.save(); ctx.globalAlpha=Math.sin(eAcc*Math.PI);
+          ctx.strokeStyle=ORO; ctx.lineWidth=2.4;
+          ctx.beginPath(); ctx.arc(cx, cy+70, 24, 0, Math.PI*2); ctx.stroke();
+          ctx.restore();
+        }
+        if(i===3){
+          ctx.save(); ctx.fillStyle=ORO; ctx.beginPath(); ctx.arc(cx, cy+70, 20, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle='#fff'; ctx.font='700 18px "DM Sans", sans-serif';
+          ctx.fillText(String(17+i), cx, cy+76);
+          ctx.restore();
+        } else {
+          ctx.save(); ctx.fillStyle='rgba(26,18,5,.55)'; ctx.font='500 15px "DM Sans", sans-serif'; ctx.textAlign='center';
+          ctx.fillText(String(17+i), cx, cy+75);
+          ctx.restore();
+        }
+      }
+    }
+
+    // pulsante CTA dorato che pulsa piano una volta comparso
+    const eBtn=ease(seg(t,1.55,0.35));
+    if(eBtn>0){
+      const pulso = eBtn>=1 ? (1+0.035*Math.sin((t-1.9)*3.2)) : 1;
+      const bw=440, bh=66, bx=W/2-bw/2, by=wy+wh+50;
+      ctx.save();
+      ctx.globalAlpha=eBtn;
+      ctx.translate(bx+bw/2, by+bh/2); ctx.scale(pulso,pulso); ctx.translate(-(bx+bw/2),-(by+bh/2));
+      ctx.shadowColor='rgba(201,168,76,.5)'; ctx.shadowBlur=18;
+      ctx.fillStyle=ORO;
+      if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,bh/2); ctx.fill(); } else ctx.fillRect(bx,by,bw,bh);
+      ctx.shadowColor='transparent';
+      ctx.fillStyle=TESTO; ctx.font='700 22px "DM Sans", sans-serif'; ctx.textAlign='center';
+      ctx.fillText(cta, bx+bw/2, by+bh/2+8);
+      ctx.restore();
+    }
+    if(!thumb && t>=Math.min(sec-0.3,2.2)) thumb=cv.toDataURL('image/jpeg',0.82);
+  };
+  return _vaiPrecaricaFontIcone(['48px "DM Serif Display"'])
+    .then(()=>_vaiRecordCanvasToBlob(cv, sec, paint, Math.min(sec-0.3,2.2)));
+}
+
+/* PUNTI DI FORZA — stile "Pearl White & Gold": sfondo perla, un pannello
+   che sale da sotto con 3 spunte dorate — i pregi veri dell'immobile se
+   ci sono, altrimenti esempi generici. */
+function _vaiPuntiForzaToVideoBlob(opts){
+  const sec=Math.max(3, Math.min(6, opts.sec||4));
+  const PERLA='#FAF6EF', NAVY='#2A2017', ORO='#C9A84C';
+  const W=720, H=1280;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d');
+  const titolo=(opts.titolo||'Punti di forza').trim();
+  const punti=(opts.punti&&opts.punti.length?opts.punti:['Vista mare','Terrazzo','Garage']).slice(0,4);
+  const ease=(p)=> p<0.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
+  const clamp01=(p)=>Math.max(0,Math.min(1,p));
+  const seg=(t,start,dur)=>clamp01((t-start)/dur);
+
+  const ph=160+punti.length*100, pw=600, px=60, pyRest=H-ph-120;
+  let thumb=null;
+  const paint=(t)=>{
+    ctx.fillStyle=PERLA; ctx.fillRect(0,0,W,H);
+
+    const eTit=ease(seg(t,0,0.4));
+    ctx.save(); ctx.globalAlpha=eTit;
+    ctx.fillStyle=NAVY; ctx.font='56px "DM Serif Display", Georgia, serif'; ctx.textAlign='center';
+    ctx.fillText(titolo, W/2, 200+(1-eTit)*14);
+    ctx.restore();
+
+    // il pannello sale da sotto lo schermo fino alla sua posizione
+    const eUp=ease(seg(t,0.25,0.5));
+    const py = H - (H-pyRest)*eUp;
+    ctx.save();
+    ctx.shadowColor='rgba(0,0,0,.14)'; ctx.shadowBlur=30; ctx.shadowOffsetY=-6;
+    ctx.fillStyle='#fff';
+    if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(px,py,pw,ph,22); ctx.fill(); } else ctx.fillRect(px,py,pw,ph);
+    ctx.shadowColor='transparent';
+    ctx.restore();
+
+    if(eUp>=0.92){
+      punti.forEach((testo,i)=>{
+        const start=0.85+i*0.3;
+        const e=ease(seg(t,start,0.3));
+        if(e<=0) return;
+        const ry=pyRest+70+i*100;
+        ctx.save(); ctx.globalAlpha=e;
+        const dx=(1-e)*-30;
+        ctx.fillStyle=ORO;
+        ctx.beginPath(); ctx.arc(px+70+dx, ry, 24, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle='#fff'; ctx.lineWidth=3; ctx.lineCap='round'; ctx.lineJoin='round';
+        ctx.beginPath(); ctx.moveTo(px+60+dx, ry); ctx.lineTo(px+68+dx, ry+8); ctx.lineTo(px+82+dx, ry-10); ctx.stroke();
+        ctx.fillStyle=NAVY; ctx.font='700 26px "DM Sans", sans-serif'; ctx.textAlign='left';
+        ctx.fillText(testo, px+118+dx, ry+9);
+        ctx.restore();
+      });
+    }
+    if(!thumb && t>=Math.min(sec-0.3, 0.85+punti.length*0.3+0.4)) thumb=cv.toDataURL('image/jpeg',0.82);
+  };
+  return _vaiPrecaricaFontIcone(['56px "DM Serif Display"'])
+    .then(()=>_vaiRecordCanvasToBlob(cv, sec, paint, Math.min(sec-0.3, 0.85+punti.length*0.3+0.4)));
+}
+
+/* CONTATTI E CALL TO ACTION — stile "Terrazzo & Copper": sfondo terracotta
+   chiaro, una tessera bianca entra con un piccolo rimbalzo, le icone di
+   contatto compaiono una alla volta — solo quelle che Enzo ha davvero
+   compilato (telefono, WhatsApp, sito), mai inventate. */
+function _vaiContattiToVideoBlob(opts){
+  const sec=Math.max(2.5, Math.min(5, opts.sec||3.4));
+  const TERRA='#E7D3C0', BRONZO='#B5734A', NAVY='#3A2E22';
+  const W=720, H=1280;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d');
+  const titolo=(opts.titolo||'Contattaci per informazioni').trim();
+  const contatti=[];
+  if(opts.telefono) contatti.push({ic:'phone', testo:opts.telefono});
+  if(opts.whatsapp) contatti.push({ic:'whatsapp', testo:opts.whatsapp});
+  if(opts.sito) contatti.push({ic:'globe', testo:opts.sito});
+  const icone=contatti.map(c=>_vaiSvgComeImg(c.ic, BRONZO));
+  const ease=(p)=> p<0.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
+  const clamp01=(p)=>Math.max(0,Math.min(1,p));
+  const seg=(t,start,dur)=>clamp01((t-start)/dur);
+
+  const ch=Math.max(220, 110+contatti.length*90), cw=600, cx=60, cy=H*0.5-ch/2;
+  let thumb=null;
+  const paint=(t)=>{
+    ctx.fillStyle=TERRA; ctx.fillRect(0,0,W,H);
+
+    const eTit=ease(seg(t,0,0.35));
+    ctx.save(); ctx.globalAlpha=eTit;
+    ctx.fillStyle=NAVY; ctx.font='44px "DM Serif Display", Georgia, serif'; ctx.textAlign='center';
+    const parole=titolo.split(' '), righe=[]; let riga='';
+    ctx.font='44px "DM Serif Display", Georgia, serif';
+    parole.forEach(w=>{ const prova=riga?riga+' '+w:w; if(ctx.measureText(prova).width>600 && riga){ righe.push(riga); riga=w; } else riga=prova; });
+    if(riga) righe.push(riga);
+    righe.forEach((r2,i)=>ctx.fillText(r2, W/2, cy-60+i*52+(1-eTit)*12));
+    ctx.restore();
+
+    // la tessera entra con un piccolo rimbalzo (overshoot poi assestamento)
+    const eCard=seg(t,0.3,0.4);
+    const el=ease(Math.min(1,eCard));
+    const overshoot = eCard<1 ? (0.9+0.15*Math.sin(el*Math.PI)) : 1;
+    ctx.save(); ctx.globalAlpha=ease(Math.min(1,eCard*1.4));
+    ctx.translate(cx+cw/2, cy+ch/2); ctx.scale(overshoot,overshoot); ctx.translate(-(cx+cw/2),-(cy+ch/2));
+    ctx.shadowColor='rgba(0,0,0,.2)'; ctx.shadowBlur=30; ctx.shadowOffsetY=14;
+    ctx.fillStyle='#fff';
+    if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(cx,cy,cw,ch,20); ctx.fill(); } else ctx.fillRect(cx,cy,cw,ch);
+    ctx.shadowColor='transparent';
+    ctx.restore();
+
+    if(eCard>=0.9){
+      if(!contatti.length){
+        ctx.save(); ctx.fillStyle=NAVY; ctx.font='500 20px "DM Sans", sans-serif'; ctx.textAlign='center';
+        ctx.fillText('Scrivi nei commenti per saperne di più', cx+cw/2, cy+ch/2+7);
+        ctx.restore();
+      } else contatti.forEach((c,i)=>{
+        const start=0.75+i*0.3;
+        const e=ease(seg(t,start,0.3));
+        if(e<=0) return;
+        const ry=cy+70+i*90;
+        ctx.save(); ctx.globalAlpha=e;
+        const sc=0.6+0.4*e;
+        ctx.translate(cx+70, ry); ctx.scale(sc,sc); ctx.translate(-(cx+70),-ry);
+        ctx.fillStyle=TERRA;
+        ctx.beginPath(); ctx.arc(cx+70, ry, 28, 0, Math.PI*2); ctx.fill();
+        const img=icone[i];
+        if(img && img.complete && img.naturalWidth){ try{ ctx.drawImage(img, cx+70-16, ry-16, 32, 32); }catch(err){} }
+        ctx.restore();
+        ctx.save(); ctx.globalAlpha=e;
+        ctx.fillStyle=NAVY; ctx.font='700 24px "DM Sans", sans-serif'; ctx.textAlign='left';
+        ctx.fillText(c.testo, cx+120, ry+8);
+        ctx.restore();
+      });
+    }
+    if(!thumb && t>=Math.min(sec-0.3, 0.75+contatti.length*0.3+0.4)) thumb=cv.toDataURL('image/jpeg',0.82);
+  };
+  return _vaiPrecaricaFontIcone(['44px "DM Serif Display"'], icone)
+    .then(()=>_vaiRecordCanvasToBlob(cv, sec, paint, Math.min(sec-0.3, 0.75+contatti.length*0.3+0.4)));
 }
 
 /* Inserisce una clip (già pronta come Blob) nel montaggio, tagliando la clip
@@ -47857,6 +48399,12 @@ function vaiCardPanel(){
         '<div class="vai-graf-sez"><div class="vai-graf-lbl">Stile</div><div class="vai-graf-items" style="grid-template-columns:1fr 1fr">'+
             '<button type="button" class="vai-graf-item vai-card-tipo sel" data-key="icona" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#1A2330;color:#E8EDF2">Icona semplice</span></button>'+
             '<button type="button" class="vai-graf-item vai-card-tipo" data-key="finestra" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#C9A84C;color:#1A1205">Finestra immobile</span></button>'+
+            '<button type="button" class="vai-graf-item vai-card-tipo" data-key="planimetria" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#0B1420;color:#8ECBFF">Planimetria</span></button>'+
+            '<button type="button" class="vai-graf-item vai-card-tipo" data-key="mappa" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#2B3438;color:#C9A84C">Mappa territorio</span></button>'+
+            '<button type="button" class="vai-graf-item vai-card-tipo" data-key="tourdati" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#1F6F54;color:#fff">Tour dati casa</span></button>'+
+            '<button type="button" class="vai-graf-item vai-card-tipo" data-key="calendario" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#0D1B2A;color:#F5F1E8">Calendario visite</span></button>'+
+            '<button type="button" class="vai-graf-item vai-card-tipo" data-key="puntiforza" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#FAF6EF;color:#2A2017;border:1px solid #E5DDC8">Punti di forza</span></button>'+
+            '<button type="button" class="vai-graf-item vai-card-tipo" data-key="contatti" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#E7D3C0;color:#3A2E22">Contatti</span></button>'+
           '</div></div>'+
         '<div id="vai-card-grp-icona">'+
           '<div class="vai-graf-sez"><div class="vai-graf-lbl">Testo della scheda</div>'+
@@ -47880,6 +48428,58 @@ function vaiCardPanel(){
           '<div class="vai-graf-sez"><div class="vai-graf-lbl">Indirizzo o testo breve (facoltativo)</div>'+
             '<input type="text" id="vai-card-indirizzo" class="vai-lz-input" placeholder="es. Corso Garibaldi, Agropoli" maxlength="40"></div>'+
         '</div>'+
+        '<div id="vai-card-grp-planimetria" style="display:none">'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Titolo</div>'+
+            '<input type="text" id="vai-card-plan-tit" class="vai-lz-input" placeholder="es. Pianta dell\'immobile" maxlength="40"></div>'+
+          '<div class="vai-graf-sez" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'+
+            '<label style="font-size:.72rem;color:var(--text2)">Mq<input type="text" id="vai-card-plan-mq" class="vai-lz-input" placeholder="90"></label>'+
+            '<label style="font-size:.72rem;color:var(--text2)">Camere<input type="text" id="vai-card-plan-camere" class="vai-lz-input" placeholder="2"></label>'+
+            '<label style="font-size:.72rem;color:var(--text2)">Bagni<input type="text" id="vai-card-plan-bagni" class="vai-lz-input" placeholder="1"></label>'+
+          '</div>'+
+          '<div class="vai-lz-note">Non è la pianta vera: è uno schema con le stanze in base ai numeri che scrivi qui.</div>'+
+        '</div>'+
+        '<div id="vai-card-grp-mappa" style="display:none">'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Comune / zona</div>'+
+            '<input type="text" id="vai-card-mappa-comune" class="vai-lz-input" placeholder="es. Agropoli" maxlength="30"></div>'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Etichetta sotto lo spillo</div>'+
+            '<input type="text" id="vai-card-mappa-etichetta" class="vai-lz-input" placeholder="es. Posizione strategica" maxlength="30"></div>'+
+          '<div class="vai-lz-note">Mappa stilizzata, non reale. Per le distanze vere da OpenStreetMap hai già "Mappa zona" (Fabbrica grafiche).</div>'+
+        '</div>'+
+        '<div id="vai-card-grp-tourdati" style="display:none">'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Titolo</div>'+
+            '<input type="text" id="vai-card-tour-tit" class="vai-lz-input" placeholder="es. Tour della casa" maxlength="40"></div>'+
+          '<div class="vai-graf-sez" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
+            '<label style="font-size:.72rem;color:var(--text2)">Mq<input type="text" id="vai-card-tour-mq" class="vai-lz-input"></label>'+
+            '<label style="font-size:.72rem;color:var(--text2)">Locali<input type="text" id="vai-card-tour-locali" class="vai-lz-input"></label>'+
+            '<label style="font-size:.72rem;color:var(--text2)">Camere<input type="text" id="vai-card-tour-camere" class="vai-lz-input"></label>'+
+            '<label style="font-size:.72rem;color:var(--text2)">Bagni<input type="text" id="vai-card-tour-bagni" class="vai-lz-input"></label>'+
+            '<label style="font-size:.72rem;color:var(--text2)">Piano<input type="text" id="vai-card-tour-piano" class="vai-lz-input"></label>'+
+            '<label style="font-size:.72rem;color:var(--text2)">Prezzo<input type="text" id="vai-card-tour-prezzo" class="vai-lz-input"></label>'+
+          '</div>'+
+        '</div>'+
+        '<div id="vai-card-grp-calendario" style="display:none">'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Titolo</div>'+
+            '<input type="text" id="vai-card-cal-tit" class="vai-lz-input" placeholder="es. Prenota la tua visita" maxlength="40"></div>'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Testo del pulsante</div>'+
+            '<input type="text" id="vai-card-cal-cta" class="vai-lz-input" placeholder="es. Prenota una visita" maxlength="30"></div>'+
+        '</div>'+
+        '<div id="vai-card-grp-puntiforza" style="display:none">'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Titolo</div>'+
+            '<input type="text" id="vai-card-pf-tit" class="vai-lz-input" placeholder="es. Punti di forza" maxlength="40"></div>'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Punti (separati da virgola, max 4)</div>'+
+            '<input type="text" id="vai-card-pf-punti" class="vai-lz-input" placeholder="es. Vista mare, Terrazzo, Garage"></div>'+
+        '</div>'+
+        '<div id="vai-card-grp-contatti" style="display:none">'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Titolo</div>'+
+            '<input type="text" id="vai-card-cont-tit" class="vai-lz-input" placeholder="es. Contattaci per informazioni" maxlength="50"></div>'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Telefono (facoltativo)</div>'+
+            '<input type="text" id="vai-card-cont-tel" class="vai-lz-input" placeholder="es. 0828.811462" maxlength="20"></div>'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">WhatsApp (facoltativo)</div>'+
+            '<input type="text" id="vai-card-cont-wa" class="vai-lz-input" placeholder="es. 0828.811462" maxlength="20"></div>'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Sito (facoltativo)</div>'+
+            '<input type="text" id="vai-card-cont-sito" class="vai-lz-input" placeholder="es. www.lecasedallaz.it" maxlength="30"></div>'+
+          '<div class="vai-lz-note">Mostra solo i contatti che scrivi qui: nessun numero inventato.</div>'+
+        '</div>'+
         '<div class="vai-graf-sez"><div class="vai-graf-lbl">Durata: <span id="vai-card-dur-v">2.5s</span></div>'+
           '<input type="range" id="vai-card-dur" min="1.5" max="4" step="0.5" value="2.5" oninput="document.getElementById(\'vai-card-dur-v\').textContent=this.value+\'s\'" style="width:100%"></div>'+
         '<label style="display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--text2);margin-bottom:10px;cursor:pointer"><input type="checkbox" id="vai-card-salvalib" checked> Salva anche nella Libreria clip, per riusarla in altri video</label>'+
@@ -47888,8 +48488,33 @@ function vaiCardPanel(){
       '</div></div>';
     document.body.appendChild(m);
   }
-  ['vai-card-testo','vai-card-tit1','vai-card-titacc','vai-card-prezzo','vai-card-indirizzo'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  try{ Object.keys(VAI_SVG_ICONE).forEach(k=>{ _vaiSvgComeImg(k,'#E8EDF2'); _vaiSvgComeImg(k,'#0D1B2A'); }); }catch(e){}
+  ['vai-card-testo','vai-card-tit1','vai-card-titacc','vai-card-prezzo','vai-card-indirizzo',
+   'vai-card-plan-tit','vai-card-plan-mq','vai-card-plan-camere','vai-card-plan-bagni',
+   'vai-card-mappa-comune','vai-card-mappa-etichetta',
+   'vai-card-tour-tit','vai-card-tour-mq','vai-card-tour-locali','vai-card-tour-camere','vai-card-tour-bagni','vai-card-tour-piano','vai-card-tour-prezzo',
+   'vai-card-cal-tit','vai-card-cal-cta','vai-card-pf-tit','vai-card-pf-punti',
+   'vai-card-cont-tit','vai-card-cont-tel','vai-card-cont-wa','vai-card-cont-sito'
+  ].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  // se c'è un immobile selezionato nel progetto, precompilo i dati veri (mai inventati)
+  try{
+    const j=(typeof vaiImmobileJSON==='function' && typeof _vaiImm!=='undefined' && _vaiImm) ? vaiImmobileJSON(_vaiImm) : null;
+    if(j){
+      const set=(id,val)=>{ if(val==null || val==='') return; const el=document.getElementById(id); if(el) el.value=val; };
+      set('vai-card-prezzo', j.prezzo?fmtE(j.prezzo):''); set('vai-card-indirizzo', j.zona&&j.zona!==j.comune?j.zona:j.comune);
+      set('vai-card-plan-mq', j.mq); set('vai-card-plan-camere', j.camere); set('vai-card-plan-bagni', j.bagni);
+      set('vai-card-mappa-comune', j.comune);
+      set('vai-card-tour-mq', j.mq); set('vai-card-tour-locali', j.locali); set('vai-card-tour-camere', j.camere);
+      set('vai-card-tour-bagni', j.bagni); set('vai-card-tour-piano', j.piano); set('vai-card-tour-prezzo', j.prezzo?fmtE(j.prezzo):'');
+      if(j.pregi) set('vai-card-pf-punti', String(j.pregi).split(/[,;\n]/).map(s=>s.trim()).filter(Boolean).slice(0,4).join(', '));
+    }
+    vaiManualSync();
+    const man=(typeof _vaiManual!=='undefined')?_vaiManual:null;
+    if(man){
+      const set=(id,val)=>{ if(val==null || val==='') return; const el=document.getElementById(id); if(el) el.value=val; };
+      set('vai-card-cont-tel', man.tel); set('vai-card-cont-wa', man.tel); set('vai-card-cont-sito', man.sito);
+    }
+  }catch(e){}
+  try{ Object.keys(VAI_SVG_ICONE).forEach(k=>{ _vaiSvgComeImg(k,'#E8EDF2'); _vaiSvgComeImg(k,'#0D1B2A'); _vaiSvgComeImg(k,'#1F6F54'); _vaiSvgComeImg(k,'#B5734A'); }); }catch(e){}
   m.style.display='flex';
 }
 function vaiCardClose(){ const m=document.getElementById('vai-card-modal'); if(m) m.style.display='none'; }
@@ -47897,9 +48522,9 @@ function vaiCardTipoSel(btn){
   document.querySelectorAll('.vai-card-tipo.sel').forEach(b=>b.classList.remove('sel'));
   btn.classList.add('sel');
   const tipo=btn.getAttribute('data-key');
-  const gi=document.getElementById('vai-card-grp-icona'), gf=document.getElementById('vai-card-grp-finestra');
-  if(gi) gi.style.display = (tipo==='finestra') ? 'none' : '';
-  if(gf) gf.style.display = (tipo==='finestra') ? '' : 'none';
+  Object.keys(VAI_CARD_TIPI).forEach(k=>{
+    const g=document.getElementById('vai-card-grp-'+k); if(g) g.style.display = (tipo===k) ? '' : 'none';
+  });
 }
 /* Trascinamento del pannello Scheda per la barra del titolo (stesso meccanismo degli altri pannelli grafica) */
 function vaiCardDragStart(e){
@@ -47932,6 +48557,96 @@ function vaiCardStileSel(btn){ document.querySelectorAll('.vai-card-stile.sel').
    (come ✂ Taglia) quando il cursore è a metà di una clip — esattamente
    "taglio la clip e inserisco in mezzo". Se richiesto, la salva anche nella
    Libreria clip per riusarla in altri video. */
+/* Un campo per tipo: legge gli input del pannello, decide il nome della clip
+   e la funzione generatrice. Niente dati inventati — i campi vuoti restano
+   vuoti nella clip (lo gestisce ogni generatore). */
+const VAI_CARD_TIPI = {
+  finestra:{
+    gen:_vaiFinestraToVideoBlob,
+    leggi:()=>{
+      const tit1=((document.getElementById('vai-card-tit1')||{}).value||'').trim();
+      const titAcc=((document.getElementById('vai-card-titacc')||{}).value||'').trim();
+      if(!tit1 && !titAcc) return null;
+      return { opts:{ tit1, titAcc,
+        prezzo:((document.getElementById('vai-card-prezzo')||{}).value||'').trim(),
+        indirizzo:((document.getElementById('vai-card-indirizzo')||{}).value||'').trim() },
+        nome:'Finestra: '+(tit1+' '+titAcc).trim().slice(0,22) };
+    }
+  },
+  planimetria:{
+    gen:_vaiPlanimetriaToVideoBlob,
+    leggi:()=>{
+      const titolo=((document.getElementById('vai-card-plan-tit')||{}).value||'').trim();
+      return { opts:{ titolo,
+        mq:((document.getElementById('vai-card-plan-mq')||{}).value||'').trim(),
+        camere:((document.getElementById('vai-card-plan-camere')||{}).value||'').trim(),
+        bagni:((document.getElementById('vai-card-plan-bagni')||{}).value||'').trim() },
+        nome:'Planimetria: '+(titolo||'pianta').slice(0,22) };
+    }
+  },
+  mappa:{
+    gen:_vaiMappaToVideoBlob,
+    leggi:()=>{
+      const comune=((document.getElementById('vai-card-mappa-comune')||{}).value||'').trim();
+      if(!comune) return null;
+      return { opts:{ comune, etichetta:((document.getElementById('vai-card-mappa-etichetta')||{}).value||'').trim() },
+        nome:'Mappa: '+comune.slice(0,22) };
+    }
+  },
+  calendario:{
+    gen:_vaiCalendarioToVideoBlob,
+    leggi:()=>{
+      const titolo=((document.getElementById('vai-card-cal-tit')||{}).value||'').trim();
+      const cta=((document.getElementById('vai-card-cal-cta')||{}).value||'').trim();
+      return { opts:{ titolo, cta }, nome:'Calendario: '+(titolo||'prenota una visita').slice(0,22) };
+    }
+  },
+  puntiforza:{
+    gen:_vaiPuntiForzaToVideoBlob,
+    leggi:()=>{
+      const titolo=((document.getElementById('vai-card-pf-tit')||{}).value||'').trim();
+      const raw=((document.getElementById('vai-card-pf-punti')||{}).value||'').trim();
+      const punti=raw?raw.split(',').map(s=>s.trim()).filter(Boolean).slice(0,4):[];
+      return { opts:{ titolo, punti }, nome:'Punti di forza: '+(titolo||'la casa').slice(0,22) };
+    }
+  },
+  contatti:{
+    gen:_vaiContattiToVideoBlob,
+    leggi:()=>{
+      const titolo=((document.getElementById('vai-card-cont-tit')||{}).value||'').trim();
+      const telefono=((document.getElementById('vai-card-cont-tel')||{}).value||'').trim();
+      const whatsapp=((document.getElementById('vai-card-cont-wa')||{}).value||'').trim();
+      const sito=((document.getElementById('vai-card-cont-sito')||{}).value||'').trim();
+      return { opts:{ titolo, telefono, whatsapp, sito }, nome:'Contatti: '+(titolo||'contattaci').slice(0,22) };
+    }
+  },
+  tourdati:{
+    gen:_vaiTourDatiToVideoBlob,
+    leggi:()=>{
+      const titolo=((document.getElementById('vai-card-tour-tit')||{}).value||'').trim();
+      return { opts:{ titolo,
+        mq:((document.getElementById('vai-card-tour-mq')||{}).value||'').trim(),
+        locali:((document.getElementById('vai-card-tour-locali')||{}).value||'').trim(),
+        camere:((document.getElementById('vai-card-tour-camere')||{}).value||'').trim(),
+        bagni:((document.getElementById('vai-card-tour-bagni')||{}).value||'').trim(),
+        piano:((document.getElementById('vai-card-tour-piano')||{}).value||'').trim(),
+        prezzo:((document.getElementById('vai-card-tour-prezzo')||{}).value||'').trim() },
+        nome:'Tour dati: '+(titolo||'casa').slice(0,22) };
+    }
+  },
+  icona:{
+    gen:_vaiCardToVideoBlob,
+    leggi:()=>{
+      const testo=((document.getElementById('vai-card-testo')||{}).value||'').trim();
+      if(!testo) return null;
+      const btnIco=document.querySelector('.vai-card-ic.sel');
+      const btnStile=document.querySelector('.vai-card-stile.sel');
+      return { opts:{ testo, svgIco:btnIco?btnIco.getAttribute('data-key'):'star', stile:btnStile?btnStile.getAttribute('data-key'):'scuro' },
+        nome:'Scheda: '+testo.slice(0,22) };
+    }
+  }
+};
+
 async function vaiCardCrea(){
   if(!_vaiClips || !_vaiClips.length){ toast('Carica prima un video','error'); return; }
   const btnTipo=document.querySelector('.vai-card-tipo.sel');
@@ -47939,32 +48654,17 @@ async function vaiCardCrea(){
   const sec=parseFloat((document.getElementById('vai-card-dur')||{}).value)||2.5;
   const salvaLib=!!(document.getElementById('vai-card-salvalib')||{}).checked;
 
-  let props, nomeClip, opts;
-  if(tipo==='finestra'){
-    const tit1=((document.getElementById('vai-card-tit1')||{}).value||'').trim();
-    const titAcc=((document.getElementById('vai-card-titacc')||{}).value||'').trim();
-    if(!tit1 && !titAcc){ toast('Scrivi almeno la parola in evidenza','error'); return; }
-    const prezzo=((document.getElementById('vai-card-prezzo')||{}).value||'').trim();
-    const indirizzo=((document.getElementById('vai-card-indirizzo')||{}).value||'').trim();
-    opts={ tit1, titAcc, prezzo, indirizzo, sec };
-    nomeClip='Finestra: '+(tit1+' '+titAcc).trim().slice(0,22);
-  } else {
-    const testo=((document.getElementById('vai-card-testo')||{}).value||'').trim();
-    if(!testo){ toast('Scrivi il testo della scheda','error'); return; }
-    const btnIco=document.querySelector('.vai-card-ic.sel');
-    const svgIco=btnIco?btnIco.getAttribute('data-key'):'star';
-    const btnStile=document.querySelector('.vai-card-stile.sel');
-    const stile=btnStile?btnStile.getAttribute('data-key'):'scuro';
-    opts={ testo, svgIco, stile, sec };
-    nomeClip='Scheda: '+testo.slice(0,22);
-  }
+  const def=VAI_CARD_TIPI[tipo]; if(!def){ toast('Stile non riconosciuto','error'); return; }
+  const letto=def.leggi();
+  if(!letto){ toast('Compila almeno il campo principale di questo stile','error'); return; }
+  const opts=Object.assign({sec}, letto.opts), nomeClip=letto.nome;
 
   const btnCrea=document.getElementById('vai-card-crea-btn');
   if(btnCrea){ btnCrea.disabled=true; btnCrea.textContent='Genero la scheda…'; }
   toast('Genero la scheda, un attimo…','info');
 
   let out;
-  try{ out = (tipo==='finestra') ? await _vaiFinestraToVideoBlob(opts) : await _vaiCardToVideoBlob(opts); }
+  try{ out = await def.gen(opts); }
   catch(e){
     console.error('[Scheda] generazione fallita', e);
     toast('Non riesco a generare la scheda su questo browser — usa Chrome o Edge aggiornati','error');
@@ -55615,8 +56315,8 @@ async function pubConfrontaAI(){
       +'<div class="lfg-az"><button class="lfg-btn" onclick="libFinAggiungi()">Aggiungi clip</button>'
       +'<button class="lfg-btn pieno" onclick="libFinCreaAIPanel()">✨ Crea con l\'AI</button></div></div>';
     if(!_lib.length){
-      h+='<div class="lfg-vuoto"><b>La libreria è vuota</b><br>Crea la prima scheda dal pulsante «Scheda» in Video Social (spunta «Salva anche nella Libreria clip»), chiedi all\'AI di crearne una, carica un video già pronto da fuori, oppure parti da 5 esempi già pronti.<br><br>'
-        +'<button class="lfg-btn pieno" id="lfg-seed-btn" onclick="libFinSeedEsempi()">🎬 Crea 5 esempi</button> '
+      h+='<div class="lfg-vuoto"><b>La libreria è vuota</b><br>Crea la prima scheda dal pulsante «Scheda» in Video Social (spunta «Salva anche nella Libreria clip»), chiedi all\'AI di crearne una, carica un video già pronto da fuori, oppure parti da '+ESEMPI_SEED.length+' esempi già pronti (uno per ogni stile: finestra immobile, icona, planimetria, mappa, tour dati).<br><br>'
+        +'<button class="lfg-btn pieno" id="lfg-seed-btn" onclick="libFinSeedEsempi()">🎬 Crea '+ESEMPI_SEED.length+' esempi</button> '
         +'<button class="lfg-btn" onclick="libFinAggiungi()">Aggiungi clip</button> <button class="lfg-btn" onclick="libFinCreaAIPanel()">✨ Crea con l\'AI</button></div>';
     } else {
       h+='<div class="lfg-grid">'+_lib.map(function(r){ return card(r,false); }).join('')+'</div>';
@@ -55685,29 +56385,34 @@ async function pubConfrontaAI(){
      diverso dietro le quinte): due "finestra immobile" e tre "icona". Vivono
      solo nel browser di chi clicca: ognuno li genera nel proprio, al volo. ── */
   var ESEMPI_SEED = [
-    { gen:'finestra', opts:{ tit1:'Casa con', titAcc:'vista mare', prezzo:'289.000 €', indirizzo:'Corso Garibaldi, Agropoli', sec:3.2 }, nome:'Finestra: Casa con vista mare' },
-    { gen:'finestra', opts:{ tit1:'La tua', titAcc:'prossima casa', prezzo:'', indirizzo:'', sec:3.2 }, nome:'Finestra: La tua prossima casa' },
-    { gen:'icona', opts:{ testo:'Pronta consegna, chiavi in mano', svgIco:'chiave', stile:'scuro', sec:2.5 }, nome:'Scheda: Pronta consegna' },
-    { gen:'icona', opts:{ testo:'Tre camere da letto', svgIco:'letto', stile:'scuro', sec:2.5 }, nome:'Scheda: Tre camere da letto' },
-    { gen:'icona', opts:{ testo:'Prenota una visita', svgIco:'pin', stile:'scuro', sec:2.5 }, nome:'Scheda: Prenota una visita' }
+    { tipo:'finestra', opts:{ tit1:'Casa con', titAcc:'vista mare', prezzo:'289.000 €', indirizzo:'Corso Garibaldi, Agropoli', sec:3.2 }, nome:'Finestra: Casa con vista mare' },
+    { tipo:'icona', opts:{ testo:'Pronta consegna, chiavi in mano', svgIco:'chiave', stile:'scuro', sec:2.5 }, nome:'Scheda: Pronta consegna' },
+    { tipo:'planimetria', opts:{ titolo:'Pianta dell\'immobile', mq:'90', camere:'3', bagni:'2', sec:4 }, nome:'Planimetria: 90 mq' },
+    { tipo:'mappa', opts:{ comune:'Agropoli', etichetta:'Posizione strategica', sec:3.6 }, nome:'Mappa: Agropoli' },
+    { tipo:'tourdati', opts:{ titolo:'Tour della casa', mq:'90', locali:'5', camere:'3', bagni:'2', piano:'2', prezzo:'289.000 €', sec:4.2 }, nome:'Tour dati: la casa in numeri' },
+    { tipo:'calendario', opts:{ titolo:'Prenota la tua visita', cta:'Prenota una visita', sec:4 }, nome:'Calendario: prenota una visita' },
+    { tipo:'puntiforza', opts:{ titolo:'Punti di forza', punti:['Vista mare','Terrazzo','Garage'], sec:4 }, nome:'Punti di forza: vista mare, terrazzo, garage' },
+    { tipo:'contatti', opts:{ titolo:'Contattaci per informazioni', telefono:'0828.811462', whatsapp:'0828.811462', sec:3.4 }, nome:'Contatti: contattaci per informazioni' }
   ];
   window.libFinSeedEsempi=function(){
     var btn=document.getElementById('lfg-seed-btn');
     if(btn){ btn.disabled=true; }
-    toastL('Creo 5 esempi, qualche secondo…','info');
+    var n=ESEMPI_SEED.length;
+    toastL('Creo '+n+' esempi, qualche secondo…','info');
     var fatti=0, cat=Promise.resolve();
     ESEMPI_SEED.forEach(function(es,i){
       cat=cat.then(function(){
-        if(btn) btn.textContent='Creo l\'esempio '+(i+1)+' di 5…';
-        var gen = (es.gen==='finestra') ? _vaiFinestraToVideoBlob(es.opts) : _vaiCardToVideoBlob(es.opts);
-        return gen.then(function(out){
+        if(btn) btn.textContent='Creo l\'esempio '+(i+1)+' di '+n+'…';
+        var def=VAI_CARD_TIPI[es.tipo];
+        if(!def) return;
+        return def.gen(es.opts).then(function(out){
           if(!out||!out.blob) return;
           return window.libFinSalvaBlob(out.blob, out.mime, es.nome, es.opts.sec, out.thumb, 'esempio').then(function(){ fatti++; });
         }).catch(function(e){ console.warn('[Libreria grafiche] esempio KO', es.nome, e); });
       });
     });
     return cat.then(function(){
-      if(btn){ btn.disabled=false; btn.textContent='🎬 Crea 5 esempi'; }
+      if(btn){ btn.disabled=false; btn.textContent='🎬 Crea '+n+' esempi'; }
       toastL(fatti?('Creati '+fatti+' esempi: puoi già provarli'):'Non sono riuscito a creare gli esempi su questo browser — usa Chrome o Edge aggiornati', fatti?'success':'error');
     });
   };
@@ -55717,8 +56422,8 @@ async function pubConfrontaAI(){
     var old=document.getElementById('lfg-ai-modal'); if(old) old.remove();
     var m=document.createElement('div'); m.id='lfg-ai-modal'; m.className='lfg-modal';
     m.innerHTML='<div class="lfg-box lfg-box-ai">'
-      +'<div class="lfg-pd"><b>✨ Crea una clip con l\'AI</b><small>Descrivi cosa vuoi: l\'AI sceglie lo stile (icona o finestra immobile), il testo e l\'icona giusta — sempre nel settore immobiliare.</small></div>'
-      +'<div style="padding:0 16px 10px"><textarea id="lfg-ai-prompt" rows="3" placeholder="es. «un invito a prenotare una visita», «vista mare», «tre camere da letto», «dal sopralluogo al rogito»…" style="width:100%;box-sizing:border-box;padding:9px 11px;border-radius:9px;border:1px solid rgba(255,255,255,.14);background:#13263B;color:#fff;font-family:inherit;font-size:.86rem;resize:vertical"></textarea></div>'
+      +'<div class="lfg-pd"><b>✨ Crea una clip con l\'AI</b><small>Descrivi cosa vuoi: l\'AI sceglie lo stile giusto (icona, finestra immobile, planimetria, mappa, tour dei dati, calendario visite, punti di forza o contatti), il testo e i colori — sempre nel settore immobiliare.</small></div>'
+      +'<div style="padding:0 16px 10px"><textarea id="lfg-ai-prompt" rows="3" placeholder="es. «un invito a prenotare una visita», «la pianta di un trilocale», «dove si trova rispetto al mare», «i punti di forza della casa», «come contattarci»…" style="width:100%;box-sizing:border-box;padding:9px 11px;border-radius:9px;border:1px solid rgba(255,255,255,.14);background:#13263B;color:#fff;font-family:inherit;font-size:.86rem;resize:vertical"></textarea></div>'
       +'<div class="lfg-azm"><button data-a="crea" class="pieno">Crea</button><button data-a="chiudi">Annulla</button></div>'
       +'</div>';
     document.body.appendChild(m);
@@ -55733,35 +56438,69 @@ async function pubConfrontaAI(){
     var btn=modal&&modal.querySelector('[data-a=crea]');
     if(btn){ btn.disabled=true; btn.textContent='Penso…'; }
     toastL('L\'AI sta pensando alla clip…','info');
+    // dati veri dell'immobile selezionato, se c'è: l'AI li può usare ma non ne deve inventare altri
+    var jImm=null; try{ jImm=(typeof vaiImmobileJSON==='function' && typeof _vaiImm!=='undefined' && _vaiImm) ? vaiImmobileJSON(_vaiImm) : null; }catch(e){}
+    var datiCasa = jImm ? ('Dati VERI dell\'immobile selezionato nel progetto (usali se pertinenti, non inventarne altri): '
+      +JSON.stringify({comune:jImm.comune, zona:jImm.zona, mq:jImm.mq, locali:jImm.locali, camere:jImm.camere, bagni:jImm.bagni, piano:jImm.piano, prezzo:jImm.prezzo?fmtE(jImm.prezzo):''})+'\n\n') : '';
     var icone=VAI_CARD_ICONE.join(', ');
-    var sys='Un agente immobiliare vuole una piccola clip grafica animata (2-3 secondi) da usare nei suoi video del settore immobiliare. '
-      +'Due stili possibili:\n'
-      +'1) "icona": un\'icona dentro un riquadro bianco con un titolo breve sotto — adatto a concetti semplici (es. "Vista mare", "Pronta consegna").\n'
-      +'2) "finestra": una finta finestra stile app con foto, prezzo e indirizzo — adatto quando si parla di UN immobile specifico con prezzo o indirizzo.\n\n'
+    var sys='Un agente immobiliare vuole una piccola clip grafica animata (2-4 secondi) da usare nei suoi video del settore immobiliare. '
+      +'Otto stili possibili:\n'
+      +'1) "icona": un\'icona dentro un riquadro bianco con un titolo breve sotto — concetti semplici (es. "Vista mare", "Pronta consegna").\n'
+      +'2) "finestra": una finta finestra stile app con foto, prezzo e indirizzo — quando si parla di UN immobile con prezzo o indirizzo.\n'
+      +'3) "planimetria": una pianta schematica (stile progetto/blueprint) con le stanze — quando si parla di mq, camere, bagni o della disposizione degli spazi.\n'
+      +'4) "mappa": una finestra con una mappa stilizzata e uno spillo che cade sul punto — quando si parla DI DOVE si trova la casa o della zona.\n'
+      +'5) "tourdati": una finestra con la lista dei dati tecnici della casa (mq, locali, camere, bagni, piano, prezzo) uno sotto l\'altro — per riepilogare i numeri della casa.\n'
+      +'6) "calendario": un calendario con un pulsante che invita a prenotare — quando si parla di fissare una visita o un appuntamento.\n'
+      +'7) "puntiforza": un pannello con 2-4 spunte dorate sui pregi dell\'immobile (es. vista mare, terrazzo, garage) — quando si parla dei punti di forza o dei pregi della casa.\n'
+      +'8) "contatti": una tessera con telefono/WhatsApp/sito per farsi contattare — quando si parla di come contattare l\'agente.\n\n'
+      +datiCasa
       +'Richiesta dell\'agente: "'+richiesta.replace(/"/g,"'")+'"\n\n'
-      +'Se scegli "icona", scegli "svgIco" SOLO fra questi valori: '+icone+'. Scrivi "testo" breve (max 28 caratteri) e "stile" "scuro" o "chiaro".\n'
-      +'Se scegli "finestra", scrivi "tit1" (prima parte del titolo), "titAcc" (la parola in evidenza, 1-3 parole), "prezzo" (stringa tipo "289.000 €", vuota se non pertinente), "indirizzo" (breve, vuota se non pertinente).\n'
+      +'Se scegli "icona": "svgIco" SOLO fra questi valori: '+icone+'. "testo" breve (max 28 caratteri). "stile" "scuro" o "chiaro".\n'
+      +'Se scegli "finestra": "tit1" (prima parte del titolo), "titAcc" (parola in evidenza, 1-3 parole), "prezzo" (vuoto se non pertinente), "indirizzo" (vuoto se non pertinente).\n'
+      +'Se scegli "planimetria": "titolo", "mq", "camere", "bagni" (numeri come stringa, vuoti se non li sai).\n'
+      +'Se scegli "mappa": "comune", "etichetta" (breve frase sotto lo spillo, es. "Posizione strategica").\n'
+      +'Se scegli "tourdati": "titolo", "mq", "locali", "camere", "bagni", "piano", "prezzo" (vuoti quelli che non sai — MAI inventare numeri).\n'
+      +'Se scegli "calendario": "titolo", "cta" (testo breve del pulsante, es. "Prenota una visita").\n'
+      +'Se scegli "puntiforza": "titolo", "punti" (ARRAY di 2-4 stringhe brevi — usa i pregi veri dell\'immobile sopra se ci sono, altrimenti esempi plausibili).\n'
+      +'Se scegli "contatti": "titolo" (es. "Contattaci per informazioni"); NON inventare telefono/whatsapp/sito, lasciali vuoti: li aggiunge Enzo a mano.\n'
       +'Resta sempre nel settore immobiliare: niente altri argomenti.\n\n'
-      +'Rispondi SOLO con JSON valido: {"tipo":"icona|finestra","testo":"","svgIco":"","stile":"","tit1":"","titAcc":"","prezzo":"","indirizzo":""}';
+      +'Rispondi SOLO con JSON valido con tutti questi campi (stringa vuota, o array vuoto per "punti", quelli che non servono per lo stile scelto): '
+      +'{"tipo":"icona|finestra|planimetria|mappa|tourdati|calendario|puntiforza|contatti","testo":"","svgIco":"","stile":"","tit1":"","titAcc":"","prezzo":"","indirizzo":"","titolo":"","mq":"","locali":"","camere":"","bagni":"","piano":"","comune":"","etichetta":"","cta":"","punti":[]}';
     aiFetch(proxy,{ method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ model:(typeof aiModel==='function'?aiModel():'claude-sonnet-4-6'), max_tokens:300,
+      body:JSON.stringify({ model:(typeof aiModel==='function'?aiModel():'claude-sonnet-4-6'), max_tokens:450,
         messages:[{role:'user',content:[{type:'text',text:sys}]}] }) }, 20000)
     .then(function(r){ return r.json(); }).then(function(d){
       var txt=''; try{ txt=(d.content||[]).map(function(b){ return b.text||''; }).join('').trim(); }catch(e){}
       var j=null; try{ j=JSON.parse(txt); }catch(e){ var mm=txt.match(/\{[\s\S]*\}/); if(mm){ try{ j=JSON.parse(mm[0]); }catch(_){} } }
-      if(!j || (j.tipo!=='icona' && j.tipo!=='finestra')) throw new Error('risposta non valida');
-      var sec=2.8;
-      var gen;
-      if(j.tipo==='finestra'){
-        gen=_vaiFinestraToVideoBlob({ tit1:j.tit1||'', titAcc:j.titAcc||richiesta.slice(0,24), prezzo:j.prezzo||'', indirizzo:j.indirizzo||'', sec:3.2 });
-      } else {
+      var def = j && VAI_CARD_TIPI[j.tipo];
+      if(!def) throw new Error('risposta non valida');
+      var sec = {icona:2.8, finestra:3.2, planimetria:4, mappa:3.6, tourdati:4.2, calendario:4, puntiforza:4, contatti:3.4}[j.tipo] || 3;
+      var opts;
+      if(j.tipo==='icona'){
         var svgIco=VAI_CARD_ICONE.indexOf(j.svgIco)>=0 ? j.svgIco : 'star';
-        gen=_vaiCardToVideoBlob({ testo:(j.testo||richiesta).toString().slice(0,28), svgIco:svgIco, stile:(j.stile==='chiaro'?'chiaro':'scuro'), sec:sec });
+        opts={ testo:(j.testo||richiesta).toString().slice(0,28), svgIco:svgIco, stile:(j.stile==='chiaro'?'chiaro':'scuro'), sec:sec };
+      } else if(j.tipo==='finestra'){
+        opts={ tit1:j.tit1||'', titAcc:j.titAcc||richiesta.slice(0,24), prezzo:j.prezzo||'', indirizzo:j.indirizzo||'', sec:sec };
+      } else if(j.tipo==='planimetria'){
+        opts={ titolo:j.titolo||'Pianta dell\'immobile', mq:j.mq||'', camere:j.camere||'', bagni:j.bagni||'', sec:sec };
+      } else if(j.tipo==='mappa'){
+        opts={ comune:j.comune||richiesta.slice(0,24), etichetta:j.etichetta||'', sec:sec };
+      } else if(j.tipo==='tourdati'){
+        opts={ titolo:j.titolo||'Tour della casa', mq:j.mq||'', locali:j.locali||'', camere:j.camere||'', bagni:j.bagni||'', piano:j.piano||'', prezzo:j.prezzo||'', sec:sec };
+      } else if(j.tipo==='calendario'){
+        opts={ titolo:j.titolo||'Prenota la tua visita', cta:j.cta||'Prenota una visita', sec:sec };
+      } else if(j.tipo==='puntiforza'){
+        var punti=Array.isArray(j.punti)?j.punti.map(String).filter(Boolean).slice(0,4):[];
+        opts={ titolo:j.titolo||'Punti di forza', punti:punti, sec:sec };
+      } else {
+        opts={ titolo:j.titolo||'Contattaci per informazioni', telefono:'', whatsapp:'', sito:'', sec:sec };
       }
-      return gen.then(function(out){
+      return def.gen(opts).then(function(out){
         if(!out||!out.blob) throw new Error('generazione vuota');
-        var nome=(j.tipo==='finestra') ? ('Finestra: '+((j.tit1||'')+' '+(j.titAcc||'')).trim().slice(0,22)) : ('Scheda: '+(j.testo||richiesta).slice(0,22));
-        return window.libFinSalvaBlob(out.blob, out.mime, nome, (j.tipo==='finestra'?3.2:sec), out.thumb, 'ai');
+        var nomi={ icona:'Scheda: '+(opts.testo||richiesta).slice(0,22), finestra:'Finestra: '+((opts.tit1||'')+' '+(opts.titAcc||'')).trim().slice(0,22),
+          planimetria:'Planimetria: '+(opts.titolo||'pianta').slice(0,22), mappa:'Mappa: '+(opts.comune||'').slice(0,22), tourdati:'Tour dati: '+(opts.titolo||'casa').slice(0,22),
+          calendario:'Calendario: '+(opts.titolo||'prenota').slice(0,22), puntiforza:'Punti di forza: '+(opts.titolo||'la casa').slice(0,22), contatti:'Contatti: '+(opts.titolo||'contattaci').slice(0,22) };
+        return window.libFinSalvaBlob(out.blob, out.mime, nomi[j.tipo], sec, out.thumb, 'ai');
       });
     }).then(function(){
       if(modal) modal.remove();
@@ -55833,7 +56572,7 @@ async function pubConfrontaAI(){
     css();
     if(!_pronta){ p.innerHTML='<div class="lfg-vuoto" style="margin-top:12px">Apro la libreria…</div>'; libFinCarica().then(libFinTabRender); return; }
     var h='<div class="lfgt-hr"><div class="vcc-h">Libreria Clip Grafiche</div></div>'
-      +'<div class="lfgt-az">'+(!_lib.length?'<button class="vcc-btn bordo" onclick="libFinSeedEsempi()">🎬 Crea 5 esempi</button>':'')
+      +'<div class="lfgt-az">'+(!_lib.length?('<button class="vcc-btn bordo" onclick="libFinSeedEsempi()">🎬 Crea '+ESEMPI_SEED.length+' esempi</button>'):'')
       +'<button class="vcc-btn bordo" onclick="libFinAggiungi()">Aggiungi clip</button>'
       +'<button class="vcc-btn bordo" onclick="libFinCreaAIPanel()">✨ Crea con l\'AI</button></div>';
     if(!_lib.length) h+='<div class="lfg-vuoto" style="margin:0 10px">La libreria è vuota. Crea la prima scheda dal pulsante «Scheda» qui sopra (spuntando «Salva anche nella Libreria»), oppure usa i pulsanti sopra.</div>';
