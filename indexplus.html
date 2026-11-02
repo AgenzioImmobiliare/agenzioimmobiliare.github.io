@@ -36895,13 +36895,19 @@ window._vaiTrasfCss=_vaiTrasfCss;
 function _vaiTrasfAggiornaAnteprima(){
   try{
     const c=(_vaiClipAttiva>=0)?_vaiClips[_vaiClipAttiva]:null;
-    const sp=!!(c&&c.specchia), rot=((c&&c.rot)||0)%360;
-    const t=(sp?'scaleX(-1) ':'')+(rot?('rotate('+rot+'deg)'):'');
+    const rot=((c&&c.rot)||0)%360;
+    /* [2 nov 2026] Prima qui si ricomponeva un transform SOLO con specchio e
+       rotazione, ignorando zoom lento/improvviso e tremolio camera — che
+       quindi, pur salvati e usati nell'export, non si vedevano mai
+       nell'anteprima dal vivo (il ciclo a 60fps chiama proprio questa
+       funzione per animarli). _vaiTrasfCss() calcola già tutto insieme
+       (Ken Burns + fx + specchio + rotazione): uso quello. */
+    const t=(typeof _vaiTrasfCss==='function')?_vaiTrasfCss().trim():'';
     /* i due lettori si riconoscono dalla classe, non da un id fisso: l'id
        'vai-video' passa dall'uno all'altro a ogni cambio clip */
     document.querySelectorAll('.vai-video').forEach(v=>{
       if(!v) return;
-      v.style.transform=t.trim();
+      v.style.transform=t;
       /* a 90 e 270 gradi i lati si scambiano: senza questo l'immagine ruotata
          sborda dal riquadro invece di starci dentro */
       v.style.objectFit=(rot===90||rot===270)?'contain':(v.style.objectFit||'');
@@ -45078,12 +45084,29 @@ function vaiInspectorRender(){
 
   if(_vaiSel.type==='clip'){
     const c=_vaiClips[_vaiSel.idx]; if(!c){ insp.style.display='none'; return; }
-    const dur=(c.durata&&c.durata>0)?c.durata.toFixed(1):'—';
+    /* [2 nov 2026] Durata EDITABILE: prima era solo un numero in sola lettura
+       (la lunghezza grezza del file). Ora mostra/modifica la durata EFFETTIVA
+       di output (dopo taglio e velocità, _vaiDurataEff) — scrivere un valore
+       più corto taglia la clip in automatico (stesso meccanismo delle
+       maniglie di taglio sulla timeline: clip.taglioDurata). */
+    const velC=(c.velocita&&c.velocita>0)?c.velocita:1;
+    const rawTotaleC=(c.durata&&c.durata>0)?c.durata:3;
+    const cInC=c.taglioInizio||0;
+    const durEff=(typeof _vaiDurataEff==='function')?_vaiDurataEff(c):(rawTotaleC-cInC)/velC;
+    const durEffMax=Math.max(0.3,(rawTotaleC-cInC)/velC);
+    const durGrezza=(c.durata&&c.durata>0)?c.durata:null;
     insp.innerHTML=
       '<div class="vai-insp-h"><span class="vai-insp-tag vai-insp-tag-video">VIDEO</span> Clip '+(_vaiSel.idx+1)+'</div>'+
       '<div class="vai-insp-row"><span class="vai-insp-l">Nome</span><input class="vai-insp-in" value="'+_vaiEsc(c.nome||'')+'" oninput="vaiInspClipNome('+_vaiSel.idx+',this.value)"></div>'+
       '<div class="vai-insp-row"><span class="vai-insp-l">Ambiente</span><input class="vai-insp-in" value="'+_vaiEsc(c.ambiente||'')+'" placeholder="es. Soggiorno" oninput="vaiInspClipAmb('+_vaiSel.idx+',this.value)"></div>'+
-      '<div class="vai-insp-row"><span class="vai-insp-l">Durata</span><span class="vai-insp-val">'+dur+' s</span></div>'+
+      '<div class="vai-insp-row"><span class="vai-insp-l">Durata</span>'+
+        '<input class="vai-insp-num" type="number" min="0.3" max="'+durEffMax.toFixed(1)+'" step="0.1" value="'+durEff.toFixed(1)+'" onchange="vaiInspClipDurata('+_vaiSel.idx+',this.value)">'+
+        '<span class="vai-insp-unit">s</span>'+
+        ((durGrezza && durGrezza>durEff+0.05) ? '<span style="font-size:.72rem;color:#8FA3B8;margin-left:6px">di '+durGrezza.toFixed(1)+'s originali</span>' : '')+
+      '</div>'+
+      '<div class="vai-insp-row"><span class="vai-insp-l"></span>'+
+        '<button class="btn btn-outline btn-sm" onclick="vaiInspClipDurataTutte('+_vaiSel.idx+')" title="Taglia tutte le clip a questa stessa durata">Applica questa durata a tutte le clip</button>'+
+      '</div>'+
       '<div class="vai-insp-row"><span class="vai-insp-l">Inquadratura</span>'+
         '<div class="vai-insp-seg">'+
           '<button class="vai-insp-sb'+((c.fit)==='cover'?' on':'')+'" onclick="vaiInspClipFit('+_vaiSel.idx+',\'cover\')" title="Riempi (taglia i bordi)">Riempi</button>'+
@@ -45243,6 +45266,54 @@ function vaiAnteprimaScritta(id){
 function _vaiFmtMs(ms){ const s=Math.floor(ms/1000), m=Math.floor(s/60), r=s%60, mm=ms%1000; return (m>0?m+':':'')+String(r).padStart(m>0?2:1,'0')+'.'+String(mm).padStart(3,'0').slice(0,2)+'s'; }
 function vaiInspClipNome(i,v){ if(_vaiClips[i]){ _vaiClips[i].nome=v; vaiTlRender(); } }
 function vaiInspClipAmb(i,v){ if(_vaiClips[i]){ _vaiClips[i].ambiente=v; vaiClipsRender(); } }
+/* [2 nov 2026] Durata scritta a mano nell'Inspector: stessa idea delle maniglie
+   di taglio sulla timeline (clip.taglioDurata), ma qui si scrive il numero
+   invece di trascinare. Il valore è la durata di OUTPUT (quella che l'agente
+   vede e capisce: "questa clip dura X secondi nel montaggio"), quindi per
+   trovare il taglio grezzo la riporto indietro moltiplicandola per la velocità. */
+function vaiInspClipDurata(i, val){
+  const c=_vaiClips[i]; if(!c) return;
+  const out=parseFloat(val); if(!isFinite(out) || out<=0) return;
+  vaiSnapshot('durata clip');
+  const vel=(c.velocita && c.velocita>0) ? c.velocita : 1;
+  const rawTotale=(c.durata && c.durata>0) ? c.durata : 3;
+  const cIn=c.taglioInizio||0;
+  const MIN_RAW=0.3;
+  let rawDur=out*vel;
+  rawDur=Math.max(MIN_RAW, Math.min(rawTotale-cIn, rawDur));
+  c.taglioDurata=rawDur;
+  _vaiDirty=true;
+  try{ if(typeof _vaiRicalcolaGruppiEstesi==='function') _vaiRicalcolaGruppiEstesi(); }catch(e){}
+  vaiTlRender(); vaiOverlayUpdate(); vaiInspectorRender();
+  if(typeof toast==='function') toast('Clip '+(i+1)+' tagliata a '+out.toFixed(1)+'s','success');
+}
+window.vaiInspClipDurata=vaiInspClipDurata;
+/* Applica la durata ATTUALE della clip selezionata a tutte le altre: ognuna
+   viene tagliata partendo dal suo stesso punto di inizio (taglioInizio
+   invariato), accorciandola se più lunga — esattamente come chiesto da Enzo:
+   "se imposto 5 secondi e la clip ne misura 8, deve tagliarla di 3". Una
+   clip già più corta della durata richiesta resta com'è (non si allunga da
+   sola: non c'è altro girato oltre la fine reale del file). */
+function vaiInspClipDurataTutte(i){
+  const c=_vaiClips[i]; if(!c) return;
+  const out=(typeof _vaiDurataEff==='function') ? _vaiDurataEff(c) : (c.taglioDurata||c.durata||3);
+  vaiSnapshot('durata su tutte le clip');
+  const MIN_RAW=0.3;
+  let n=0;
+  (_vaiClips||[]).forEach(cc=>{
+    const vel=(cc.velocita && cc.velocita>0) ? cc.velocita : 1;
+    const rawTotale=(cc.durata && cc.durata>0) ? cc.durata : 3;
+    const cIn=cc.taglioInizio||0;
+    let rawDur=out*vel;
+    rawDur=Math.max(MIN_RAW, Math.min(Math.max(MIN_RAW, rawTotale-cIn), rawDur));
+    cc.taglioDurata=rawDur; n++;
+  });
+  _vaiDirty=true;
+  try{ if(typeof _vaiRicalcolaGruppiEstesi==='function') _vaiRicalcolaGruppiEstesi(); }catch(e){}
+  vaiTlRender(); vaiOverlayUpdate(); vaiInspectorRender();
+  if(typeof toast==='function') toast('Durata '+out.toFixed(1)+'s applicata a '+n+' clip','success');
+}
+window.vaiInspClipDurataTutte=vaiInspClipDurataTutte;
 function vaiInspClipFit(i,fit){
   if(!_vaiClips[i]) return;
   _vaiClips[i].fit=fit;
