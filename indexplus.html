@@ -3233,6 +3233,11 @@ input[type=range].vai-seek::-webkit-slider-thumb{-webkit-appearance:none;width:1
 }
 @keyframes vaiSheetIn{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
 .vai-txt-card{background:#15171C;color:#E8EDF2;border:1px solid #2A2E37;border-radius:14px;padding:18px;width:100%;max-width:440px;height:auto;max-height:calc(100vh - 28px);display:flex;flex-direction:column;box-shadow:-8px 0 40px rgba(0,0,0,.5)}
+/* [2 nov 2026] Ridotto a icona (tipo Windows): resta solo l'intestazione,
+   per liberare il video senza dover chiudere del tutto il pannello. */
+.vai-txt-card.vai-txt-min{max-width:220px;padding-bottom:18px;max-height:none}
+.vai-txt-card.vai-txt-min .vai-txt-h{margin-bottom:0}
+.vai-txt-card.vai-txt-min>*:not(.vai-txt-h){display:none}
 .vai-txt-h{font-size:1.05rem;font-weight:800;color:#fff;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between}
 .vai-txt-xbtn{background:none;border:none;color:#8A93A0;font-size:22px;cursor:pointer;line-height:1;padding:0 4px}
 .vai-txt-xbtn:hover{color:#fff}
@@ -43480,7 +43485,11 @@ function _vaiOpenTextEditor(s){
     m=document.createElement('div'); m.id='vai-txt-editor'; m.className='vai-txt-editor';
     m.innerHTML=
       '<div class="vai-txt-card">'+
-        '<div class="vai-txt-h" style="cursor:grab" title="Trascina per spostare questo pannello in qualunque punto dello schermo" onmousedown="_vaiTxtDragStart(event)" ontouchstart="_vaiTxtDragStart(event)">Testo <button class="vai-txt-xbtn" onclick="_vaiTxtClose()">×</button></div>'+
+        '<div class="vai-txt-h" style="cursor:grab" title="Trascina per spostare questo pannello in qualunque punto dello schermo" onmousedown="_vaiTxtDragStart(event)" ontouchstart="_vaiTxtDragStart(event)">Testo '
+          +'<span style="display:flex;gap:4px;margin-left:auto">'
+          +'<button class="vai-txt-xbtn vai-txt-minbtn" title="Riduci a icona" onclick="_vaiTxtToggleMin(event)">−</button>'
+          +'<button class="vai-txt-xbtn" onclick="_vaiTxtClose()">×</button>'
+          +'</span></div>'+
         '<div class="vai-txt-scroll">'+
         '<div id="vai-txt-foto" style="display:none"></div>'+
         // ── TESTI ──
@@ -43650,6 +43659,8 @@ function _vaiOpenTextEditor(s){
     '<label class="vai-txt-cdot vai-txt-cpick" title="Scegli un colore"><input type="color" value="'+(s.bgText||'#0D1B2A')+'" oninput="_vaiTxtBg(this.value)"></label>';
   _vaiTxtSyncButtons(s);
   m.style.display='flex';
+  // riaprendolo (anche per un elemento diverso) riparte sempre espanso, mai ridotto a icona
+  const cardEl=m.querySelector('.vai-txt-card'); if(cardEl) cardEl.classList.remove('vai-txt-min');
   setTimeout(()=>{ const a=m.querySelector('#vai-txt-main'); if(a){ a.focus(); a.select(); } },50);
 }
 function _vaiTxtCur(){ const m=document.getElementById('vai-txt-editor'); if(!m) return null; return _vaiScritte.find(x=>x.id===m._editId); }
@@ -43682,6 +43693,16 @@ function _vaiTxtDragStart(e){
   document.addEventListener('touchmove',move,{passive:false}); document.addEventListener('touchend',up);
 }
 window._vaiTxtDragStart=_vaiTxtDragStart;
+/* Riduci a icona / ripristina (tipo Windows): comodo quando serve vedere il
+   video sotto senza perdere il punto in cui si era arrivati col pannello. */
+function _vaiTxtToggleMin(e){
+  if(e){ e.stopPropagation(); e.preventDefault(); }
+  const card=document.querySelector('#vai-txt-editor .vai-txt-card'); if(!card) return;
+  const min=card.classList.toggle('vai-txt-min');
+  const btn=card.querySelector('.vai-txt-minbtn');
+  if(btn) btn.title = min ? 'Ripristina' : 'Riduci a icona';
+}
+window._vaiTxtToggleMin=_vaiTxtToggleMin;
 function _vaiTxtClose(){
   window._vaiTestoSnapFatto=false;   // chiusa la finestra: la prossima modifica avrà il suo punto
   const m=document.getElementById('vai-txt-editor'); if(m) m.style.display='none'; }
