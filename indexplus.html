@@ -5594,6 +5594,12 @@ hubTema();
           <span>Libreria Cilento</span>
           <span class="nav-badge" style="background:#7C3AED;color:white">NUOVA</span>
         </div>
+        <!-- [2 nov 2026] Libreria Clip Grafiche: le "schede"/"finestre" animate da riusare nei video -->
+        <div class="nav-item" onclick="switchSection('libgrafiche')" title="Le schede e finestre animate (icona+titolo, scheda immobile...) da riusare in più video: create a mano, con l'AI o caricate da fuori">
+          <div class="ni-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 9l2.5 2.5L15 7l4 5"/><circle cx="8.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/></svg></div>
+          <span>Libreria Clip Grafiche</span>
+          <span class="nav-badge" style="background:#7C3AED;color:white">NUOVA</span>
+        </div>
       </div>
     </div>
 
@@ -7148,6 +7154,11 @@ Un caro saluto,
     <!-- ══════════════ LIBRERIA CILENTO [24 ott 2026] ══════════════ -->
     <div id="sec-libreria" class="section-panel">
       <div id="libcil-root"></div>
+    </div>
+
+    <!-- ══════════════ LIBRERIA CLIP GRAFICHE [2 nov 2026] ══════════════ -->
+    <div id="sec-libgrafiche" class="section-panel">
+      <div id="libfin-root"></div>
     </div>
 
     <!-- ══════════════ PACCHETTO YOUTUBE [29 ott 2026] ══════════════ -->
@@ -10700,7 +10711,7 @@ const SECTION_LABEL = {
   pubblicazioni:'Pubblicazioni', kit:'Kit di Lancio', volantino:'Volantino',
   fotoai:'Analisi Foto AI', videoai:'Video Social', campagna:'Campagna WhatsApp',
   descai:'Descrizioni AI', stagai:'Home Staging AI', ytpack:'Pacchetto YouTube', ytperf:'Performance YouTube',
-  libreria:'Libreria Cilento', openhouse:'Open House',
+  libreria:'Libreria Cilento', libgrafiche:'Libreria Clip Grafiche', openhouse:'Open House',
   compleanni:'Compleanni', recensioni:'Recensioni Google', templates:'Template Messaggi',
   settimana:'Piano Social', linkinbio:'Link in Bio', timeline:'Timeline Contatti', regali:'Liste regali',
   ai:'Genera con AI', log:'Log Attività'
@@ -47660,6 +47671,177 @@ function _vaiCardToVideoBlob(opts){
   });
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+   [2 nov 2026] FINESTRA MOCKUP — lo stile "finestra finta" che ha approvato
+   Enzo guardando un Reel di riferimento (titolo serif con parola colorata,
+   finestra bianca stile app con barra dei tre pallini, contenuto che entra
+   un pezzo alla volta). Stesso motore di _vaiCardToVideoBlob (canvas →
+   MediaRecorder), ma con il layout "scheda immobile": foto, prezzo,
+   indirizzo, mq/camere/bagni. ══════════════════════════════════════════ */
+function _vaiFinestraToVideoBlob(opts){
+  return new Promise((resolve,reject)=>{
+    if(typeof MediaRecorder==='undefined' || !HTMLCanvasElement.prototype.captureStream){
+      reject(new Error('no-recorder')); return;
+    }
+    const sec=Math.max(2, Math.min(6, opts.sec||3.2));
+    const CREAM='#F5F1E8', NAVY='#0D1B2A', GOLD='#C9A84C', GREY='#E4E0D6';
+    const W=720, H=1280;
+    const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+    const ctx=cv.getContext('2d');
+    const tit1=String(opts.tit1||'').trim()||'La tua ';
+    const titAcc=String(opts.titAcc||'').trim()||'prossima casa';
+    const prezzo=String(opts.prezzo||'').trim();
+    const indirizzo=String(opts.indirizzo||'').trim();
+    const icone=['mq','letto','bagno'].map(k=>_vaiSvgComeImg(k, NAVY));
+    const ease=(p)=> p<0.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
+    const clamp01=(p)=> Math.max(0, Math.min(1,p));
+    const seg=(t,start,dur)=> ease(clamp01((t-start)/dur));
+
+    const pronto=()=>{
+      let thumb=null;
+      const paint=(t)=>{
+        ctx.fillStyle=CREAM; ctx.fillRect(0,0,W,H);
+        ctx.fillStyle='rgba(13,27,42,.06)';
+        for(let y=40;y<H;y+=40) for(let x=40;x<W;x+=40){ ctx.beginPath(); ctx.arc(x,y,1.6,0,Math.PI*2); ctx.fill(); }
+
+        const eHead=seg(t,0,0.45);
+        ctx.save(); ctx.globalAlpha=eHead;
+        const dyH=(1-eHead)*16;
+        ctx.font='54px "DM Serif Display", Georgia, serif';
+        const w1=ctx.measureText(tit1).width;
+        ctx.font='italic 54px "DM Serif Display", Georgia, serif';
+        const w2=ctx.measureText(titAcc).width;
+        const startX=W/2-(w1+w2)/2;
+        ctx.textAlign='left'; ctx.fillStyle=NAVY;
+        ctx.font='54px "DM Serif Display", Georgia, serif';
+        ctx.fillText(tit1, startX, 150+dyH);
+        ctx.fillStyle=GOLD; ctx.font='italic 54px "DM Serif Display", Georgia, serif';
+        ctx.fillText(titAcc, startX+w1, 150+dyH);
+        ctx.restore();
+
+        const eWin=seg(t,0.25,0.4);
+        const wx=60, wy=230, ww=600, wh=560, r=20;
+        ctx.save();
+        ctx.globalAlpha=eWin;
+        ctx.translate(wx+ww/2, wy+wh/2);
+        ctx.scale(0.92+0.08*eWin, 0.92+0.08*eWin);
+        ctx.translate(-(wx+ww/2), -(wy+wh/2));
+        ctx.shadowColor='rgba(0,0,0,.18)'; ctx.shadowBlur=36; ctx.shadowOffsetY=18;
+        ctx.fillStyle='#fff';
+        if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(wx,wy,ww,wh,r); ctx.fill(); } else ctx.fillRect(wx,wy,ww,wh);
+        ctx.shadowColor='transparent';
+        ctx.save();
+        if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(wx,wy,ww,54,[r,r,0,0]); ctx.clip(); }
+        ctx.fillStyle='#FAFAF8'; ctx.fillRect(wx,wy,ww,54);
+        ['#E4756B','#E8B74D','#6FBF73'].forEach((c,i)=>{ ctx.fillStyle=c; ctx.beginPath(); ctx.arc(wx+28+i*20, wy+27, 6, 0, Math.PI*2); ctx.fill(); });
+        ctx.restore();
+        ctx.fillStyle='#8A8577'; ctx.font='15px "DM Sans", sans-serif'; ctx.textAlign='center';
+        ctx.fillText('I tuoi immobili', wx+ww/2, wy+33);
+        ctx.strokeStyle='rgba(0,0,0,.06)'; ctx.beginPath(); ctx.moveTo(wx,wy+54); ctx.lineTo(wx+ww,wy+54); ctx.stroke();
+        ctx.restore();
+
+        if(eWin>=0.9){
+          const px=wx+24, py=wy+78, pw=ww-48, ph=220;
+          const eFoto=seg(t,0.55,0.25);
+          ctx.save(); ctx.globalAlpha=eFoto;
+          ctx.fillStyle=GREY; if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(px,py,pw,ph,12); ctx.fill(); } else ctx.fillRect(px,py,pw,ph);
+          ctx.fillStyle='rgba(13,27,42,.18)';
+          ctx.beginPath(); ctx.moveTo(px+30,py+ph-30); ctx.lineTo(px+pw*0.35,py+ph*0.45); ctx.lineTo(px+pw*0.55,py+ph*0.65); ctx.lineTo(px+pw*0.75,py+ph*0.3); ctx.lineTo(px+pw-30,py+ph-30); ctx.closePath(); ctx.fill();
+          ctx.restore();
+
+          if(prezzo){
+            const ePrezzo=seg(t,0.75,0.2);
+            ctx.save(); ctx.globalAlpha=ePrezzo;
+            ctx.fillStyle=NAVY; ctx.textAlign='left'; ctx.font='800 38px "DM Sans", sans-serif';
+            ctx.fillText(prezzo, px, py+ph+56+(1-ePrezzo)*10);
+            ctx.restore();
+          }
+
+          if(indirizzo){
+            const eAddr=seg(t,0.90,0.2);
+            ctx.save(); ctx.globalAlpha=eAddr;
+            ctx.fillStyle=NAVY; ctx.textAlign='left'; ctx.font='600 20px "DM Sans", sans-serif';
+            ctx.fillText(indirizzo.length>34?indirizzo.slice(0,33)+'…':indirizzo, px, py+ph+(prezzo?92:60));
+            ctx.restore();
+          }
+
+          const starts=[1.05,1.20,1.35];
+          let fx=px;
+          icone.forEach((img,i)=>{
+            const e=seg(t,starts[i],0.18);
+            if(e>0){
+              ctx.save(); ctx.globalAlpha=e;
+              ctx.translate(fx+13, py+ph+131); ctx.scale(0.7+0.3*e,0.7+0.3*e); ctx.translate(-(fx+13),-(py+ph+131));
+              if(img && img.complete && img.naturalWidth){ try{ ctx.drawImage(img, fx, py+ph+112, 26, 26); }catch(err){} }
+              ctx.restore();
+            }
+            fx+=90;
+          });
+        }
+
+        if(!thumb && t>=1.6) thumb=cv.toDataURL('image/jpeg',0.82);
+      };
+      paint(0);
+      const stream=cv.captureStream(30);
+      const mime = MediaRecorder.isTypeSupported('video/mp4') ? 'video/mp4'
+                 : MediaRecorder.isTypeSupported('video/webm;codecs=vp9') ? 'video/webm;codecs=vp9'
+                 : 'video/webm';
+      const rec=new MediaRecorder(stream,{mimeType:mime, videoBitsPerSecond:9000000});
+      const chunks=[];
+      rec.ondataavailable=e=>{ if(e.data&&e.data.size) chunks.push(e.data); };
+      rec.onstop=()=>resolve({ blob:new Blob(chunks,{type:mime}), mime, thumb:thumb||cv.toDataURL('image/jpeg',0.82) });
+      rec.start();
+      const t0=performance.now(), ms=sec*1000;
+      (function loop(){
+        const t=(performance.now()-t0)/1000;
+        paint(Math.min(t,sec));
+        if(t>=sec){ rec.stop(); return; }
+        requestAnimationFrame(loop);
+      })();
+    };
+
+    const attesaFont = (document.fonts && document.fonts.load) ?
+      Promise.all([document.fonts.load('54px "DM Serif Display"'), document.fonts.load('italic 54px "DM Serif Display"')]).catch(()=>{}) : Promise.resolve();
+    const attesaIcone = Promise.all(icone.map(img=> (img && !img.complete) ? new Promise(res=>{ img.onload=res; img.onerror=res; }) : Promise.resolve()));
+    Promise.all([attesaFont, attesaIcone]).then(pronto).catch(pronto);
+  });
+}
+
+/* Inserisce una clip (già pronta come Blob) nel montaggio, tagliando la clip
+   corrente nel punto del cursore quando il cursore è a metà — esattamente
+   "taglio la clip e inserisco in mezzo". Condivisa da "Scheda"/"Finestra" e
+   dalla Libreria ("Usa in questo video"), così il comportamento è identico
+   qualunque sia l'origine della clip. */
+function _vaiInserisciClipAlCursore(blob, mime, nome, sec, thumb){
+  if(!window._vaiNoSnapshot) vaiSnapshot('inserisci clip');
+  if(_vaiClipAttiva>=0 && _vaiClips[_vaiClipAttiva]) _vaiClips[_vaiClipAttiva].scritte=_vaiScritte;
+  const v=document.getElementById('vai-video');
+  const url=URL.createObjectURL(blob);
+  const fileV=new File([blob], nome+'.'+((mime||'').indexOf('mp4')>=0?'mp4':'webm'), {type:mime||blob.type});
+  const clip={ id:_vaiNuovoIdClip(), file:fileV, url, nome, durata:sec, ambiente:'', scritte:[],
+    logo:null, logoPos:{x:0.05,y:0.04,scale:0.22}, thumb:thumb||null, parlata:false, parlataAuto:false, parlataManuale:false,
+    daCard:true, taglioInizio:0, taglioDurata:sec };
+
+  let ciDopo=_vaiClips.length;
+  if(_vaiClipAttiva>=0 && _vaiClips[_vaiClipAttiva] && v){
+    const ci=_vaiClipAttiva, c=_vaiClips[ci];
+    const cIn=c.taglioInizio||0;
+    const durTot=(c.taglioDurata&&c.taglioDurata>0)?c.taglioDurata:((c.durata&&c.durata>0)?c.durata:3);
+    const rawLoc=(isFinite(v.currentTime)?v.currentTime:cIn)-cIn;
+    window._vaiNoSnapshot=true;
+    try{
+      if(rawLoc>=0.35 && rawLoc<=durTot-0.35){ vaiDividiClip(v.currentTime); ciDopo=ci+1; }
+      else ciDopo=ci+1;
+    } finally { window._vaiNoSnapshot=false; }
+  }
+  _vaiClips.splice(ciDopo, 0, clip);
+  _vaiProbaDurata(clip);
+  vaiClipsRender(); vaiTlRender(); vaiClipSelect(ciDopo, true); vaiOverlayUpdate();
+  _vaiDirty=true;
+  return clip;
+}
+window._vaiInserisciClipAlCursore=_vaiInserisciClipAlCursore;
+
 function vaiCardPanel(){
   const v=document.getElementById('vai-video');
   if(!v||!v.src){ toast('Carica prima una clip','error'); return; }
@@ -47672,28 +47854,53 @@ function vaiCardPanel(){
         '<button class="vai-graf-x" onclick="vaiCardClose()">×</button>'+
       '</div>'+
       '<div class="vai-graf-body">'+
-        '<div class="vai-graf-sez"><div class="vai-graf-lbl">Testo della scheda</div>'+
-          '<input type="text" id="vai-card-testo" class="vai-lz-input" placeholder="es. Il secondo cervello" maxlength="60"></div>'+
-        '<div class="vai-graf-sez"><div class="vai-graf-lbl">Icona</div><div class="vai-graf-items" id="vai-card-icone">'+
-          VAI_CARD_ICONE.map((k,i)=>'<button type="button" class="vai-graf-item vai-card-ic'+(i===0?' sel':'')+'" data-key="'+k+'" onclick="vaiCardIconSel(this)">'+
-            '<span class="vgi-pill" style="background:#1A2330;color:#E8EDF2"><span class="vgi-svg">'+_vaiSvgIco(k)+'</span></span></button>').join('')+
+        '<div class="vai-graf-sez"><div class="vai-graf-lbl">Stile</div><div class="vai-graf-items" style="grid-template-columns:1fr 1fr">'+
+            '<button type="button" class="vai-graf-item vai-card-tipo sel" data-key="icona" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#1A2330;color:#E8EDF2">Icona semplice</span></button>'+
+            '<button type="button" class="vai-graf-item vai-card-tipo" data-key="finestra" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#C9A84C;color:#1A1205">Finestra immobile</span></button>'+
           '</div></div>'+
-        '<div class="vai-graf-sez"><div class="vai-graf-lbl">Stile sfondo</div><div class="vai-graf-items" style="grid-template-columns:1fr 1fr">'+
-            '<button type="button" class="vai-graf-item vai-card-stile sel" data-key="scuro" onclick="vaiCardStileSel(this)"><span class="vgi-pill" style="background:#0D1B2A;color:#fff">Scuro elegante</span></button>'+
-            '<button type="button" class="vai-graf-item vai-card-stile" data-key="chiaro" onclick="vaiCardStileSel(this)"><span class="vgi-pill" style="background:#F5F1E8;color:#1A1205">Chiaro caldo</span></button>'+
-          '</div></div>'+
+        '<div id="vai-card-grp-icona">'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Testo della scheda</div>'+
+            '<input type="text" id="vai-card-testo" class="vai-lz-input" placeholder="es. Il secondo cervello" maxlength="60"></div>'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Icona</div><div class="vai-graf-items" id="vai-card-icone">'+
+            VAI_CARD_ICONE.map((k,i)=>'<button type="button" class="vai-graf-item vai-card-ic'+(i===0?' sel':'')+'" data-key="'+k+'" onclick="vaiCardIconSel(this)">'+
+              '<span class="vgi-pill" style="background:#1A2330;color:#E8EDF2"><span class="vgi-svg">'+_vaiSvgIco(k)+'</span></span></button>').join('')+
+            '</div></div>'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Stile sfondo</div><div class="vai-graf-items" style="grid-template-columns:1fr 1fr">'+
+              '<button type="button" class="vai-graf-item vai-card-stile sel" data-key="scuro" onclick="vaiCardStileSel(this)"><span class="vgi-pill" style="background:#0D1B2A;color:#fff">Scuro elegante</span></button>'+
+              '<button type="button" class="vai-graf-item vai-card-stile" data-key="chiaro" onclick="vaiCardStileSel(this)"><span class="vgi-pill" style="background:#F5F1E8;color:#1A1205">Chiaro caldo</span></button>'+
+            '</div></div>'+
+        '</div>'+
+        '<div id="vai-card-grp-finestra" style="display:none">'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Titolo (prima parte)</div>'+
+            '<input type="text" id="vai-card-tit1" class="vai-lz-input" placeholder="es. Casa con" maxlength="40"></div>'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Parola in evidenza (colorata)</div>'+
+            '<input type="text" id="vai-card-titacc" class="vai-lz-input" placeholder="es. vista mare" maxlength="30"></div>'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Prezzo (facoltativo)</div>'+
+            '<input type="text" id="vai-card-prezzo" class="vai-lz-input" placeholder="es. 289.000 €" maxlength="20"></div>'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Indirizzo o testo breve (facoltativo)</div>'+
+            '<input type="text" id="vai-card-indirizzo" class="vai-lz-input" placeholder="es. Corso Garibaldi, Agropoli" maxlength="40"></div>'+
+        '</div>'+
         '<div class="vai-graf-sez"><div class="vai-graf-lbl">Durata: <span id="vai-card-dur-v">2.5s</span></div>'+
           '<input type="range" id="vai-card-dur" min="1.5" max="4" step="0.5" value="2.5" oninput="document.getElementById(\'vai-card-dur-v\').textContent=this.value+\'s\'" style="width:100%"></div>'+
+        '<label style="display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--text2);margin-bottom:10px;cursor:pointer"><input type="checkbox" id="vai-card-salvalib" checked> Salva anche nella Libreria clip, per riusarla in altri video</label>'+
         '<div class="vai-lz-note">Si inserisce come una clip vera: se il cursore è dentro una clip, la taglia e la mette in mezzo.</div>'+
         '<button class="btn btn-sm" id="vai-card-crea-btn" onclick="vaiCardCrea()" style="width:100%;margin-top:4px;background:linear-gradient(135deg,#C9A84C,#EC4899);color:#1A1205;border:none;font-weight:700;padding:10px;border-radius:10px;cursor:pointer">Crea e inserisci qui</button>'+
       '</div></div>';
     document.body.appendChild(m);
   }
-  const t=document.getElementById('vai-card-testo'); if(t) t.value='';
+  ['vai-card-testo','vai-card-tit1','vai-card-titacc','vai-card-prezzo','vai-card-indirizzo'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   try{ Object.keys(VAI_SVG_ICONE).forEach(k=>{ _vaiSvgComeImg(k,'#E8EDF2'); _vaiSvgComeImg(k,'#0D1B2A'); }); }catch(e){}
   m.style.display='flex';
 }
 function vaiCardClose(){ const m=document.getElementById('vai-card-modal'); if(m) m.style.display='none'; }
+function vaiCardTipoSel(btn){
+  document.querySelectorAll('.vai-card-tipo.sel').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  const tipo=btn.getAttribute('data-key');
+  const gi=document.getElementById('vai-card-grp-icona'), gf=document.getElementById('vai-card-grp-finestra');
+  if(gi) gi.style.display = (tipo==='finestra') ? 'none' : '';
+  if(gf) gf.style.display = (tipo==='finestra') ? '' : 'none';
+}
 /* Trascinamento del pannello Scheda per la barra del titolo (stesso meccanismo degli altri pannelli grafica) */
 function vaiCardDragStart(e){
   if(e.target.closest('.vai-graf-x')) return;
@@ -47720,25 +47927,44 @@ function vaiCardDragStart(e){
 function vaiCardIconSel(btn){ document.querySelectorAll('.vai-card-ic.sel').forEach(b=>b.classList.remove('sel')); btn.classList.add('sel'); }
 function vaiCardStileSel(btn){ document.querySelectorAll('.vai-card-stile.sel').forEach(b=>b.classList.remove('sel')); btn.classList.add('sel'); }
 
-/* Genera davvero la scheda e la inserisce come CLIP nel montaggio, tagliando
-   la clip corrente nel punto del cursore (come ✂ Taglia) quando il cursore
-   è a metà di una clip — esattamente "taglio la clip e inserisco in mezzo". */
+/* Genera davvero la scheda (icona semplice o finestra immobile) e la inserisce
+   come CLIP nel montaggio, tagliando la clip corrente nel punto del cursore
+   (come ✂ Taglia) quando il cursore è a metà di una clip — esattamente
+   "taglio la clip e inserisco in mezzo". Se richiesto, la salva anche nella
+   Libreria clip per riusarla in altri video. */
 async function vaiCardCrea(){
   if(!_vaiClips || !_vaiClips.length){ toast('Carica prima un video','error'); return; }
-  const testo=((document.getElementById('vai-card-testo')||{}).value||'').trim();
-  if(!testo){ toast('Scrivi il testo della scheda','error'); return; }
-  const btnIco=document.querySelector('.vai-card-ic.sel');
-  const svgIco=btnIco?btnIco.getAttribute('data-key'):'star';
-  const btnStile=document.querySelector('.vai-card-stile.sel');
-  const stile=btnStile?btnStile.getAttribute('data-key'):'scuro';
+  const btnTipo=document.querySelector('.vai-card-tipo.sel');
+  const tipo=btnTipo?btnTipo.getAttribute('data-key'):'icona';
   const sec=parseFloat((document.getElementById('vai-card-dur')||{}).value)||2.5;
+  const salvaLib=!!(document.getElementById('vai-card-salvalib')||{}).checked;
+
+  let props, nomeClip, opts;
+  if(tipo==='finestra'){
+    const tit1=((document.getElementById('vai-card-tit1')||{}).value||'').trim();
+    const titAcc=((document.getElementById('vai-card-titacc')||{}).value||'').trim();
+    if(!tit1 && !titAcc){ toast('Scrivi almeno la parola in evidenza','error'); return; }
+    const prezzo=((document.getElementById('vai-card-prezzo')||{}).value||'').trim();
+    const indirizzo=((document.getElementById('vai-card-indirizzo')||{}).value||'').trim();
+    opts={ tit1, titAcc, prezzo, indirizzo, sec };
+    nomeClip='Finestra: '+(tit1+' '+titAcc).trim().slice(0,22);
+  } else {
+    const testo=((document.getElementById('vai-card-testo')||{}).value||'').trim();
+    if(!testo){ toast('Scrivi il testo della scheda','error'); return; }
+    const btnIco=document.querySelector('.vai-card-ic.sel');
+    const svgIco=btnIco?btnIco.getAttribute('data-key'):'star';
+    const btnStile=document.querySelector('.vai-card-stile.sel');
+    const stile=btnStile?btnStile.getAttribute('data-key'):'scuro';
+    opts={ testo, svgIco, stile, sec };
+    nomeClip='Scheda: '+testo.slice(0,22);
+  }
 
   const btnCrea=document.getElementById('vai-card-crea-btn');
   if(btnCrea){ btnCrea.disabled=true; btnCrea.textContent='Genero la scheda…'; }
   toast('Genero la scheda, un attimo…','info');
 
   let out;
-  try{ out = await _vaiCardToVideoBlob({ testo, svgIco, stile, sec }); }
+  try{ out = (tipo==='finestra') ? await _vaiFinestraToVideoBlob(opts) : await _vaiCardToVideoBlob(opts); }
   catch(e){
     console.error('[Scheda] generazione fallita', e);
     toast('Non riesco a generare la scheda su questo browser — usa Chrome o Edge aggiornati','error');
@@ -47751,38 +47977,18 @@ async function vaiCardCrea(){
     return;
   }
 
-  if(!window._vaiNoSnapshot) vaiSnapshot('scheda a schermo intero');
-  if(_vaiClipAttiva>=0 && _vaiClips[_vaiClipAttiva]) _vaiClips[_vaiClipAttiva].scritte=_vaiScritte;
-
-  const v=document.getElementById('vai-video');
-  const url=URL.createObjectURL(out.blob);
-  const fileV=new File([out.blob], 'scheda-'+Date.now()+'.'+(out.mime.indexOf('mp4')>=0?'mp4':'webm'), {type:out.mime});
-  const clip={ id:_vaiNuovoIdClip(), file:fileV, url, nome:'Scheda: '+testo.slice(0,22), durata:sec, ambiente:'', scritte:[],
-    logo:null, logoPos:{x:0.05,y:0.04,scale:0.22}, thumb:out.thumb||null, parlata:false, parlataAuto:false, parlataManuale:false,
-    daCard:true, taglioInizio:0, taglioDurata:sec };
-
-  // taglio la clip attuale nel punto del cursore, poi inserisco la scheda in mezzo
-  let ciDopo=_vaiClips.length;
-  if(_vaiClipAttiva>=0 && _vaiClips[_vaiClipAttiva] && v){
-    const ci=_vaiClipAttiva, c=_vaiClips[ci];
-    const cIn=c.taglioInizio||0;
-    const durTot=(c.taglioDurata&&c.taglioDurata>0)?c.taglioDurata:((c.durata&&c.durata>0)?c.durata:3);
-    const rawLoc=(isFinite(v.currentTime)?v.currentTime:cIn)-cIn;
-    window._vaiNoSnapshot=true;
-    try{
-      if(rawLoc>=0.35 && rawLoc<=durTot-0.35){ vaiDividiClip(v.currentTime); ciDopo=ci+1; }
-      else ciDopo=ci+1;
-    } finally { window._vaiNoSnapshot=false; }
-  }
-  _vaiClips.splice(ciDopo, 0, clip);
-  _vaiProbaDurata(clip);
-  vaiClipsRender(); vaiTlRender(); vaiClipSelect(ciDopo, true); vaiOverlayUpdate();
-  _vaiDirty=true;
+  _vaiInserisciClipAlCursore(out.blob, out.mime, nomeClip, sec, out.thumb);
   vaiCardClose();
   if(btnCrea){ btnCrea.disabled=false; btnCrea.textContent='Crea e inserisci qui'; }
   toast('Scheda inserita nel montaggio — puoi tagliarla e allungarla come le altre clip','success');
+
+  if(salvaLib && typeof window.libFinSalvaBlob==='function'){
+    try{ await window.libFinSalvaBlob(out.blob, out.mime, nomeClip, sec, out.thumb, 'manuale'); }
+    catch(e){ console.warn('[Scheda] salvataggio in libreria fallito', e); }
+  }
 }
 window.vaiCardPanel=vaiCardPanel; window.vaiCardClose=vaiCardClose; window.vaiCardDragStart=vaiCardDragStart;
+window.vaiCardTipoSel=vaiCardTipoSel;
 window.vaiCardIconSel=vaiCardIconSel; window.vaiCardStileSel=vaiCardStileSel; window.vaiCardCrea=vaiCardCrea;
 
 /* ═══════════ ATLANTE STILI PER "CREA ANIMAZIONE QUI" [30 ott 2026] ═══════════
@@ -55314,6 +55520,309 @@ async function pubConfrontaAI(){
   if(typeof _cl==='function' && !_cl._lib){
     window._vaiCapcutLayout=function(){ var r=_cl.apply(this,arguments); try{ aggancia(); }catch(e){ console.warn('[Territorio] aggancio KO',e); } return r; };
     window._vaiCapcutLayout._lib=true;
+  }
+})();
+
+/* ══════════════════════════════════════════════════════════════════════
+   [2 nov 2026] LIBRERIA CLIP GRAFICHE — le "Schede"/"Finestre" animate
+   (vedi _vaiCardToVideoBlob / _vaiFinestraToVideoBlob più sopra) diventano
+   RIUTILIZZABILI: create una volta — a mano, con l'AI o caricate da fuori —
+   restano in una libreria (IndexedDB, come la Libreria Cilento) e si
+   inseriscono in qualunque video con un clic, senza rigenerarle ogni volta.
+   Stesso schema della Libreria Cilento: pagina dedicata nel menù Social +
+   linguetta compatta dentro Video Social per usarle senza uscire dal
+   progetto aperto (uscire da Video Social con un progetto non salvato
+   chiede conferma e può svuotarlo — vedi switchSection). ══════════════ */
+(function(){
+  if(window._libFinInit) return;
+  window._libFinInit=true;
+  var DB_NOME='vai_libreria_grafiche_v1', DB_STORE='clip';
+  var _lib=[], _pronta=false;
+
+  function esc(s){ return (typeof _vaiEsc==='function') ? _vaiEsc(s) : String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function toastL(m,t){ try{ toast(m,t||''); }catch(e){} }
+  function durTxt(s){ s=Math.max(0,Math.round(s||0)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
+
+  function db(){
+    return new Promise(function(ok,ko){
+      try{
+        var q=indexedDB.open(DB_NOME,1);
+        q.onupgradeneeded=function(){ var d=q.result; if(!d.objectStoreNames.contains(DB_STORE)) d.createObjectStore(DB_STORE,{keyPath:'id'}); };
+        q.onsuccess=function(){ ok(q.result); }; q.onerror=function(){ ko(q.error); };
+      }catch(e){ ko(e); }
+    });
+  }
+  function tx(modo, fn){
+    return db().then(function(d){ return new Promise(function(ok,ko){
+      var t=d.transaction(DB_STORE,modo), s=t.objectStore(DB_STORE), r=fn(s);
+      t.oncomplete=function(){ ok(r&&r.result!==undefined?r.result:undefined); d.close(); };
+      t.onerror=function(){ ko(t.error); d.close(); };
+    }); });
+  }
+  function libFinCarica(){
+    return tx('readonly',function(s){ return s.getAll(); }).then(function(a){
+      _lib=(a||[]).sort(function(x,y){ return (y.creata||0)-(x.creata||0); }); _pronta=true; return _lib;
+    }).catch(function(e){ console.warn('[Libreria grafiche] lettura KO',e); _lib=[]; _pronta=true; return _lib; });
+  }
+  function libFinSalvaRec(rec){ return tx('readwrite',function(s){ return s.put(rec); }); }
+  function libFinElimina(id){ return tx('readwrite',function(s){ return s.delete(id); }); }
+
+  /* misura una clip già in memoria (durata, dimensioni, miniatura se non già data) */
+  function misura(blob, thumbGia){
+    return new Promise(function(ok){
+      if(thumbGia){ // la miniatura la generatore (Scheda/Finestra) l'ha già fatta: evito di ricaricare il video
+        var v2=document.createElement('video'), url2=URL.createObjectURL(blob), fatto2=false;
+        v2.muted=true; v2.preload='metadata'; v2.src=url2;
+        var fine2=function(r){ if(fatto2) return; fatto2=true; try{ v2.removeAttribute('src'); v2.load(); }catch(e){} URL.revokeObjectURL(url2); ok(r); };
+        v2.onloadedmetadata=function(){ fine2({durata:v2.duration||0,w:v2.videoWidth,h:v2.videoHeight,thumb:thumbGia}); };
+        v2.onerror=function(){ fine2({durata:0,w:0,h:0,thumb:thumbGia}); };
+        setTimeout(function(){ fine2({durata:0,w:0,h:0,thumb:thumbGia}); },8000);
+        return;
+      }
+      var v=document.createElement('video'), url=URL.createObjectURL(blob), fatto=false;
+      v.muted=true; v.preload='metadata'; v.src=url;
+      var fine=function(r){ if(fatto) return; fatto=true; try{ v.removeAttribute('src'); v.load(); }catch(e){} URL.revokeObjectURL(url); ok(r); };
+      v.onloadedmetadata=function(){ try{ v.currentTime=Math.min((v.duration||1)*0.5, Math.max(0,(v.duration||1)-0.1)); }catch(e){ fine({durata:v.duration||0,w:v.videoWidth,h:v.videoHeight,thumb:''}); } };
+      v.onseeked=function(){
+        var th='';
+        try{ var sc=Math.min(1,360/(v.videoWidth||360)), c=document.createElement('canvas');
+          c.width=Math.round((v.videoWidth||360)*sc); c.height=Math.round((v.videoHeight||640)*sc);
+          c.getContext('2d').drawImage(v,0,0,c.width,c.height); th=c.toDataURL('image/jpeg',0.72); }catch(e){}
+        fine({durata:v.duration||0,w:v.videoWidth,h:v.videoHeight,thumb:th});
+      };
+      v.onerror=function(){ fine(null); };
+      setTimeout(function(){ fine(null); },15000);
+    });
+  }
+
+  /* ── render: pagina dedicata (menù Social → Libreria Clip Grafiche) ── */
+  function card(r, mostraUsa){
+    var bdg = r.origine==='ai' ? '<span class="lb-bdg" style="background:#7C3AED;color:#fff">AI</span>'
+            : r.origine==='esterna' ? '<span class="lb-bdg" style="background:rgba(10,14,20,.78);color:#C7D0DB;border:1px solid rgba(255,255,255,.15)">ESTERNA</span>'
+            : '<span class="lb-bdg" style="background:var(--ps-brand,#7C3AED);color:#fff">TUA</span>';
+    var azione = mostraUsa ? ('<button class="lfg-usa" onclick="event.stopPropagation();libFinUsa(\''+r.id+'\')">Usa qui</button>') : '';
+    return '<div class="lfg-card" onclick="libFinScheda(\''+r.id+'\')" title="'+esc(r.nome)+'">'
+      +'<div class="lb-th" style="background-image:url('+(r.thumb||'')+')">'+bdg+'<span class="lb-dur">'+durTxt(r.durata)+'</span></div>'
+      +'<div class="lfg-b"><div class="lfg-t">'+esc(r.nome)+'</div>'+azione+'</div></div>';
+  }
+  function libFinRender(){
+    var root=document.getElementById('libfin-root'); if(!root) return;
+    css();
+    if(!_pronta){ root.innerHTML='<div class="lfg-vuoto">Apro la libreria…</div>'; libFinCarica().then(libFinRender); return; }
+    var h='<div class="lfg-testa"><div><div class="lfg-tit">Libreria Clip Grafiche</div>'
+      +'<div class="lfg-sot">Le schede e finestre animate (icona+titolo, scheda immobile…) pronte da riusare in più video. Create a mano, con l\'AI o caricate da fuori. Restano in questo browser: esportale di tanto in tanto per averne una copia.</div></div>'
+      +'<div class="lfg-az"><button class="lfg-btn" onclick="libFinAggiungi()">Aggiungi clip</button>'
+      +'<button class="lfg-btn pieno" onclick="libFinCreaAIPanel()">✨ Crea con l\'AI</button></div></div>';
+    if(!_lib.length){
+      h+='<div class="lfg-vuoto"><b>La libreria è vuota</b><br>Crea la prima scheda dal pulsante «Scheda» in Video Social (spunta «Salva anche nella Libreria clip»), chiedi all\'AI di crearne una, oppure carica un video già pronto da fuori.<br><br>'
+        +'<button class="lfg-btn" onclick="libFinAggiungi()">Aggiungi clip</button> <button class="lfg-btn pieno" onclick="libFinCreaAIPanel()">✨ Crea con l\'AI</button></div>';
+    } else {
+      h+='<div class="lfg-grid">'+_lib.map(function(r){ return card(r,false); }).join('')+'</div>';
+    }
+    root.innerHTML=h;
+  }
+  window.libFinRender=libFinRender;
+
+  window.libFinScheda=function(id){
+    var r=_lib.find(function(x){ return x.id===id; }); if(!r) return;
+    var url=URL.createObjectURL(r.blob);
+    var m=document.createElement('div'); m.className='lfg-modal';
+    m.innerHTML='<div class="lfg-box"><video src="'+url+'" controls autoplay muted loop playsinline></video>'
+      +'<div class="lfg-pd"><b>'+esc(r.nome)+'</b><small>'+durTxt(r.durata)+' · '+(r.origine==='ai'?'creata con l\'AI':(r.origine==='esterna'?'caricata da fuori':'creata a mano'))+'</small></div>'
+      +'<div class="lfg-azm"><button data-a="usa">Usa in questo video</button><button data-a="elimina">Elimina</button><button data-a="chiudi">Chiudi</button></div></div>';
+    var chiudi=function(){ try{ URL.revokeObjectURL(url); }catch(e){} m.remove(); };
+    m.addEventListener('click',function(e){ if(e.target===m) chiudi(); });
+    m.querySelector('[data-a=chiudi]').onclick=chiudi;
+    m.querySelector('[data-a=usa]').onclick=function(){ chiudi(); libFinUsa(id); };
+    m.querySelector('[data-a=elimina]').onclick=function(){
+      if(!confirm('Eliminare questa clip dalla libreria?')) return;
+      libFinElimina(id).then(libFinCarica).then(function(){ chiudi(); libFinRender(); try{ libFinTabRender(); }catch(e){} toastL('Clip eliminata','success'); });
+    };
+    document.body.appendChild(m);
+  };
+
+  /* ── aggiungi clip da fuori (file video) ── */
+  window.libFinAggiungi=function(){
+    var inp=document.createElement('input'); inp.type='file'; inp.accept='video/*'; inp.multiple=true;
+    inp.onchange=function(){ libFinAggiungiFile(Array.from(inp.files||[])); };
+    inp.click();
+  };
+  function libFinAggiungiFile(files){
+    files=files.filter(function(f){ return f && f.type && f.type.indexOf('video/')===0; });
+    if(!files.length){ toastL('Scegli uno o più file video','error'); return Promise.resolve(); }
+    var cat=Promise.resolve();
+    files.forEach(function(f,i){
+      cat=cat.then(function(){
+        toastL('Carico la clip '+(i+1)+' di '+files.length+'…','info');
+        return misura(f).then(function(m2){
+          if(!m2){ toastL('Non riesco a leggere '+f.name,'error'); return; }
+          var rec={id:'libfin'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), nome:(f.name||'Clip esterna').replace(/\.[^.]+$/,''),
+            blob:f, tipo:f.type, durata:m2.durata||3, w:m2.w, h:m2.h, thumb:m2.thumb, origine:'esterna', creata:Date.now()};
+          return libFinSalvaRec(rec);
+        });
+      });
+    });
+    return cat.then(libFinCarica).then(function(){ libFinRender(); try{ libFinTabRender(); }catch(e){} toastL(files.length>1?(files.length+' clip aggiunte'):'Clip aggiunta','success'); });
+  }
+  window._libFinAggiungiFile=libFinAggiungiFile;
+
+  /* ── salva una clip già generata (chiamata da vaiCardCrea con "Salva anche nella Libreria") ── */
+  window.libFinSalvaBlob=function(blob, mime, nome, durata, thumb, origine){
+    return misura(blob, thumb).then(function(m2){
+      var rec={id:'libfin'+Date.now().toString(36)+Math.random().toString(36).slice(2,6), nome:nome||'Clip',
+        blob:blob, tipo:mime||blob.type, durata:(m2&&m2.durata)||durata||3, w:m2&&m2.w, h:m2&&m2.h, thumb:(m2&&m2.thumb)||thumb||null,
+        origine:origine||'manuale', creata:Date.now()};
+      return libFinSalvaRec(rec).then(function(){ return libFinCarica(); }).then(function(){
+        libFinRender(); try{ libFinTabRender(); }catch(e){} return rec;
+      });
+    });
+  };
+
+  /* ── crea con l'AI: Enzo descrive cosa vuole, l'AI sceglie stile/testo/icona ── */
+  window.libFinCreaAIPanel=function(){
+    var old=document.getElementById('lfg-ai-modal'); if(old) old.remove();
+    var m=document.createElement('div'); m.id='lfg-ai-modal'; m.className='lfg-modal';
+    m.innerHTML='<div class="lfg-box lfg-box-ai">'
+      +'<div class="lfg-pd"><b>✨ Crea una clip con l\'AI</b><small>Descrivi cosa vuoi: l\'AI sceglie lo stile (icona o finestra immobile), il testo e l\'icona giusta — sempre nel settore immobiliare.</small></div>'
+      +'<div style="padding:0 16px 10px"><textarea id="lfg-ai-prompt" rows="3" placeholder="es. «un invito a prenotare una visita», «vista mare», «tre camere da letto», «dal sopralluogo al rogito»…" style="width:100%;box-sizing:border-box;padding:9px 11px;border-radius:9px;border:1px solid rgba(255,255,255,.14);background:#13263B;color:#fff;font-family:inherit;font-size:.86rem;resize:vertical"></textarea></div>'
+      +'<div class="lfg-azm"><button data-a="crea" class="pieno">Crea</button><button data-a="chiudi">Annulla</button></div>'
+      +'</div>';
+    document.body.appendChild(m);
+    m.addEventListener('click',function(e){ if(e.target===m) m.remove(); });
+    m.querySelector('[data-a=chiudi]').onclick=function(){ m.remove(); };
+    m.querySelector('[data-a=crea]').onclick=function(){ libFinCreaAI((document.getElementById('lfg-ai-prompt').value||'').trim(), m); };
+  };
+  window.libFinCreaAI=function(richiesta, modal){
+    if(!richiesta){ toastL('Scrivi cosa vuoi creare','error'); return; }
+    var proxy=(typeof aiGetProxy==='function')?aiGetProxy():'';
+    if(!proxy){ try{ vaiAvvisaProxy(); }catch(e){ toastL('Collega prima l\'AI nelle impostazioni','error'); } return; }
+    var btn=modal&&modal.querySelector('[data-a=crea]');
+    if(btn){ btn.disabled=true; btn.textContent='Penso…'; }
+    toastL('L\'AI sta pensando alla clip…','info');
+    var icone=VAI_CARD_ICONE.join(', ');
+    var sys='Un agente immobiliare vuole una piccola clip grafica animata (2-3 secondi) da usare nei suoi video del settore immobiliare. '
+      +'Due stili possibili:\n'
+      +'1) "icona": un\'icona dentro un riquadro bianco con un titolo breve sotto — adatto a concetti semplici (es. "Vista mare", "Pronta consegna").\n'
+      +'2) "finestra": una finta finestra stile app con foto, prezzo e indirizzo — adatto quando si parla di UN immobile specifico con prezzo o indirizzo.\n\n'
+      +'Richiesta dell\'agente: "'+richiesta.replace(/"/g,"'")+'"\n\n'
+      +'Se scegli "icona", scegli "svgIco" SOLO fra questi valori: '+icone+'. Scrivi "testo" breve (max 28 caratteri) e "stile" "scuro" o "chiaro".\n'
+      +'Se scegli "finestra", scrivi "tit1" (prima parte del titolo), "titAcc" (la parola in evidenza, 1-3 parole), "prezzo" (stringa tipo "289.000 €", vuota se non pertinente), "indirizzo" (breve, vuota se non pertinente).\n'
+      +'Resta sempre nel settore immobiliare: niente altri argomenti.\n\n'
+      +'Rispondi SOLO con JSON valido: {"tipo":"icona|finestra","testo":"","svgIco":"","stile":"","tit1":"","titAcc":"","prezzo":"","indirizzo":""}';
+    aiFetch(proxy,{ method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ model:(typeof aiModel==='function'?aiModel():'claude-sonnet-4-6'), max_tokens:300,
+        messages:[{role:'user',content:[{type:'text',text:sys}]}] }) }, 20000)
+    .then(function(r){ return r.json(); }).then(function(d){
+      var txt=''; try{ txt=(d.content||[]).map(function(b){ return b.text||''; }).join('').trim(); }catch(e){}
+      var j=null; try{ j=JSON.parse(txt); }catch(e){ var mm=txt.match(/\{[\s\S]*\}/); if(mm){ try{ j=JSON.parse(mm[0]); }catch(_){} } }
+      if(!j || (j.tipo!=='icona' && j.tipo!=='finestra')) throw new Error('risposta non valida');
+      var sec=2.8;
+      var gen;
+      if(j.tipo==='finestra'){
+        gen=_vaiFinestraToVideoBlob({ tit1:j.tit1||'', titAcc:j.titAcc||richiesta.slice(0,24), prezzo:j.prezzo||'', indirizzo:j.indirizzo||'', sec:3.2 });
+      } else {
+        var svgIco=VAI_CARD_ICONE.indexOf(j.svgIco)>=0 ? j.svgIco : 'star';
+        gen=_vaiCardToVideoBlob({ testo:(j.testo||richiesta).toString().slice(0,28), svgIco:svgIco, stile:(j.stile==='chiaro'?'chiaro':'scuro'), sec:sec });
+      }
+      return gen.then(function(out){
+        if(!out||!out.blob) throw new Error('generazione vuota');
+        var nome=(j.tipo==='finestra') ? ('Finestra: '+((j.tit1||'')+' '+(j.titAcc||'')).trim().slice(0,22)) : ('Scheda: '+(j.testo||richiesta).slice(0,22));
+        return window.libFinSalvaBlob(out.blob, out.mime, nome, (j.tipo==='finestra'?3.2:sec), out.thumb, 'ai');
+      });
+    }).then(function(){
+      if(modal) modal.remove();
+      toastL('Clip creata dall\'AI e salvata nella libreria','success');
+    }).catch(function(e){
+      console.error('[Libreria grafiche] creazione AI KO', e);
+      toastL('Non sono riuscito a creare la clip: riprova con una descrizione diversa','error');
+    }).finally(function(){ if(btn){ btn.disabled=false; btn.textContent='Crea'; } });
+  };
+
+  /* ── usa una clip della libreria nel progetto Video Social aperto ── */
+  window.libFinUsa=function(id){
+    var r=_lib.find(function(x){ return x.id===id; }); if(!r) return;
+    if(typeof _vaiClips==='undefined' || !_vaiClips || !_vaiClips.length){ toastL('Apri prima un progetto Video Social con delle clip','error'); return; }
+    try{ _vaiInserisciClipAlCursore(r.blob, r.tipo, r.nome, r.durata||3, r.thumb); }catch(e){ console.error(e); toastL('Non riesco a inserire questa clip','error'); return; }
+    toastL('Clip «'+r.nome+'» inserita nel montaggio','success');
+  };
+
+  /* ── stile ── */
+  function css(){
+    if(document.getElementById('lfg-css')) return;
+    var st=document.createElement('style'); st.id='lfg-css';
+    st.textContent=
+      '#sec-libgrafiche{padding:20px}'
+     +'.lfg-testa{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}'
+     +'.lfg-tit{font-size:1.3rem;font-weight:800;color:var(--text)}'
+     +'.lfg-sot{font-size:.82rem;color:var(--text3);margin-top:4px;max-width:640px;line-height:1.5}'
+     +'.lfg-az{display:flex;gap:8px;flex-wrap:wrap}'
+     +'.lfg-btn{height:38px;padding:0 16px;border-radius:9px;border:1.5px solid var(--border,#E2DFD5);background:#fff;color:var(--text);font-weight:700;font-size:.82rem;cursor:pointer;font-family:inherit}'
+     +'.lfg-btn.pieno{background:linear-gradient(135deg,#C9A84C,#EC4899);border:none;color:#1A1205}'
+     +'.lfg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}'
+     +'.lfg-card{background:var(--ps-card,#fff);border:1px solid var(--border,#E2DFD5);border-radius:10px;overflow:hidden;cursor:pointer;display:flex;flex-direction:column}'
+     +'.lfg-card:hover{border-color:#C9A84C}'
+     +'.lfg-card .lb-th{position:relative;aspect-ratio:9/16;background:#0B0F14 center/cover no-repeat}'
+     +'.lfg-card .lb-bdg{position:absolute;top:6px;left:6px;font-size:.6rem;font-weight:800;letter-spacing:.04em;padding:2px 6px;border-radius:4px}'
+     +'.lfg-card .lb-dur{position:absolute;bottom:6px;right:6px;font-size:.6rem;font-weight:700;padding:1px 5px;border-radius:4px;background:rgba(10,14,20,.75);color:#fff}'
+     +'.lfg-b{padding:8px 9px 10px;flex:1;display:flex;flex-direction:column;gap:6px}'
+     +'.lfg-t{font-size:.76rem;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
+     +'.lfg-usa{height:26px;border-radius:6px;border:none;background:#C9A84C;color:#1A1205;font-weight:700;font-size:.7rem;cursor:pointer;font-family:inherit}'
+     +'.lfg-vuoto{border:2px dashed var(--border,#E2DFD5);border-radius:14px;padding:40px 20px;text-align:center;color:var(--text3);font-size:.88rem;line-height:1.6}'
+     +'.lfg-vuoto b{color:var(--text);font-size:1rem}'
+     +'.lfg-modal{position:fixed;inset:0;z-index:9600;background:rgba(6,10,16,.72);display:flex;align-items:center;justify-content:center;padding:20px}'
+     +'.lfg-box{background:#11161C;border:1px solid #2A3542;border-radius:14px;width:min(380px,100%);overflow:hidden;color:#E8EDF2}'
+     +'.lfg-box video{width:100%;max-height:420px;background:#000;display:block}'
+     +'.lfg-pd{padding:14px 16px}.lfg-pd b{font-size:.95rem;display:block}.lfg-pd small{display:block;color:#8796A6;font-size:.74rem;margin-top:4px;line-height:1.4}'
+     +'.lfg-azm{display:flex;gap:6px;padding:0 16px 16px}.lfg-azm button{flex:1;height:34px;border-radius:7px;border:1px solid #2A3542;background:#141A21;color:#C7D0DB;font-weight:700;font-size:.76rem;cursor:pointer;font-family:inherit}'
+     +'.lfg-azm button.pieno{background:var(--ps-brand,#7C3AED);border-color:var(--ps-brand,#7C3AED);color:#fff}'
+     +'.lfg-box-ai{width:min(440px,100%)}'
+     +'/* linguetta compatta dentro Video Social */'
+     +'.lfgt-hr{display:flex;align-items:center;justify-content:space-between;padding:12px 10px 8px}'
+     +'.lfgt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 10px}'
+     +'.lfgt-az{display:flex;gap:6px;padding:0 10px 10px;flex-wrap:wrap}';
+    document.head.appendChild(st);
+  }
+
+  var _sw=window.switchSection;
+  if(typeof _sw==='function' && !_sw._libFin){
+    window.switchSection=function(name){
+      var r=_sw.apply(this,arguments);
+      if(name==='libgrafiche'){ try{ libFinRender(); }catch(e){ console.warn('[Libreria grafiche] KO',e); } }
+      return r;
+    };
+    window.switchSection._libFin=true;
+  }
+
+  /* ── linguetta compatta "Grafiche" dentro Video Social, accanto a "Territorio" ── */
+  function libFinTabRender(){
+    var p=document.querySelector('.vcc-pane[data-p=grafiche]'); if(!p) return;
+    css();
+    if(!_pronta){ p.innerHTML='<div class="lfg-vuoto" style="margin-top:12px">Apro la libreria…</div>'; libFinCarica().then(libFinTabRender); return; }
+    var h='<div class="lfgt-hr"><div class="vcc-h">Libreria Clip Grafiche</div></div>'
+      +'<div class="lfgt-az"><button class="vcc-btn bordo" onclick="libFinAggiungi()">Aggiungi clip</button>'
+      +'<button class="vcc-btn bordo" onclick="libFinCreaAIPanel()">✨ Crea con l\'AI</button></div>';
+    if(!_lib.length) h+='<div class="lfg-vuoto" style="margin:0 10px">La libreria è vuota. Crea la prima scheda dal pulsante «Scheda» qui sopra (spuntando «Salva anche nella Libreria»), oppure usa i pulsanti sopra.</div>';
+    else h+='<div class="lfgt-grid">'+_lib.map(function(r){ return card(r,true); }).join('')+'</div>';
+    p.innerHTML=h;
+  }
+  window.libFinTabRender=libFinTabRender;
+
+  function aggancia(){
+    var tabs=document.querySelector('.vcc-tabs'), panes=document.querySelector('.vcc-panes');
+    if(!tabs || !panes || tabs.querySelector('[data-t=grafiche]')) return;
+    var dopo=tabs.querySelector('[data-t=territorio]') || tabs.querySelector('[data-t=clip]');
+    var b=document.createElement('button'); b.type='button'; b.className='vcc-tab'; b.setAttribute('data-t','grafiche');
+    b.title='Libreria Clip Grafiche: le schede e finestre animate pronte da inserire in questo video';
+    b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 9l2.5 2.5L15 7l4 5"/></svg>Grafiche';
+    b.onclick=function(){ try{ vccTab('grafiche'); }catch(e){} libFinTabRender(); };
+    if(dopo && dopo.nextSibling) tabs.insertBefore(b, dopo.nextSibling); else tabs.appendChild(b);
+    var p=document.createElement('div'); p.className='vcc-pane'; p.setAttribute('data-p','grafiche'); panes.appendChild(p);
+    libFinCarica();
+  }
+  var _cl2=window._vaiCapcutLayout;
+  if(typeof _cl2==='function' && !_cl2._libFin){
+    window._vaiCapcutLayout=function(){ var r=_cl2.apply(this,arguments); try{ aggancia(); }catch(e){ console.warn('[Libreria grafiche] aggancio KO',e); } return r; };
+    window._vaiCapcutLayout._libFin=true;
   }
 })();
 
