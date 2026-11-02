@@ -2342,8 +2342,14 @@
       +   '<div id="mcat-dati" class="mcat-dati" style="display:none">'
       +     '<div class="mcat-campi">'
       +       _campo('Sigla dall\'Agenzia', 'mcat-sigla', '', true, 'incolla qui, es. A091_004300.120')
-      +       _campo('Foglio', 'mcat-foglio', im ? im.catFoglio : _opz.foglio)
-      +       _campo('Particella', 'mcat-part', im ? im.catParticella : _opz.particella)
+      +       '<label class="mcat-campo"><span>Foglio</span><input id="mcat-foglio" class="finput" value="' + _attr(im ? im.catFoglio : _opz.foglio)
+      +         '" inputmode="numeric" onkeydown="if(event.key===\'Enter\'){event.preventDefault();_mcatCercaFP();}"></label>'
+      +       '<label class="mcat-campo"><span>Particella</span><div style="display:flex;gap:4px">'
+      +         '<input id="mcat-part" class="finput" value="' + _attr(im ? im.catParticella : _opz.particella)
+      +           '" style="flex:1;min-width:0" onkeydown="if(event.key===\'Enter\'){event.preventDefault();_mcatCercaFP();}">'
+      +         '<button type="button" class="mcat-ico" style="width:38px;height:38px;flex:0 0 auto" onclick="_mcatCercaFP()" '
+      +           'data-fum="Cerca foglio e particella e vai lì sulla mappa" aria-label="Cerca particella">' + _MI.cerca + '</button>'
+      +       '</div></label>'
       +       _campo('Sub', 'mcat-sub', im ? im.catSub : _opz.sub)
       +     '</div>'
       +     '<div id="mcat-esito" class="mcat-esito"></div>'
@@ -2516,6 +2522,30 @@
     if(typeof showToast==='function') showToast('Ricerca salvata in Ricerche catastali');
     _avviso('Ricerca salvata'+(f||p?' (foglio '+(f||'?')+', particella '+(p||'?')+(sb?', sub '+sb:'')+')':'')
       +'. La trovi in Ricerche catastali, da agganciare a un contatto.');
+  };
+  /* [2 nov 2026] icona di ricerca accanto a Foglio/Particella: scrivi i due
+     numeri, premi Invio o tocca la lente, e la mappa zooma sulla particella.
+     Stesso motore della barra di ricerca in alto (_catCerca), che se non
+     scrivi il comune usa già quello dell'immobile o quello al centro mappa. */
+  window._mcatCercaFP=function(){
+    var f=String((_el('mcat-foglio')||{}).value||'').trim();
+    var p=String((_el('mcat-part')||{}).value||'').trim();
+    var es=_el('mcat-esito');
+    if(!f || !p){
+      if(es){ es.textContent='Scrivi foglio e particella.'; es.style.color='#B91C1C'; }
+      return;
+    }
+    if(es){ es.textContent='Cerco…'; es.style.color=''; }
+    _catCerca(f+'/'+p).then(function(r){
+      if(!r || r.errore || !_map){
+        if(es){ es.textContent=(r && r.errore) || 'Particella non trovata.'; es.style.color='#B91C1C'; }
+        return;
+      }
+      _catScegli(r.p, true);
+      _catAggiorna();
+    }).catch(function(){
+      if(es){ es.textContent='Particella non trovata.'; es.style.color='#B91C1C'; }
+    });
   };
   window._mcatPosizione=_vaiAllaPosizione;
   window._mcatSalva=_salvaNellaScheda;
