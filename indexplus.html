@@ -46785,11 +46785,22 @@ function vaiBlockDragStart(e, id, modo, ci){
     }
     vaiTlRender();
     vaiOverlayUpdate();
-    // click senza trascinamento → apro l'editor: QUI la selezione della clip è giusta
-    // e voluta (il player va sulla clip della scritta per mostrartela mentre la modifichi)
+    // click senza trascinamento → apro l'editor: il salto alla clip "capo" (dove la
+    // scritta è nata) serve SOLO se da qui non si vede — es. hai scorso la timeline
+    // lontano dalla sua prima comparsa. [2 nov 2026] Se invece la scritta (o il suo
+    // gruppo, per quelle estese su più clip) è GIÀ su questa stessa clip — ci hai
+    // appena cliccato sopra perché la vedi qui — il salto portava il player (e il
+    // cursore della timeline) indietro su un'altra clip senza che l'avessi chiesto,
+    // e il pannello restava agganciato alla copia sbagliata: i comandi sembravano
+    // "non rispondere" perché agivano su una scritta che non era più quella attiva.
     if(!_moved && modo==='move'){
-      if(ciBase!==_vaiClipAttiva){ try{ vaiClipSelect(ciBase, true); }catch(err){} }
-      const sc=_vaiScritte.find(x=>x.id===id); if(sc) _vaiOpenTextEditor(sc);
+      const giaQui = gruppo
+        ? (_vaiScritte||[]).some(x=>x._gruppoEst===gruppo)
+        : (_vaiScritte||[]).some(x=>x.id===id);
+      if(!giaQui && ciBase!==_vaiClipAttiva){ try{ vaiClipSelect(ciBase, true); }catch(err){} }
+      const sc=(_vaiScritte||[]).find(x=>x.id===id)
+        || (gruppo && (_vaiScritte||[]).find(x=>x._gruppoEst===gruppo));
+      if(sc) _vaiOpenTextEditor(sc);
     }
   };
   document.addEventListener('mousemove',move); document.addEventListener('mouseup',up);
