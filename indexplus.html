@@ -43480,7 +43480,7 @@ function _vaiOpenTextEditor(s){
     m=document.createElement('div'); m.id='vai-txt-editor'; m.className='vai-txt-editor';
     m.innerHTML=
       '<div class="vai-txt-card">'+
-        '<div class="vai-txt-h">Testo <button class="vai-txt-xbtn" onclick="_vaiTxtClose()">×</button></div>'+
+        '<div class="vai-txt-h" style="cursor:grab" title="Trascina per spostare questo pannello in qualunque punto dello schermo" onmousedown="_vaiTxtDragStart(event)" ontouchstart="_vaiTxtDragStart(event)">Testo <button class="vai-txt-xbtn" onclick="_vaiTxtClose()">×</button></div>'+
         '<div class="vai-txt-scroll">'+
         '<div id="vai-txt-foto" style="display:none"></div>'+
         // ── TESTI ──
@@ -43577,7 +43577,13 @@ function _vaiOpenTextEditor(s){
           '<button class="btn btn-gold btn-sm" onclick="_vaiTxtClose()">Fatto</button>'+
         '</div>'+
       '</div>';
-    document.body.appendChild(m);
+    /* [2 nov 2026] Dentro .vai-cc-video (non document.body): così quando il
+       video va a schermo intero (vaiFullscreen, che ingrandisce SOLO il
+       video) questo pannello resta nella parte che l'API Fullscreen mostra
+       davvero — prima, essendo fuori, spariva. position:fixed lo fa comunque
+       restare ancorato alla finestra (reale o a schermo intero) e non al
+       riquadro del video, quindi non cambia nulla nell'uso normale. */
+    (document.querySelector('.vai-cc-video') || document.body).appendChild(m);
     // applicazione live a ogni modifica testo
     /* Stesso punto di ripristino per la finestra Testo: anche qui scrivere non entrava nella
        cronologia, e Annulla saltava all'operazione precedente. */
@@ -43647,6 +43653,35 @@ function _vaiOpenTextEditor(s){
   setTimeout(()=>{ const a=m.querySelector('#vai-txt-main'); if(a){ a.focus(); a.select(); } },50);
 }
 function _vaiTxtCur(){ const m=document.getElementById('vai-txt-editor'); if(!m) return null; return _vaiScritte.find(x=>x.id===m._editId); }
+/* [2 nov 2026] Trascina il pannello "Testo"/"Foto" per tutto lo schermo
+   (richiesta di Enzo: deve poterlo gestire meglio, non restare incollato
+   nell'angolo). Al primo trascinamento la card passa a posizione fissa alle
+   sue coordinate attuali — da lì segue il dito/mouse, agganciata dentro i
+   bordi della finestra. Resta dov'è stata lasciata finché non la chiudi o
+   la trascini di nuovo: niente "torna da sola" al posto di partenza. */
+function _vaiTxtDragStart(e){
+  if(e.target && e.target.closest && e.target.closest('.vai-txt-xbtn')) return;
+  e.preventDefault();
+  const card=document.querySelector('#vai-txt-editor .vai-txt-card'); if(!card) return;
+  const startX=(e.touches?e.touches[0].clientX:e.clientX), startY=(e.touches?e.touches[0].clientY:e.clientY);
+  const r=card.getBoundingClientRect();
+  card.style.position='fixed'; card.style.left=r.left+'px'; card.style.top=r.top+'px'; card.style.right='auto'; card.style.margin='0';
+  const offX=startX-r.left, offY=startY-r.top;
+  const move=(ev)=>{
+    const x=(ev.touches?ev.touches[0].clientX:ev.clientX), y=(ev.touches?ev.touches[0].clientY:ev.clientY);
+    const w=card.offsetWidth, h=card.offsetHeight;
+    const nl=Math.max(4, Math.min(window.innerWidth-w-4, x-offX));
+    const nt=Math.max(4, Math.min(window.innerHeight-h-4, y-offY));
+    card.style.left=nl+'px'; card.style.top=nt+'px';
+  };
+  const up=()=>{
+    document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up);
+    document.removeEventListener('touchmove',move); document.removeEventListener('touchend',up);
+  };
+  document.addEventListener('mousemove',move); document.addEventListener('mouseup',up);
+  document.addEventListener('touchmove',move,{passive:false}); document.addEventListener('touchend',up);
+}
+window._vaiTxtDragStart=_vaiTxtDragStart;
 function _vaiTxtClose(){
   window._vaiTestoSnapFatto=false;   // chiusa la finestra: la prossima modifica avrà il suo punto
   const m=document.getElementById('vai-txt-editor'); if(m) m.style.display='none'; }
