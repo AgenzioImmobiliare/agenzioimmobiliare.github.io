@@ -55599,6 +55599,7 @@ async function pubConfrontaAI(){
   function card(r, mostraUsa){
     var bdg = r.origine==='ai' ? '<span class="lb-bdg" style="background:#7C3AED;color:#fff">AI</span>'
             : r.origine==='esterna' ? '<span class="lb-bdg" style="background:rgba(10,14,20,.78);color:#C7D0DB;border:1px solid rgba(255,255,255,.15)">ESTERNA</span>'
+            : r.origine==='esempio' ? '<span class="lb-bdg" style="background:#C9A84C;color:#1A1205">ESEMPIO</span>'
             : '<span class="lb-bdg" style="background:var(--ps-brand,#7C3AED);color:#fff">TUA</span>';
     var azione = mostraUsa ? ('<button class="lfg-usa" onclick="event.stopPropagation();libFinUsa(\''+r.id+'\')">Usa qui</button>') : '';
     return '<div class="lfg-card" onclick="libFinScheda(\''+r.id+'\')" title="'+esc(r.nome)+'">'
@@ -55614,8 +55615,9 @@ async function pubConfrontaAI(){
       +'<div class="lfg-az"><button class="lfg-btn" onclick="libFinAggiungi()">Aggiungi clip</button>'
       +'<button class="lfg-btn pieno" onclick="libFinCreaAIPanel()">✨ Crea con l\'AI</button></div></div>';
     if(!_lib.length){
-      h+='<div class="lfg-vuoto"><b>La libreria è vuota</b><br>Crea la prima scheda dal pulsante «Scheda» in Video Social (spunta «Salva anche nella Libreria clip»), chiedi all\'AI di crearne una, oppure carica un video già pronto da fuori.<br><br>'
-        +'<button class="lfg-btn" onclick="libFinAggiungi()">Aggiungi clip</button> <button class="lfg-btn pieno" onclick="libFinCreaAIPanel()">✨ Crea con l\'AI</button></div>';
+      h+='<div class="lfg-vuoto"><b>La libreria è vuota</b><br>Crea la prima scheda dal pulsante «Scheda» in Video Social (spunta «Salva anche nella Libreria clip»), chiedi all\'AI di crearne una, carica un video già pronto da fuori, oppure parti da 5 esempi già pronti.<br><br>'
+        +'<button class="lfg-btn pieno" id="lfg-seed-btn" onclick="libFinSeedEsempi()">🎬 Crea 5 esempi</button> '
+        +'<button class="lfg-btn" onclick="libFinAggiungi()">Aggiungi clip</button> <button class="lfg-btn" onclick="libFinCreaAIPanel()">✨ Crea con l\'AI</button></div>';
     } else {
       h+='<div class="lfg-grid">'+_lib.map(function(r){ return card(r,false); }).join('')+'</div>';
     }
@@ -55675,6 +55677,38 @@ async function pubConfrontaAI(){
       return libFinSalvaRec(rec).then(function(){ return libFinCarica(); }).then(function(){
         libFinRender(); try{ libFinTabRender(); }catch(e){} return rec;
       });
+    });
+  };
+
+  /* ── 5 esempi pronti, per provare subito la libreria senza crearli a mano.
+     Generati con gli STESSI motori usati per le creazioni di Enzo (niente di
+     diverso dietro le quinte): due "finestra immobile" e tre "icona". Vivono
+     solo nel browser di chi clicca: ognuno li genera nel proprio, al volo. ── */
+  var ESEMPI_SEED = [
+    { gen:'finestra', opts:{ tit1:'Casa con', titAcc:'vista mare', prezzo:'289.000 €', indirizzo:'Corso Garibaldi, Agropoli', sec:3.2 }, nome:'Finestra: Casa con vista mare' },
+    { gen:'finestra', opts:{ tit1:'La tua', titAcc:'prossima casa', prezzo:'', indirizzo:'', sec:3.2 }, nome:'Finestra: La tua prossima casa' },
+    { gen:'icona', opts:{ testo:'Pronta consegna, chiavi in mano', svgIco:'chiave', stile:'scuro', sec:2.5 }, nome:'Scheda: Pronta consegna' },
+    { gen:'icona', opts:{ testo:'Tre camere da letto', svgIco:'letto', stile:'scuro', sec:2.5 }, nome:'Scheda: Tre camere da letto' },
+    { gen:'icona', opts:{ testo:'Prenota una visita', svgIco:'pin', stile:'scuro', sec:2.5 }, nome:'Scheda: Prenota una visita' }
+  ];
+  window.libFinSeedEsempi=function(){
+    var btn=document.getElementById('lfg-seed-btn');
+    if(btn){ btn.disabled=true; }
+    toastL('Creo 5 esempi, qualche secondo…','info');
+    var fatti=0, cat=Promise.resolve();
+    ESEMPI_SEED.forEach(function(es,i){
+      cat=cat.then(function(){
+        if(btn) btn.textContent='Creo l\'esempio '+(i+1)+' di 5…';
+        var gen = (es.gen==='finestra') ? _vaiFinestraToVideoBlob(es.opts) : _vaiCardToVideoBlob(es.opts);
+        return gen.then(function(out){
+          if(!out||!out.blob) return;
+          return window.libFinSalvaBlob(out.blob, out.mime, es.nome, es.opts.sec, out.thumb, 'esempio').then(function(){ fatti++; });
+        }).catch(function(e){ console.warn('[Libreria grafiche] esempio KO', es.nome, e); });
+      });
+    });
+    return cat.then(function(){
+      if(btn){ btn.disabled=false; btn.textContent='🎬 Crea 5 esempi'; }
+      toastL(fatti?('Creati '+fatti+' esempi: puoi già provarli'):'Non sono riuscito a creare gli esempi su questo browser — usa Chrome o Edge aggiornati', fatti?'success':'error');
     });
   };
 
@@ -55799,7 +55833,8 @@ async function pubConfrontaAI(){
     css();
     if(!_pronta){ p.innerHTML='<div class="lfg-vuoto" style="margin-top:12px">Apro la libreria…</div>'; libFinCarica().then(libFinTabRender); return; }
     var h='<div class="lfgt-hr"><div class="vcc-h">Libreria Clip Grafiche</div></div>'
-      +'<div class="lfgt-az"><button class="vcc-btn bordo" onclick="libFinAggiungi()">Aggiungi clip</button>'
+      +'<div class="lfgt-az">'+(!_lib.length?'<button class="vcc-btn bordo" onclick="libFinSeedEsempi()">🎬 Crea 5 esempi</button>':'')
+      +'<button class="vcc-btn bordo" onclick="libFinAggiungi()">Aggiungi clip</button>'
       +'<button class="vcc-btn bordo" onclick="libFinCreaAIPanel()">✨ Crea con l\'AI</button></div>';
     if(!_lib.length) h+='<div class="lfg-vuoto" style="margin:0 10px">La libreria è vuota. Crea la prima scheda dal pulsante «Scheda» qui sopra (spuntando «Salva anche nella Libreria»), oppure usa i pulsanti sopra.</div>';
     else h+='<div class="lfgt-grid">'+_lib.map(function(r){ return card(r,true); }).join('')+'</div>';
