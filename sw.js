@@ -3,7 +3,7 @@
    IMPORTANTE: quando esce un aggiornamento, bumpa CACHE='lecase-vN'
    per invalidare la cache HTML/JS e forzare il telefono a scaricare il nuovo codice. */
 
-var CACHE = 'lecase-v146';            /* Video Social: tolta la doppia finestra proprietà, schermo intero su tutto il laboratorio, pannello Dettagli spostabile ovunque (02/11/2026) */
+var CACHE = 'lecase-v147';            /* Video Social: pannello Testo/Foto spostabile e visibile a schermo intero (quello vero), schermo intero tornato sul solo video (02/11/2026) */
 var FOTO_CACHE = 'lecase-foto-v1';
 
 self.addEventListener('install', function (e) { self.skipWaiting(); });
