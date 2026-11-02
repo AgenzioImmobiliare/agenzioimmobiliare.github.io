@@ -43092,7 +43092,18 @@ function vaiScrittaDragStart(e, id){
     _vaiDirty=true;
     vaiOverlayUpdate();
   };
-  const up=()=>{ document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up); document.removeEventListener('touchmove',move); document.removeEventListener('touchend',up); };
+  const up=()=>{
+    document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up);
+    document.removeEventListener('touchmove',move); document.removeEventListener('touchend',up);
+    /* [2 nov 2026] A schermo intero il pannello Dettagli (dove di norma si apre
+       "✦ Tutti gli stili") è fuori dall'area ingrandita e non si vede: un clic
+       sulla scritta la selezionava sul video (maniglie) ma non apriva niente —
+       "non si attiva il pannello testo". In quella modalità l'unico pannello
+       raggiungibile è #vai-txt-editor (vive dentro .vai-cc-video): un clic
+       semplice (non un trascinamento) lo apre subito, senza dover cercare
+       il pulsante nel pannello che non c'è. */
+    if(!moved && document.fullscreenElement){ try{ _vaiEditById(id); }catch(e){} }
+  };
   document.addEventListener('mousemove',move); document.addEventListener('mouseup',up);
   document.addEventListener('touchmove',move,{passive:false}); document.addEventListener('touchend',up);
 }
