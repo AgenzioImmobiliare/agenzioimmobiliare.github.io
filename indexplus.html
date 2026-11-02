@@ -1641,6 +1641,9 @@ body.soc-fs .soc-tabbar{background:#0A0F14}
 .vgi-pill .vgi-svg{width:14px;height:14px;flex-shrink:0;display:inline-flex}
 .vgi-pill .vgi-svg svg{width:100%;height:100%}
 .vgi-txt{overflow:hidden;text-overflow:ellipsis}
+.vai-lz-input{width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--border);border-radius:9px;font-size:.85rem;font-family:inherit}
+.vai-lz-item.sel{border-color:var(--gold);background:var(--cream);box-shadow:inset 0 0 0 2px var(--gold)}
+.vai-lz-note{font-size:.74rem;color:var(--text2);margin:2px 0 10px;line-height:1.4}
 .vov-svg{display:inline-flex;align-items:center;width:.9em;height:.9em;margin-right:.35em;vertical-align:-0.1em}
 .vov-svg svg{width:100%;height:100%}
 .vai-export-multi{background:linear-gradient(135deg,#7C3AED,#0EA5E9)!important;color:#fff!important;border:none!important;font-weight:700;display:inline-flex;align-items:center;gap:6px}
@@ -7941,6 +7944,10 @@ Un caro saluto,
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="14" y2="12"/><line x1="3" y1="18" x2="14" y2="18"/><line x1="19" y1="14" x2="19" y2="20"/><line x1="16" y1="17" x2="22" y2="17"/></svg><span class="vai-icobtn-lbl">Traccia</span></button>
               <button class="btn btn-sm vai-tl-graf vai-icobtn" onclick="vaiGraficaPanel()" title="Aggiungi badge, inviti all'azione, contatti e decorazioni">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 2a10 10 0 100 20 2.5 2.5 0 002-4 2.5 2.5 0 012-4 10 10 0 00-6-12z"/></svg><span class="vai-icobtn-lbl">Grafica</span></button>
+              <!-- [2 nov 2026] "Layout zona": layout pronto all'uso, città + punti di forza
+                   della zona (mare, scuole, ospedale…) + chiusura fissa con effetti speciali. -->
+              <button class="btn btn-sm vai-icobtn" onclick="vaiLayoutZonaPanel()" title="Layout pronto: città, punti di forza della zona (mare, scuole, ospedale…) e chiusura fissa con effetti speciali">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 1116 0z"/><circle cx="12" cy="10" r="3"/></svg><span class="vai-icobtn-lbl">Layout zona</span></button>
               <!-- [2 nov 2026] "Scrivi cosa vuoi": richiesta libera all'AI, inserita
                    esattamente nel punto della timeline in cui si trova il video ora. -->
               <button class="btn btn-sm vai-icobtn" onclick="vaiGraficaAI()" title="Scrivi cosa vuoi inserire qui (es. &quot;un grafico degli abitanti di Agropoli&quot;) e l'AI lo crea" style="background:linear-gradient(135deg,#C9A84C,#EC4899);color:#1A1205;border:none">
@@ -47280,7 +47287,11 @@ const VAI_SVG_ICONE = {
   chiave:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="5"/><path d="M11.5 11.5L21 21M17 17l2-2M15 15l1.5-1.5"/></svg>',
   riscaldamento:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2c1 2-1 3-1 5s2 2 1 5"/><path d="M15 2c1 2-1 3-1 5s2 2 1 5"/><path d="M5 14h14a1 1 0 011 1v5a1 1 0 01-1 1H5a1 1 0 01-1-1v-5a1 1 0 011-1z"/></svg>',
   clima:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/></svg>',
-  divano:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12V7a2 2 0 012-2h12a2 2 0 012 2v5"/><path d="M2 12h20v5a2 2 0 01-2 2H4a2 2 0 01-2-2z"/><line x1="4" y1="19" x2="4" y2="22"/><line x1="20" y1="19" x2="20" y2="22"/></svg>'
+  divano:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12V7a2 2 0 012-2h12a2 2 0 012 2v5"/><path d="M2 12h20v5a2 2 0 01-2 2H4a2 2 0 01-2-2z"/><line x1="4" y1="19" x2="4" y2="22"/><line x1="20" y1="19" x2="20" y2="22"/></svg>',
+  scuola:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2.5 3 6 3s6-2 6-3v-5"/><line x1="22" y1="10" x2="22" y2="16"/></svg>',
+  ospedale:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="1"/><path d="M12 8v8M8 12h8"/></svg>',
+  negozi:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7h12l1 13H5z"/><path d="M9 7a3 3 0 016 0"/></svg>',
+  bus:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="12" rx="2"/><line x1="3" y1="11" x2="21" y2="11"/><circle cx="7.5" cy="19" r="1.3" fill="currentColor" stroke="none"/><circle cx="16.5" cy="19" r="1.3" fill="currentColor" stroke="none"/></svg>'
 };
 function _vaiSvgIco(key){ return VAI_SVG_ICONE[key]||''; }
 
@@ -47366,6 +47377,154 @@ const VAI_GRAFICHE = {
     {label:'Applausi', testo:'👏', size:2.0, anim:'pop', animOut:'fade'}
   ]
 };
+
+/* ══════════════════════════════════════════════════════════════════════
+   [2 nov 2026] LAYOUT ZONA — animazione pronta all'uso: presenta la città/
+   zona dell'immobile, 2-3 punti di forza vicini (mare, scuole, ospedale…)
+   e chiude SEMPRE con lo stesso invito a guardare fino alla fine / scrivere
+   nei commenti, con effetti speciali. Si AGGIUNGE alle scritte già presenti
+   su una traccia dedicata (stesso meccanismo di "Inserisci dati"), non le
+   sostituisce — niente da annullare se non piace, basta cancellare i pezzi
+   che non servono dalla timeline. ══════════════════════════════════════ */
+const VAI_PREGI = [
+  {key:'mare',       label:'Mare',       svg:'mare',     testoDef:'Mare a 5 minuti',         bg:'#0EA5E9', color:'#ffffff'},
+  {key:'centro',     label:'Centro',     svg:'pin',      testoDef:'Centro a 5 minuti',        bg:'#C9A84C', color:'#0D1B2A'},
+  {key:'scuola',     label:'Scuole',     svg:'scuola',   testoDef:'Scuole a 5 minuti',        bg:'#7C3AED', color:'#ffffff'},
+  {key:'ospedale',   label:'Ospedale',   svg:'ospedale', testoDef:'Ospedale a 10 minuti',     bg:'#DC2626', color:'#ffffff'},
+  {key:'negozi',     label:'Negozi',     svg:'negozi',   testoDef:'Negozi a 2 minuti',        bg:'#10B981', color:'#ffffff'},
+  {key:'trasporti',  label:'Trasporti',  svg:'bus',      testoDef:'Bus/stazione a 3 minuti',  bg:'#0D1B2A', color:'#ffffff'},
+  {key:'parcheggio', label:'Parcheggio', svg:'auto',     testoDef:'Comodo parcheggio',        bg:'#1A2330', color:'#E8EDF2'},
+  {key:'parco',      label:'Verde/Parco',svg:'giardino', testoDef:'Parco a 5 minuti',         bg:'#10B981', color:'#ffffff'}
+];
+
+function vaiLayoutZonaPanel(){
+  const v=document.getElementById('vai-video');
+  if(!v||!v.src){ toast('Carica prima una clip','error'); return; }
+  let m=document.getElementById('vai-lz-modal');
+  if(!m){
+    m=document.createElement('div'); m.id='vai-lz-modal'; m.className='vai-graf-modal';
+    m.innerHTML='<div class="vai-graf-card" id="vai-lz-card">'+
+      '<div class="vai-graf-head" onmousedown="vaiLZDragStart(event)">'+
+        '<span class="vai-graf-h">📍 Layout zona</span>'+
+        '<button class="vai-graf-x" onclick="vaiLZClose()">×</button>'+
+      '</div>'+
+      '<div class="vai-graf-body">'+
+        '<div class="vai-graf-sez"><div class="vai-graf-lbl">Città o zona dell\'immobile</div>'+
+          '<input type="text" id="vai-lz-citta" class="vai-lz-input" placeholder="es. Agropoli, Centro storico…"></div>'+
+        '<div class="vai-graf-sez"><div class="vai-graf-lbl">Cosa c\'è vicino (scegli 2-3)</div>'+
+          '<div class="vai-graf-items" id="vai-lz-pregi">'+
+          VAI_PREGI.map(p=>'<button type="button" class="vai-graf-item vai-lz-item" data-key="'+p.key+'" onclick="this.classList.toggle(\'sel\')">'+
+            '<span class="vgi-pill" style="background:'+p.bg+';color:'+p.color+'"><span class="vgi-svg">'+_vaiSvgIco(p.svg)+'</span>'+
+            '<span class="vgi-txt">'+_vaiEsc(p.label)+'</span></span></button>').join('')+
+          '</div></div>'+
+        '<div class="vai-lz-note">Si chiude sempre con "Guarda il video fino alla fine" e "Scrivi nei commenti", con effetti speciali — stile fisso, uguale per ogni video.</div>'+
+        '<button class="btn btn-sm" onclick="vaiLZCrea()" style="width:100%;margin-top:4px;background:linear-gradient(135deg,#C9A84C,#EC4899);color:#1A1205;border:none;font-weight:700;padding:10px;border-radius:10px;cursor:pointer">Crea il layout</button>'+
+      '</div></div>';
+    document.body.appendChild(m);
+  }
+  const citta=document.getElementById('vai-lz-citta'); if(citta) citta.value='';
+  m.querySelectorAll('.vai-lz-item.sel').forEach(b=>b.classList.remove('sel'));
+  try{ Object.keys(VAI_SVG_ICONE).forEach(k=>{ _vaiSvgComeImg(k,'#ffffff'); _vaiSvgComeImg(k,'#0D1B2A'); _vaiSvgComeImg(k,'#E8EDF2'); }); }catch(e){}
+  m.style.display='flex';
+}
+function vaiLZClose(){ const m=document.getElementById('vai-lz-modal'); if(m) m.style.display='none'; }
+/* Trascinamento del pannello Layout zona per la barra del titolo (stesso meccanismo del pannello Grafica) */
+function vaiLZDragStart(e){
+  if(e.target.closest('.vai-graf-x')) return;
+  e.preventDefault();
+  const card=document.getElementById('vai-lz-card'); if(!card) return;
+  const rect=card.getBoundingClientRect();
+  const startX=(e.touches?e.touches[0].clientX:e.clientX);
+  const startY=(e.touches?e.touches[0].clientY:e.clientY);
+  const offX=startX-rect.left, offY=startY-rect.top;
+  card.style.position='fixed'; card.style.margin='0';
+  const move=(ev)=>{
+    const x=(ev.touches?ev.touches[0].clientX:ev.clientX);
+    const y=(ev.touches?ev.touches[0].clientY:ev.clientY);
+    card.style.left=Math.max(4, Math.min(window.innerWidth-rect.width-4, x-offX))+'px';
+    card.style.top=Math.max(4, Math.min(window.innerHeight-60, y-offY))+'px';
+  };
+  const up=()=>{
+    document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',up);
+    document.removeEventListener('touchmove',move); document.removeEventListener('touchend',up);
+  };
+  document.addEventListener('mousemove',move); document.addEventListener('mouseup',up);
+  document.addEventListener('touchmove',move,{passive:false}); document.addEventListener('touchend',up);
+}
+
+/* Costruisce davvero il layout: badge città, badge dei pregi scelti in sequenza,
+   e chiusura fissa (sempre uguale) con effetti speciali — tutto su una traccia
+   dedicata, senza toccare le scritte già presenti. Stesso meccanismo di
+   "Inserisci dati" (_vaiPushScrittaGlobale su una traccia tutta sua). */
+function vaiLZCrea(){
+  if(!_vaiClips || !_vaiClips.length){ toast('Carica prima un video','error'); return; }
+  const citta=((document.getElementById('vai-lz-citta')||{}).value||'').trim();
+  if(!citta){ toast('Scrivi il nome della città o della zona','error'); return; }
+  const scelti=Array.from(document.querySelectorAll('#vai-lz-pregi .vai-lz-item.sel')).map(b=>b.getAttribute('data-key'));
+  const pregi=VAI_PREGI.filter(p=>scelti.includes(p.key));
+  if(!pregi.length){ toast('Scegli almeno un punto di forza della zona','error'); return; }
+  const dur=_vaiDurataTot();
+  if(!dur || dur<4){ toast('Il video è troppo corto per questo layout','error'); return; }
+  if(_vaiClipAttiva>=0 && _vaiClips[_vaiClipAttiva]) _vaiClips[_vaiClipAttiva].scritte=_vaiScritte;
+  vaiSnapshot('layout zona');
+  const tr=_vaiTracciaAutomazione();
+  let inserite=0;
+
+  // chiusura fissa — SEMPRE le stesse due frasi — calcolata per prima: tutto il resto
+  // del layout (città + pregi) deve starci davanti senza invaderla
+  const durCTA=Math.max(1.8, Math.min(3, dur*0.22));
+  const tCTA2=Math.max(0, dur-durCTA-0.3);
+  const tCTA1=Math.max(0, tCTA2-durCTA-0.2);
+
+  // badge città, all'inizio del video
+  const durCitta=Math.max(1.8, Math.min(3, dur*0.12));
+  const tCitta=Math.min(0.4, dur*0.05);
+  if(_vaiPushScrittaGlobale(tCitta, {
+    tipo:'badge', testo:citta, svgIco:'pin', _maxLen:40,
+    bg:'#0D1B2A', color:'#ffffff', durata:durCitta, traccia:tr,
+    x:0.5, y:0.14, w:0.7, size:1.1, anim:'pop', animOut:'fade'
+  })) inserite++;
+
+  // badge dei pregi scelti, uno dopo l'altro, fra la città e la chiusura
+  const inizioPregi=tCitta+durCitta+0.25;
+  const spazioPregi=Math.max(0, tCTA1-inizioPregi-0.2);
+  const durPregio=Math.max(1.2, Math.min(2.6, spazioPregi/pregi.length));
+  const entrate=['slideL','slideR','bounce','pop'];
+  pregi.forEach((p,i)=>{
+    const t=inizioPregi+i*durPregio;
+    if(t>=tCTA1-0.3) return; // video troppo corto per tutti: niente accavallo con la chiusura
+    if(_vaiPushScrittaGlobale(t, {
+      tipo:'badge', testo:p.testoDef, svgIco:p.svg,
+      bg:p.bg, color:p.color, durata:durPregio, traccia:tr,
+      x:0.5, y:0.80, w:0.72, size:1.05, anim:entrate[i%entrate.length], animOut:'fade'
+    })) inserite++;
+  });
+
+  // chiusura fissa, stile a parte (testo con sfondo + effetti speciali, non badge)
+  if(_vaiPushScrittaGlobale(tCTA1, {
+    tipo:'testo', testo:'Guarda il video fino alla fine 👀', nowrap:false, w:0.86, _maxLen:40,
+    bold:true, color:'#ffffff', bgText:'#E11D2A', bgRadius:14, size:1.1,
+    traccia:tr, x:0.5, y:0.82, align:'center',
+    anim:'pop', animOut:'fade', moto:'respira', colorFx:'bagliore', fxCol:'#FFD98A'
+  })) inserite++;
+  if(_vaiPushScrittaGlobale(tCTA2, {
+    tipo:'testo', testo:'Scrivi nei commenti 💬', nowrap:false, w:0.86, _maxLen:40,
+    bold:true, color:'#ffffff', bgText:'#7C3AED', bgRadius:14, size:1.1,
+    traccia:tr, x:0.5, y:0.82, align:'center',
+    anim:'bounce', animOut:'fade', moto:'ondeggia', colorFx:'riempimento', fxCol:'#FFD98A'
+  })) inserite++;
+
+  try{ _vaiRisolviSovrapposizioni(); }catch(e){}
+  try{ _vaiCompattaTracce(); }catch(e){}
+  if(_vaiClipAttiva>=0 && _vaiClips[_vaiClipAttiva]) _vaiScritte=_vaiClips[_vaiClipAttiva].scritte||[];
+  _vaiDirty=true;
+  vaiTlRender(); vaiOverlayUpdate();
+  if(typeof vaiInspectorRender==='function') vaiInspectorRender();
+  vaiLZClose();
+  toast('Layout zona creato — '+inserite+' elementi aggiunti, modificabili come al solito','success');
+}
+window.vaiLayoutZonaPanel=vaiLayoutZonaPanel; window.vaiLZClose=vaiLZClose;
+window.vaiLZDragStart=vaiLZDragStart; window.vaiLZCrea=vaiLZCrea;
 
 /* ═══════════ ATLANTE STILI PER "CREA ANIMAZIONE QUI" [30 ott 2026] ═══════════
    La forma tracciata (rettangolo/quadrato/cerchio + etichetta) resta la stessa
