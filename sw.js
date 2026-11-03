@@ -3,7 +3,7 @@
    IMPORTANTE: quando esce un aggiornamento, bumpa CACHE='lecase-vN'
    per invalidare la cache HTML/JS e forzare il telefono a scaricare il nuovo codice. */
 
-var CACHE = 'lecase-v160';            /* Video Social: nuova grafica timeline/clip, piatta con accento colorato (03/11/2026) */
+var CACHE = 'lecase-v161';            /* Video Social: Scheda "in sovraimpressione" dalle proprietà della clip, PiP con opacità (03/11/2026) */
 var FOTO_CACHE = 'lecase-foto-v1';
 
 self.addEventListener('install', function (e) { self.skipWaiting(); });
