@@ -47707,14 +47707,17 @@ function _vaiFinestraToVideoBlob(opts){
         const eHead=seg(t,0,0.45);
         ctx.save(); ctx.globalAlpha=eHead;
         const dyH=(1-eHead)*16;
+        // uno spazio vero fra le due parti: senza, "tit1"+"titAcc" si toccano
+        // (tit1 arriva sempre senza spazio finale, è stato "trim"ato sopra)
+        const tit1Sp=tit1+' ';
         ctx.font='54px "DM Serif Display", Georgia, serif';
-        const w1=ctx.measureText(tit1).width;
+        const w1=ctx.measureText(tit1Sp).width;
         ctx.font='italic 54px "DM Serif Display", Georgia, serif';
         const w2=ctx.measureText(titAcc).width;
         const startX=W/2-(w1+w2)/2;
         ctx.textAlign='left'; ctx.fillStyle=NAVY;
         ctx.font='54px "DM Serif Display", Georgia, serif';
-        ctx.fillText(tit1, startX, 150+dyH);
+        ctx.fillText(tit1Sp, startX, 150+dyH);
         ctx.fillStyle=GOLD; ctx.font='italic 54px "DM Serif Display", Georgia, serif';
         ctx.fillText(titAcc, startX+w1, 150+dyH);
         ctx.restore();
@@ -48349,6 +48352,409 @@ function _vaiContattiToVideoBlob(opts){
     .then(()=>_vaiRecordCanvasToBlob(cv, sec, paint, Math.min(sec-0.3, 0.75+contatti.length*0.3+0.4)));
 }
 
+/* PRIMA E DOPO / RISTRUTTURAZIONE — stile "Slate & Emerald": una finestra
+   con una foto "prima" (spenta, tratteggiata) e una "dopo" (chiara), con
+   una barra che scorre e rivela il "dopo" — lo slider dei confronti, ma
+   disegnato, non una foto vera. */
+function _vaiRistrutturazioneToVideoBlob(opts){
+  const sec=Math.max(3, Math.min(6, opts.sec||4));
+  const SLATE='#49545E', EMERALD='#2F6F5E', PRIMA='#8B96A0', DOPO='#F5F1E8', TESTO='#fff';
+  const W=720, H=1280;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d');
+  const tit1=(opts.tit1||'Potenziale di').trim();
+  const titAcc=(opts.titAcc||'ristrutturazione').trim();
+  const ease=(p)=> p<0.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
+  const clamp01=(p)=>Math.max(0,Math.min(1,p));
+  const seg=(t,start,dur)=>clamp01((t-start)/dur);
+
+  const wx=60, wy=300, ww=600, wh=460, r=20;
+  let thumb=null;
+  const paint=(t)=>{
+    ctx.fillStyle=SLATE; ctx.fillRect(0,0,W,H);
+
+    const eTit=ease(seg(t,0,0.4));
+    ctx.save(); ctx.globalAlpha=eTit;
+    // uno spazio vero fra le due parti: tit1 arriva sempre senza spazio finale (trim sopra)
+    const tit1Sp=tit1+' ';
+    ctx.font='44px "DM Serif Display", Georgia, serif';
+    const w1=ctx.measureText(tit1Sp).width;
+    ctx.font='italic 44px "DM Serif Display", Georgia, serif';
+    const w2=ctx.measureText(titAcc).width;
+    const startX=W/2-(w1+w2)/2;
+    ctx.textAlign='left'; ctx.fillStyle=TESTO;
+    ctx.font='44px "DM Serif Display", Georgia, serif';
+    ctx.fillText(tit1Sp, startX, 180+(1-eTit)*12);
+    ctx.fillStyle=EMERALD; ctx.font='italic 44px "DM Serif Display", Georgia, serif';
+    ctx.fillText(titAcc, startX+w1, 180+(1-eTit)*12);
+    ctx.restore();
+
+    const eWin=ease(seg(t,0.2,0.4));
+    ctx.save(); ctx.globalAlpha=eWin;
+    ctx.translate(wx+ww/2, wy+wh/2); ctx.scale(0.92+0.08*eWin,0.92+0.08*eWin); ctx.translate(-(wx+ww/2),-(wy+wh/2));
+    ctx.shadowColor='rgba(0,0,0,.35)'; ctx.shadowBlur=30; ctx.shadowOffsetY=16;
+    ctx.fillStyle='#fff';
+    if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(wx,wy,ww,wh,r); ctx.fill(); } else ctx.fillRect(wx,wy,ww,wh);
+    ctx.shadowColor='transparent';
+    ctx.restore();
+
+    if(eWin<0.9){ if(!thumb && t>=Math.min(sec-0.3,1.4)) thumb=cv.toDataURL('image/jpeg',0.82); return; }
+
+    const px=wx+16, py=wy+16, pw=ww-32, ph=wh-32;
+    ctx.save();
+    if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(px,py,pw,ph,12); ctx.clip(); }
+    // "dopo" riempie tutto lo sfondo della foto
+    ctx.fillStyle=DOPO; ctx.fillRect(px,py,pw,ph);
+    ctx.fillStyle=EMERALD; ctx.globalAlpha=.18;
+    ctx.beginPath(); ctx.arc(px+pw*0.7, py+ph*0.35, 70, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1;
+
+    // lo slider scorre da sinistra verso il 62% circa, rivelando il "dopo" a destra
+    const eSlider=ease(seg(t,0.7,0.8));
+    const sliderX=px+20+(pw*0.58)*eSlider;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(px,py,sliderX-px,ph); ctx.clip();
+    ctx.fillStyle=PRIMA; ctx.fillRect(px,py,pw,ph);
+    ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=2;
+    for(let d=-ph;d<pw;d+=26){ ctx.beginPath(); ctx.moveTo(px+d,py+ph); ctx.lineTo(px+d+ph,py); ctx.stroke(); }
+    ctx.restore();
+    ctx.restore();
+
+    // maniglia dello slider
+    ctx.save();
+    ctx.strokeStyle='#fff'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(sliderX,py); ctx.lineTo(sliderX,py+ph); ctx.stroke();
+    ctx.fillStyle='#fff';
+    ctx.beginPath(); ctx.arc(sliderX, py+ph/2, 22, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle=EMERALD; ctx.font='700 16px "DM Sans", sans-serif'; ctx.textAlign='center';
+    ctx.fillText('↔', sliderX, py+ph/2+6);
+    ctx.restore();
+
+    if(!thumb && t>=Math.min(sec-0.3,2.4)) thumb=cv.toDataURL('image/jpeg',0.82);
+  };
+  return _vaiPrecaricaFontIcone(['44px "DM Serif Display"','italic 44px "DM Serif Display"'])
+    .then(()=>_vaiRecordCanvasToBlob(cv, sec, paint, Math.min(sec-0.3,2.4)));
+}
+
+/* CLASSE ENERGETICA — stile "Eco Sage & Gold": tessera bianca su sfondo
+   salvia, barra che si riempie fino al punto della classe con un bagliore
+   dorato, lettera della classe in evidenza. */
+function _vaiClasseEnergeticaToVideoBlob(opts){
+  const sec=Math.max(2.5, Math.min(5, opts.sec||3.2));
+  const SAGE='#AEBBA0', NAVY='#2A3326', GOLD='#C9A84C', TRACCIA='#E3E8DC';
+  const W=720, H=1280;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d');
+  const classe=(opts.classe||'A4').trim().toUpperCase();
+  const ORDINE=['A4','A3','A2','A1','A','B','C','D','E','F','G'];
+  const idx=ORDINE.indexOf(classe); const punteggio=idx>=0 ? 1-(idx/(ORDINE.length-1)) : 0.85;
+  const ease=(p)=> p<0.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
+  const clamp01=(p)=>Math.max(0,Math.min(1,p));
+  const seg=(t,start,dur)=>clamp01((t-start)/dur);
+
+  const wx=70, wy=420, ww=580, wh=320, r=24;
+  let thumb=null;
+  const paint=(t)=>{
+    ctx.fillStyle=SAGE; ctx.fillRect(0,0,W,H);
+
+    const eCard=ease(seg(t,0.15,0.5));
+    ctx.save(); ctx.globalAlpha=eCard;
+    const overshoot = eCard<1 ? (0.85+0.2*Math.sin(eCard*Math.PI)) : 1;
+    ctx.translate(wx+ww/2, wy+wh/2); ctx.scale(overshoot,overshoot); ctx.translate(-(wx+ww/2),-(wy+wh/2));
+    ctx.shadowColor='rgba(0,0,0,.2)'; ctx.shadowBlur=30; ctx.shadowOffsetY=16;
+    ctx.fillStyle='#fff';
+    if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(wx,wy,ww,wh,r); ctx.fill(); } else ctx.fillRect(wx,wy,ww,wh);
+    ctx.shadowColor='transparent';
+    ctx.restore();
+
+    if(eCard<0.9){ if(!thumb && t>=Math.min(sec-0.3,1.6)) thumb=cv.toDataURL('image/jpeg',0.82); return; }
+
+    ctx.save();
+    ctx.fillStyle=NAVY; ctx.font='700 26px "DM Sans", sans-serif'; ctx.textAlign='left';
+    ctx.fillText('Efficienza energetica', wx+40, wy+70);
+    ctx.restore();
+
+    // traccia della barra
+    const bx=wx+40, by=wy+120, bw=ww-80, bh=26;
+    ctx.save();
+    ctx.fillStyle=TRACCIA;
+    if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,bh/2); ctx.fill(); } else ctx.fillRect(bx,by,bw,bh);
+    ctx.restore();
+
+    // riempimento che cresce fino al punteggio della classe
+    const eFill=ease(seg(t,0.85,0.7));
+    const fillW=bw*punteggio*eFill;
+    if(fillW>2){
+      ctx.save();
+      ctx.shadowColor='rgba(201,168,76,.6)'; ctx.shadowBlur=16;
+      ctx.fillStyle=GOLD;
+      if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(bx,by,fillW,bh,bh/2); ctx.fill(); } else ctx.fillRect(bx,by,fillW,bh);
+      ctx.restore();
+    }
+
+    // badge della classe, compare quando la barra è quasi arrivata
+    const eBadge=ease(seg(t,1.4,0.35));
+    if(eBadge>0){
+      ctx.save(); ctx.globalAlpha=eBadge;
+      const bgx=bx+bw*punteggio+10, bgy=by+bh/2;
+      ctx.translate(bgx,bgy); ctx.scale(0.7+0.3*eBadge,0.7+0.3*eBadge); ctx.translate(-bgx,-bgy);
+      ctx.fillStyle=NAVY; ctx.beginPath(); ctx.arc(bgx,bgy,26,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=GOLD; ctx.font='800 20px "DM Sans", sans-serif'; ctx.textAlign='center';
+      ctx.fillText(classe, bgx, bgy+7);
+      ctx.restore();
+    }
+
+    const eSub=ease(seg(t,1.65,0.3));
+    if(eSub>0){
+      ctx.save(); ctx.globalAlpha=eSub;
+      ctx.fillStyle='rgba(42,51,38,.75)'; ctx.font='500 18px "DM Sans", sans-serif'; ctx.textAlign='left';
+      ctx.fillText('Classe '+classe, bx, by+70);
+      ctx.restore();
+    }
+    if(!thumb && t>=Math.min(sec-0.3,2.1)) thumb=cv.toDataURL('image/jpeg',0.82);
+  };
+  return _vaiRecordCanvasToBlob(cv, sec, paint, Math.min(sec-0.3,2.1));
+}
+
+/* DISTRIBUZIONE SPAZI — stile "Charcoal & Off-White": pannello chiaro che
+   si apre dal centro su sfondo antracite, zone piene (non tracciate come
+   la Planimetria) che si illuminano d'oro una alla volta, zoom continuo
+   leggero su tutta l'inquadratura. */
+function _vaiDistribuzioneSpaziToVideoBlob(opts){
+  const sec=Math.max(3, Math.min(6, opts.sec||4));
+  const CHARCOAL='#26282B', OFFWHITE='#F2EFE9', GOLD='#C9A84C', TESTO='#26282B';
+  const W=720, H=1280;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d');
+  const titolo=(opts.titolo||'Distribuzione spazi').trim();
+  const stanze=['Soggiorno','Cucina'];
+  const nCamere=Math.max(1, Math.min(4, parseInt(opts.camere,10)||2));
+  for(let i=1;i<=nCamere;i++) stanze.push(nCamere>1?('Camera '+i):'Camera');
+  const nBagni=Math.max(1, Math.min(2, parseInt(opts.bagni,10)||1));
+  for(let i=1;i<=nBagni;i++) stanze.push(nBagni>1?('Bagno '+i):'Bagno');
+  const elenco=stanze.slice(0,6);
+  const ease=(p)=> p<0.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
+  const clamp01=(p)=>Math.max(0,Math.min(1,p));
+  const seg=(t,start,dur)=>clamp01((t-start)/dur);
+
+  const areaX=70, areaY=300, areaW=580, areaH=740;
+  const cols=2, rows=Math.ceil(elenco.length/cols), padR=10;
+  const celle=elenco.map((nome,i)=>{
+    const c=i%cols, r=Math.floor(i/cols);
+    const cw=(areaW-padR)/cols, ch=(areaH-padR*(rows-1))/rows;
+    return { nome, x:areaX+c*(cw+padR), y:areaY+r*(ch+padR), w:cw, h:ch };
+  });
+  const inizioZone=0.55, durPerStanza=0.45;
+
+  let thumb=null;
+  const paint=(t)=>{
+    // leggero zoom continuo su tutta l'inquadratura, come una ripresa a mano lenta
+    const zoom=1+0.06*Math.min(1,t/sec);
+    ctx.save();
+    ctx.translate(W/2,H/2); ctx.scale(zoom,zoom); ctx.translate(-W/2,-H/2);
+
+    ctx.fillStyle=CHARCOAL; ctx.fillRect(0,0,W,H);
+
+    const eTit=ease(seg(t,0,0.4));
+    ctx.save(); ctx.globalAlpha=eTit;
+    ctx.fillStyle='#fff'; ctx.font='46px "DM Serif Display", Georgia, serif'; ctx.textAlign='center';
+    ctx.fillText(titolo, W/2, 170+(1-eTit)*12);
+    ctx.restore();
+
+    // il pannello si apre dal centro (scala da 0 a 1)
+    const eOpen=ease(seg(t,0.25,0.45));
+    if(eOpen>0){
+      ctx.save(); ctx.globalAlpha=Math.min(1,eOpen*1.4);
+      ctx.translate(areaX+areaW/2, areaY+areaH/2); ctx.scale(eOpen,eOpen); ctx.translate(-(areaX+areaW/2),-(areaY+areaH/2));
+      ctx.fillStyle=OFFWHITE;
+      if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(areaX-20,areaY-20,areaW+40,areaH+40,20); ctx.fill(); } else ctx.fillRect(areaX-20,areaY-20,areaW+40,areaH+40);
+      if(eOpen>=0.92){
+        celle.forEach(cel=>{
+          ctx.fillStyle='#fff'; ctx.strokeStyle='rgba(38,40,43,.18)'; ctx.lineWidth=2;
+          ctx.fillRect(cel.x,cel.y,cel.w,cel.h); ctx.strokeRect(cel.x,cel.y,cel.w,cel.h);
+        });
+      }
+      ctx.restore();
+    }
+
+    if(eOpen>=0.92){
+      celle.forEach((cel,i)=>{
+        const start=inizioZone+i*durPerStanza*0.65;
+        const eHi=seg(t,start,durPerStanza);
+        if(eHi<=0) return;
+        const pulso = eHi>=1 ? (0.5+0.5*Math.max(0,Math.sin((t-(start+durPerStanza))*3))) : Math.sin(eHi*Math.PI);
+        ctx.save();
+        ctx.globalAlpha=0.35*pulso;
+        ctx.fillStyle=GOLD;
+        ctx.fillRect(cel.x,cel.y,cel.w,cel.h);
+        ctx.restore();
+        const eLab=ease(seg(t,start+0.1,0.3));
+        if(eLab>0){
+          ctx.save(); ctx.globalAlpha=eLab;
+          ctx.fillStyle=TESTO; ctx.font='700 17px "DM Sans", sans-serif'; ctx.textAlign='center';
+          ctx.fillText(cel.nome, cel.x+cel.w/2, cel.y+cel.h/2+6);
+          ctx.restore();
+        }
+      });
+    }
+    ctx.restore();
+    if(!thumb && t>=Math.min(sec-0.3, inizioZone+elenco.length*durPerStanza*0.65+0.5)) thumb=cv.toDataURL('image/jpeg',0.82);
+  };
+  return _vaiPrecaricaFontIcone(['46px "DM Serif Display"'])
+    .then(()=>_vaiRecordCanvasToBlob(cv, sec, paint, Math.min(sec-0.3, inizioZone+elenco.length*durPerStanza*0.65+0.5)));
+}
+
+/* PANORAMICA DEL QUARTIERE E SERVIZI — stile "Navy & Warm Sand": tessera
+   color sabbia che sale da sotto su sfondo blu notte, i servizi vicini
+   compaiono uno alla volta con la distanza a piedi e una spunta. */
+function _vaiQuartiereToVideoBlob(opts){
+  const sec=Math.max(3, Math.min(6, opts.sec||4));
+  const NAVY='#0D1B2A', SAND='#F0E4D0', GOLD='#C9A84C', TESTO='#3A2E1A';
+  const W=720, H=1280;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d');
+  const comune=(opts.comune||'il quartiere').trim();
+  const servizi=(opts.servizi&&opts.servizi.length?opts.servizi:[
+    {label:'Scuole', distanza:'5 min a piedi', ic:'scuola'},
+    {label:'Supermercato', distanza:'3 min a piedi', ic:'negozi'},
+    {label:'Mare', distanza:'5 min a piedi', ic:'mare'},
+    {label:'Trasporti', distanza:'2 min a piedi', ic:'bus'}
+  ]).slice(0,4);
+  const icone=servizi.map(s=>_vaiSvgComeImg(s.ic||'pin', NAVY));
+  const ease=(p)=> p<0.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
+  const clamp01=(p)=>Math.max(0,Math.min(1,p));
+  const seg=(t,start,dur)=>ease(clamp01((t-start)/dur));
+
+  const ph=170+servizi.length*110, pw=600, px=60, pyRest=H-ph-110;
+  let thumb=null;
+  const paint=(t)=>{
+    ctx.fillStyle=NAVY; ctx.fillRect(0,0,W,H);
+
+    const eTit=seg(t,0,0.4);
+    ctx.save(); ctx.globalAlpha=eTit;
+    ctx.fillStyle='#fff'; ctx.font='46px "DM Serif Display", Georgia, serif'; ctx.textAlign='center';
+    ctx.fillText('Vivere a '+comune, W/2, 170+(1-eTit)*12);
+    ctx.restore();
+
+    const eUp=seg(t,0.25,0.5);
+    const py = H - (H-pyRest)*eUp;
+    ctx.save();
+    ctx.shadowColor='rgba(0,0,0,.3)'; ctx.shadowBlur=30; ctx.shadowOffsetY=-6;
+    ctx.fillStyle=SAND;
+    if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(px,py,pw,ph,22); ctx.fill(); } else ctx.fillRect(px,py,pw,ph);
+    ctx.shadowColor='transparent';
+    ctx.restore();
+
+    if(eUp>=0.92){
+      servizi.forEach((s,i)=>{
+        const start=0.85+i*0.32;
+        const e=seg(t,start,0.3);
+        if(e<=0) return;
+        const ry=pyRest+75+i*110;
+        ctx.save(); ctx.globalAlpha=e;
+        const dx=(1-e)*-30;
+        ctx.fillStyle='#fff';
+        ctx.beginPath(); ctx.arc(px+70+dx, ry, 26, 0, Math.PI*2); ctx.fill();
+        const img=icone[i];
+        if(img && img.complete && img.naturalWidth){ try{ ctx.drawImage(img, px+70-15+dx, ry-15, 30, 30); }catch(err){} }
+        ctx.fillStyle=TESTO; ctx.font='700 23px "DM Sans", sans-serif'; ctx.textAlign='left';
+        ctx.fillText(s.label, px+115+dx, ry-4);
+        ctx.fillStyle='rgba(58,46,26,.65)'; ctx.font='500 17px "DM Sans", sans-serif';
+        ctx.fillText(s.distanza||'', px+115+dx, ry+20);
+        ctx.restore();
+        // spunta, compare un filo dopo la riga
+        const eCk=seg(t,start+0.18,0.2);
+        if(eCk>0){
+          ctx.save(); ctx.globalAlpha=eCk;
+          ctx.strokeStyle=GOLD; ctx.lineWidth=4; ctx.lineCap='round'; ctx.lineJoin='round';
+          ctx.beginPath(); ctx.moveTo(px+pw-70, ry-4); ctx.lineTo(px+pw-60, ry+6); ctx.lineTo(px+pw-44, ry-14); ctx.stroke();
+          ctx.restore();
+        }
+      });
+    }
+    if(!thumb && t>=Math.min(sec-0.3, 0.85+servizi.length*0.32+0.4)) thumb=cv.toDataURL('image/jpeg',0.82);
+  };
+  return _vaiPrecaricaFontIcone(['46px "DM Serif Display"'], icone)
+    .then(()=>_vaiRecordCanvasToBlob(cv, sec, paint, Math.min(sec-0.3, 0.85+servizi.length*0.32+0.4)));
+}
+
+/* COPERTINA / SCHERMATA DI BENVENUTO — stile "Soft Beige & Bronze": la
+   prima schermata del video, una tessera bianca che si avvicina piano con
+   l'intestazione e il titolo dell'immobile, e un indicatore "scorri su"
+   che fa piccoli balzi per invitare a continuare a guardare. */
+function _vaiCopertinaToVideoBlob(opts){
+  const sec=Math.max(2.5, Math.min(5, opts.sec||3.5));
+  const BEIGE='#EDE3D3', BRONZO='#A8744F', TESTO='#3A2E22';
+  const W=720, H=1280;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d');
+  const eyebrow=(opts.eyebrow||'Nuova proposta').trim().toUpperCase();
+  const titolo=(opts.titolo||'La tua prossima casa').trim();
+  const ease=(p)=> p<0.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
+  const clamp01=(p)=>Math.max(0,Math.min(1,p));
+  const seg=(t,start,dur)=>clamp01((t-start)/dur);
+
+  const wx=70, wy=430, ww=580, wh=420, r=22;
+  let thumb=null;
+  const paint=(t)=>{
+    ctx.fillStyle=BEIGE; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle='rgba(168,116,79,.06)';
+    for(let y=40;y<H;y+=40) for(let x=40;x<W;x+=40){ ctx.beginPath(); ctx.arc(x,y,1.6,0,Math.PI*2); ctx.fill(); }
+
+    // la tessera si avvicina piano (zoom gentile dal 90% al 100%)
+    const eCard=ease(seg(t,0,0.6));
+    ctx.save(); ctx.globalAlpha=eCard;
+    ctx.translate(wx+ww/2, wy+wh/2); ctx.scale(0.9+0.1*eCard,0.9+0.1*eCard); ctx.translate(-(wx+ww/2),-(wy+wh/2));
+    ctx.shadowColor='rgba(0,0,0,.16)'; ctx.shadowBlur=34; ctx.shadowOffsetY=18;
+    ctx.fillStyle='#fff';
+    if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(wx,wy,ww,wh,r); ctx.fill(); } else ctx.fillRect(wx,wy,ww,wh);
+    ctx.shadowColor='transparent';
+    ctx.restore();
+
+    if(eCard<0.9){ if(!thumb && t>=Math.min(sec-0.3,1.6)) thumb=cv.toDataURL('image/jpeg',0.82); return; }
+
+    const eEye=ease(seg(t,0.5,0.4));
+    if(eEye>0){
+      ctx.save(); ctx.globalAlpha=eEye;
+      ctx.fillStyle=BRONZO; ctx.font='700 17px "DM Sans", sans-serif'; ctx.textAlign='center';
+      try{ ctx.letterSpacing='3px'; }catch(e){}
+      ctx.fillText(eyebrow, W/2, wy+90+(1-eEye)*8);
+      try{ ctx.letterSpacing='0px'; }catch(e){}
+      ctx.restore();
+    }
+
+    const eTit=ease(seg(t,0.85,0.5));
+    if(eTit>0){
+      ctx.save(); ctx.globalAlpha=eTit;
+      ctx.fillStyle=TESTO; ctx.font='44px "DM Serif Display", Georgia, serif'; ctx.textAlign='center';
+      const maxW=ww-80;
+      const parole=titolo.split(' '), righe=[]; let riga='';
+      parole.forEach(p=>{ const prova=riga?riga+' '+p:p; if(ctx.measureText(prova).width>maxW && riga){ righe.push(riga); riga=p; } else riga=prova; });
+      if(riga) righe.push(riga);
+      const dy=(1-eTit)*12;
+      righe.slice(0,2).forEach((r2,i)=>ctx.fillText(r2, W/2, wy+160+i*52+dy));
+      ctx.restore();
+    }
+
+    // indicatore "scorri su": una freccetta che fa piccoli balzi verso l'alto
+    const eSw=ease(seg(t,1.5,0.4));
+    if(eSw>0){
+      const balzo=eSw>=1 ? Math.abs(Math.sin((t-1.9)*2.6))*10 : 0;
+      ctx.save(); ctx.globalAlpha=eSw;
+      ctx.translate(W/2, wy+wh-70-balzo);
+      ctx.strokeStyle=BRONZO; ctx.lineWidth=3.4; ctx.lineCap='round'; ctx.lineJoin='round';
+      ctx.beginPath(); ctx.moveTo(-14,8); ctx.lineTo(0,-8); ctx.lineTo(14,8); ctx.stroke();
+      ctx.fillStyle=BRONZO; ctx.font='600 14px "DM Sans", sans-serif'; ctx.textAlign='center';
+      ctx.fillText('SCORRI', 0, 34);
+      ctx.restore();
+    }
+
+    if(!thumb && t>=Math.min(sec-0.3,2)) thumb=cv.toDataURL('image/jpeg',0.82);
+  };
+  return _vaiPrecaricaFontIcone(['44px "DM Serif Display"'])
+    .then(()=>_vaiRecordCanvasToBlob(cv, sec, paint, Math.min(sec-0.3,2)));
+}
+
 /* Inserisce una clip (già pronta come Blob) nel montaggio, tagliando la clip
    corrente nel punto del cursore quando il cursore è a metà — esattamente
    "taglio la clip e inserisco in mezzo". Condivisa da "Scheda"/"Finestra" e
@@ -48405,6 +48811,11 @@ function vaiCardPanel(){
             '<button type="button" class="vai-graf-item vai-card-tipo" data-key="calendario" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#0D1B2A;color:#F5F1E8">Calendario visite</span></button>'+
             '<button type="button" class="vai-graf-item vai-card-tipo" data-key="puntiforza" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#FAF6EF;color:#2A2017;border:1px solid #E5DDC8">Punti di forza</span></button>'+
             '<button type="button" class="vai-graf-item vai-card-tipo" data-key="contatti" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#E7D3C0;color:#3A2E22">Contatti</span></button>'+
+            '<button type="button" class="vai-graf-item vai-card-tipo" data-key="ristrutturazione" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#49545E;color:#6FCBAE">Prima e dopo</span></button>'+
+            '<button type="button" class="vai-graf-item vai-card-tipo" data-key="classeenergetica" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#AEBBA0;color:#2A3326">Classe energetica</span></button>'+
+            '<button type="button" class="vai-graf-item vai-card-tipo" data-key="distribuzionespazi" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#26282B;color:#F2EFE9">Distribuzione spazi</span></button>'+
+            '<button type="button" class="vai-graf-item vai-card-tipo" data-key="quartiere" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#0D1B2A;color:#F0E4D0">Quartiere e servizi</span></button>'+
+            '<button type="button" class="vai-graf-item vai-card-tipo" data-key="copertina" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#EDE3D3;color:#A8744F">Copertina</span></button>'+
           '</div></div>'+
         '<div id="vai-card-grp-icona">'+
           '<div class="vai-graf-sez"><div class="vai-graf-lbl">Testo della scheda</div>'+
@@ -48480,6 +48891,41 @@ function vaiCardPanel(){
             '<input type="text" id="vai-card-cont-sito" class="vai-lz-input" placeholder="es. www.lecasedallaz.it" maxlength="30"></div>'+
           '<div class="vai-lz-note">Mostra solo i contatti che scrivi qui: nessun numero inventato.</div>'+
         '</div>'+
+        '<div id="vai-card-grp-ristrutturazione" style="display:none">'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Titolo (prima parte)</div>'+
+            '<input type="text" id="vai-card-rist-tit1" class="vai-lz-input" placeholder="es. Potenziale di" maxlength="40"></div>'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Parola in evidenza (colorata)</div>'+
+            '<input type="text" id="vai-card-rist-titacc" class="vai-lz-input" placeholder="es. ristrutturazione" maxlength="30"></div>'+
+          '<div class="vai-lz-note">Prima/dopo illustrato, non foto vere: utile come gancio, non come confronto reale.</div>'+
+        '</div>'+
+        '<div id="vai-card-grp-classeenergetica" style="display:none">'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Classe energetica</div>'+
+            '<select id="vai-card-ce-classe" class="vai-lz-input">'+
+              ['A4','A3','A2','A1','A','B','C','D','E','F','G'].map(c=>'<option value="'+c+'">'+c+'</option>').join('')+
+            '</select></div>'+
+        '</div>'+
+        '<div id="vai-card-grp-distribuzionespazi" style="display:none">'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Titolo</div>'+
+            '<input type="text" id="vai-card-ds-tit" class="vai-lz-input" placeholder="es. Distribuzione spazi" maxlength="40"></div>'+
+          '<div class="vai-graf-sez" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
+            '<label style="font-size:.72rem;color:var(--text2)">Camere<input type="text" id="vai-card-ds-camere" class="vai-lz-input" placeholder="2"></label>'+
+            '<label style="font-size:.72rem;color:var(--text2)">Bagni<input type="text" id="vai-card-ds-bagni" class="vai-lz-input" placeholder="1"></label>'+
+          '</div>'+
+          '<div class="vai-lz-note">Schema delle stanze, non la pianta vera.</div>'+
+        '</div>'+
+        '<div id="vai-card-grp-quartiere" style="display:none">'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Comune / zona</div>'+
+            '<input type="text" id="vai-card-q-comune" class="vai-lz-input" placeholder="es. Agropoli" maxlength="30"></div>'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Servizi vicini (uno per riga: "Nome - distanza", max 4)</div>'+
+            '<textarea id="vai-card-q-servizi" rows="4" class="vai-lz-input" style="resize:vertical" placeholder="Scuole - 5 min a piedi&#10;Supermercato - 3 min a piedi&#10;Mare - 5 min a piedi&#10;Trasporti - 2 min a piedi"></textarea></div>'+
+        '</div>'+
+        '<div id="vai-card-grp-copertina" style="display:none">'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Intestazione (sopra il titolo)</div>'+
+            '<input type="text" id="vai-card-cop-eyebrow" class="vai-lz-input" placeholder="es. Nuova proposta" maxlength="24"></div>'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Titolo dell\'immobile</div>'+
+            '<input type="text" id="vai-card-cop-tit" class="vai-lz-input" placeholder="es. Appartamento con vista mare ad Agropoli" maxlength="70"></div>'+
+          '<div class="vai-lz-note">Pensata per l\'apertura del video.</div>'+
+        '</div>'+
         '<div class="vai-graf-sez"><div class="vai-graf-lbl">Durata: <span id="vai-card-dur-v">2.5s</span></div>'+
           '<input type="range" id="vai-card-dur" min="1.5" max="4" step="0.5" value="2.5" oninput="document.getElementById(\'vai-card-dur-v\').textContent=this.value+\'s\'" style="width:100%"></div>'+
         '<label style="display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--text2);margin-bottom:10px;cursor:pointer"><input type="checkbox" id="vai-card-salvalib" checked> Salva anche nella Libreria clip, per riusarla in altri video</label>'+
@@ -48493,7 +48939,9 @@ function vaiCardPanel(){
    'vai-card-mappa-comune','vai-card-mappa-etichetta',
    'vai-card-tour-tit','vai-card-tour-mq','vai-card-tour-locali','vai-card-tour-camere','vai-card-tour-bagni','vai-card-tour-piano','vai-card-tour-prezzo',
    'vai-card-cal-tit','vai-card-cal-cta','vai-card-pf-tit','vai-card-pf-punti',
-   'vai-card-cont-tit','vai-card-cont-tel','vai-card-cont-wa','vai-card-cont-sito'
+   'vai-card-cont-tit','vai-card-cont-tel','vai-card-cont-wa','vai-card-cont-sito',
+   'vai-card-rist-tit1','vai-card-rist-titacc','vai-card-ds-tit','vai-card-ds-camere','vai-card-ds-bagni',
+   'vai-card-q-comune','vai-card-q-servizi','vai-card-cop-eyebrow','vai-card-cop-tit'
   ].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
   // se c'è un immobile selezionato nel progetto, precompilo i dati veri (mai inventati)
   try{
@@ -48506,6 +48954,10 @@ function vaiCardPanel(){
       set('vai-card-tour-mq', j.mq); set('vai-card-tour-locali', j.locali); set('vai-card-tour-camere', j.camere);
       set('vai-card-tour-bagni', j.bagni); set('vai-card-tour-piano', j.piano); set('vai-card-tour-prezzo', j.prezzo?fmtE(j.prezzo):'');
       if(j.pregi) set('vai-card-pf-punti', String(j.pregi).split(/[,;\n]/).map(s=>s.trim()).filter(Boolean).slice(0,4).join(', '));
+      if(j.energia){ const sel=document.getElementById('vai-card-ce-classe'); if(sel) sel.value=j.energia; }
+      set('vai-card-ds-camere', j.camere); set('vai-card-ds-bagni', j.bagni);
+      set('vai-card-q-comune', j.comune);
+      set('vai-card-cop-tit', j.titolo||((j.tipo||'Immobile')+(j.comune?(' a '+j.comune):'')));
     }
     vaiManualSync();
     const man=(typeof _vaiManual!=='undefined')?_vaiManual:null;
@@ -48618,6 +49070,61 @@ const VAI_CARD_TIPI = {
       const whatsapp=((document.getElementById('vai-card-cont-wa')||{}).value||'').trim();
       const sito=((document.getElementById('vai-card-cont-sito')||{}).value||'').trim();
       return { opts:{ titolo, telefono, whatsapp, sito }, nome:'Contatti: '+(titolo||'contattaci').slice(0,22) };
+    }
+  },
+  ristrutturazione:{
+    gen:_vaiRistrutturazioneToVideoBlob,
+    leggi:()=>{
+      const tit1=((document.getElementById('vai-card-rist-tit1')||{}).value||'').trim();
+      const titAcc=((document.getElementById('vai-card-rist-titacc')||{}).value||'').trim();
+      if(!tit1 && !titAcc) return null;
+      return { opts:{ tit1, titAcc }, nome:'Ristrutturazione: '+(tit1+' '+titAcc).trim().slice(0,22) };
+    }
+  },
+  classeenergetica:{
+    gen:_vaiClasseEnergeticaToVideoBlob,
+    leggi:()=>{
+      const classe=((document.getElementById('vai-card-ce-classe')||{}).value||'').trim();
+      if(!classe) return null;
+      return { opts:{ classe }, nome:'Classe energetica: '+classe.slice(0,10) };
+    }
+  },
+  distribuzionespazi:{
+    gen:_vaiDistribuzioneSpaziToVideoBlob,
+    leggi:()=>{
+      const titolo=((document.getElementById('vai-card-ds-tit')||{}).value||'').trim();
+      return { opts:{ titolo,
+        camere:((document.getElementById('vai-card-ds-camere')||{}).value||'').trim(),
+        bagni:((document.getElementById('vai-card-ds-bagni')||{}).value||'').trim() },
+        nome:'Distribuzione spazi: '+(titolo||'gli spazi').slice(0,22) };
+    }
+  },
+  quartiere:{
+    gen:_vaiQuartiereToVideoBlob,
+    leggi:()=>{
+      const comune=((document.getElementById('vai-card-q-comune')||{}).value||'').trim();
+      if(!comune) return null;
+      const raw=((document.getElementById('vai-card-q-servizi')||{}).value||'').trim();
+      const servizi=raw?raw.split('\n').map(r=>r.trim()).filter(Boolean).slice(0,4).map(riga=>{
+        const parti=riga.split(' - ');
+        const label=(parti[0]||riga).trim(), distanza=(parti[1]||'').trim();
+        const bassa=label.toLowerCase();
+        let ic='pin';
+        if(bassa.includes('scuol')) ic='scuola'; else if(bassa.includes('mare')||bassa.includes('spiagg')) ic='mare';
+        else if(bassa.includes('negoz')||bassa.includes('supermerc')) ic='negozi'; else if(bassa.includes('bus')||bassa.includes('tras')||bassa.includes('staz')) ic='bus';
+        else if(bassa.includes('parcheg')) ic='auto'; else if(bassa.includes('osped')) ic='ospedale';
+        return { label, distanza, ic };
+      }) : [];
+      return { opts:{ comune, servizi }, nome:'Quartiere: '+comune.slice(0,22) };
+    }
+  },
+  copertina:{
+    gen:_vaiCopertinaToVideoBlob,
+    leggi:()=>{
+      const titolo=((document.getElementById('vai-card-cop-tit')||{}).value||'').trim();
+      if(!titolo) return null;
+      const eyebrow=((document.getElementById('vai-card-cop-eyebrow')||{}).value||'').trim();
+      return { opts:{ eyebrow, titolo }, nome:'Copertina: '+titolo.slice(0,22) };
     }
   },
   tourdati:{
@@ -56315,7 +56822,7 @@ async function pubConfrontaAI(){
       +'<div class="lfg-az"><button class="lfg-btn" onclick="libFinAggiungi()">Aggiungi clip</button>'
       +'<button class="lfg-btn pieno" onclick="libFinCreaAIPanel()">✨ Crea con l\'AI</button></div></div>';
     if(!_lib.length){
-      h+='<div class="lfg-vuoto"><b>La libreria è vuota</b><br>Crea la prima scheda dal pulsante «Scheda» in Video Social (spunta «Salva anche nella Libreria clip»), chiedi all\'AI di crearne una, carica un video già pronto da fuori, oppure parti da '+ESEMPI_SEED.length+' esempi già pronti (uno per ogni stile: finestra immobile, icona, planimetria, mappa, tour dati).<br><br>'
+      h+='<div class="lfg-vuoto"><b>La libreria è vuota</b><br>Crea la prima scheda dal pulsante «Scheda» in Video Social (spunta «Salva anche nella Libreria clip»), chiedi all\'AI di crearne una, carica un video già pronto da fuori, oppure parti da '+ESEMPI_SEED.length+' esempi già pronti, uno per ogni stile.<br><br>'
         +'<button class="lfg-btn pieno" id="lfg-seed-btn" onclick="libFinSeedEsempi()">🎬 Crea '+ESEMPI_SEED.length+' esempi</button> '
         +'<button class="lfg-btn" onclick="libFinAggiungi()">Aggiungi clip</button> <button class="lfg-btn" onclick="libFinCreaAIPanel()">✨ Crea con l\'AI</button></div>';
     } else {
@@ -56392,7 +56899,12 @@ async function pubConfrontaAI(){
     { tipo:'tourdati', opts:{ titolo:'Tour della casa', mq:'90', locali:'5', camere:'3', bagni:'2', piano:'2', prezzo:'289.000 €', sec:4.2 }, nome:'Tour dati: la casa in numeri' },
     { tipo:'calendario', opts:{ titolo:'Prenota la tua visita', cta:'Prenota una visita', sec:4 }, nome:'Calendario: prenota una visita' },
     { tipo:'puntiforza', opts:{ titolo:'Punti di forza', punti:['Vista mare','Terrazzo','Garage'], sec:4 }, nome:'Punti di forza: vista mare, terrazzo, garage' },
-    { tipo:'contatti', opts:{ titolo:'Contattaci per informazioni', telefono:'0828.811462', whatsapp:'0828.811462', sec:3.4 }, nome:'Contatti: contattaci per informazioni' }
+    { tipo:'contatti', opts:{ titolo:'Contattaci per informazioni', telefono:'0828.811462', whatsapp:'0828.811462', sec:3.4 }, nome:'Contatti: contattaci per informazioni' },
+    { tipo:'ristrutturazione', opts:{ tit1:'Potenziale di', titAcc:'ristrutturazione', sec:4 }, nome:'Ristrutturazione: potenziale' },
+    { tipo:'classeenergetica', opts:{ classe:'A4', sec:3.2 }, nome:'Classe energetica: A4' },
+    { tipo:'distribuzionespazi', opts:{ titolo:'Distribuzione spazi', camere:'3', bagni:'2', sec:4 }, nome:'Distribuzione spazi: 3 camere, 2 bagni' },
+    { tipo:'quartiere', opts:{ comune:'Agropoli', sec:4 }, nome:'Quartiere: Agropoli' },
+    { tipo:'copertina', opts:{ eyebrow:'Nuova proposta', titolo:'Appartamento con vista mare ad Agropoli', sec:3.5 }, nome:'Copertina: nuova proposta' }
   ];
   window.libFinSeedEsempi=function(){
     var btn=document.getElementById('lfg-seed-btn');
@@ -56422,7 +56934,7 @@ async function pubConfrontaAI(){
     var old=document.getElementById('lfg-ai-modal'); if(old) old.remove();
     var m=document.createElement('div'); m.id='lfg-ai-modal'; m.className='lfg-modal';
     m.innerHTML='<div class="lfg-box lfg-box-ai">'
-      +'<div class="lfg-pd"><b>✨ Crea una clip con l\'AI</b><small>Descrivi cosa vuoi: l\'AI sceglie lo stile giusto (icona, finestra immobile, planimetria, mappa, tour dei dati, calendario visite, punti di forza o contatti), il testo e i colori — sempre nel settore immobiliare.</small></div>'
+      +'<div class="lfg-pd"><b>✨ Crea una clip con l\'AI</b><small>Descrivi cosa vuoi: l\'AI sceglie fra 12 stili (icona, finestra immobile, planimetria, mappa, tour dei dati, calendario visite, punti di forza, contatti, prima/dopo, classe energetica, distribuzione spazi, quartiere), il testo e i colori — sempre nel settore immobiliare.</small></div>'
       +'<div style="padding:0 16px 10px"><textarea id="lfg-ai-prompt" rows="3" placeholder="es. «un invito a prenotare una visita», «la pianta di un trilocale», «dove si trova rispetto al mare», «i punti di forza della casa», «come contattarci»…" style="width:100%;box-sizing:border-box;padding:9px 11px;border-radius:9px;border:1px solid rgba(255,255,255,.14);background:#13263B;color:#fff;font-family:inherit;font-size:.86rem;resize:vertical"></textarea></div>'
       +'<div class="lfg-azm"><button data-a="crea" class="pieno">Crea</button><button data-a="chiudi">Annulla</button></div>'
       +'</div>';
@@ -56441,10 +56953,10 @@ async function pubConfrontaAI(){
     // dati veri dell'immobile selezionato, se c'è: l'AI li può usare ma non ne deve inventare altri
     var jImm=null; try{ jImm=(typeof vaiImmobileJSON==='function' && typeof _vaiImm!=='undefined' && _vaiImm) ? vaiImmobileJSON(_vaiImm) : null; }catch(e){}
     var datiCasa = jImm ? ('Dati VERI dell\'immobile selezionato nel progetto (usali se pertinenti, non inventarne altri): '
-      +JSON.stringify({comune:jImm.comune, zona:jImm.zona, mq:jImm.mq, locali:jImm.locali, camere:jImm.camere, bagni:jImm.bagni, piano:jImm.piano, prezzo:jImm.prezzo?fmtE(jImm.prezzo):''})+'\n\n') : '';
+      +JSON.stringify({comune:jImm.comune, zona:jImm.zona, mq:jImm.mq, locali:jImm.locali, camere:jImm.camere, bagni:jImm.bagni, piano:jImm.piano, prezzo:jImm.prezzo?fmtE(jImm.prezzo):'', energia:jImm.energia||'', titolo:jImm.titolo||''})+'\n\n') : '';
     var icone=VAI_CARD_ICONE.join(', ');
     var sys='Un agente immobiliare vuole una piccola clip grafica animata (2-4 secondi) da usare nei suoi video del settore immobiliare. '
-      +'Otto stili possibili:\n'
+      +'Tredici stili possibili:\n'
       +'1) "icona": un\'icona dentro un riquadro bianco con un titolo breve sotto — concetti semplici (es. "Vista mare", "Pronta consegna").\n'
       +'2) "finestra": una finta finestra stile app con foto, prezzo e indirizzo — quando si parla di UN immobile con prezzo o indirizzo.\n'
       +'3) "planimetria": una pianta schematica (stile progetto/blueprint) con le stanze — quando si parla di mq, camere, bagni o della disposizione degli spazi.\n'
@@ -56452,7 +56964,12 @@ async function pubConfrontaAI(){
       +'5) "tourdati": una finestra con la lista dei dati tecnici della casa (mq, locali, camere, bagni, piano, prezzo) uno sotto l\'altro — per riepilogare i numeri della casa.\n'
       +'6) "calendario": un calendario con un pulsante che invita a prenotare — quando si parla di fissare una visita o un appuntamento.\n'
       +'7) "puntiforza": un pannello con 2-4 spunte dorate sui pregi dell\'immobile (es. vista mare, terrazzo, garage) — quando si parla dei punti di forza o dei pregi della casa.\n'
-      +'8) "contatti": una tessera con telefono/WhatsApp/sito per farsi contattare — quando si parla di come contattare l\'agente.\n\n'
+      +'8) "contatti": una tessera con telefono/WhatsApp/sito per farsi contattare — quando si parla di come contattare l\'agente.\n'
+      +'9) "ristrutturazione": un confronto prima/dopo illustrato (non foto vere) — quando si parla di potenziale di ristrutturazione o di una casa da rimettere a nuovo.\n'
+      +'10) "classeenergetica": una barra che si riempie fino alla classe energetica — quando si parla di efficienza energetica, classe APE o consumi.\n'
+      +'11) "distribuzionespazi": una pianta piena (non a contorno) con le zone che si illuminano una alla volta — quando si parla della disposizione interna degli ambienti.\n'
+      +'12) "quartiere": una lista dei servizi vicini con le distanze a piedi — quando si parla di scuole, negozi, mare, trasporti o della vita del quartiere.\n'
+      +'13) "copertina": la schermata di apertura del video con il titolo dell\'immobile e un invito a scorrere — quando si chiede una copertina, un\'intro o il titolo iniziale del video.\n\n'
       +datiCasa
       +'Richiesta dell\'agente: "'+richiesta.replace(/"/g,"'")+'"\n\n'
       +'Se scegli "icona": "svgIco" SOLO fra questi valori: '+icone+'. "testo" breve (max 28 caratteri). "stile" "scuro" o "chiaro".\n'
@@ -56463,9 +56980,15 @@ async function pubConfrontaAI(){
       +'Se scegli "calendario": "titolo", "cta" (testo breve del pulsante, es. "Prenota una visita").\n'
       +'Se scegli "puntiforza": "titolo", "punti" (ARRAY di 2-4 stringhe brevi — usa i pregi veri dell\'immobile sopra se ci sono, altrimenti esempi plausibili).\n'
       +'Se scegli "contatti": "titolo" (es. "Contattaci per informazioni"); NON inventare telefono/whatsapp/sito, lasciali vuoti: li aggiunge Enzo a mano.\n'
+      +'Se scegli "ristrutturazione": "tit1" (prima parte), "titAcc" (parola in evidenza, es. "ristrutturazione").\n'
+      +'Se scegli "classeenergetica": "classe" SOLO fra A4,A3,A2,A1,A,B,C,D,E,F,G — usa quella vera dell\'immobile sopra se c\'è, altrimenti la più plausibile dalla richiesta, mai a caso.\n'
+      +'Se scegli "distribuzionespazi": "titolo", "camere", "bagni" (vuoti se non li sai).\n'
+      +'Se scegli "quartiere": "comune" (usa quello vero sopra se c\'è); NON inventare servizi/distanze specifiche, lasciali per i valori di default.\n'
+      +'Se scegli "copertina": "eyebrow" (piccola intestazione, es. "Nuova proposta"), "titolo" (usa il titolo vero dell\'immobile sopra se c\'è, altrimenti scrivine uno plausibile dalla richiesta).\n'
       +'Resta sempre nel settore immobiliare: niente altri argomenti.\n\n'
       +'Rispondi SOLO con JSON valido con tutti questi campi (stringa vuota, o array vuoto per "punti", quelli che non servono per lo stile scelto): '
-      +'{"tipo":"icona|finestra|planimetria|mappa|tourdati|calendario|puntiforza|contatti","testo":"","svgIco":"","stile":"","tit1":"","titAcc":"","prezzo":"","indirizzo":"","titolo":"","mq":"","locali":"","camere":"","bagni":"","piano":"","comune":"","etichetta":"","cta":"","punti":[]}';
+      +'{"tipo":"icona|finestra|planimetria|mappa|tourdati|calendario|puntiforza|contatti|ristrutturazione|classeenergetica|distribuzionespazi|quartiere|copertina",'
+      +'"testo":"","svgIco":"","stile":"","tit1":"","titAcc":"","prezzo":"","indirizzo":"","titolo":"","mq":"","locali":"","camere":"","bagni":"","piano":"","comune":"","etichetta":"","cta":"","punti":[],"classe":"","eyebrow":""}';
     aiFetch(proxy,{ method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({ model:(typeof aiModel==='function'?aiModel():'claude-sonnet-4-6'), max_tokens:450,
         messages:[{role:'user',content:[{type:'text',text:sys}]}] }) }, 20000)
@@ -56474,7 +56997,8 @@ async function pubConfrontaAI(){
       var j=null; try{ j=JSON.parse(txt); }catch(e){ var mm=txt.match(/\{[\s\S]*\}/); if(mm){ try{ j=JSON.parse(mm[0]); }catch(_){} } }
       var def = j && VAI_CARD_TIPI[j.tipo];
       if(!def) throw new Error('risposta non valida');
-      var sec = {icona:2.8, finestra:3.2, planimetria:4, mappa:3.6, tourdati:4.2, calendario:4, puntiforza:4, contatti:3.4}[j.tipo] || 3;
+      var sec = {icona:2.8, finestra:3.2, planimetria:4, mappa:3.6, tourdati:4.2, calendario:4, puntiforza:4, contatti:3.4,
+        ristrutturazione:4, classeenergetica:3.2, distribuzionespazi:4, quartiere:4, copertina:3.5}[j.tipo] || 3;
       var opts;
       if(j.tipo==='icona'){
         var svgIco=VAI_CARD_ICONE.indexOf(j.svgIco)>=0 ? j.svgIco : 'star';
@@ -56492,14 +57016,28 @@ async function pubConfrontaAI(){
       } else if(j.tipo==='puntiforza'){
         var punti=Array.isArray(j.punti)?j.punti.map(String).filter(Boolean).slice(0,4):[];
         opts={ titolo:j.titolo||'Punti di forza', punti:punti, sec:sec };
-      } else {
+      } else if(j.tipo==='contatti'){
         opts={ titolo:j.titolo||'Contattaci per informazioni', telefono:'', whatsapp:'', sito:'', sec:sec };
+      } else if(j.tipo==='ristrutturazione'){
+        opts={ tit1:j.tit1||'Potenziale di', titAcc:j.titAcc||'ristrutturazione', sec:sec };
+      } else if(j.tipo==='classeenergetica'){
+        var ORDINE_CE=['A4','A3','A2','A1','A','B','C','D','E','F','G'];
+        opts={ classe:ORDINE_CE.indexOf((j.classe||'').toUpperCase())>=0?j.classe.toUpperCase():'A4', sec:sec };
+      } else if(j.tipo==='distribuzionespazi'){
+        opts={ titolo:j.titolo||'Distribuzione spazi', camere:j.camere||'', bagni:j.bagni||'', sec:sec };
+      } else if(j.tipo==='quartiere'){
+        opts={ comune:j.comune||richiesta.slice(0,24), servizi:[], sec:sec };
+      } else {
+        opts={ eyebrow:j.eyebrow||'Nuova proposta', titolo:j.titolo||richiesta.slice(0,60), sec:sec };
       }
       return def.gen(opts).then(function(out){
         if(!out||!out.blob) throw new Error('generazione vuota');
         var nomi={ icona:'Scheda: '+(opts.testo||richiesta).slice(0,22), finestra:'Finestra: '+((opts.tit1||'')+' '+(opts.titAcc||'')).trim().slice(0,22),
           planimetria:'Planimetria: '+(opts.titolo||'pianta').slice(0,22), mappa:'Mappa: '+(opts.comune||'').slice(0,22), tourdati:'Tour dati: '+(opts.titolo||'casa').slice(0,22),
-          calendario:'Calendario: '+(opts.titolo||'prenota').slice(0,22), puntiforza:'Punti di forza: '+(opts.titolo||'la casa').slice(0,22), contatti:'Contatti: '+(opts.titolo||'contattaci').slice(0,22) };
+          calendario:'Calendario: '+(opts.titolo||'prenota').slice(0,22), puntiforza:'Punti di forza: '+(opts.titolo||'la casa').slice(0,22), contatti:'Contatti: '+(opts.titolo||'contattaci').slice(0,22),
+          ristrutturazione:'Ristrutturazione: '+((opts.tit1||'')+' '+(opts.titAcc||'')).trim().slice(0,22), classeenergetica:'Classe energetica: '+(opts.classe||''),
+          distribuzionespazi:'Distribuzione spazi: '+(opts.titolo||'gli spazi').slice(0,22), quartiere:'Quartiere: '+(opts.comune||'').slice(0,22),
+          copertina:'Copertina: '+(opts.titolo||'nuova proposta').slice(0,22) };
         return window.libFinSalvaBlob(out.blob, out.mime, nomi[j.tipo], sec, out.thumb, 'ai');
       });
     }).then(function(){
