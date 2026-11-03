@@ -48153,6 +48153,171 @@ function _vaiMappaToVideoBlob(opts){
     .then(()=>_vaiRecordCanvasToBlob(cv, sec, paint, Math.min(sec-0.3,2)));
 }
 
+/* ZONA CON AUTO IN MOVIMENTO [03 nov 2026] — stesso spirito della "Mappa
+   territorio" ma con un racconto: città, zona, una strada stilizzata (non una
+   mappa vera) che si traccia da un punto A a un punto B con una piccola auto
+   che la percorre, e in chiusura la barra con le due distanze — richiesta di
+   Enzo dopo aver visto "Mappa della zona" (Fabbrica Grafiche, sul suo PC, fuori
+   da questo codice): qui la stessa idea ma disegnata interamente in canvas. */
+function _vaiZonaAutoToVideoBlob(opts){
+  const sec=Math.max(4, Math.min(7, opts.sec||5));
+  const SABBIA='#F7EFE3', NAVY='#2A2420', ARANCIO='#EA580C', ARANCIO2='#FB923C', ACQUA='#BEE0ED';
+  const W=720, H=1280;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d');
+  const comune=(opts.comune||'La tua zona').trim();
+  const zona=(opts.zona||'').trim();
+  const d1v=(opts.d1v||'').trim(), d1l=(opts.d1l||'dal mare').trim();
+  const d2v=(opts.d2v||'').trim(), d2l=(opts.d2l||'dal centro').trim();
+  const icoD1=_vaiSvgComeImg(/centro|citt|paese/i.test(d1l)?'pin':'mare', '#fff');
+  const icoD2=_vaiSvgComeImg(/mare|spiagg/i.test(d2l)?'mare':'pin', '#fff');
+  const ease=(p)=> p<0.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
+  const clamp01=(p)=>Math.max(0,Math.min(1,p));
+  const seg=(t,start,dur)=>clamp01((t-start)/dur);
+  const segE=(t,start,dur)=>ease(seg(t,start,dur));
+
+  // strada stilizzata (non una mappa vera) dal basso — punto A, l'immobile — fino
+  // in alto — punto B, la destinazione raccontata dalle due distanze sotto.
+  const via=[[150,1050],[232,934],[188,792],[322,702],[286,556],[452,498],[404,356],[560,288],[514,164]];
+  const lunghezze=[]; let totLen=0;
+  for(let i=1;i<via.length;i++){ const l=Math.hypot(via[i][0]-via[i-1][0], via[i][1]-via[i-1][1]); lunghezze.push(l); totLen+=l; }
+  const puntoSuVia=(frac)=>{
+    frac=clamp01(frac);
+    const target=frac*totLen; let acc=0;
+    for(let i=0;i<lunghezze.length;i++){
+      if(acc+lunghezze[i]>=target || i===lunghezze.length-1){
+        const p=lunghezze[i]>0?(target-acc)/lunghezze[i]:0;
+        return { x:via[i][0]+(via[i+1][0]-via[i][0])*p, y:via[i][1]+(via[i+1][1]-via[i][1])*p,
+          ang:Math.atan2(via[i+1][1]-via[i][1], via[i+1][0]-via[i][0]) };
+      }
+      acc+=lunghezze[i];
+    }
+    return { x:via[via.length-1][0], y:via[via.length-1][1], ang:0 };
+  };
+
+  let thumb=null;
+  const paint=(t)=>{
+    ctx.fillStyle=SABBIA; ctx.fillRect(0,0,W,H);
+    ctx.save(); ctx.fillStyle=ACQUA;
+    ctx.beginPath(); ctx.ellipse(30,110,230,170,0.3,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+    ctx.strokeStyle='rgba(170,148,108,.45)'; ctx.lineWidth=5; ctx.lineCap='round';
+    [[[30,500],[690,565]],[[70,830],[650,770]],[[255,40],[300,1220]]].forEach(l=>{
+      ctx.beginPath(); ctx.moveTo(l[0][0],l[0][1]); ctx.lineTo(l[1][0],l[1][1]); ctx.stroke();
+    });
+
+    const eTit=segE(t,0,0.4);
+    ctx.save(); ctx.globalAlpha=eTit;
+    ctx.fillStyle=NAVY; ctx.font='800 42px "DM Sans", sans-serif'; ctx.textAlign='center';
+    ctx.fillText(comune.toUpperCase(), W/2, 110+(1-eTit)*12);
+    ctx.restore();
+
+    if(zona){
+      const eChip=segE(t,0.25,0.35);
+      if(eChip>0){
+        ctx.save(); ctx.globalAlpha=eChip;
+        ctx.font='700 21px "DM Sans", sans-serif';
+        const tw=ctx.measureText(zona.toUpperCase()).width;
+        const cw=tw+46, ch=42, cx=W/2-cw/2, cy=142+(1-eChip)*8;
+        ctx.fillStyle=ARANCIO;
+        if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(cx,cy,cw,ch,21); ctx.fill(); } else ctx.fillRect(cx,cy,cw,ch);
+        ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(zona.toUpperCase(), W/2, cy+ch/2+1);
+        ctx.textBaseline='alphabetic';
+        ctx.restore();
+      }
+    }
+
+    // la strada si traccia progressivamente, l'auto la percorre in sincrono
+    const eStrada=segE(t,0.55,1.1);
+    if(eStrada>0){
+      ctx.save();
+      ctx.strokeStyle=ARANCIO2; ctx.lineWidth=9; ctx.lineCap='round'; ctx.lineJoin='round';
+      ctx.globalAlpha=0.92;
+      const target=eStrada*totLen; let acc=0;
+      ctx.beginPath(); ctx.moveTo(via[0][0],via[0][1]);
+      for(let i=1;i<via.length;i++){
+        const l=lunghezze[i-1];
+        if(acc+l<=target){ ctx.lineTo(via[i][0],via[i][1]); acc+=l; }
+        else { const p=l>0?(target-acc)/l:0; ctx.lineTo(via[i-1][0]+(via[i][0]-via[i-1][0])*p, via[i-1][1]+(via[i][1]-via[i-1][1])*p); break; }
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    const eA=segE(t,0.5,0.3);
+    if(eA>0){
+      ctx.save(); ctx.globalAlpha=eA;
+      ctx.fillStyle=NAVY;
+      ctx.beginPath(); ctx.arc(via[0][0], via[0][1], 12, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle='#fff'; ctx.font='700 13px "DM Sans", sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('A', via[0][0], via[0][1]+1);
+      ctx.textBaseline='alphabetic';
+      ctx.restore();
+    }
+    if(eStrada>=1){
+      const eB=segE(t,1.7,0.3);
+      if(eB>0){
+        ctx.save(); ctx.globalAlpha=eB;
+        const pb=via[via.length-1];
+        ctx.fillStyle=ARANCIO;
+        ctx.beginPath(); ctx.arc(pb[0], pb[1], 13, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle='#fff'; ctx.font='700 14px "DM Sans", sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText('B', pb[0], pb[1]+1);
+        ctx.textBaseline='alphabetic';
+        ctx.restore();
+      }
+    }
+
+    if(eStrada>0){
+      // si ferma un poco PRIMA del punto B: altrimenti arriva esattamente sopra
+      // lo spillo di arrivo e i due disegni si confondono in una macchia sola.
+      const pAuto=puntoSuVia(Math.min(eStrada,0.965));
+      ctx.save();
+      ctx.translate(pAuto.x, pAuto.y); ctx.rotate(pAuto.ang);
+      ctx.fillStyle='rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(0,11,19,5,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle=NAVY;
+      if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(-20,-9,40,18,7); ctx.fill(); } else ctx.fillRect(-20,-9,40,18);
+      ctx.fillStyle=ARANCIO;
+      if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(-9,-15,20,12,5); ctx.fill(); } else ctx.fillRect(-9,-15,20,12);
+      ctx.fillStyle='rgba(255,255,255,.85)';
+      ctx.fillRect(-6,-13,7,8); ctx.fillRect(2,-13,7,8);
+      ctx.fillStyle='#1A1A1A';
+      ctx.beginPath(); ctx.arc(-11,9,5,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(11,9,5,0,Math.PI*2); ctx.fill();
+      ctx.restore();
+    }
+
+    // barra delle due distanze, in basso — compare a strada completata
+    const eBar=segE(t, Math.max(2.1, sec-1.7), 0.4);
+    if(eBar>0 && (d1v||d2v)){
+      const bw=600, bh=112, bx=W/2-bw/2, by=H-190+(1-eBar)*40;
+      ctx.save(); ctx.globalAlpha=eBar;
+      ctx.shadowColor='rgba(0,0,0,.3)'; ctx.shadowBlur=24; ctx.shadowOffsetY=10;
+      ctx.fillStyle=ARANCIO;
+      if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,22); ctx.fill(); } else ctx.fillRect(bx,by,bw,bh);
+      ctx.shadowColor='transparent';
+      if(d1v && d2v){ ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(bx+bw/2,by+18); ctx.lineTo(bx+bw/2,by+bh-18); ctx.stroke(); }
+      const colonna=(cx,val,lab,ico)=>{
+        if(!val) return;
+        if(ico && ico.complete && ico.naturalWidth){ try{ ctx.drawImage(ico, cx-11, by+15, 22, 22); }catch(e){} }
+        ctx.fillStyle='#fff'; ctx.textAlign='center';
+        ctx.font='800 27px "DM Sans", sans-serif';
+        ctx.fillText(val, cx, by+72);
+        ctx.font='600 14px "DM Sans", sans-serif';
+        ctx.fillText(lab.toUpperCase(), cx, by+93);
+      };
+      if(d1v && d2v){ colonna(bx+bw*0.25, d1v, d1l, icoD1); colonna(bx+bw*0.75, d2v, d2l, icoD2); }
+      else { colonna(bx+bw/2, d1v||d2v, d1v?d1l:d2l, d1v?icoD1:icoD2); }
+      ctx.restore();
+    }
+
+    if(!thumb && t>=Math.min(sec-0.3, sec*0.7)) thumb=cv.toDataURL('image/jpeg',0.82);
+  };
+  return _vaiPrecaricaFontIcone(['800 42px "DM Sans"','700 21px "DM Sans"'], [icoD1, icoD2].filter(Boolean))
+    .then(()=>_vaiRecordCanvasToBlob(cv, sec, paint, Math.min(sec-0.3, sec*0.7)));
+}
+
 /* TOUR DEI DATI — la finestra app (stesso "chrome" della Finestra
    immobile) ma con accento verde smeraldo e dentro una lista di dati veri
    della casa che scorrono uno alla volta, invece di foto+prezzo+indirizzo. */
@@ -48906,6 +49071,7 @@ function vaiCardPanel(){
             '<button type="button" class="vai-graf-item vai-card-tipo" data-key="finestra" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#C9A84C;color:#1A1205">Finestra immobile</span></button>'+
             '<button type="button" class="vai-graf-item vai-card-tipo" data-key="planimetria" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#0B1420;color:#8ECBFF">Planimetria</span></button>'+
             '<button type="button" class="vai-graf-item vai-card-tipo" data-key="mappa" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#2B3438;color:#C9A84C">Mappa territorio</span></button>'+
+            '<button type="button" class="vai-graf-item vai-card-tipo" data-key="zonaauto" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#EA580C;color:#fff">Zona, auto in corsa</span></button>'+
             '<button type="button" class="vai-graf-item vai-card-tipo" data-key="tourdati" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#1F6F54;color:#fff">Tour dati casa</span></button>'+
             '<button type="button" class="vai-graf-item vai-card-tipo" data-key="calendario" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#0D1B2A;color:#F5F1E8">Calendario visite</span></button>'+
             '<button type="button" class="vai-graf-item vai-card-tipo" data-key="puntiforza" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#FAF6EF;color:#2A2017;border:1px solid #E5DDC8">Punti di forza</span></button>'+
@@ -48954,6 +49120,21 @@ function vaiCardPanel(){
           '<div class="vai-graf-sez"><div class="vai-graf-lbl">Etichetta sotto lo spillo</div>'+
             '<input type="text" id="vai-card-mappa-etichetta" class="vai-lz-input" placeholder="es. Posizione strategica" maxlength="30"></div>'+
           '<div class="vai-lz-note">Mappa stilizzata, non reale. Per le distanze vere da OpenStreetMap hai già "Mappa zona" (Fabbrica grafiche).</div>'+
+        '</div>'+
+        '<div id="vai-card-grp-zonaauto" style="display:none">'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Comune</div>'+
+            '<input type="text" id="vai-card-za-comune" class="vai-lz-input" placeholder="es. Agropoli" maxlength="30"></div>'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Nome della zona (facoltativo)</div>'+
+            '<input type="text" id="vai-card-za-zona" class="vai-lz-input" placeholder="es. Zona Trascinelle" maxlength="30"></div>'+
+          '<div class="vai-graf-sez" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
+            '<label style="font-size:.72rem;color:var(--text2)">Distanza 1<input type="text" id="vai-card-za-d1v" class="vai-lz-input" placeholder="3,8 km"></label>'+
+            '<label style="font-size:.72rem;color:var(--text2)">Da dove<input type="text" id="vai-card-za-d1l" class="vai-lz-input" placeholder="dal mare"></label>'+
+          '</div>'+
+          '<div class="vai-graf-sez" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
+            '<label style="font-size:.72rem;color:var(--text2)">Distanza 2 (facoltativa)<input type="text" id="vai-card-za-d2v" class="vai-lz-input" placeholder="2,5 km"></label>'+
+            '<label style="font-size:.72rem;color:var(--text2)">Da dove<input type="text" id="vai-card-za-d2l" class="vai-lz-input" placeholder="dal centro"></label>'+
+          '</div>'+
+          '<div class="vai-lz-note">Strada stilizzata con un\'auto che la percorre dal punto A al punto B — non è una mappa vera. Per le distanze reali da OpenStreetMap hai già "Mappa zona" (Fabbrica grafiche).</div>'+
         '</div>'+
         '<div id="vai-card-grp-tourdati" style="display:none">'+
           '<div class="vai-graf-sez"><div class="vai-graf-lbl">Titolo</div>'+
@@ -49036,6 +49217,7 @@ function vaiCardPanel(){
   ['vai-card-testo','vai-card-tit1','vai-card-titacc','vai-card-prezzo','vai-card-indirizzo',
    'vai-card-plan-tit','vai-card-plan-mq','vai-card-plan-camere','vai-card-plan-bagni',
    'vai-card-mappa-comune','vai-card-mappa-etichetta',
+   'vai-card-za-comune','vai-card-za-zona','vai-card-za-d1v','vai-card-za-d1l','vai-card-za-d2v','vai-card-za-d2l',
    'vai-card-tour-tit','vai-card-tour-mq','vai-card-tour-locali','vai-card-tour-camere','vai-card-tour-bagni','vai-card-tour-piano','vai-card-tour-prezzo',
    'vai-card-cal-tit','vai-card-cal-cta','vai-card-pf-tit','vai-card-pf-punti',
    'vai-card-cont-tit','vai-card-cont-tel','vai-card-cont-wa','vai-card-cont-sito',
@@ -49050,6 +49232,8 @@ function vaiCardPanel(){
       set('vai-card-prezzo', j.prezzo?fmtE(j.prezzo):''); set('vai-card-indirizzo', j.zona&&j.zona!==j.comune?j.zona:j.comune);
       set('vai-card-plan-mq', j.mq); set('vai-card-plan-camere', j.camere); set('vai-card-plan-bagni', j.bagni);
       set('vai-card-mappa-comune', j.comune);
+      set('vai-card-za-comune', j.comune); set('vai-card-za-zona', j.zona&&j.zona!==j.comune?j.zona:'');
+      set('vai-card-za-d1v', j.distMare); set('vai-card-za-d2v', j.distCentro);
       set('vai-card-tour-mq', j.mq); set('vai-card-tour-locali', j.locali); set('vai-card-tour-camere', j.camere);
       set('vai-card-tour-bagni', j.bagni); set('vai-card-tour-piano', j.piano); set('vai-card-tour-prezzo', j.prezzo?fmtE(j.prezzo):'');
       if(j.pregi) set('vai-card-pf-punti', String(j.pregi).split(/[,;\n]/).map(s=>s.trim()).filter(Boolean).slice(0,4).join(', '));
@@ -49142,6 +49326,20 @@ const VAI_CARD_TIPI = {
       if(!comune) return null;
       return { opts:{ comune, etichetta:((document.getElementById('vai-card-mappa-etichetta')||{}).value||'').trim() },
         nome:'Mappa: '+comune.slice(0,22) };
+    }
+  },
+  zonaauto:{
+    gen:_vaiZonaAutoToVideoBlob,
+    leggi:()=>{
+      const comune=((document.getElementById('vai-card-za-comune')||{}).value||'').trim();
+      if(!comune) return null;
+      const opts={ comune,
+        zona:((document.getElementById('vai-card-za-zona')||{}).value||'').trim(),
+        d1v:((document.getElementById('vai-card-za-d1v')||{}).value||'').trim(),
+        d1l:((document.getElementById('vai-card-za-d1l')||{}).value||'').trim(),
+        d2v:((document.getElementById('vai-card-za-d2v')||{}).value||'').trim(),
+        d2l:((document.getElementById('vai-card-za-d2l')||{}).value||'').trim() };
+      return { opts, nome:'Zona: '+comune.slice(0,22) };
     }
   },
   calendario:{
