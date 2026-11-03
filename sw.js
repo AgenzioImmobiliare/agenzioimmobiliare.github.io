@@ -3,7 +3,7 @@
    IMPORTANTE: quando esce un aggiornamento, bumpa CACHE='lecase-vN'
    per invalidare la cache HTML/JS e forzare il telefono a scaricare il nuovo codice. */
 
-var CACHE = 'lecase-v162';            /* Video Social: nuova Scheda "Zona, auto in corsa" con strada e auto animata (03/11/2026) */
+var CACHE = 'lecase-v163';            /* Video Social: "Scheda" e "Layout zona" ora anche nel menu Elementi, più facili da trovare (03/11/2026) */
 var FOTO_CACHE = 'lecase-foto-v1';
 
 self.addEventListener('install', function (e) { self.skipWaiting(); });
