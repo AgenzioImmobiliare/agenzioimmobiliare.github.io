@@ -3370,7 +3370,7 @@ input[type=range].vai-ms-rng-mini{max-width:78px}
 .vai-tl-track{position:relative;display:flex;min-height:90px;background:#1a2332;border-radius:8px;margin-bottom:8px;user-select:none;overflow-y:hidden;overflow-x:hidden}
 /* colonna header tracce (fissa a sinistra) */
 .vai-tl-headers{flex-shrink:0;width:92px;background:#0E1620;border-right:1px solid rgba(255,255,255,.055);padding-top:18px;display:flex;flex-direction:column;gap:5px;z-index:6}
-.vai-tl-hrow{height:var(--vai-lane-h,24px);display:flex;align-items:center;gap:3px;padding:0 5px;border-radius:5px;cursor:pointer}
+.vai-tl-hrow{height:var(--vai-lane-h,24px);display:flex;align-items:center;gap:3px;padding:0 5px;border-radius:3px;cursor:pointer}
 .vai-tl-hrow-video{height:var(--vai-tl-vh,40px)}
 .vai-tl-hrow.attiva{background:rgba(255,255,255,.07)}
 .vai-tl-hbtn{width:22px;height:22px;display:flex;align-items:center;justify-content:center;background:#1A2330;border:1px solid rgba(255,255,255,.055);color:#9FB4C8;border-radius:5px;cursor:pointer;padding:0;flex-shrink:0}
@@ -3411,15 +3411,15 @@ input[type=range].vai-ms-rng-mini{max-width:78px}
 /* lo sfondo delle corsie prosegue anche nella coda: senza, si vedeva uno scalino
    netto fra la timeline e lo spazio di manovra. I blocchi restano posizionati in
    percentuale della parte utile, quindi nulla si sposta. */
-.vai-tl-lanes-testo{display:flex;flex-direction:column;gap:5px;height:var(--vai-tl-lanes-h,141px);overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#3A4856 transparent;background:#0A0F14;border-radius:6px}
+.vai-tl-lanes-testo{display:flex;flex-direction:column;gap:2px;height:var(--vai-tl-lanes-h,141px);overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:#3A4856 transparent;background:#0A0F14;border-radius:4px}
 .vai-tl-lanes-testo::-webkit-scrollbar{width:7px}
 .vai-tl-lanes-testo::-webkit-scrollbar-thumb{background:#3A4856;border-radius:4px}
 .vai-tl-lanes-testo::-webkit-scrollbar-track{background:transparent}
 /* stessa altezza delle corsie: se le due colonne divergono, i nomi delle tracce
    si sfasano rispetto ai blocchi che stanno a destra */
-.vai-tl-heads-testo{display:flex;flex-direction:column;gap:5px;height:var(--vai-tl-lanes-h,141px);overflow:hidden}
-.vai-tl-lane{position:relative;border-radius:5px}
-.vai-tl-lane-text{height:var(--vai-lane-h,24px);background:rgba(255,255,255,.028);border:1px solid transparent;border-radius:5px;transition:border-color .15s}
+.vai-tl-heads-testo{display:flex;flex-direction:column;gap:2px;height:var(--vai-tl-lanes-h,141px);overflow:hidden}
+.vai-tl-lane{position:relative;border-radius:3px}
+.vai-tl-lane-text{height:var(--vai-lane-h,24px);background:rgba(255,255,255,.028);border:1px solid transparent;border-bottom:1px solid rgba(255,255,255,.04);border-radius:3px;transition:border-color .15s}
 .vai-tl-lane-text.attiva{border-color:#fff;background:rgba(255,255,255,.08)}
 .vai-tl-lane-text.vai-tl-lane-hidden{opacity:.4}
 .vai-tl-lane-video{height:var(--vai-tl-vh,40px);background:rgba(124,58,237,.07);border:1px solid rgba(124,58,237,.25);border-radius:6px}
@@ -3560,17 +3560,21 @@ input[type=range].vai-ms-rng-mini{max-width:78px}
 .vai-tl-tick span{position:absolute;top:2px;left:3px;font-size:.58rem;color:rgba(255,255,255,.45);white-space:nowrap}
 .vai-tl-playhead{position:absolute;top:0;bottom:0;width:2px;background:var(--gold,#C9A84C);box-shadow:0 0 5px rgba(201,168,76,.7);z-index:5;pointer-events:none}
 .vai-tl-playhead::before{content:'';position:absolute;top:0;left:-4px;width:10px;height:8px;background:var(--gold,#C9A84C);clip-path:polygon(0 0,100% 0,50% 100%)}
-.vai-tl-block{position:absolute;top:0;height:var(--vai-lane-h,24px);border-radius:8px;display:flex;align-items:center;cursor:grab;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.16);min-width:30px;border:1px solid rgba(0,0,0,.25);transition:box-shadow .15s ease,outline-color .15s ease}
-.vai-tl-block:not(.vai-tl-logoblock){background-image:linear-gradient(165deg, rgba(255,255,255,.24), rgba(255,255,255,0) 42%, rgba(0,0,0,.2))}
-.vai-tl-block:hover{box-shadow:0 3px 9px rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.2)}
-.vai-tl-block.sel{outline:2px solid #C9A84C;outline-offset:-1px;box-shadow:0 0 0 3px rgba(201,168,76,.25),0 3px 10px rgba(0,0,0,.4)}
+.vai-tl-block{position:absolute;top:0;height:var(--vai-lane-h,24px);border-radius:3px;display:flex;align-items:center;cursor:grab;overflow:hidden;min-width:30px;border:none;box-sizing:border-box;transition:background-color .15s ease,outline-color .15s ease}
+/* stile "banco di montaggio": niente più pillole colorate a tutta campitura — sfondo
+   piatto per tutti i blocchi, con un trattino colorato (--acc, il colore scelto per la
+   scritta) sotto, a fare da unico riferimento cromatico. Esclude i blocchi speciali
+   (logo/PiP/Prima-Dopo), che restano con il loro sfondo sfumato dedicato (02/11/2026). */
+.vai-tl-block:not(.vai-tl-logoblock){background-image:none;background-color:#1C2635;border-bottom:2px solid var(--acc,#3A4A5E)}
+.vai-tl-block:hover:not(.vai-tl-logoblock){background-color:#232E40}
+.vai-tl-block.sel:not(.vai-tl-logoblock){background-color:#283451;outline:1.5px solid #C9A84C;outline-offset:-1px}
 .vai-tl-block:active{cursor:grabbing}
-.vai-tl-block-txt{flex:1;color:#fff;font-size:.7rem;font-weight:700;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;text-shadow:0 1px 2px rgba(0,0,0,.45)}
-.vai-tl-block-h{width:11px;height:100%;background:rgba(255,255,255,.22);cursor:ew-resize;flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative;z-index:2;transition:background .12s ease}
-.vai-tl-block-h::after{content:'';width:2px;height:14px;border-radius:2px;background:rgba(255,255,255,.8)}
-.vai-tl-block-h:hover{background:rgba(255,255,255,.55)}
-.vai-tl-block-hl{border-radius:7px 0 0 7px}
-.vai-tl-block-hr{border-radius:0 7px 7px 0}
+.vai-tl-block-txt{flex:1;color:#C9D3DE;font-size:.7rem;font-weight:600;padding:0 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.vai-tl-block-h{width:11px;height:100%;background:rgba(255,255,255,.14);cursor:ew-resize;flex-shrink:0;display:flex;align-items:center;justify-content:center;position:relative;z-index:2;transition:background .12s ease}
+.vai-tl-block-h::after{content:'';width:2px;height:14px;border-radius:2px;background:rgba(255,255,255,.7)}
+.vai-tl-block-h:hover{background:rgba(255,255,255,.4)}
+.vai-tl-block-hl{border-radius:2px 0 0 2px}
+.vai-tl-block-hr{border-radius:0 2px 2px 0}
 /* blocco "multi-clip": una scritta continua estesa su più clip — bordo tratteggiato
    chiaro e badge con catena + numero di clip coperte, per distinguerla a colpo d'occhio */
 .vai-tl-block-multi{outline:1.5px dashed rgba(255,255,255,.55);outline-offset:-2px}
@@ -44589,7 +44593,7 @@ function vaiTlRender(){
             +'<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>'
             +arr.length+'</span>'
           : '';
-        blocchi += '<div class="vai-tl-block'+selCls+hidCls+multiCls+'" data-id="'+capo.s.id+'" data-ci="'+capo.ci+'" style="left:'+left+'%;width:'+width+'%;background-color:'+col+'" '+
+        blocchi += '<div class="vai-tl-block'+selCls+hidCls+multiCls+'" data-id="'+capo.s.id+'" data-ci="'+capo.ci+'" style="left:'+left+'%;width:'+width+'%;--acc:'+col+'" '+
           'onmousedown="vaiBlockDragStart(event,\''+capo.s.id+'\',\'move\','+capo.ci+')" ontouchstart="vaiBlockDragStart(event,\''+capo.s.id+'\',\'move\','+capo.ci+')" '+
           'title="'+_vaiEsc(capo.s.testo)+(arr.length>1?' — continua su '+arr.length+' clip':'')+'">'+
           '<span class="vai-tl-block-h vai-tl-block-hl" onmousedown="vaiBlockDragStart(event,\''+capo.s.id+'\',\'left\','+capo.ci+')" ontouchstart="vaiBlockDragStart(event,\''+capo.s.id+'\',\'left\','+capo.ci+')"></span>'+
