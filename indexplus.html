@@ -32563,7 +32563,11 @@ function _vaiLogoPosDi(clip){
    principale (es. un dettaglio o il suo volto mentre parla, mentre sotto scorre
    l'ambiente). È un solo overlay globale sull'intero montaggio — stessa idea del
    logo (vedi sopra), con una finestra di tempo propria invece che per clip.
-   {url, fileName, naturalW, naturalH, naturalDur, taglioInizio, t, durata, x, y, w, radius} */
+   {url, fileName, naturalW, naturalH, naturalDur, taglioInizio, t, durata, x, y, w, radius,
+    opacity}  — opacity (0-1, default 1): quanto il video resta "in trasparenza" sopra la
+   clip sotto. _daCard, se presente, ricorda che questo overlay viene da una Scheda creata
+   col generatore (vedi "Come inserirla" nelle proprietà della clip) — serve solo per un
+   messaggio più chiaro nell'editor, il disegno è identico a un PiP qualunque. */
 let _vaiPip = null;
 
 /* ─── PRIMA/DOPO ───
@@ -32741,7 +32745,7 @@ function vaiPipCarica(file){
       url, fileName:file.name,
       naturalW:tv.videoWidth||9, naturalH:tv.videoHeight||16, naturalDur,
       taglioInizio:0, t:Math.round(tGlob*10)/10, durata:Math.min(5, naturalDur),
-      x:0.62, y:0.58, w:0.33, radius:14
+      x:0.62, y:0.58, w:0.33, radius:14, opacity:1
     };
     _vaiDirty=true;
     vaiTlRender(); vaiOverlayUpdate();
@@ -32763,6 +32767,34 @@ function vaiPipRimuovi(){
   toast('Video in sovrimpressione rimosso','');
 }
 window.vaiPipRimuovi=vaiPipRimuovi;
+
+/* Riporta l'attuale video in sovrimpressione come clip normale, in coda al montaggio —
+   niente da ricalcolare su DOVE inserirla: la si riordina poi trascinandola, come
+   qualunque altra clip. Riuso il blob già in memoria (fetch dell'URL esistente),
+   nessun nuovo caricamento richiesto all'utente. */
+async function vaiPipTornaClip(){
+  if(!_vaiPip || !_vaiClips){ return; }
+  if(!_vaiClips.length){ toast('Carica prima un video sulla timeline principale','error'); return; }
+  const s=_vaiPip;
+  let blob;
+  try{ blob=await (await fetch(s.url)).blob(); }
+  catch(e){ console.error('[PiP] impossibile recuperare il video', e); toast('Non ci sono riuscito — riprova','error'); return; }
+  vaiSnapshot('riporta sovrimpressione nella timeline');
+  const m=document.getElementById('vai-pip-editor'); if(m) m.remove();
+  const nome=(s.fileName||'Video').replace(/\.[^.]+$/,'');
+  const durata=Math.min(s.durata||3, s.naturalDur||s.durata||3)||3;
+  const nuova={ id:_vaiNuovoIdClip(), file:new File([blob], (s.fileName||'video.webm'), {type:blob.type||'video/webm'}),
+    url:URL.createObjectURL(blob), nome, durata, ambiente:'', scritte:[], logo:null,
+    logoPos:{x:0.05,y:0.04,scale:0.22}, thumb:null, parlata:false, parlataAuto:false, parlataManuale:false,
+    daCard:!!s._daCard, taglioInizio:0, taglioDurata:durata };
+  _vaiClips.push(nuova);
+  try{ URL.revokeObjectURL(s.url); }catch(e){}
+  _vaiPip=null; _vaiDirty=true;
+  _vaiProbaDurata(nuova);
+  vaiClipsRender(); vaiTlRender(); vaiClipSelect(_vaiClips.length-1, true); vaiOverlayUpdate();
+  toast('Rimessa nella timeline, in fondo al montaggio — trascinala per riordinarla','success');
+}
+window.vaiPipTornaClip=vaiPipTornaClip;
 
 /* Posiziona il video in sovrimpressione in un angolo predefinito — stessa idea
    di vaiLogoAngolo, qui con w invece di scale e l'altezza calcolata dal
@@ -32801,9 +32833,14 @@ function vaiPipModifica(){
     '<input id="vpp-t" type="number" min="0" step="0.1" value="'+s.t+'" style="width:100%;box-sizing:border-box;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:.86rem;margin-bottom:14px">'+
     '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Durata (secondi): <span id="vpp-dur-val">'+s.durata.toFixed(1)+'</span>s</div>'+
     '<input id="vpp-dur" type="range" min="0.5" max="'+Math.max(0.5,(s.naturalDur-s.taglioInizio).toFixed(2))+'" step="0.1" value="'+s.durata+'" style="width:100%;margin-bottom:14px">'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Trasparenza: <span id="vpp-op-val">'+Math.round((s.opacity!=null?s.opacity:1)*100)+'</span>% <span style="opacity:.7">(più bassa = lascia vedere di più la clip sotto)</span></div>'+
+    '<input id="vpp-op" type="range" min="15" max="100" step="1" value="'+Math.round((s.opacity!=null?s.opacity:1)*100)+'" style="width:100%;margin-bottom:14px">'+
     '<label style="display:flex;align-items:center;gap:8px;color:#8FA3B8;font-size:.78rem;margin-bottom:14px;cursor:pointer">'+
       '<input id="vpp-round" type="checkbox" '+(s.radius>0?'checked':'')+'> Angoli arrotondati'+
     '</label>'+
+    (s._daCard
+      ? '<button id="vpp-torna" style="width:100%;padding:9px 0;border-radius:8px;cursor:pointer;font-size:.8rem;font-weight:700;background:#13263B;color:#8ECBFF;border:1px solid rgba(142,203,255,.3);margin-bottom:8px">↩ Riporta nella timeline principale</button>'
+      : '')+
     '<button id="vpp-rimuovi" style="width:100%;padding:9px 0;border-radius:8px;cursor:pointer;font-size:.8rem;font-weight:700;background:#2A1414;color:#F5A3A3;border:1px solid rgba(239,68,68,.3)">Rimuovi video in sovrimpressione</button>'
   );
   ov.id='vai-pip-editor';
@@ -32814,8 +32851,12 @@ function vaiPipModifica(){
   if(tEl) tEl.addEventListener('input', function(){ s.t=Math.max(0, parseFloat(this.value)||0); if(tVal) tVal.textContent=s.t.toFixed(1); _vaiDirty=true; vaiTlRender(); vaiOverlayUpdate(); });
   const durEl=ov.querySelector('#vpp-dur'), durVal=ov.querySelector('#vpp-dur-val');
   if(durEl) durEl.addEventListener('input', function(){ s.durata=parseFloat(this.value)||3; if(durVal) durVal.textContent=s.durata.toFixed(1); delete s._frameCache; _vaiDirty=true; vaiTlRender(); vaiOverlayUpdate(); });
+  const opEl=ov.querySelector('#vpp-op'), opVal=ov.querySelector('#vpp-op-val');
+  if(opEl) opEl.addEventListener('input', function(){ s.opacity=Math.max(0.15, Math.min(1, (parseInt(this.value,10)||100)/100)); if(opVal) opVal.textContent=Math.round(s.opacity*100); _vaiDirty=true; vaiOverlayUpdate(); });
   const roundEl=ov.querySelector('#vpp-round');
   if(roundEl) roundEl.addEventListener('change', function(){ s.radius=this.checked?14:0; _vaiDirty=true; vaiOverlayUpdate(); });
+  const tornaEl=ov.querySelector('#vpp-torna');
+  if(tornaEl) tornaEl.addEventListener('click', ()=>{ vaiPipTornaClip(); });
   const rimEl=ov.querySelector('#vpp-rimuovi');
   if(rimEl) rimEl.addEventListener('click', ()=>{ vaiPipRimuovi(); });
 }
@@ -33014,104 +33055,6 @@ function vaiQrCodeModifica(e, id){
   if(rim) rim.addEventListener('click', ()=>{ vaiScrittaDel(id); ov.remove(); });
 }
 window.vaiQrCodeModifica=vaiQrCodeModifica;
-
-/* Scheda "card" in sovraimpressione: la stessa idea delle Schede/Finestre generate come
-   video a sé stanti, ma qui come overlay VIVO — mobile su tutto il quadro, ridimensionabile
-   in larghezza e con lo sfondo che si può opacizzare per lasciare in primo piano la clip
-   sotto (richiesta del 03/11/2026: "deve essere movibile in tutta l'area del video e
-   modificabile di ampiezza... lo sfondo deve poter essere opacizzato"). */
-function vaiSchedaOverlayApri(){
-  const v=document.getElementById('vai-video');
-  if(!v || !_vaiClips || !_vaiClips.length){ toast('Carica prima un video','error'); return; }
-  const old=document.getElementById('vai-scheda-nuova'); if(old) old.remove();
-  const im=_vaiImm||{};
-  const titoloDef=(im.titolo||[im.tipo,im.comune].filter(Boolean).join(' a ')||'Nuova proposta').toString().slice(0,40);
-  const prezzoNum=im.prezzoAttuale||im.prezzo;
-  const prezzoDef=prezzoNum?(typeof fmtE==='function'?fmtE(prezzoNum):(Math.round(prezzoNum).toLocaleString('it-IT')+' €')):'';
-  const ov=_vaiMiniModal(
-    '<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:10px">Scheda in sovraimpressione</div>'+
-    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Titolo:</div>'+
-    '<input id="vsc-tit" value="'+_vaiEsc(titoloDef)+'" maxlength="40" style="width:100%;box-sizing:border-box;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:.86rem;margin-bottom:14px">'+
-    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Prezzo (opzionale):</div>'+
-    '<input id="vsc-prz" value="'+_vaiEsc(prezzoDef)+'" maxlength="20" style="width:100%;box-sizing:border-box;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:.86rem;margin-bottom:14px">'+
-    '<button id="vsc-crea" style="width:100%;padding:10px 0;border-radius:8px;cursor:pointer;font-size:.84rem;font-weight:700;background:#C9A84C;color:#1A1205;border:none">Inserisci</button>'
-  );
-  ov.id='vai-scheda-nuova';
-  const titEl=ov.querySelector('#vsc-tit');
-  if(titEl) setTimeout(()=>titEl.focus(), 50);
-  const crea=ov.querySelector('#vsc-crea');
-  if(crea) crea.addEventListener('click', ()=>{
-    vaiSnapshot('aggiungi scheda in sovraimpressione');
-    const ci=_vaiClipAttiva>=0?_vaiClipAttiva:0;
-    const c=_vaiClips[ci]||{};
-    const cIn=c.taglioInizio||0;
-    const offGlob=(typeof _vaiOffsetClip==='function')?_vaiOffsetClip(ci):0;
-    const localOut=(typeof _vaiRawToOutput==='function')?_vaiRawToOutput(c, Math.max(0,v.currentTime-cIn)):Math.max(0,v.currentTime-cIn);
-    const tGlob=offGlob+localOut;
-    const durataScelta=4;
-    const posto=(typeof _vaiTrovaPostoLibero==='function')?_vaiTrovaPostoLibero(0, tGlob, durataScelta):{traccia:0};
-    const przEl=ov.querySelector('#vsc-prz');
-    const nuova=_vaiPushScrittaGlobale(tGlob, {
-      tipo:'scheda', titolo:(titEl?titEl.value:'').toString().slice(0,40),
-      prezzo:(przEl?przEl.value:'').toString().slice(0,20),
-      opacity:0.9, accento:'#C9873D', rapporto:1.18,
-      durata:durataScelta, traccia:posto.traccia, x:0.74, y:0.3, w:0.38,
-      anim:'', animOut:''
-    });
-    if(!nuova){ toast('Non riesco a inserire la scheda qui — prova un altro punto','error'); return; }
-    if(_vaiClipAttiva===ci) _vaiScritte=c.scritte||[];
-    _vaiSelScritta=nuova.id; _vaiTracciaAttiva=posto.traccia; _vaiDirty=true;
-    try{ _vaiRisolviSovrapposizioni(nuova.id); }catch(e){}
-    vaiTlRender(); vaiOverlayUpdate();
-    ov.remove();
-    toast('Scheda inserita — trascinala, ridimensionala e regola la trasparenza con un doppio clic','success');
-  });
-}
-window.vaiSchedaOverlayApri=vaiSchedaOverlayApri;
-
-function vaiSchedaOverlayModifica(e, id){
-  if(e){ e.preventDefault(); e.stopPropagation(); }
-  const s=_vaiScritte.find(x=>x.id===id); if(!s) return;
-  _vaiSelScritta=id; _vaiSel={type:'scritta', id};
-  const v=document.getElementById('vai-video'); if(v) v.pause();
-  const old=document.getElementById('vai-scheda-editor'); if(old) old.remove();
-  const opPct=Math.round((s.opacity!=null?s.opacity:0.9)*100);
-  const ov=_vaiMiniModal(
-    '<div style="color:#fff;font-weight:800;font-size:1rem;margin-bottom:10px">Modifica scheda</div>'+
-    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Titolo:</div>'+
-    '<input id="vse-tit" value="'+_vaiEsc(s.titolo||'')+'" maxlength="40" style="width:100%;box-sizing:border-box;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:.86rem;margin-bottom:14px">'+
-    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Prezzo (opzionale):</div>'+
-    '<input id="vse-prz" value="'+_vaiEsc(s.prezzo||'')+'" maxlength="20" style="width:100%;box-sizing:border-box;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:.86rem;margin-bottom:14px">'+
-    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Colore accento:</div>'+
-    '<div style="display:flex;gap:8px;margin-bottom:14px">'+
-      ['#C9873D','#C9A84C','#0EA5E9','#10B981','#DC2626','#7C3AED'].map(c=>'<button class="vse-col" data-c="'+c+'" style="width:28px;height:28px;border-radius:50%;cursor:pointer;background:'+c+';border:2px solid '+((s.accento||'#C9873D')===c?'#fff':'rgba(255,255,255,.2)')+'"></button>').join('')+
-    '</div>'+
-    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Trasparenza dello sfondo: <span id="vse-opv">'+opPct+'%</span></div>'+
-    '<input id="vse-op" type="range" min="15" max="100" value="'+opPct+'" style="width:100%;margin-bottom:14px">'+
-    '<button id="vse-rimuovi" style="width:100%;padding:9px 0;border-radius:8px;cursor:pointer;font-size:.8rem;font-weight:700;background:#2A1414;color:#F5A3A3;border:1px solid rgba(239,68,68,.3)">Elimina scheda</button>'
-  );
-  ov.id='vai-scheda-editor';
-  const titEl=ov.querySelector('#vse-tit');
-  if(titEl) titEl.addEventListener('input', function(){ s.titolo=this.value; _vaiDirty=true; vaiOverlayUpdate(); });
-  const przEl=ov.querySelector('#vse-prz');
-  if(przEl) przEl.addEventListener('input', function(){ s.prezzo=this.value; _vaiDirty=true; vaiOverlayUpdate(); });
-  ov.querySelectorAll('.vse-col').forEach(b=>{
-    b.addEventListener('click', ()=>{
-      s.accento=b.getAttribute('data-c');
-      ov.querySelectorAll('.vse-col').forEach(x=>x.style.borderColor=(x===b)?'#fff':'rgba(255,255,255,.2)');
-      _vaiDirty=true; vaiOverlayUpdate();
-    });
-  });
-  const opEl=ov.querySelector('#vse-op');
-  if(opEl) opEl.addEventListener('input', function(){
-    s.opacity=Math.max(0.15, Math.min(1, (parseInt(this.value,10)||90)/100));
-    const lbl=ov.querySelector('#vse-opv'); if(lbl) lbl.textContent=this.value+'%';
-    _vaiDirty=true; vaiOverlayUpdate();
-  });
-  const rim=ov.querySelector('#vse-rimuovi');
-  if(rim) rim.addEventListener('click', ()=>{ vaiScrittaDel(id); ov.remove(); });
-}
-window.vaiSchedaOverlayModifica=vaiSchedaOverlayModifica;
 
 /* Mostra all'utente quali dati dell'immobile l'AI userà come contesto */
 function vaiRenderImmRecap(){
@@ -37184,7 +37127,9 @@ function _vaiDrawPip(ctx, W, H, tGlob){
   ctx.restore();
   ctx.save();
   if(_vaiPip.radius>0){ rr(bx,by,bw,bh,Math.min(_vaiPip.radius,bw/2,bh/2)); ctx.clip(); }
+  ctx.globalAlpha=(_vaiPip.opacity!=null)?_vaiPip.opacity:1;
   try{ ctx.drawImage(fr.img, bx, by, bw, bh); }catch(e){}
+  ctx.globalAlpha=1;
   ctx.restore();
 }
 window._vaiDrawPip=_vaiDrawPip;
@@ -42518,36 +42463,6 @@ function vaiOverlayUpdate(){
         (s.etichetta?('<span style="position:absolute;left:50%;top:100%;transform:translate(-50%,8%);color:'+(s.color||'#fff')+';font:700 2.2cqw DM Sans, sans-serif;text-shadow:0 2px 6px rgba(0,0,0,.6);white-space:nowrap;pointer-events:none">'+_vaiEsc(s.etichetta)+'</span>'):'')+
         figHandlesQ+
         '</div>';
-    } else if(tipo==='scheda'){
-      // Scheda "card" in sovraimpressione: stessa geometria del disegno su tela in export
-      // (_vaiDrawScrittaSuCanvas, tipo==='scheda') — qui in HTML/CSS per l'anteprima dal vivo.
-      // Solo lo sfondo prende l'opacità regolabile (s.opacity): il contenuto resta leggibile.
-      const rapSch=(s.rapporto&&s.rapporto>0)?s.rapporto:1.18;
-      const accSch=s.accento||'#C9873D';
-      const opSch=(s.opacity!=null?Math.max(0.1,Math.min(1,s.opacity)):0.9);
-      const cwSch=100, chSch=34;
-      const puntiSch=[0.12,0.32,0.22,0.5,0.4,0.68,0.58,0.88];
-      let pathSch='';
-      puntiSch.forEach((p,i)=>{ const px=(i/(puntiSch.length-1))*cwSch, py=chSch-(p*chSch); pathSch += (i===0?'M':'L')+px.toFixed(1)+','+py.toFixed(1)+' '; });
-      const areaSch='M0,'+chSch+' '+pathSch+' L'+cwSch+','+chSch+' Z';
-      const schHandles = editUI
-        ? '<span class="vai-ov-rh vai-ov-rh-l" title="Larghezza" onmousedown="vaiScrittaResizeStart(event,\''+s.id+'\',\'width\')" ontouchstart="vaiScrittaResizeStart(event,\''+s.id+'\',\'width\')"></span>'+
-          '<span class="vai-ov-rh vai-ov-rh-r" title="Larghezza" onmousedown="vaiScrittaResizeStart(event,\''+s.id+'\',\'width\')" ontouchstart="vaiScrittaResizeStart(event,\''+s.id+'\',\'width\')"></span>'
-        : '';
-      html += '<div class="vai-ov-box'+(editUI?' sel':'')+'" data-id="'+s.id+'" '+
-        'style="left:'+anchorLeft+'%;top:'+(s.y*100)+'%;transform:'+tx+';width:'+((s.w||0.38)*100)+'%;aspect-ratio:1/'+rapSch+'" '+
-        (editUI?('ondblclick="vaiSchedaOverlayModifica(event,\''+s.id+'\')" '):'')+handlers+'>'+
-        '<div style="position:absolute;inset:0;border-radius:11%;overflow:hidden;box-shadow:0 1.4cqw 3cqw rgba(0,0,0,.4)">'+
-          '<div style="position:absolute;inset:0;background:#FAF6EF;opacity:'+opSch+'"></div>'+
-          '<div style="position:relative;height:100%;box-sizing:border-box;padding:9% 10% 8%;display:flex;flex-direction:column">'+
-            '<div style="font:800 2.3cqw DM Sans, sans-serif;letter-spacing:.03em;text-transform:uppercase;color:'+accSch+'">Nuova proposta</div>'+
-            '<div style="font:800 3.1cqw DM Sans, sans-serif;color:#1A1A1A;margin-top:3%;line-height:1.15;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">'+_vaiEsc(s.titolo||'Titolo immobile')+'</div>'+
-            '<svg viewBox="0 0 '+cwSch+' '+chSch+'" preserveAspectRatio="none" style="width:100%;height:30%;margin-top:6%;flex-shrink:0"><path d="'+areaSch+'" fill="'+accSch+'" opacity=".16"/><path d="'+pathSch+'" fill="none" stroke="'+accSch+'" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>'+
-            (s.prezzo?('<div style="margin-top:auto;font:800 3.6cqw DM Sans, sans-serif;color:#1A1A1A">'+_vaiEsc(s.prezzo)+'</div>'):'')+
-          '</div>'+
-        '</div>'+
-        schHandles+
-        '</div>';
     } else if(tipo==='emoji'){
       // reazione emoji rilevata dal parlato: stesso rimbalzo in entrata e dissolvenza
       // in uscita del disegno sul canvas, qui in versione CSS per l'anteprima dal vivo.
@@ -42777,6 +42692,7 @@ function _vaiPipSync(frame, v){
   el.style.top=(_vaiPip.y*100)+'%';
   el.style.width=(_vaiPip.w*100)+'cqw';
   el.style.borderRadius=(_vaiPip.radius||0)+'px';
+  el.style.opacity=(_vaiPip.opacity!=null)?_vaiPip.opacity:1;
   el.style.boxShadow='0 6px 18px rgba(0,0,0,.45)';
   el.style.zIndex='6';
   el.style.cursor='grab';
@@ -45380,6 +45296,12 @@ function vaiInspectorRender(){
       '<div class="vai-insp-row"><span class="vai-insp-l"></span>'+
         '<button class="btn btn-outline btn-sm" onclick="vaiInspClipDurataTutte('+_vaiSel.idx+')" title="Taglia tutte le clip a questa stessa durata">Applica questa durata a tutte le clip</button>'+
       '</div>'+
+      (c.daCard ? (
+        '<div class="vai-insp-row"><span class="vai-insp-l">Come inserirla</span>'+
+          '<button class="btn btn-outline btn-sm" onclick="vaiInspClipInSovrimpressione('+_vaiSel.idx+')" title="Trasformala in una sovraimpressione: mobile, ridimensionabile, con lo sfondo che puoi rendere trasparente per lasciare in primo piano il video sotto">↗ Metti in sovraimpressione</button>'+
+        '</div>'+
+        '<div class="vai-insp-row"><span class="vai-insp-l"></span><span style="flex:1;font-size:.72rem;color:#8FA3B8">Ora è una clip nella timeline. In sovraimpressione resta movibile e ridimensionabile sopra un\'altra clip, e lo sfondo diventa trasparente a piacere.</span></div>'
+      ) : '')+
       '<div class="vai-insp-row"><span class="vai-insp-l">Inquadratura</span>'+
         '<div class="vai-insp-seg">'+
           '<button class="vai-insp-sb'+((c.fit)==='cover'?' on':'')+'" onclick="vaiInspClipFit('+_vaiSel.idx+',\'cover\')" title="Riempi (taglia i bordi)">Riempi</button>'+
@@ -45595,6 +45517,51 @@ function vaiInspClipFit(i,fit){
   vaiInspectorRender();
   if(typeof vaiSyncFrame==='function') vaiSyncFrame();
 }
+
+/* ═══ SCHEDA: NELLA TIMELINE o IN SOVRIMPRESSIONE [03 nov 2026] ═══
+   Richiesta di Enzo: una Scheda generata col "Crea e inserisci" deve poter restare una
+   clip normale (comportamento di sempre) OPPURE diventare una sovraimpressione sulla
+   clip sotto — mobile, ridimensionabile, con lo sfondo che si può rendere trasparente.
+   Non una sezione a parte: un'azione dentro le proprietà della clip stessa. Riuso di
+   proposito il sistema "Video in sovrimpressione" già esistente (_vaiPip): è già
+   mobile/ridimensionabile, gli ho solo aggiunto la trasparenza (s.opacity, vedi sopra). */
+async function vaiInspClipInSovrimpressione(i){
+  const c=_vaiClips[i]; if(!c) return;
+  if(_vaiPip){
+    if(!confirm('C\'è già una sovraimpressione attiva ('+(_vaiPip.fileName||'video')+'). Per ora può essercene una sola: la metto in coda alla timeline e la sostituisco con questa. Continuare?')) return;
+    await vaiPipTornaClip();
+  }
+  vaiSnapshot('sposta la scheda in sovraimpressione');
+  const url=c.url;
+  const tGlob=(typeof _vaiOffsetClip==='function')?_vaiOffsetClip(i):0;
+  const durata=(typeof _vaiDurataEff==='function')?_vaiDurataEff(c):(c.durata||3);
+  const pronto=(naturalW, naturalH, naturalDur)=>{
+    // le scritte della clip attiva vivono in _vaiScritte finché non la si rilascia:
+    // le rimetto al loro posto prima di toccare l'array, stessa cautela di vaiClipDel.
+    if(_vaiClipAttiva>=0 && _vaiClipAttiva<_vaiClips.length){ _vaiClips[_vaiClipAttiva].scritte=_vaiScritte; }
+    _vaiPip={
+      url, fileName:(c.nome||'Scheda')+'.'+((c.file&&c.file.type&&c.file.type.indexOf('mp4')>=0)?'mp4':'webm'),
+      naturalW:naturalW||9, naturalH:naturalH||16, naturalDur:naturalDur||durata||3,
+      taglioInizio:c.taglioInizio||0, t:Math.round(tGlob*10)/10, durata:Math.max(0.5,durata||3),
+      x:0.26, y:0.1, w:0.46, radius:14, opacity:0.95, _daCard:true
+    };
+    _vaiClips.splice(i,1);
+    if(_vaiClipAttiva>=_vaiClips.length) _vaiClipAttiva=_vaiClips.length-1;
+    else if(i<_vaiClipAttiva) _vaiClipAttiva--;
+    _vaiSel=null;
+    _vaiDirty=true;
+    vaiClipsRender();
+    if(_vaiClipAttiva>=0) vaiClipSelect(_vaiClipAttiva, true);
+    vaiTlRender(); vaiOverlayUpdate(); vaiInspectorRender();
+    toast('Spostata in sovraimpressione — trascinala, ridimensionala e regola la trasparenza','success');
+    try{ vaiPipModifica(); }catch(e){}
+  };
+  const tv=document.createElement('video');
+  tv.preload='metadata'; tv.muted=true; tv.src=url;
+  tv.onloadedmetadata=()=>{ pronto(tv.videoWidth, tv.videoHeight, (isFinite(tv.duration)&&tv.duration>0)?tv.duration:durata); try{ tv.remove(); }catch(e){} };
+  tv.onerror=()=>{ pronto(9,16,durata); try{ tv.remove(); }catch(e){} };
+}
+window.vaiInspClipInSovrimpressione=vaiInspClipInSovrimpressione;
 /* ═══ GRIGLIA A DUE VIDEO — anteprima ═══
    Il secondo filmato ha un lettore suo, appoggiato a destra sopra al riquadro. La divisione
    decide quanto spazio prende ciascuno. Il passo lo tengo confrontando i due tempi e
@@ -51407,70 +51374,6 @@ function _vaiDrawScrittaSuCanvas(ctx, W, H, s, t){
     ctx.textAlign='left'; ctx.textBaseline='alphabetic';
     _finish(); return;
   }
-  if(tipo==='scheda'){
-    // Scheda "card" in sovraimpressione: titolo, mini-grafico stilizzato e prezzo dentro
-    // un riquadro arrotondato — si trascina e si ridimensiona come le altre grafiche, ma
-    // a differenza loro ha uno SFONDO a trasparenza regolabile (s.opacity), così la clip
-    // sotto resta visibile "attraverso" — esattamente come richiesto per la sovraimpressione.
-    // Il contenuto (testo/grafico) resta SEMPRE a piena opacità: solo il riquadro dietro si opacizza.
-    const rapSch=(s.rapporto&&s.rapporto>0)?s.rapporto:1.18;
-    const accSch=s.accento||'#C9873D';
-    const opSch=(s.opacity!=null?Math.max(0.1,Math.min(1,s.opacity)):0.9);
-    const bw=(s.w||0.38)*W, bh=bw*rapSch;
-    const dx=ax-bw/2, dy=ay-bh/2;
-    const rad=bw*0.11;
-    // sfondo (unico elemento che prende l'alpha regolabile, con la sua ombra)
-    ctx.save();
-    ctx.shadowColor='rgba(0,0,0,.4)'; ctx.shadowBlur=bw*0.05; ctx.shadowOffsetY=bw*0.02;
-    ctx.globalAlpha=opSch;
-    ctx.fillStyle='#FAF6EF';
-    if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(dx,dy,bw,bh,rad); ctx.fill(); }
-    else ctx.fillRect(dx,dy,bw,bh);
-    ctx.restore();
-    // contenuto, sempre a piena opacità, ritagliato dentro il riquadro
-    ctx.save();
-    if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(dx,dy,bw,bh,rad); ctx.clip(); }
-    const padX=bw*0.1, padTop=bh*0.1;
-    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
-    ctx.fillStyle=accSch;
-    ctx.font='800 '+Math.round(bw*0.072)+'px DM Sans, sans-serif';
-    ctx.fillText('NUOVA PROPOSTA', dx+padX, dy+padTop+bw*0.06);
-    // titolo, su al massimo due righe (spezzato in base alla larghezza reale del testo)
-    const titRaw=(s.titolo||'Titolo immobile');
-    const fsTit=Math.round(bw*0.1);
-    ctx.font='800 '+fsTit+'px DM Sans, sans-serif';
-    ctx.fillStyle='#1A1A1A';
-    const maxTitW=bw-padX*2;
-    const paroleTit=titRaw.split(/\s+/).filter(Boolean);
-    const righeTit=[]; let curTit='';
-    paroleTit.forEach(w=>{
-      const prova=curTit?curTit+' '+w:w;
-      if(!curTit || ctx.measureText(prova).width<=maxTitW) curTit=prova;
-      else { righeTit.push(curTit); curTit=w; }
-    });
-    if(curTit) righeTit.push(curTit);
-    let tyTit=dy+padTop+bw*0.21;
-    righeTit.slice(0,2).forEach(riga=>{ ctx.fillText(riga, dx+padX, tyTit); tyTit+=bw*0.115; });
-    // mini-grafico stilizzato (andamento decorativo, non dati reali)
-    const puntiG=[0.12,0.32,0.22,0.5,0.4,0.68,0.58,0.88];
-    const gx=dx+padX, gy=tyTit+bw*0.02, gw=bw-padX*2, gh=bh*0.17;
-    ctx.beginPath();
-    puntiG.forEach((p,i)=>{ const px=gx+(i/(puntiG.length-1))*gw, py=gy+gh-(p*gh); if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py); });
-    ctx.lineTo(gx+gw, gy+gh); ctx.lineTo(gx, gy+gh); ctx.closePath();
-    ctx.globalAlpha=0.16; ctx.fillStyle=accSch; ctx.fill(); ctx.globalAlpha=1;
-    ctx.beginPath();
-    puntiG.forEach((p,i)=>{ const px=gx+(i/(puntiG.length-1))*gw, py=gy+gh-(p*gh); if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py); });
-    ctx.strokeStyle=accSch; ctx.lineWidth=Math.max(1.5,bw*0.012); ctx.lineCap='round'; ctx.lineJoin='round';
-    ctx.stroke();
-    if(s.prezzo){
-      ctx.fillStyle='#1A1A1A';
-      ctx.font='800 '+Math.round(bw*0.12)+'px DM Sans, sans-serif';
-      ctx.fillText(s.prezzo, dx+padX, dy+bh-bh*0.09);
-    }
-    ctx.textAlign='left'; ctx.textBaseline='alphabetic';
-    ctx.restore();
-    _finish(); return;
-  }
   if(tipo==='qrcode'){
     // Un QR che porta all'annuncio o al modulo contatti — utile quando il video gira
     // anche fuori dai social (schermi in agenzia, stampa). Sempre moduli neri su sfondo
@@ -56104,7 +56007,6 @@ async function pubConfrontaAI(){
     logo:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>',
     pip:'<rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="12" width="7" height="5" rx="1" fill="currentColor" stroke="none"/>',
     primadopo:'<rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="4" width="10" height="16" fill="currentColor" stroke="none"/><line x1="12" y1="4" x2="12" y2="20"/>',
-    scheda:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M7 14l2.5-3 2 2L16 9"/><line x1="7" y1="18" x2="13" y2="18"/>',
     qrcode:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><line x1="14" y1="14" x2="14" y2="21"/><line x1="21" y1="14" x2="21" y2="21"/><line x1="14" y1="17.5" x2="21" y2="17.5"/>',
     grafica:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><circle cx="17.5" cy="17.5" r="3.5"/>',
     piu:'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
@@ -56205,8 +56107,7 @@ async function pubConfrontaAI(){
     P.elementi.innerHTML='<div class="vcc-h">Da mettere sopra il video</div><div class="vcc-griglia">'
       + tile('grafica','Grafiche','badge, inviti, contatti','vaiGraficaPanel()',"Badge, inviti all'azione, contatti e decorazioni")
       + tile('logo','Logo','posizione e durata','vaiLogoOpen()',"Carica e posiziona il logo dell'agenzia")
-      + tile('pip','Video sovrapposto','riquadro PiP','vaiPipApri()',"Un secondo video piccolo sopra il principale, come il tuo volto mentre parli")
-      + tile('scheda','Scheda in sovraimpressione','card con sfondo opacizzabile','vaiSchedaOverlayApri()',"Una card con titolo e prezzo sopra la clip: si sposta e si ridimensiona ovunque, e lo sfondo si può rendere trasparente per lasciare in primo piano il video sotto")
+      + tile('pip','Video sovrapposto','riquadro PiP','vaiPipApri()',"Un secondo video piccolo sopra il principale, come il tuo volto mentre parli — qui finisce anche una Scheda messa in sovraimpressione dalle sue proprietà")
       + tile('primadopo','Prima / Dopo','rivela una ristrutturazione','vaiPrimaDopoApri()',"Mostra un ambiente prima e dopo: a tendina o a schermo diviso")
       + tile('qrcode','QR code','link all\'annuncio','vaiQrCodeApri()',"Un QR che porta all'annuncio o al modulo contatti, utile anche fuori dai social")
       + '</div><div class="vcc-h">Inserisci</div>';
