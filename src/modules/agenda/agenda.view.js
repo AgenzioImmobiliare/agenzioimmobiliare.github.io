@@ -683,6 +683,15 @@ function apRenderPipeline(){
           + 'onmouseout="this.style.borderColor=\'' + rowBorder + '\';this.style.background=\'var(--bg2)\';this.style.color=\'var(--text3)\'">'
           + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="13" x2="12" y2="19"/><line x1="9" y1="16" x2="15" y2="16"/></svg>'
           + '</button>' : '')
+      /* [3 nov 2026] Incarico preso: apre il modulo FRIMM già esistente,
+         precompilato con i dati del contatto (vedi apPreparaIncaricoDaDeal) */
+      + (isWon
+        ? '<button onclick="event.stopPropagation();apPreparaIncaricoDaDeal(\'' + deal.id + '\')" title="Compila il modulo di incarico — precompilato con i dati già inseriti" '
+          + 'style="width:28px;height:28px;border-radius:7px;border:1.5px solid #6EE7B7;background:rgba(5,150,105,.10);cursor:pointer;display:flex;align-items:center;justify-content:center;color:#059669;transition:all .12s" '
+          + 'onmouseover="this.style.background=\'rgba(5,150,105,.18)\';this.style.borderColor=\'#059669\'" '
+          + 'onmouseout="this.style.background=\'rgba(5,150,105,.10)\';this.style.borderColor=\'#6EE7B7\'">'
+          + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/></svg>'
+          + '</button>' : '')
       + '<button onclick="event.stopPropagation();apEditDeal(\'' + deal.id + '\')" title="Apri scheda" '
       + 'style="width:28px;height:28px;border-radius:7px;border:1.5px solid ' + rowBorder + ';background:var(--bg2);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);transition:all .12s" '
       + 'onmouseover="this.style.borderColor=\'#1D4ED8\';this.style.background=\'rgba(37,99,235,.08)\';this.style.color=\'#1D4ED8\'" '
@@ -863,6 +872,54 @@ function apStampaPipeline(){
   win.focus();
 }
 
+
+/* ══ PONTE INCARICO DA UN CONTATTO DELLA PIPELINE ══  [3 nov 2026]
+   Quando un contatto arriva a "Incarico Preso" serve compilare il modulo di
+   incarico FRIMM già esistente (incarico_frimm.html). Stessa "busta" monouso
+   in localStorage del pulsante "Prepara incarico" della scheda immobile (vedi
+   PONTE INCARICO in index.html) — qui costruita dai campi che la pipeline ha
+   già (nome, telefono, email, comune/zona, tipo immobile, mq, prezzo). Il
+   resto (codice fiscale, nascita, dati catastali…) un contatto della pipeline
+   non li ha: li scrive Enzo a mano sul modulo, niente di inventato qui. */
+function apPreparaIncaricoDaDeal(dealId){
+  var deal=apGetDeals().find(function(d){return d.id===dealId;});
+  if(!deal){ if(typeof showToast==='function') showToast('Contatto non trovato','','#DC2626'); return; }
+
+  var txt=function(v){ return String(v==null?'':v).trim(); };
+  var euro=function(v){
+    var n=parseFloat(String(v==null?'':v).replace(/[^\d.,-]/g,'').replace(/\./g,'').replace(',','.'));
+    return (isNaN(n)||n<=0) ? '' : Math.round(n).toLocaleString('it-IT');
+  };
+  var campi={};
+  var set=function(k,v){ v=txt(v); if(v!=='') campi[k]=v; };
+
+  set('p1_sig1',      deal.titolo||deal.cliente);
+  set('p1_tel1',      deal.telefono);
+  set('p1_email1',    deal.email);
+  set('p1_comune',    deal.comune);
+  set('p1_indirizzo', deal.zona);
+  var comp=[];
+  if(txt(deal.tipoImm)) comp.push(txt(deal.tipoImm));
+  if(txt(deal.mq)) comp.push(txt(deal.mq)+' mq');
+  set('p1_composizione', comp.join(' — '));
+  var pr=euro(deal.valore); if(pr) campi.p1_prezzo=pr;
+
+  var busta={
+    v:1, ts:Date.now(), origine:'pipeline', immUuid:'', cliUuid:'',
+    etichetta:(deal.titolo||deal.cliente||'contatto')+(deal.comune?(' — '+deal.comune):''),
+    sesso1:'', campi:campi, catasto:[]
+  };
+  try{ localStorage.setItem('lecase_incarico_v1', JSON.stringify(busta)); }
+  catch(e){
+    console.warn('[Pipeline] scrittura busta incarico KO:', e);
+    if(typeof dlgAlert==='function') dlgAlert('Non sono riuscito a preparare i dati per l\'incarico (memoria del browser piena).','','Incarico');
+    else if(typeof showToast==='function') showToast('Non sono riuscito a preparare il modulo','','#DC2626');
+    return;
+  }
+  try{ window.open('incarico_frimm.html', '_blank', 'noopener'); }
+  catch(e2){ window.location.href='incarico_frimm.html'; }
+}
+window.apPreparaIncaricoDaDeal=apPreparaIncaricoDaDeal;
 
 /* ══ SCHEDA CONTATTO — apri modal con tutti i campi ══ */
 function apEditDeal(dealId){

@@ -3,7 +3,7 @@
    IMPORTANTE: quando esce un aggiornamento, bumpa CACHE='lecase-vN'
    per invalidare la cache HTML/JS e forzare il telefono a scaricare il nuovo codice. */
 
-var CACHE = 'lecase-v157';            /* Video Social: 5 nuovi stili Scheda (prima/dopo, classe energetica, distribuzione spazi, quartiere, copertina) + corretto uno spazio mancante nei titoli a due colori (03/11/2026) */
+var CACHE = 'lecase-v158';            /* Pipeline commerciale: icona "Compila modulo incarico" quando un contatto arriva a Incarico Preso (03/11/2026) */
 var FOTO_CACHE = 'lecase-foto-v1';
 
 self.addEventListener('install', function (e) { self.skipWaiting(); });
