@@ -12294,6 +12294,7 @@ body.dark-mode :is([style^="color: #64748B" i],[style*=";color: #64748B" i],[sty
     <button onclick="siTab('cma')" id="si-tab-cma" class="btn btn-outline btn-sm" style="border-radius:9px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Analisi di Mercato (CMA)</button>
     <button onclick="siTab('report')" id="si-tab-report" class="btn btn-outline btn-sm" style="border-radius:9px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> Report Venditore</button>
     <button onclick="siTab('netto')" id="si-tab-netto" class="btn btn-outline btn-sm" style="border-radius:9px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="6" x2="16" y2="6"/><line x1="8" y1="10" x2="16" y2="10"/><line x1="8" y1="14" x2="12" y2="14"/></svg> Netto al Venditore</button>
+    <button onclick="siTab('kit')" id="si-tab-kit" class="btn btn-outline btn-sm" style="border-radius:9px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Kit Acquisizione</button>
   </div>
 
   <!-- ─── TAB: PROPOSTA INCARICO ─── -->
@@ -12460,6 +12461,35 @@ body.dark-mode :is([style^="color: #64748B" i],[style*=";color: #64748B" i],[sty
         <div class="card-header"><span class="card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M12 2a10 10 0 100 20A10 10 0 0012 2z"/><path d="M12 6v2m0 8v2m-4-6h8m-7-2h6"/></svg> Risultato</span></div>
         <div class="card-body" id="nv-result" style="min-height:350px;display:flex;align-items:center;justify-content:center">
           <div style="text-align:center;color:var(--text4)">Inserisci il prezzo di vendita per calcolare</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── TAB: KIT ACQUISIZIONE [08 nov 2026] ─── -->
+  <div id="si-panel-kit" style="display:none">
+    <div class="grid-2" style="gap:18px">
+      <div class="card">
+        <div class="card-header" style="background:linear-gradient(135deg,#0F172A,#1E293B)">
+          <span class="card-title" style="color:white"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Prepara il Kit Acquisizione</span>
+        </div>
+        <div class="card-body">
+          <div class="fgrid">
+            <div class="frow" style="grid-column:1/-1"><label class="flabel">Nome proprietario</label><input class="finput" id="ki-nome" placeholder="Mario Rossi"></div>
+            <div class="frow"><label class="flabel">Comune</label><input class="finput" id="ki-comune" placeholder="Agropoli"></div>
+            <div class="frow"><label class="flabel">Zona</label><input class="finput" id="ki-zona" placeholder="Centro"></div>
+          </div>
+          <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+            <button onclick="siGeneraKit()" class="btn btn-primary" style="flex:1"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> Genera Kit Acquisizione</button>
+            <button onclick="siCaricaKitDaImmobile()" class="btn btn-outline"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Carica da Immobile</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Cos'è il Kit Acquisizione</span></div>
+        <div class="card-body" style="font-size:0.85rem;color:var(--text2);line-height:1.7">
+          <p>Il dossier da mandare al proprietario prima dell'appuntamento per prendere l'incarico: chi sei, il tuo metodo di lavoro, i dati di mercato reali della zona, le risposte alle obiezioni più comuni, i documenti da preparare per vendere e il modulo di incarico.</p>
+          <p style="margin-top:10px">Si apre in una nuova scheda: da lì lo stampi e lo spedisci, oppure lo mandi via WhatsApp.</p>
         </div>
       </div>
     </div>
@@ -19472,7 +19502,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.8nov-KITCSSFIX';
+var APP_VERSION = 'v.8nov-KITDASHFAQINCARICO';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -38679,7 +38709,7 @@ function renderStrumentiIncarico(){
   siAggiornaPreview();
 }
 function siTab(tab){
-  ['proposta','cma','report','netto'].forEach(t=>{
+  ['proposta','cma','report','netto','kit'].forEach(t=>{
     document.getElementById('si-panel-'+t).style.display=t===tab?'':'none';
     const btn=document.getElementById('si-tab-'+t);
     if(btn){btn.className=t===tab?'btn btn-primary btn-sm':'btn btn-outline btn-sm';btn.style.borderRadius='9px';}
@@ -38687,6 +38717,26 @@ function siTab(tab){
   if(tab==='cma') renderCMA();
   if(tab==='report') renderReport();
   if(tab==='netto') calcNettoVenditore();
+}
+/* Kit Acquisizione dalla dashboard [08 nov 2026]: si prepara qui, prima
+   ancora di avere un cliente o un immobile in gestionale. */
+function siGeneraKit(){
+  if(typeof kaApriKit!=='function'){ if(typeof showToast==='function') showToast('Kit Acquisizione non disponibile','','#DC2626'); return; }
+  const comune=((document.getElementById('ki-comune')||{}).value||'').trim();
+  const zona=((document.getElementById('ki-zona')||{}).value||'').trim();
+  const nome=((document.getElementById('ki-nome')||{}).value||'').trim();
+  if(!comune){ if(typeof showToast==='function') showToast('Inserisci almeno il comune','','#DC2626'); return; }
+  kaApriKit(comune, zona, nome);
+}
+function siCaricaKitDaImmobile(){
+  const idx=prompt('Inserisci il numero progressivo dell\'immobile da caricare (vedi lista immobili):');
+  if(!idx) return;
+  const im=D.immobili[parseInt(idx)-1];
+  if(!im){ if(typeof dlgAlert==='function') dlgAlert('Immobile non trovato',''); else if(typeof showToast==='function') showToast('Immobile non trovato','','#DC2626'); return; }
+  const g=id=>document.getElementById(id);
+  if(im.comune) g('ki-comune').value=im.comune;
+  if(im.zona) g('ki-zona').value=im.zona;
+  if(im.contatto) g('ki-nome').value=im.contatto;
 }
 function siCaricaDaImmobile(){
   // Apri select per scegliere immobile
@@ -51825,6 +51875,25 @@ function kaApriKit(comune, zona, prospectNome){
   var waMsg=encodeURIComponent('Ciao, confermo il nostro appuntamento per l\'immobile a '+dove.replace(/<[^>]*>/g,'')+'.');
   var qrWaDataUrl=(telDigits && typeof qrDataUrl==='function') ? qrDataUrl('https://wa.me/'+telDigits+'?text='+waMsg, 220) : null;
 
+  var incaricoUrl='incarico_frimm.html';
+  try{ incaricoUrl=new URL('incarico_frimm.html', window.location.href).href; }catch(e){}
+
+  /* Precompila il modulo di incarico con quel poco che il Kit già sa
+     (nome, comune, zona) — stessa busta monouso usata dalla Pipeline, così
+     da "Dossier & Incarico" si apre già pronto da completare e stampare
+     per inserirlo in busta insieme al Kit. [08 nov 2026] */
+  try{
+    var incCampi={};
+    if(prospectNome && prospectNome.trim()) incCampi.p1_sig1=prospectNome.trim();
+    if(comune) incCampi.p1_comune=comune;
+    if(zona) incCampi.p1_indirizzo=zona;
+    localStorage.setItem('lecase_incarico_v1', JSON.stringify({
+      v:1, ts:Date.now(), origine:'kit', immUuid:'', cliUuid:'',
+      etichetta:(prospectNome||'contatto')+(comune?(' — '+comune):''),
+      sesso1:'', campi:incCampi, catasto:[]
+    }));
+  }catch(e){}
+
   var badgeAgente=logo
     ? '<img src="'+logo+'" class="w-12 h-12 rounded-lg object-cover shadow-lg">'
     : '<div class="w-12 h-12 rounded-lg bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center font-bold text-white text-xl shadow-lg shadow-gold-500/20">'+iniziali+'</div>';
@@ -51864,6 +51933,31 @@ function kaApriKit(comune, zona, prospectNome){
       +'<h3 class="font-bold text-navy-900 text-sm sm:text-base">'+esc(o.t)+'</h3></div>'
       +'<i id="objIcon-'+n+'" class="fa-solid fa-chevron-down text-slate-400 transition-transform flex-shrink-0 ml-2"></i></button>'
       +'<div id="objContent-'+n+'" class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 text-xs sm:text-sm text-slate-600'+(n>1?' hidden':'')+'"><strong class="text-gold-700">La mia risposta:</strong> '+esc(o.r)+'</div></div>';
+  }).join('');
+
+  var faqPrezzo = [
+    { q:'Qual è il giusto prezzo per vendere casa?',
+      a:'È il prezzo in linea con quello pagato dal mercato della zona per case simili, stimato con una valutazione che considera le caratteristiche specifiche dell\'immobile.' },
+    { q:'Di quanto si abbassa in media il prezzo in trattativa?',
+      a:'Secondo il sondaggio congiunturale di Banca d\'Italia, Tecnoborsa e Agenzia delle Entrate (II trimestre 2026), si attesta intorno al 7,1%, con sconti più contenuti al Nord-Est e più ampi al Sud e nelle Isole.' },
+    { q:'Quanto tempo ci vuole per vendere casa?',
+      a:'Intorno ai 5 mesi in media (5,2 mesi nel II trimestre 2026), ma il tempo varia molto in base alla zona, al prezzo di partenza e allo stato dell\'immobile.' },
+    { q:'Cosa succede se parto con un prezzo troppo alto?',
+      a:'La casa resta più a lungo sul mercato, le visite scarseggiano e spesso si arriva a ribassare dopo mesi — con il rischio che gli acquirenti la percepiscano come un immobile "problematico".' },
+    { q:'Meglio partire alto e poi trattare?',
+      a:'Conviene partire da un prezzo ragionato, con un margine di trattativa contenuto (5-7%), piuttosto che da un prezzo esageratamente alto seguito poi da forti ribassi.' },
+    { q:'Un prezzo basso fa vendere più in fretta?',
+      a:'Sì, ma riduce il ricavo netto del venditore. Il giusto prezzo non è il prezzo più basso, ma il valore reale che il mercato riconosce a immobili comparabili.' },
+    { q:'Quando conviene ribassare il prezzo?',
+      a:'Quando dopo alcune settimane arrivano poche richieste di visita o molte visite senza nessuna offerta: il momento e l\'entità del ribasso li valutiamo insieme, conoscendo la zona.' }
+  ];
+  var faqHtml = faqPrezzo.map(function(f,i){
+    var n=i+1;
+    return '<div class="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">'
+      +'<button onclick="toggleFaq('+n+')" class="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-slate-50 transition">'
+      +'<h4 class="font-bold text-navy-900 text-sm sm:text-base">'+esc(f.q)+'</h4>'
+      +'<i id="faqIcon-'+n+'" class="fa-solid fa-chevron-down text-slate-400 transition-transform flex-shrink-0 ml-2"></i></button>'
+      +'<div id="faqContent-'+n+'" class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 text-xs sm:text-sm text-slate-600 hidden">'+esc(f.a)+'</div></div>';
   }).join('');
 
   var coverQrBlock = qrWaDataUrl
@@ -52368,6 +52462,12 @@ var kitCss = ''
             +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900 mt-1">Risposte Chiare ai Tuoi Dubbi</h2>'
             +'<p class="text-slate-500 text-sm mt-1">Le domande più comuni, e come ci lavoro io.</p></div>'
             +'<div class="mt-6 space-y-4">'+obiezioniHtml+'</div>'
+            +'<div class="mt-10 pt-6 border-t border-slate-100">'
+              +'<h3 class="font-bold text-navy-900 text-base mb-1">Domande frequenti sul giusto prezzo</h3>'
+              +'<p class="text-slate-500 text-xs mb-4">Dati reali del mercato immobiliare italiano, non opinioni.</p>'
+              +'<div class="space-y-4">'+faqHtml+'</div>'
+              +'<p class="text-[11px] text-slate-400 italic mt-4">Fonte: sondaggio congiunturale sul mercato delle abitazioni, Banca d\'Italia, Tecnoborsa e Agenzia delle Entrate.</p>'
+            +'</div>'
           +'</div></div>'
 
           // ═══ 6. DOSSIER & INCARICO ═══
@@ -52386,8 +52486,9 @@ var kitCss = ''
               +'</div>'
               +'<div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col justify-between">'
                 +'<div><div class="flex items-center justify-between mb-3"><h3 class="font-bold text-navy-900 text-sm flex items-center gap-2"><i class="fa-solid fa-signature text-gold-600"></i>Il modulo di incarico</h3></div>'
-                +'<p class="text-xs text-slate-500 mb-4">In questa stessa busta trovi già il modulo di incarico di mediazione, compilato con i tuoi dati — non per darti fretta, ma perché quando arrivo voglio parlare di come vendere casa tua al meglio, non perdere tempo con la carta. Le condizioni (durata, compenso) le decidiamo insieme, per iscritto.</p></div>'
-                +'<div class="pt-3 border-t border-slate-200 text-xs text-emerald-700 font-semibold"><i class="fa-solid fa-check mr-1"></i>Allegato a parte in questa busta</div>'
+                +'<p class="text-xs text-slate-500 mb-4">In questa stessa busta trovi anche il modulo di incarico di mediazione, già precompilato con zona e nominativo — non per darti fretta, ma perché quando arrivo voglio parlare di come vendere casa tua al meglio, non perdere tempo con la carta. Le condizioni (durata, compenso) le decidiamo insieme, per iscritto.</p></div>'
+                +'<a href="'+incaricoUrl+'" target="_blank" class="no-print flex items-center justify-center gap-2 py-2 bg-navy-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition mb-3"><i class="fa-solid fa-file-signature"></i>Apri e completa il modulo</a>'
+                +'<div class="pt-3 border-t border-slate-200 text-xs text-emerald-700 font-semibold"><i class="fa-solid fa-check mr-1"></i>Da completare, stampare e inserire in questa busta</div>'
               +'</div>'
             +'</div>'
             +'<div class="mt-6 bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-200">'
@@ -52456,6 +52557,12 @@ var kitCss = ''
       +'}'
       +'function toggleObj(n){'
         +'var c=document.getElementById("objContent-"+n),ic=document.getElementById("objIcon-"+n);'
+        +'var open=!c.classList.contains("hidden");'
+        +'c.classList.toggle("hidden");'
+        +'ic.style.transform=open?"rotate(0deg)":"rotate(180deg)";'
+      +'}'
+      +'function toggleFaq(n){'
+        +'var c=document.getElementById("faqContent-"+n),ic=document.getElementById("faqIcon-"+n);'
         +'var open=!c.classList.contains("hidden");'
         +'c.classList.toggle("hidden");'
         +'ic.style.transform=open?"rotate(0deg)":"rotate(180deg)";'
