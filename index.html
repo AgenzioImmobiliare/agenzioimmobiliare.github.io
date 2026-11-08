@@ -19461,7 +19461,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.3nov-SCHEDATROVABILE';
+var APP_VERSION = 'v.8nov-KITACQUISIZIONE';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -51637,6 +51637,155 @@ function getTaglineAg(){
 }
 try{ window.getNomeAgente=getNomeAgente; window.getTaglineAg=getTaglineAg; }catch(e){}
 
+/* ═══ KIT ACQUISIZIONE — [08 nov 2026] ═══
+   Richiesto dopo il corso "Agente del Futuro" (Riccione, nov 2026): un documento
+   unico da portare agli appuntamenti per prendere un incarico — risultati,
+   testimonianze, obiezioni anticipate, piano di vendita, analisi di mercato
+   della zona e un richiamo all'incarico. "Risultati" e "analisi di mercato"
+   usano SOLO dati veri già nel gestionale (immobili venduti, tabella OMI);
+   testimonianze e obiezioni restano segnaposto apposta — sono la personalità
+   e la relazione col cliente di Enzo, non si inventano (vedi cosa delegare
+   all'IA e cosa no, dal recap del corso). Stesso meccanismo di stampa già
+   usato per i report (rvStampaCard): finestra nuova, bottone Stampa/Salva PDF. */
+function _kaOmiDiZona(comune, zonaTesto, tipoTesto){
+  var V = window.VC_DATI; if(!V || !comune) return null;
+  var zt = String(comune).toLowerCase();
+  var com = V.COMUNI.filter(function(c){ var n=c.nome.toLowerCase(); return zt.indexOf(n)>=0 || n.indexOf(zt)>=0; })[0];
+  if(!com || !V.OMI[com.id]) return null;
+  var testo = (String(zonaTesto||'')+' '+String(tipoTesto||'')).toLowerCase();
+  var tip = /\b(villa|villetta|indipendente)\b/.test(testo) ? 'vil' : 'civ';
+  var zona=null, lung=0;
+  com.zone.forEach(function(z){
+    String(z.n).split(/[\/()]/).map(function(x){ return x.trim().toLowerCase(); }).filter(function(x){ return x.length>3; }).forEach(function(tk){
+      if(testo.indexOf(tk)>=0 && tk.length>lung && V.OMI[com.id][z.omi]){ zona=z; lung=tk.length; }
+    });
+  });
+  var min,max,dove;
+  if(zona){ var r=V.OMI[com.id][zona.omi][tip]; if(!r) return null; min=r[0]; max=r[1]; dove=zona.n; }
+  else {
+    min=Infinity; max=0;
+    Object.keys(V.OMI[com.id]).forEach(function(k){ var r=V.OMI[com.id][k][tip]; if(r){ if(r[0]<min) min=r[0]; if(r[1]>max) max=r[1]; } });
+    if(!isFinite(min) || !max) return null;
+    dove='Tutto il comune di '+com.nome;
+  }
+  return { min:min, max:max, dove:dove, tip:tip, semestre:V.semestre||'' };
+}
+function kaApriKit(comune, zona, prospectNome){
+  comune=(comune||'').trim();
+  if(!comune){ if(typeof showToast==='function') showToast('Serve almeno il comune della zona','','#DC2626'); return; }
+  var nowStr=new Date().toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
+
+  var tutti=(Array.isArray(D.immobili)?D.immobili:[]);
+  var venduti=tutti.filter(function(im){ return im && String(im.stato||'').toLowerCase()==='venduto'; });
+  venduti.sort(function(a,b){ return String(b.dataIns||'').localeCompare(String(a.dataIns||'')); });
+  var risultati=venduti.slice(0,6);
+
+  var inComune=tutti.filter(function(im){ return im && String(im.comune||'').toLowerCase()===comune.toLowerCase(); });
+  var attiviZona=inComune.filter(function(im){ return String(im.stato||'').toLowerCase()==='attivo'; }).length;
+  var vendutiZona=inComune.filter(function(im){ return String(im.stato||'').toLowerCase()==='venduto'; }).length;
+
+  var omi=_kaOmiDiZona(comune, zona, '');
+
+  var rigaRisultato=function(im){
+    return '<tr><td style="padding:6px 8px;font-size:10px">'+(im.tipo||'Immobile')+'</td>'
+      +'<td style="padding:6px 8px;font-size:10px">'+(im.comune||'')+(im.zona?' — '+im.zona:'')+'</td>'
+      +'<td style="padding:6px 8px;font-size:10px;text-align:right;font-weight:700">'+(im.prezzo?fmtE(im.prezzo):'—')+'</td></tr>';
+  };
+
+  var html='<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8">'
+    +'<title>Kit Acquisizione — '+comune+'</title>'
+    +'<style>*{box-sizing:border-box;margin:0;padding:0}'
+    +'@page{size:A4 portrait;margin:14mm 16mm}'
+    +'body{font-family:"Helvetica Neue",Arial,sans-serif;font-size:12px;color:#111827;background:white;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+    +'table{width:100%;border-collapse:collapse}'
+    +'h2{font-size:17px;color:#0D1B2A;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #C9A84C}'
+    +'.sezione{page-break-before:always;padding-top:4mm}'
+    +'.placeholder{background:#FFF7ED;border:1.5px dashed #F59E0B;border-radius:8px;padding:12px;font-size:11px;color:#92400E;font-style:italic}'
+    +'.card{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:12px;margin-bottom:10px}'
+    +'</style></head><body>'
+
+    +'<div style="height:240mm;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;border:3px solid #C9A84C;border-radius:16px;padding:20mm">'
+      +'<div style="font-size:11px;letter-spacing:2px;color:#C9A84C;font-weight:700;margin-bottom:18px">KIT ACQUISIZIONE</div>'
+      +'<div style="font-size:30px;font-weight:900;color:#0D1B2A;margin-bottom:10px">'+getNomeAgenzia()+'</div>'
+      +(prospectNome?'<div style="font-size:15px;color:#374151;margin-bottom:6px">Preparato per: <strong>'+prospectNome+'</strong></div>':'')
+      +'<div style="font-size:15px;color:#374151;margin-bottom:30px">Zona: <strong>'+comune+(zona?' — '+zona:'')+'</strong></div>'
+      +'<div style="font-size:11px;color:#6B7280">'+getNomeAgente()+' · '+nowStr+'</div>'
+    +'</div>'
+
+    +'<div class="sezione">'
+      +'<h2>I nostri risultati</h2>'
+      +(risultati.length
+        ? '<table><thead><tr style="background:#F1F5F9">'
+          +'<th style="padding:6px 8px;text-align:left;font-size:9px;text-transform:uppercase;color:#6B7280">Tipo</th>'
+          +'<th style="padding:6px 8px;text-align:left;font-size:9px;text-transform:uppercase;color:#6B7280">Dove</th>'
+          +'<th style="padding:6px 8px;text-align:right;font-size:9px;text-transform:uppercase;color:#6B7280">Prezzo</th>'
+          +'</tr></thead><tbody>'+risultati.map(rigaRisultato).join('')+'</tbody></table>'
+        : '<div class="placeholder">Nessun immobile segnato come "venduto" nel gestionale — appena ne avrai, compariranno qui in automatico.</div>')
+      +'<div style="margin:18px 0 8px;font-size:13px;font-weight:800;color:#0D1B2A">Cosa dicono di noi</div>'
+      +'<div class="placeholder">[Sostituisci con una testimonianza reale — nome e cognome del cliente, 1-2 frasi sulla sua esperienza]</div>'
+      +'<div class="placeholder" style="margin-top:8px">[Seconda testimonianza — meglio se con una foto o uno screenshot del messaggio]</div>'
+    +'</div>'
+
+    +'<div class="sezione">'
+      +'<h2>Le domande più comuni</h2>'
+      +'<div class="placeholder" style="margin-bottom:10px">[Obiezione 1 che senti più spesso — es. "Perché dovrei pagare una provvigione?"]<br><br><strong>Risposta:</strong> [la tua risposta, con le tue parole]</div>'
+      +'<div class="placeholder" style="margin-bottom:10px">[Obiezione 2 — es. sul prezzo richiesto]<br><br><strong>Risposta:</strong> [...]</div>'
+      +'<div class="placeholder">[Obiezione 3 — es. sui tempi di vendita]<br><br><strong>Risposta:</strong> [...]</div>'
+    +'</div>'
+
+    +'<div class="sezione">'
+      +'<h2>Il piano di vendita</h2>'
+      +'<div class="card"><strong>1. Valutazione e fotografie professionali</strong><br><span style="font-size:11px;color:#4B5563">Prezzo basato sui dati reali di mercato della zona, non su una stima a sensazione.</span></div>'
+      +'<div class="card"><strong>2. Promozione su tutti i canali</strong><br><span style="font-size:11px;color:#4B5563">Portali immobiliari, social media, zona (depliant e segnalazione ai vicini), rete di contatti.</span></div>'
+      +'<div class="card"><strong>3. Open House</strong><br><span style="font-size:11px;color:#4B5563">Visite organizzate per ridurre i tempi e proteggere prezzo e provvigione.</span></div>'
+      +'<div class="card"><strong>4. Report periodici</strong><br><span style="font-size:11px;color:#4B5563">Aggiornamenti scritti, con i dati del mercato — non solo la nostra opinione.</span></div>'
+      +'<div class="card"><strong>5. Trattativa e chiusura</strong><br><span style="font-size:11px;color:#4B5563">Gestiamo noi ogni passaggio fino al rogito.</span></div>'
+    +'</div>'
+
+    +'<div class="sezione">'
+      +'<h2>Il mercato a '+comune+(zona?' — '+zona:'')+'</h2>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">'
+        +'<div class="card" style="text-align:center"><div style="font-size:26px;font-weight:900;color:#0D1B2A">'+attiviZona+'</div><div style="font-size:10px;color:#6B7280;text-transform:uppercase">Immobili attivi in vendita</div></div>'
+        +'<div class="card" style="text-align:center"><div style="font-size:26px;font-weight:900;color:#0D1B2A">'+vendutiZona+'</div><div style="font-size:10px;color:#6B7280;text-transform:uppercase">Venduti da noi</div></div>'
+      +'</div>'
+      +(omi
+        ? '<div class="card"><strong>Valori di riferimento OMI — '+omi.dove+'</strong><br>'
+          +'<span style="font-size:20px;font-weight:900;color:#0D1B2A">'+Math.round(omi.min)+' – '+Math.round(omi.max)+' €/m²</span>'
+          +(omi.semestre?'<br><span style="font-size:10px;color:#6B7280">'+omi.semestre+'</span>':'')+'</div>'
+        : '<div class="placeholder">Nessun valore OMI trovato per questo comune/zona nella tabella del gestionale.</div>')
+    +'</div>'
+
+    +'<div class="sezione">'
+      +'<h2>L\'incarico</h2>'
+      +'<div class="card">Con la firma dell\'incarico partiamo subito: foto professionali, pubblicazione su tutti i canali e primo Open House entro 2 settimane.</div>'
+      +'<div class="placeholder">[Condizioni economiche — percentuale di provvigione ed eventuale esclusiva, da definire con il proprietario]</div>'
+      +'<div style="margin-top:14px;font-size:11px;color:#6B7280">Il modulo di incarico si compila direttamente dal gestionale, con i dati già inseriti.</div>'
+    +'</div>'
+
+    +'<div style="margin-top:14mm;padding-top:8px;border-top:1px solid #E5E7EB;display:flex;justify-content:space-between;font-size:9px;color:#9CA3AF">'
+      +'<span>'+getNomeAgenzia()+' — '+getNomeAgente()+'</span><span>'+nowStr+' — DOCUMENTO RISERVATO</span>'
+    +'</div>'
+    +'</body></html>';
+
+  var printBar = '<div style="position:fixed;top:0;left:0;right:0;z-index:9999;background:#0D1B2A;padding:10px 20px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.3)" class="no-print">'
+    +'<div style="display:flex;align-items:center;gap:10px">'
+      +'<span style="color:#C9A84C;font-weight:800;font-size:14px">Kit Acquisizione — '+comune+'</span>'
+      +'<span style="color:rgba(255,255,255,.6);font-size:12px">bozza da completare e stampare</span>'
+    +'</div>'
+    +'<div style="display:flex;gap:8px">'
+      +'<button onclick="window.print()" style="padding:8px 20px;background:#C9A84C;border:none;border-radius:8px;color:#1A1205;font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">🖨 Stampa / Salva PDF</button>'
+      +'<button onclick="window.close()" style="padding:8px 16px;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.35);border-radius:8px;color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">Chiudi</button>'
+    +'</div></div>'
+    +'<style>@media print{.no-print{display:none!important}body{padding-top:0!important}}</style>'
+    +'<style>body{padding-top:52px}</style>';
+  html = html.replace('<body>', '<body>'+printBar);
+
+  var win = window.open('', '_blank', 'width=960,height=800');
+  if(!win){ if(typeof showToast==='function') showToast('Abilita i popup del browser per generare il kit','','#D97706'); return; }
+  win.document.open(); win.document.write(html); win.document.close(); win.focus();
+}
+try{ window.kaApriKit=kaApriKit; }catch(e){}
+
 /* ── getLogoAgenzia — URL/base64 del logo dal pannello admin (può essere '') ── */
 function getLogoAgenzia(){
   try{
@@ -68375,7 +68524,7 @@ try{
   // a riscaricarlo. Usa la stessa data del badge versione, es. '20260702'.
   // [25 set 2026] Ogni index.js passa il suo ?v= ai file che carica
   // (.view/.mobile/.report): alzare _MOD_V basta per TUTTI i moduli.
-  const _MOD_V = '20261103';
+  const _MOD_V = '20261108';
   const moduli = [
     ['Richieste', './src/modules/richieste/index.js?v=' + _MOD_V],
     ['Clienti',   './src/modules/clienti/index.js?v=' + _MOD_V],

@@ -692,6 +692,14 @@ function apRenderPipeline(){
           + 'onmouseout="this.style.background=\'rgba(5,150,105,.10)\';this.style.borderColor=\'#6EE7B7\'">'
           + '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/></svg>'
           + '</button>' : '')
+      /* [8 nov 2026] Kit Acquisizione: da portare all'appuntamento per prendere
+         l'incarico — disponibile su ogni contatto, non solo su quelli vinti. */
+      + '<button onclick="event.stopPropagation();apGeneraKitDaDeal(\'' + deal.id + '\')" title="Prepara il Kit Acquisizione per questa zona (risultati, analisi di mercato, piano di vendita)" '
+      + 'style="width:28px;height:28px;border-radius:7px;border:1.5px solid ' + rowBorder + ';background:var(--bg2);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);transition:all .12s" '
+      + 'onmouseover="this.style.borderColor=\'#C9A84C\';this.style.background=\'rgba(201,168,76,.1)\';this.style.color=\'#C9A84C\'" '
+      + 'onmouseout="this.style.borderColor=\'' + rowBorder + '\';this.style.background=\'var(--bg2)\';this.style.color=\'var(--text3)\'">'
+      + '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>'
+      + '</button>'
       + '<button onclick="event.stopPropagation();apEditDeal(\'' + deal.id + '\')" title="Apri scheda" '
       + 'style="width:28px;height:28px;border-radius:7px;border:1.5px solid ' + rowBorder + ';background:var(--bg2);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);transition:all .12s" '
       + 'onmouseover="this.style.borderColor=\'#1D4ED8\';this.style.background=\'rgba(37,99,235,.08)\';this.style.color=\'#1D4ED8\'" '
@@ -920,6 +928,24 @@ function apPreparaIncaricoDaDeal(dealId){
   catch(e2){ window.location.href='incarico_frimm.html'; }
 }
 window.apPreparaIncaricoDaDeal=apPreparaIncaricoDaDeal;
+
+/* Kit Acquisizione [08 nov 2026]: lo porti all'appuntamento per prendere
+   l'incarico, quindi serve PRIMA di vincerlo — disponibile su ogni contatto
+   della pipeline, non solo su quelli già chiusi. Usa il comune/zona del
+   contatto; se mancano li chiede al volo (kaApriKit ha solo bisogno del
+   comune per fare l'analisi di mercato). */
+function apGeneraKitDaDeal(dealId){
+  var deal=apGetDeals().find(function(d){return d.id===dealId;});
+  if(!deal){ if(typeof showToast==='function') showToast('Contatto non trovato','','#DC2626'); return; }
+  if(typeof kaApriKit!=='function'){ if(typeof showToast==='function') showToast('Kit Acquisizione non disponibile in questa pagina','','#DC2626'); return; }
+  var comune=deal.comune;
+  if(!comune || !String(comune).trim()){
+    comune=window.prompt('Comune della zona per il Kit Acquisizione:', '');
+    if(!comune || !comune.trim()) return;
+  }
+  kaApriKit(comune, deal.zona, deal.titolo||deal.cliente);
+}
+window.apGeneraKitDaDeal=apGeneraKitDaDeal;
 
 /* ══ SCHEDA CONTATTO — apri modal con tutti i campi ══ */
 function apEditDeal(dealId){
