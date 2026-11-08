@@ -19472,7 +19472,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.8nov-KITCOPERTINARETRO';
+var APP_VERSION = 'v.8nov-TELEFONOKITCLIENTE';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -28126,7 +28126,7 @@ function _vFlyerPannello(im, tipo, qr){
   var luogo = (im.comune||'')+(im.zona?' — '+im.zona:'');
   var carat = [im.mq&&(im.mq+' mq'), im.locali&&(im.locali+(im.locali==1?' locale':' locali')), im.bagni&&(im.bagni+(im.bagni==1?' bagno':' bagni')), im.energia&&('Classe '+im.energia)].filter(Boolean).join(' &nbsp;·&nbsp; ');
   var agenzia = getNomeAgenzia(), agente = getNomeAgente();
-  var tel = (typeof _brchState!=='undefined' && _brchState.agTel) ? _brchState.agTel : '';
+  var tel = (typeof getTelefonoAgenzia==='function') ? getTelefonoAgenzia() : '';
   if(tipo==='av'){
     return ''
       +'<div class="vf-panel vf-av">'
@@ -49091,6 +49091,7 @@ function copiaMessaggioAnniversarioRogito(){
           <div class="adm2-c"><label for="pers_nome_agenzia">Nome agenzia</label><input class="adm2-in" type="text" id="pers_nome_agenzia" oninput="pers_livePreview()"></div>
           <div class="adm2-c"><label for="pers_tagline">Frase sotto il nome</label><input class="adm2-in" type="text" id="pers_tagline" oninput="pers_livePreview()"></div>
           <div class="adm2-c"><label for="pers_nome_agente">Nome del titolare</label><input class="adm2-in" type="text" id="pers_nome_agente"></div>
+          <div class="adm2-c"><label for="pers_telefono">Telefono (per QR WhatsApp e contatti nei documenti)</label><input class="adm2-in" type="tel" id="pers_telefono" placeholder="338 1234567"></div>
           <div class="adm2-c"><label for="pers_logo_url">Logo (indirizzo o file)</label>
             <div style="display:flex;gap:6px">
               <input class="adm2-in" type="text" id="pers_logo_url" placeholder="https://… oppure carica un file" oninput="pers_livePreview()">
@@ -51527,7 +51528,8 @@ var _APP_CONFIG_DEFAULT = {
     nome_agenzia: 'Le case dalla A allo Z.io',
     tagline:      'La tua agenzia di fiducia',
     logo_url:     '',
-    nome_agente:  'Vincenzo Carnicelli'
+    nome_agente:  'Vincenzo Carnicelli',
+    telefono:     ''
   },
   tema: {
     colore_primario:   '#2563EB',
@@ -51748,7 +51750,19 @@ function getTaglineAg(){
   }catch(e){}
   return '';
 }
-try{ window.getNomeAgente=getNomeAgente; window.getTaglineAg=getTaglineAg; }catch(e){}
+// ── getTelefonoAgenzia — numero da mostrare/usare per i QR WhatsApp ──
+function getTelefonoAgenzia(){
+  try{
+    var cfg = loadAppConfig();
+    if(cfg.brand && cfg.brand.telefono && cfg.brand.telefono.trim())
+      return cfg.brand.telefono.trim();
+  }catch(e){}
+  // fallback legacy, per chi lo aveva impostato prima che ci fosse questo campo
+  return (typeof _brchState!=='undefined' && _brchState.agTel && String(_brchState.agTel).trim())
+    ? String(_brchState.agTel).trim()
+    : '';
+}
+try{ window.getNomeAgente=getNomeAgente; window.getTaglineAg=getTaglineAg; window.getTelefonoAgenzia=getTelefonoAgenzia; }catch(e){}
 
 /* ═══ KIT ACQUISIZIONE — [08 nov 2026] ═══
    Richiesto dopo il corso "Agente del Futuro" (Riccione, nov 2026): un documento
@@ -51802,7 +51816,7 @@ function kaApriKit(comune, zona, prospectNome){
   var omi=_kaOmiDiZona(comune, zona, '');
   var agenzia=esc(getNomeAgenzia()), agente=esc(getNomeAgente());
   var logo=(typeof getLogoAgenzia==='function')?getLogoAgenzia():'';
-  var tel=(typeof _brchState!=='undefined' && _brchState.agTel) ? String(_brchState.agTel).trim() : '';
+  var tel=(typeof getTelefonoAgenzia==='function') ? getTelefonoAgenzia() : '';
   var telDigits=tel.replace(/[^\d]/g,'');
   var tagline=(typeof getTaglineAg==='function') ? esc(getTaglineAg()) : '';
   var iniziali=(agente.replace(/<[^>]*>/g,'').split(/\s+/).map(function(w){return w[0];}).filter(Boolean).slice(0,2).join('')||'A').toUpperCase();
@@ -52187,6 +52201,7 @@ function pers_loadIntoForm(){
   n('pers_nome_agenzia', cfg.brand.nome_agenzia);
   n('pers_tagline',      cfg.brand.tagline);
   n('pers_nome_agente',  cfg.brand.nome_agente);
+  n('pers_telefono',     cfg.brand.telefono);
   n('pers_logo_url',     cfg.brand.logo_url);
 
   // Color pickers + hex inputs
@@ -52292,7 +52307,8 @@ function pers_save(){
       nome_agenzia: (document.getElementById('pers_nome_agenzia')||{}).value || _APP_CONFIG_DEFAULT.brand.nome_agenzia,
       tagline:      (document.getElementById('pers_tagline')||{}).value      || '',
       logo_url:     (document.getElementById('pers_logo_url')||{}).value     || '',
-      nome_agente:  (document.getElementById('pers_nome_agente')||{}).value  || _APP_CONFIG_DEFAULT.brand.nome_agente
+      nome_agente:  (document.getElementById('pers_nome_agente')||{}).value  || _APP_CONFIG_DEFAULT.brand.nome_agente,
+      telefono:     (document.getElementById('pers_telefono')||{}).value     || ''
     },
     tema: {
       colore_primario:   (document.getElementById('pers_color_primary')||{}).value   || _vec.tema.colore_primario   || '#2563EB',
@@ -68906,7 +68922,7 @@ try{
   // a riscaricarlo. Usa la stessa data del badge versione, es. '20260702'.
   // [25 set 2026] Ogni index.js passa il suo ?v= ai file che carica
   // (.view/.mobile/.report): alzare _MOD_V basta per TUTTI i moduli.
-  const _MOD_V = '20261108';
+  const _MOD_V = '20261108b';
   const moduli = [
     ['Richieste', './src/modules/richieste/index.js?v=' + _MOD_V],
     ['Clienti',   './src/modules/clienti/index.js?v=' + _MOD_V],
