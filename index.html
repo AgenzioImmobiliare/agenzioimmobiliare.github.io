@@ -19472,7 +19472,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.8nov-TELEFONOKITCLIENTE';
+var APP_VERSION = 'v.8nov-KITDOCUMENTI';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -52102,7 +52102,7 @@ function kaApriKit(comune, zona, prospectNome){
             +'<div class="pb-6 border-b border-slate-100 flex justify-between items-center flex-wrap gap-2">'
               +'<div><span class="text-xs font-bold text-gold-600 tracking-wider uppercase">Sezione 05</span>'
               +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900 mt-1">Dossier & Incarico</h2>'
-              +'<p class="text-slate-500 text-sm mt-1">Cosa verifico prima del nostro incontro, e cosa trovi già pronto.</p></div>'
+              +'<p class="text-slate-500 text-sm mt-1">Cosa verifico prima del nostro incontro, cosa trovi già pronto e quali documenti ti servono.</p></div>'
             +'</div>'
             +'<div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">'
               +'<div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col justify-between">'
@@ -52114,6 +52114,23 @@ function kaApriKit(comune, zona, prospectNome){
                 +'<div><div class="flex items-center justify-between mb-3"><h3 class="font-bold text-navy-900 text-sm flex items-center gap-2"><i class="fa-solid fa-signature text-gold-600"></i>Il modulo di incarico</h3></div>'
                 +'<p class="text-xs text-slate-500 mb-4">In questa stessa busta trovi già il modulo di incarico di mediazione, compilato con i tuoi dati — non per darti fretta, ma perché quando arrivo voglio parlare di come vendere casa tua al meglio, non perdere tempo con la carta. Le condizioni (durata, compenso) le decidiamo insieme, per iscritto.</p></div>'
                 +'<div class="pt-3 border-t border-slate-200 text-xs text-emerald-700 font-semibold"><i class="fa-solid fa-check mr-1"></i>Allegato a parte in questa busta</div>'
+              +'</div>'
+            +'</div>'
+            +'<div class="mt-6 bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-200">'
+              +'<h3 class="font-bold text-navy-900 text-sm flex items-center gap-2 mb-1"><i class="fa-solid fa-folder-open text-gold-600"></i>Documenti da preparare per vendere casa</h3>'
+              +'<p class="text-xs text-slate-500 mb-5">L\'elenco di quello che normalmente serve. Non preoccuparti se non li hai già tutti: li verifichiamo insieme e ti aiuto a recuperare quello che manca.</p>'
+              +'<div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">'
+                +[['Atto di provenienza','Rogito d\'acquisto, successione o donazione: dimostra che la casa è tua.'],
+                  ['Visura e planimetria catastali','Aggiornate e conformi allo stato reale dell\'immobile.'],
+                  ['Attestato di Prestazione Energetica (APE)','Obbligatorio per legge già per pubblicare l\'annuncio.'],
+                  ['Conformità degli impianti','Dichiarazione di conformità (o di rispondenza) per elettrico, idraulico, gas.'],
+                  ['Titoli edilizi ed eventuali sanatorie','Permesso di costruire, concessione o condono: la storia urbanistica dell\'immobile.'],
+                  ['Documento d\'identità e codice fiscale','Di tutti i proprietari intestatari dell\'immobile.'],
+                  ['Documenti del condominio','Regolamento, ultimo verbale di assemblea e situazione spese, se l\'immobile è in condominio.'],
+                  ['Certificato di destinazione urbanistica','Solo se vendi anche terreni o pertinenze autonome.']
+                ].map(function(d){
+                  return '<div class="flex items-start gap-3"><div class="w-7 h-7 rounded-full bg-gold-50 border border-gold-200 text-gold-700 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-check text-xs"></i></div><div><h4 class="font-bold text-navy-900 text-xs sm:text-sm">'+d[0]+'</h4><p class="text-xs text-slate-500">'+d[1]+'</p></div></div>';
+                }).join('')
               +'</div>'
             +'</div>'
           +'</div></div>'
