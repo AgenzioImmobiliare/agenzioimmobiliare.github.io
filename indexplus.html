@@ -48318,6 +48318,116 @@ function _vaiZonaAutoToVideoBlob(opts){
     .then(()=>_vaiRecordCanvasToBlob(cv, sec, paint, Math.min(sec-0.3, sec*0.7)));
 }
 
+/* ANNUNCIO: NUOVO INCARICO / VENDUTO / PREZZO RIBASSATO / OPEN HOUSE [08 nov 2026]
+   La card "AMV/AV" chiesta da Enzo dopo il corso di Simone Rossi ad Agente del
+   Futuro: far sapere subito alla zona ogni immobile appena preso o appena
+   venduto. Usa la FOTO VERA dell'immobile (se c'è, stesso modo già collaudato
+   altrove nel progetto — crossOrigin + fallback silenzioso se non carica) con
+   sopra un timbro colorato, la località, il prezzo e i dati essenziali. Non
+   scatta da sola: un clic in più rispetto a prima, ma pronta in pochi secondi
+   nel momento in cui prendi o chiudi un incarico. */
+function _vaiAnnuncioToVideoBlob(opts){
+  const sec=Math.max(3, Math.min(6, opts.sec||4));
+  const W=720, H=1280;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H;
+  const ctx=cv.getContext('2d');
+  const TIMBRI={
+    incarico:  {label:'NUOVO INCARICO',   bg:'#C9A84C', color:'#1A1205'},
+    venduto:   {label:'VENDUTO',          bg:'#DC2626', color:'#ffffff'},
+    ribassato: {label:'PREZZO RIBASSATO', bg:'#F59E0B', color:'#1A1205'},
+    openhouse: {label:'OPEN HOUSE',       bg:'#EC4899', color:'#ffffff'}
+  };
+  const timbro=TIMBRI[opts.tipo]||TIMBRI.incarico;
+  const comune=(opts.comune||'').trim(), zona=(opts.zona||'').trim();
+  const prezzo=(opts.prezzo||'').trim();
+  const mq=(opts.mq||'').trim(), locali=(opts.locali||'').trim(), bagni=(opts.bagni||'').trim();
+  const ease=(p)=> p<0.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
+  const clamp01=(p)=>Math.max(0,Math.min(1,p));
+  const seg=(t,start,dur)=>ease(clamp01((t-start)/dur));
+
+  let foto=null, fotoPronta=false;
+  const caricaFoto=()=> new Promise((ok)=>{
+    if(!opts.foto){ ok(); return; }
+    let risolto=false;
+    const fine=()=>{ if(risolto) return; risolto=true; ok(); };
+    const img=new Image(); img.crossOrigin='anonymous';
+    img.onload=()=>{ if(img.naturalWidth){ foto=img; fotoPronta=true; } fine(); };
+    img.onerror=fine;
+    img.src=opts.foto;
+    setTimeout(fine, 4000); // non blocco la generazione se la foto non arriva in tempo
+  });
+
+  let thumb=null;
+  const paint=(t)=>{
+    if(fotoPronta && foto){
+      const eZoom=1+0.05*Math.min(1, t/sec);
+      const ar=foto.naturalWidth/foto.naturalHeight, arC=W/H;
+      let sw,sh,sx,sy;
+      if(ar>arC){ sh=foto.naturalHeight; sw=sh*arC; sx=(foto.naturalWidth-sw)/2; sy=0; }
+      else { sw=foto.naturalWidth; sh=sw/arC; sx=0; sy=(foto.naturalHeight-sh)/2; }
+      ctx.save();
+      ctx.translate(W/2,H/2); ctx.scale(eZoom,eZoom); ctx.translate(-W/2,-H/2);
+      try{ ctx.drawImage(foto, sx,sy,sw,sh, 0,0,W,H); }catch(e){ fotoPronta=false; }
+      ctx.restore();
+    } else {
+      ctx.fillStyle='#0D1B2A'; ctx.fillRect(0,0,W,H);
+    }
+    const grad=ctx.createLinearGradient(0,H*0.4,0,H);
+    grad.addColorStop(0,'rgba(10,15,20,0)'); grad.addColorStop(1,'rgba(8,10,14,.92)');
+    ctx.fillStyle=grad; ctx.fillRect(0,H*0.4,W,H*0.6);
+    const gradT=ctx.createLinearGradient(0,0,0,170);
+    gradT.addColorStop(0,'rgba(0,0,0,.4)'); gradT.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=gradT; ctx.fillRect(0,0,W,170);
+
+    const eTimbro=seg(t,0.15,0.35);
+    if(eTimbro>0){
+      ctx.save();
+      ctx.globalAlpha=eTimbro;
+      ctx.translate(30,60); ctx.rotate(-0.06);
+      ctx.scale(0.85+0.15*eTimbro, 0.85+0.15*eTimbro);
+      ctx.font='800 25px "DM Sans", sans-serif';
+      const tw=ctx.measureText(timbro.label).width;
+      const pw=tw+44, ph=48;
+      ctx.fillStyle=timbro.bg;
+      ctx.shadowColor='rgba(0,0,0,.4)'; ctx.shadowBlur=18; ctx.shadowOffsetY=6;
+      if(ctx.roundRect){ ctx.beginPath(); ctx.roundRect(0,0,pw,ph,10); ctx.fill(); } else ctx.fillRect(0,0,pw,ph);
+      ctx.shadowColor='transparent';
+      ctx.fillStyle=timbro.color; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(timbro.label, pw/2, ph/2+1);
+      ctx.textBaseline='alphabetic';
+      ctx.restore();
+    }
+
+    const eLoc=seg(t,0.45,0.35);
+    if(eLoc>0 && comune){
+      ctx.save(); ctx.globalAlpha=eLoc;
+      ctx.fillStyle='rgba(255,255,255,.88)'; ctx.font='700 22px "DM Sans", sans-serif'; ctx.textAlign='left';
+      ctx.fillText((zona?zona+' — ':'')+comune, 36, H-192+(1-eLoc)*10);
+      ctx.restore();
+    }
+    const ePrezzo=seg(t,0.55,0.4);
+    if(ePrezzo>0 && prezzo){
+      ctx.save(); ctx.globalAlpha=ePrezzo;
+      ctx.fillStyle='#fff'; ctx.font='800 52px "DM Sans", sans-serif'; ctx.textAlign='left';
+      ctx.fillText(prezzo, 36, H-130+(1-ePrezzo)*12);
+      ctx.restore();
+    }
+    const eSpec=seg(t,0.75,0.35);
+    const pezzi=[mq&&(mq+' mq'), locali&&(locali+(locali==='1'?' locale':' locali')), bagni&&(bagni+(bagni==='1'?' bagno':' bagni'))].filter(Boolean);
+    if(eSpec>0 && pezzi.length){
+      ctx.save(); ctx.globalAlpha=eSpec;
+      ctx.fillStyle='rgba(255,255,255,.78)'; ctx.font='600 20px "DM Sans", sans-serif'; ctx.textAlign='left';
+      ctx.fillText(pezzi.join('   ·   '), 36, H-84);
+      ctx.restore();
+    }
+
+    if(!thumb && t>=Math.min(sec-0.3, sec*0.6)) thumb=cv.toDataURL('image/jpeg',0.85);
+  };
+  return caricaFoto()
+    .then(()=>_vaiPrecaricaFontIcone(['800 25px "DM Sans"','800 52px "DM Sans"']))
+    .then(()=>_vaiRecordCanvasToBlob(cv, sec, paint, Math.min(sec-0.3, sec*0.6)));
+}
+
 /* TOUR DEI DATI — la finestra app (stesso "chrome" della Finestra
    immobile) ma con accento verde smeraldo e dentro una lista di dati veri
    della casa che scorrono uno alla volta, invece di foto+prezzo+indirizzo. */
@@ -49072,6 +49182,7 @@ function vaiCardPanel(){
             '<button type="button" class="vai-graf-item vai-card-tipo" data-key="planimetria" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#0B1420;color:#8ECBFF">Planimetria</span></button>'+
             '<button type="button" class="vai-graf-item vai-card-tipo" data-key="mappa" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#2B3438;color:#C9A84C">Mappa territorio</span></button>'+
             '<button type="button" class="vai-graf-item vai-card-tipo" data-key="zonaauto" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#EA580C;color:#fff">Zona, auto in corsa</span></button>'+
+            '<button type="button" class="vai-graf-item vai-card-tipo" data-key="annuncio" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#DC2626;color:#fff">Annuncio (AMV/AV)</span></button>'+
             '<button type="button" class="vai-graf-item vai-card-tipo" data-key="tourdati" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#1F6F54;color:#fff">Tour dati casa</span></button>'+
             '<button type="button" class="vai-graf-item vai-card-tipo" data-key="calendario" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#0D1B2A;color:#F5F1E8">Calendario visite</span></button>'+
             '<button type="button" class="vai-graf-item vai-card-tipo" data-key="puntiforza" onclick="vaiCardTipoSel(this)"><span class="vgi-pill" style="background:#FAF6EF;color:#2A2017;border:1px solid #E5DDC8">Punti di forza</span></button>'+
@@ -49135,6 +49246,26 @@ function vaiCardPanel(){
             '<label style="font-size:.72rem;color:var(--text2)">Da dove<input type="text" id="vai-card-za-d2l" class="vai-lz-input" placeholder="dal centro"></label>'+
           '</div>'+
           '<div class="vai-lz-note">Strada stilizzata con un\'auto che la percorre dal punto A al punto B — non è una mappa vera. Per le distanze reali da OpenStreetMap hai già "Mappa zona" (Fabbrica grafiche).</div>'+
+        '</div>'+
+        '<div id="vai-card-grp-annuncio" style="display:none">'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Tipo di annuncio</div><div class="vai-graf-items" style="grid-template-columns:1fr 1fr">'+
+            '<button type="button" class="vai-graf-item vai-card-ann-tipo sel" data-key="incarico" onclick="vaiCardAnnTipoSel(this)"><span class="vgi-pill" style="background:#C9A84C;color:#1A1205">Nuovo incarico</span></button>'+
+            '<button type="button" class="vai-graf-item vai-card-ann-tipo" data-key="venduto" onclick="vaiCardAnnTipoSel(this)"><span class="vgi-pill" style="background:#DC2626;color:#fff">Venduto</span></button>'+
+            '<button type="button" class="vai-graf-item vai-card-ann-tipo" data-key="ribassato" onclick="vaiCardAnnTipoSel(this)"><span class="vgi-pill" style="background:#F59E0B;color:#1A1205">Prezzo ribassato</span></button>'+
+            '<button type="button" class="vai-graf-item vai-card-ann-tipo" data-key="openhouse" onclick="vaiCardAnnTipoSel(this)"><span class="vgi-pill" style="background:#EC4899;color:#fff">Open house</span></button>'+
+          '</div></div>'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Comune</div>'+
+            '<input type="text" id="vai-card-ann-comune" class="vai-lz-input" placeholder="es. Agropoli" maxlength="30"></div>'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Zona (facoltativo)</div>'+
+            '<input type="text" id="vai-card-ann-zona" class="vai-lz-input" placeholder="es. Trascinelle" maxlength="30"></div>'+
+          '<div class="vai-graf-sez"><div class="vai-graf-lbl">Prezzo</div>'+
+            '<input type="text" id="vai-card-ann-prezzo" class="vai-lz-input" placeholder="es. 215.000 €" maxlength="20"></div>'+
+          '<div class="vai-graf-sez" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">'+
+            '<label style="font-size:.72rem;color:var(--text2)">Mq<input type="text" id="vai-card-ann-mq" class="vai-lz-input"></label>'+
+            '<label style="font-size:.72rem;color:var(--text2)">Locali<input type="text" id="vai-card-ann-locali" class="vai-lz-input"></label>'+
+            '<label style="font-size:.72rem;color:var(--text2)">Bagni<input type="text" id="vai-card-ann-bagni" class="vai-lz-input"></label>'+
+          '</div>'+
+          '<div class="vai-lz-note">Usa la foto vera dell\'immobile selezionato, se presente — altrimenti uno sfondo scuro elegante.</div>'+
         '</div>'+
         '<div id="vai-card-grp-tourdati" style="display:none">'+
           '<div class="vai-graf-sez"><div class="vai-graf-lbl">Titolo</div>'+
@@ -49218,6 +49349,7 @@ function vaiCardPanel(){
    'vai-card-plan-tit','vai-card-plan-mq','vai-card-plan-camere','vai-card-plan-bagni',
    'vai-card-mappa-comune','vai-card-mappa-etichetta',
    'vai-card-za-comune','vai-card-za-zona','vai-card-za-d1v','vai-card-za-d1l','vai-card-za-d2v','vai-card-za-d2l',
+   'vai-card-ann-comune','vai-card-ann-zona','vai-card-ann-prezzo','vai-card-ann-mq','vai-card-ann-locali','vai-card-ann-bagni',
    'vai-card-tour-tit','vai-card-tour-mq','vai-card-tour-locali','vai-card-tour-camere','vai-card-tour-bagni','vai-card-tour-piano','vai-card-tour-prezzo',
    'vai-card-cal-tit','vai-card-cal-cta','vai-card-pf-tit','vai-card-pf-punti',
    'vai-card-cont-tit','vai-card-cont-tel','vai-card-cont-wa','vai-card-cont-sito',
@@ -49234,6 +49366,9 @@ function vaiCardPanel(){
       set('vai-card-mappa-comune', j.comune);
       set('vai-card-za-comune', j.comune); set('vai-card-za-zona', j.zona&&j.zona!==j.comune?j.zona:'');
       set('vai-card-za-d1v', j.distMare); set('vai-card-za-d2v', j.distCentro);
+      set('vai-card-ann-comune', j.comune); set('vai-card-ann-zona', j.zona&&j.zona!==j.comune?j.zona:'');
+      set('vai-card-ann-prezzo', j.prezzo?fmtE(j.prezzo):''); set('vai-card-ann-mq', j.mq);
+      set('vai-card-ann-locali', j.locali); set('vai-card-ann-bagni', j.bagni);
       set('vai-card-tour-mq', j.mq); set('vai-card-tour-locali', j.locali); set('vai-card-tour-camere', j.camere);
       set('vai-card-tour-bagni', j.bagni); set('vai-card-tour-piano', j.piano); set('vai-card-tour-prezzo', j.prezzo?fmtE(j.prezzo):'');
       if(j.pregi) set('vai-card-pf-punti', String(j.pregi).split(/[,;\n]/).map(s=>s.trim()).filter(Boolean).slice(0,4).join(', '));
@@ -49286,6 +49421,7 @@ function vaiCardDragStart(e){
 }
 function vaiCardIconSel(btn){ document.querySelectorAll('.vai-card-ic.sel').forEach(b=>b.classList.remove('sel')); btn.classList.add('sel'); }
 function vaiCardStileSel(btn){ document.querySelectorAll('.vai-card-stile.sel').forEach(b=>b.classList.remove('sel')); btn.classList.add('sel'); }
+function vaiCardAnnTipoSel(btn){ document.querySelectorAll('.vai-card-ann-tipo.sel').forEach(b=>b.classList.remove('sel')); btn.classList.add('sel'); }
 
 /* Genera davvero la scheda (icona semplice o finestra immobile) e la inserisce
    come CLIP nel montaggio, tagliando la clip corrente nel punto del cursore
@@ -49340,6 +49476,26 @@ const VAI_CARD_TIPI = {
         d2v:((document.getElementById('vai-card-za-d2v')||{}).value||'').trim(),
         d2l:((document.getElementById('vai-card-za-d2l')||{}).value||'').trim() };
       return { opts, nome:'Zona: '+comune.slice(0,22) };
+    }
+  },
+  annuncio:{
+    gen:_vaiAnnuncioToVideoBlob,
+    leggi:()=>{
+      const comune=((document.getElementById('vai-card-ann-comune')||{}).value||'').trim();
+      if(!comune) return null;
+      const btnTipo=document.querySelector('.vai-card-ann-tipo.sel');
+      const tipo=btnTipo?btnTipo.getAttribute('data-key'):'incarico';
+      let foto='';
+      try{ if(typeof _vaiImm!=='undefined' && _vaiImm){ foto=_vaiImm.foto || (Array.isArray(_vaiImm.fotoList)&&_vaiImm.fotoList[0]) || ''; } }catch(e){}
+      const opts={ tipo, comune,
+        zona:((document.getElementById('vai-card-ann-zona')||{}).value||'').trim(),
+        prezzo:((document.getElementById('vai-card-ann-prezzo')||{}).value||'').trim(),
+        mq:((document.getElementById('vai-card-ann-mq')||{}).value||'').trim(),
+        locali:((document.getElementById('vai-card-ann-locali')||{}).value||'').trim(),
+        bagni:((document.getElementById('vai-card-ann-bagni')||{}).value||'').trim(),
+        foto };
+      const TIPI_NOME={incarico:'Nuovo incarico',venduto:'Venduto',ribassato:'Prezzo ribassato',openhouse:'Open house'};
+      return { opts, nome:(TIPI_NOME[tipo]||'Annuncio')+': '+comune.slice(0,22) };
     }
   },
   calendario:{
