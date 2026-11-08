@@ -979,6 +979,18 @@ function renderSchedaCliente(i){
     ${(typeof window.ctCardScheda==='function')?window.ctCardScheda(i):''}
       ${(typeof window.cliSchedaExtra==='function')?window.cliSchedaExtra(i):''}
     <div class="card">
+      <div class="card-header"><span class="card-title"> Marketing</span></div>
+      <div class="card-body">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+          <div>
+            <div style="font-weight:700;font-size:0.92rem">Kit Acquisizione</div>
+            <div style="font-size:0.8rem;color:var(--text3);max-width:440px">Il dossier da mandare prima dell'appuntamento per prendere l'incarico: chi sei, il metodo, i dati di mercato e il modulo già pronto.</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="ctGeneraKitCliente(${i})" title="Prepara il Kit Acquisizione per questo cliente"> Prepara Kit</button>
+        </div>
+      </div>
+    </div>
+    <div class="card">
       <div class="card-header"><span class="card-title"> Immobili Collegati</span><button class="btn btn-primary btn-sm" onclick="openImmobileModalWithClient(${i})">+ Collega Immobile</button></div>
       <div class="card-body">${immClienti.length?'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px">'+immClienti.map(im=>{const ri=D.immobili.indexOf(im);return`<div class="imm-card"><div style="cursor:pointer" onclick="openSchedaImmobile(${ri})">${immPhotoWithStato(im,ri,null)}</div><div class="imm-body"><div class="imm-price">${im.prezzo?fmtE(im.prezzo):'—'}</div><div style="font-size:0.78rem;color:var(--text3)">${im.tipo||''} · ${im.comune||''}</div>${bStato(im.stato)}<div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap"><button class="btn btn-outline btn-sm" onclick="openSchedaImmobile(${ri})"> Scheda</button><button class="btn btn-primary btn-sm" onclick="openPraticaImm(${ri})"> Pratica</button><button class="btn btn-sm" style="background:var(--red-pale);color:var(--red-l);border:1px solid #FECACA" onclick="delImmobileFromScheda(${ri})" title="Elimina"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg></button></div></div></div>`;}).join('')+'</div>':'<div class="empty-state" style="padding:18px"><p>Nessun immobile collegato</p></div>'}</div>
     </div>
@@ -995,6 +1007,27 @@ function renderSchedaCliente(i){
   try{ _tlMount('cliente', i); }catch(_e){ }
 }
 
+/* Kit Acquisizione dalla scheda cliente [08 nov 2026]: per i Venditori/Entrambi,
+   lo si prepara anche senza passare dalla Pipeline. Usa comune/zona
+   dell'immobile già collegato se c'è; altrimenti chiede il comune al volo
+   (stessa logica di apGeneraKitDaDeal nella Pipeline Commerciale). */
+function ctGeneraKitCliente(i){
+  const c=D.clienti[i];
+  if(!c) return;
+  if(typeof window.kaApriKit!=='function'){
+    if(typeof showToast==='function') showToast('Kit Acquisizione non disponibile in questa pagina','','#DC2626');
+    return;
+  }
+  const immCli=_immSenzaDoppioni(D.immobili.filter(im=>_immApparteneCli(im, i)));
+  let comune=(immCli[0]&&immCli[0].comune) || c.citta || '';
+  const zona=(immCli[0]&&immCli[0].zona) || '';
+  if(!comune || !String(comune).trim()){
+    comune=window.prompt('Comune della zona per il Kit Acquisizione:', '');
+    if(!comune || !comune.trim()) return;
+  }
+  window.kaApriKit(comune, zona, c.nome);
+}
+
 // ===== IMMOBILI =====
 // ── STORICO PREZZI IMMOBILE — solo visualizzazione ──
 let _spImmIdx=null;
@@ -1003,7 +1036,7 @@ let _spImmIdx=null;
 Object.assign(window, {
   openClienteModal, onTipoClienteChange, saveCliente, editCliente, delCliente,
   archiviaCliente, riattivaCliente, delCliPure, openSchedaCliente,
-  renderClienti, renderSchedaCliente,
+  renderClienti, renderSchedaCliente, ctGeneraKitCliente,
 });
 
 export { renderClienti, openSchedaCliente, saveCliente, editCliente, delCliente, openClienteModal };
