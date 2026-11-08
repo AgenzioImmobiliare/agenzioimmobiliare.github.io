@@ -1428,6 +1428,12 @@ function disegnaDettaglio(a){
   }
   if(annotaFine(a, im)) setTimeout(salva, 0);
   var F = ferme(a, im);
+  /* Kit Acquisizione [08 nov 2026]: appena il percorso parte, la prima cosa
+     da preparare — in busta prima dell'appuntamento, non dopo. Sempre
+     visibile, non è un passo tracciato come gli altri. */
+  h += '<div class="gx-info" style="border-left:4px solid ' + c.am + ';display:flex;flex-wrap:wrap;gap:10px;align-items:center">'
+    + '<span style="flex:1;min-width:240px"><b>Prepara il Kit Acquisizione</b> da mandare a ' + esc(bello(p.nome) || 'il proprietario') + ' prima dell\'appuntamento: chi sei, il tuo metodo, i dati di mercato e il modulo di incarico già pronto.</span>'
+    + '<button class="gx-btn pieno" onclick="_acqApriKit(\'' + id + '\')">' + ico(I.doc) + ' Prepara Kit Acquisizione</button></div>';
   h += barraPassi(a, im, s);   /* [20 ott 2026] i passi scelti, nel loro ordine */
   if(eNascosto(im)) h += bloccoProprietario(a, im);
   if(F.length) h += '<div class="gx-info" style="border-left:4px solid ' + c.ko + '"><b>Percorso fermo.</b> ' + F.map(function(w){ return esc(w.x) + ' — ' + w.gg + ' gg oltre i giorni previsti'; }).join('<br>') + '</div>';
@@ -1888,6 +1894,18 @@ window._acqCaricaNuovo = function(){
   });
 };
 
+window._acqApriKit = function(id){
+  var a = trova(id); if(!a) return;
+  var im = immDi(a), p = propDi(im);
+  if(typeof window.kaApriKit !== 'function'){ avviso('Kit Acquisizione non disponibile in questa pagina'); return; }
+  var comune = (im && im.comune) || '';
+  var zona = (im && im.zona) || '';
+  if(!comune){
+    comune = window.prompt('Comune della zona per il Kit Acquisizione:', '');
+    if(!comune || !comune.trim()) return;
+  }
+  window.kaApriKit(comune, zona, p.nome || '');
+};
 window._acqScheda = function(immUuid){
   var i = (D.immobili || []).findIndex(function(x){ return x && x.uuid === immUuid; });
   if(i < 0){ avviso('Scheda non trovata'); return; }
