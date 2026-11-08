@@ -19502,7 +19502,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.8nov-KITDASHFAQINCARICO';
+var APP_VERSION = 'v.8nov-FOTOAGENTEFAQ2';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -49149,6 +49149,13 @@ function copiaMessaggioAnniversarioRogito(){
             </div>
             <div class="adm2-k" id="pers_logo_fname"></div>
           </div>
+          <div class="adm2-c"><label for="pers_foto_agente">Foto del consulente (indirizzo o file)</label>
+            <div style="display:flex;gap:6px">
+              <input class="adm2-in" type="text" id="pers_foto_agente" placeholder="https://… oppure carica un file">
+              <label class="gx-btn" style="cursor:pointer;white-space:nowrap"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> File<input type="file" accept="image/*" onchange="pers_uploadFotoAgente(this)" style="display:none"></label>
+            </div>
+            <div class="adm2-k" id="pers_foto_agente_fname"></div>
+          </div>
         </div>
         <div class="adm2-azioni">
           <button class="adm2-pri" onclick="pers_save()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Salva agenzia</button>
@@ -51579,7 +51586,8 @@ var _APP_CONFIG_DEFAULT = {
     tagline:      'La tua agenzia di fiducia',
     logo_url:     '',
     nome_agente:  'Vincenzo Carnicelli',
-    telefono:     ''
+    telefono:     '',
+    foto_agente:  ''
   },
   tema: {
     colore_primario:   '#2563EB',
@@ -51866,6 +51874,7 @@ function kaApriKit(comune, zona, prospectNome){
   var omi=_kaOmiDiZona(comune, zona, '');
   var agenzia=esc(getNomeAgenzia()), agente=esc(getNomeAgente());
   var logo=(typeof getLogoAgenzia==='function')?getLogoAgenzia():'';
+  var fotoAgente=(typeof getFotoAgente==='function')?getFotoAgente():'';
   var tel=(typeof getTelefonoAgenzia==='function') ? getTelefonoAgenzia() : '';
   var telDigits=tel.replace(/[^\d]/g,'');
   var tagline=(typeof getTaglineAg==='function') ? esc(getTaglineAg()) : '';
@@ -51897,6 +51906,10 @@ function kaApriKit(comune, zona, prospectNome){
   var badgeAgente=logo
     ? '<img src="'+logo+'" class="w-12 h-12 rounded-lg object-cover shadow-lg">'
     : '<div class="w-12 h-12 rounded-lg bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center font-bold text-white text-xl shadow-lg shadow-gold-500/20">'+iniziali+'</div>';
+
+  var fotoAgenteBlock = fotoAgente
+    ? '<img src="'+fotoAgente+'" class="w-20 h-20 rounded-full object-cover shadow-md flex-shrink-0" alt="'+agente+'">'
+    : '<div class="w-20 h-20 rounded-full bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center font-bold text-white text-2xl shadow-md shadow-gold-500/20 flex-shrink-0">'+iniziali+'</div>';
 
   var telRow = tel
     ? '<a href="tel:'+esc(tel)+'" class="hidden md:flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-gold-400 px-3 py-2 rounded-md hover:bg-navy-800 transition"><i class="fa-solid fa-phone text-gold-500"></i>'+esc(tel)+'</a>'
@@ -51953,6 +51966,29 @@ function kaApriKit(comune, zona, prospectNome){
   ];
   var faqHtml = faqPrezzo.map(function(f,i){
     var n=i+1;
+    return '<div class="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">'
+      +'<button onclick="toggleFaq('+n+')" class="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-slate-50 transition">'
+      +'<h4 class="font-bold text-navy-900 text-sm sm:text-base">'+esc(f.q)+'</h4>'
+      +'<i id="faqIcon-'+n+'" class="fa-solid fa-chevron-down text-slate-400 transition-transform flex-shrink-0 ml-2"></i></button>'
+      +'<div id="faqContent-'+n+'" class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 text-xs sm:text-sm text-slate-600 hidden">'+esc(f.a)+'</div></div>';
+  }).join('');
+
+  var faqInterventi = [
+    { q:'Conviene ristrutturare prima di vendere casa?',
+      a:'Non sempre: conviene quando l\'aumento di prezzo atteso supera il costo dei lavori. Un agente della zona può stimare il valore della casa "così com\'è" e "dopo gli interventi" per decidere sui numeri.' },
+    { q:'Quali interventi fanno vendere casa più velocemente?',
+      a:'I più efficaci rispetto al costo sono pulizia e ordine, tinteggiatura neutra, piccole riparazioni e home staging. Rifacimenti più costosi vanno valutati caso per caso.' },
+    { q:'Quanto aumenta il valore di una casa con l\'home staging?',
+      a:'Le stime di settore indicano un premio di prezzo medio nell\'ordine del 4-8%, ma i dati variano per fonte e per immobile: vanno intesi come ordine di grandezza, non come promessa.' },
+    { q:'Meglio vendere casa ristrutturata o da ristrutturare?',
+      a:'Dipende da zona, tempo e budget: in aree dove il valore dipende soprattutto dalla posizione, o con poco tempo a disposizione, può convenire vendere allo stato attuale con un prezzo coerente.' },
+    { q:'Cosa succede alla detrazione del Bonus Ristrutturazioni se vendo casa?',
+      a:'Le rate non ancora utilizzate passano, in assenza di accordo diverso, all\'acquirente persona fisica: conviene chiarire il punto nell\'atto con il notaio.' },
+    { q:'Qual è la cosa più importante per vendere in fretta?',
+      a:'Fissare un prezzo allineato al mercato fin dall\'inizio e avere la documentazione tecnica (urbanistica e catastale) perfettamente in regola, prima ancora di valutare qualsiasi lavoro estetico.' }
+  ];
+  var faqHtml2 = faqInterventi.map(function(f,i){
+    var n=i+1+faqPrezzo.length;
     return '<div class="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">'
       +'<button onclick="toggleFaq('+n+')" class="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-slate-50 transition">'
       +'<h4 class="font-bold text-navy-900 text-sm sm:text-base">'+esc(f.q)+'</h4>'
@@ -52100,6 +52136,7 @@ var kitCss = ''
     +'[class~="h-12"]{height:3rem}'
     +'[class~="h-14"]{height:3.5rem}'
     +'[class~="h-20"]{height:5rem}'
+    +'[class~="w-20"]{width:5rem}'
     +'[class~="min-h-screen"]{min-height:100vh}'
     +'[class~="max-w-xs"]{max-width:20rem}'
     +'[class~="max-w-md"]{max-width:28rem}'
@@ -52405,7 +52442,9 @@ var kitCss = ''
             +'<p class="text-slate-500 text-sm mt-1">Un approccio basato su etica, presenza sul territorio e trasparenza.</p></div>'
             +'<div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">'
               +'<div class="space-y-4 text-slate-600 text-sm leading-relaxed">'
-                +'<h3 class="font-bold text-navy-900 text-base flex items-center gap-2"><i class="fa-solid fa-location-dot text-gold-600"></i>Operativo nel Cilento, al tuo fianco a '+esc(comune)+'</h3>'
+                +'<div class="flex items-center gap-4">'+fotoAgenteBlock
+                  +'<div><h3 class="font-bold text-navy-900 text-base">'+agente+'</h3><p class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5"><i class="fa-solid fa-location-dot text-gold-600"></i>Operativo nel Cilento, al tuo fianco a '+esc(comune)+'</p></div>'
+                +'</div>'
                 +'<div class="bg-amber-50 border border-dashed border-amber-300 rounded-xl p-4 text-amber-800 text-xs italic">[Due o tre frasi su di te: da quanti anni fai questo lavoro, perché lo fai, cosa ti contraddistingue — scrivile con le tue parole]</div>'
                 +'<div class="bg-navy-900 text-slate-200 p-5 rounded-2xl space-y-3 mt-6">'
                   +'<h4 class="font-semibold text-gold-400 text-sm flex items-center gap-2"><i class="fa-solid fa-star"></i> Il Mio Impegno Con Te</h4>'
@@ -52467,6 +52506,11 @@ var kitCss = ''
               +'<p class="text-slate-500 text-xs mb-4">Dati reali del mercato immobiliare italiano, non opinioni.</p>'
               +'<div class="space-y-4">'+faqHtml+'</div>'
               +'<p class="text-[11px] text-slate-400 italic mt-4">Fonte: sondaggio congiunturale sul mercato delle abitazioni, Banca d\'Italia, Tecnoborsa e Agenzia delle Entrate.</p>'
+            +'</div>'
+            +'<div class="mt-10 pt-6 border-t border-slate-100">'
+              +'<h3 class="font-bold text-navy-900 text-base mb-1">Domande frequenti sugli interventi prima di vendere</h3>'
+              +'<p class="text-slate-500 text-xs mb-4">Cosa conviene fare, e cosa no, prima di mettere in vendita.</p>'
+              +'<div class="space-y-4">'+faqHtml2+'</div>'
             +'</div>'
           +'</div></div>'
 
@@ -52587,7 +52631,16 @@ function getLogoAgenzia(){
   }catch(e){}
   return '';
 }
-try{ window.getNomeAgenzia=getNomeAgenzia; window.getLogoAgenzia=getLogoAgenzia; }catch(e){}
+/* ── getFotoAgente — URL/base64 della foto del consulente (può essere '') ── */
+function getFotoAgente(){
+  try{
+    var cfg = loadAppConfig();
+    if(cfg.brand && cfg.brand.foto_agente && cfg.brand.foto_agente.trim())
+      return cfg.brand.foto_agente.trim();
+  }catch(e){}
+  return '';
+}
+try{ window.getNomeAgenzia=getNomeAgenzia; window.getLogoAgenzia=getLogoAgenzia; window.getFotoAgente=getFotoAgente; }catch(e){}
 
 // ── pers_loadIntoForm: popola il form coi valori salvati ─────────────
 function pers_loadIntoForm(){
@@ -52599,6 +52652,7 @@ function pers_loadIntoForm(){
   n('pers_nome_agente',  cfg.brand.nome_agente);
   n('pers_telefono',     cfg.brand.telefono);
   n('pers_logo_url',     cfg.brand.logo_url);
+  n('pers_foto_agente',  cfg.brand.foto_agente);
 
   // Color pickers + hex inputs
   var setColor = function(field, val){
@@ -52692,6 +52746,26 @@ function pers_uploadLogo(input){
   reader.readAsDataURL(file);
 }
 
+function pers_uploadFotoAgente(input){
+  if(!input || !input.files || !input.files[0]) return;
+  var file = input.files[0];
+  if(file.size > 2 * 1024 * 1024){
+    if(typeof showToast==='function') showToast('Foto troppo grande (max 2MB)','','#DC2626');
+    return;
+  }
+  var fname = document.getElementById('pers_foto_agente_fname');
+  if(fname) fname.textContent = file.name;
+
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var b64 = e.target.result;
+    var urlEl = document.getElementById('pers_foto_agente');
+    if(urlEl) urlEl.value = b64;
+    if(typeof showToast==='function') showToast('Foto caricata — clicca Salva per applicare','','#059669');
+  };
+  reader.readAsDataURL(file);
+}
+
 // ── pers_save: salva e applica ────────────────────────────────────────
 function pers_save(){
   /* [18 ott 2026] colori e caratteri non si scelgono piu' qui (c'e' un solo
@@ -52704,7 +52778,8 @@ function pers_save(){
       tagline:      (document.getElementById('pers_tagline')||{}).value      || '',
       logo_url:     (document.getElementById('pers_logo_url')||{}).value     || '',
       nome_agente:  (document.getElementById('pers_nome_agente')||{}).value  || _APP_CONFIG_DEFAULT.brand.nome_agente,
-      telefono:     (document.getElementById('pers_telefono')||{}).value     || ''
+      telefono:     (document.getElementById('pers_telefono')||{}).value     || '',
+      foto_agente:  (document.getElementById('pers_foto_agente')||{}).value  || ''
     },
     tema: {
       colore_primario:   (document.getElementById('pers_color_primary')||{}).value   || _vec.tema.colore_primario   || '#2563EB',
