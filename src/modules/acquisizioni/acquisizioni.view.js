@@ -1224,11 +1224,12 @@ window._acqWzApriKit = function(){
   var im = W.imm ? immPerUuid(W.imm) : null;
   var comune = (im && im.comune) || (W.ni && W.ni.comune) || '';
   var zona = (im && im.zona) || '';
+  var indirizzo = (im && im.indirizzo) || (W.ni && W.ni.indirizzo) || '';
   if(!comune){
     comune = window.prompt('Comune della zona per il Kit Acquisizione:', '');
     if(!comune || !comune.trim()) return;
   }
-  window.kaApriKit(comune, zona, p.nome || '');
+  window.kaApriKit(comune, zona, p.nome || '', indirizzo);
 };
 window._acqWzFirmato = function(){
   var X = wzScrivi();
@@ -1918,11 +1919,12 @@ window._acqApriKit = function(id){
   if(typeof window.kaApriKit !== 'function'){ avviso('Kit Acquisizione non disponibile in questa pagina'); return; }
   var comune = (im && im.comune) || '';
   var zona = (im && im.zona) || '';
+  var indirizzo = (im && im.indirizzo) || '';
   if(!comune){
     comune = window.prompt('Comune della zona per il Kit Acquisizione:', '');
     if(!comune || !comune.trim()) return;
   }
-  window.kaApriKit(comune, zona, p.nome || '');
+  window.kaApriKit(comune, zona, p.nome || '', indirizzo);
 };
 window._acqScheda = function(immUuid){
   var i = (D.immobili || []).findIndex(function(x){ return x && x.uuid === immUuid; });

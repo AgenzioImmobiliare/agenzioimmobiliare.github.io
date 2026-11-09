@@ -1021,11 +1021,12 @@ function ctGeneraKitCliente(i){
   const immCli=_immSenzaDoppioni(D.immobili.filter(im=>_immApparteneCli(im, i)));
   let comune=(immCli[0]&&immCli[0].comune) || c.citta || '';
   const zona=(immCli[0]&&immCli[0].zona) || '';
+  const indirizzo=(immCli[0]&&immCli[0].indirizzo) || '';
   if(!comune || !String(comune).trim()){
     comune=window.prompt('Comune della zona per il Kit Acquisizione:', '');
     if(!comune || !comune.trim()) return;
   }
-  window.kaApriKit(comune, zona, c.nome);
+  window.kaApriKit(comune, zona, c.nome, indirizzo);
 }
 
 // ===== IMMOBILI =====
