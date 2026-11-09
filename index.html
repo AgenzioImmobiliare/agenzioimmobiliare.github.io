@@ -19502,7 +19502,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.9nov-KIT1PERCENTO';
+var APP_VERSION = 'v.9nov-KITCHECKUP5D';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -52007,9 +52007,30 @@ function kaApriKit(comune, zona, prospectNome){
         +'<div class="p-5 rounded-2xl bg-amber-50 border border-dashed border-amber-300 text-amber-800 text-xs italic mb-10 leading-relaxed">'
           +'<i class="fa-solid fa-star mr-1.5"></i>[Spazio per una recensione reale di un cliente soddisfatto — es. uno screenshot o una citazione da Google. Scrivimi il testo quando lo hai e te lo preparo in formato grafico.]'
         +'</div>'
-        +'<div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center gap-5">'
+        +'<div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center gap-5 mb-10">'
           +'<div class="flex-1 min-w-0"><h4 class="font-bold text-navy-900 text-sm mb-1"><i class="fa-solid fa-qrcode text-gold-600 mr-1.5"></i>Scopri subito il valore della tua casa</h4><p class="text-xs text-slate-500">Inquadra il codice con la fotocamera: in pochi secondi hai una prima stima online, gratuita e senza impegno.</p></div>'
           +(qrLandingDataUrl?'<img src="'+qrLandingDataUrl+'" width="90" height="90" alt="QR valuta la tua casa" class="flex-shrink-0 rounded-lg">':'')
+        +'</div>'
+        +'<div class="p-5 sm:p-6 rounded-2xl bg-white border border-gold-200" style="border-width:2px">'
+          +'<h4 class="font-bold text-navy-900 text-sm mb-1"><i class="fa-solid fa-clipboard-check text-gold-600 mr-1.5"></i>Il tuo check-up in 5 domande</h4>'
+          +'<p class="text-xs text-slate-500 mb-4">Prima del nostro appuntamento, rispondi con sincerità: ti aiuta a capire se sei pronto/a a procedere.</p>'
+          +'<div class="space-y-3">'
+            +[ 'Il mio modo di lavorare, spiegato in questo dossier, ti è sembrato chiaro e concreto?',
+               'I dati di mercato che hai letto ti sembrano seri, non una stima gonfiata per convincerti?',
+               'Le risposte alle tue obiezioni, nella sezione "Dubbi e Risposte", ti hanno tolto qualche dubbio?',
+               'Il metodo Open House ti sembra un modo sensato per vendere al prezzo giusto, senza perdere tempo?',
+               'Ti senti pronto/a a parlarne di persona, sapendo che il modulo di incarico è già pronto da completare insieme?'
+            ].map(function(q,i){
+              return '<div class="flex items-center justify-between gap-3">'
+                +'<span class="text-xs sm:text-sm text-slate-700 flex-1">'+(i+1)+'. '+q+'</span>'
+                +'<span class="flex items-center gap-3 flex-shrink-0 text-[11px] text-slate-400 font-semibold">'
+                  +'<span class="flex items-center gap-1.5"><span style="width:15px;height:15px;border:2px solid #CBD5E1;border-radius:4px;display:inline-block"></span>Sì</span>'
+                  +'<span class="flex items-center gap-1.5"><span style="width:15px;height:15px;border:2px solid #CBD5E1;border-radius:4px;display:inline-block"></span>No</span>'
+                +'</span>'
+              +'</div>';
+            }).join('')
+          +'</div>'
+          +'<p class="text-xs text-navy-900 font-semibold mt-5 bg-gold-50 p-3 rounded-xl border border-gold-200"><i class="fa-solid fa-circle-check text-gold-600 mr-1"></i>3 "Sì" su 5? Possiamo procedere con l\'appuntamento già concordato. Meno di 3? Nessun problema: ne riparliamo insieme, con calma, al nostro incontro.</p>'
         +'</div>'
       +'</div>'
       +'<div>'
