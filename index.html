@@ -19502,7 +19502,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.9nov-KITLOGOPOLISH';
+var APP_VERSION = 'v.9nov-KITFULLWIN';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -52637,7 +52637,7 @@ var kitCss = ''
     +'<\/script>'
     +'</body></html>';
 
-  var win = window.open('', '_blank', 'width=1200,height=860');
+  var win = window.open('', '_blank');
   if(!win){ if(typeof showToast==='function') showToast('Abilita i popup del browser per generare il kit','','#D97706'); return; }
   win.document.open(); win.document.write(html); win.document.close(); win.focus();
 }
