@@ -19502,7 +19502,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.9nov-KITCHIARO';
+var APP_VERSION = 'v.9nov-KITCONTENUTI';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -51886,9 +51886,8 @@ function kaApriKit(comune, zona, prospectNome){
 
   var incaricoUrl='incarico_frimm.html';
   try{ incaricoUrl=new URL('incarico_frimm.html', window.location.href).href; }catch(e){}
-  var landingUrl='valuta-casa.html';
-  try{ landingUrl=new URL('valuta-casa.html', window.location.href).href; }catch(e){}
-  var qrLandingDataUrl=(typeof qrDataUrl==='function') ? qrDataUrl(landingUrl, 220) : null;
+  var googleReviewUrl='https://share.google/As5aDBR7LcxszQCa6';
+  var qrReviewDataUrl=(typeof qrDataUrl==='function') ? qrDataUrl(googleReviewUrl, 220) : null;
 
   /* Precompila il modulo di incarico con quel poco che il Kit già sa
      (nome, comune, zona) — stessa busta monouso usata dalla Pipeline, così
@@ -51945,7 +51944,9 @@ function kaApriKit(comune, zona, prospectNome){
     { t:'"Un\'altra agenzia mi ha promesso una cifra più alta."',
       r:'Sovrastimare l\'immobile per acquisire l\'incarico è una tecnica diffusa, che porta quasi sempre a ribassi ripetuti dopo mesi di immobilismo. Si preferisce illustrare i dati reali delle compravendite comparabili a '+dove+' e lavorare sul prezzo che il mercato è realmente disposto a riconoscere.' },
     { t:'"Non voglio sconosciuti che girano per casa a tutte le ore."',
-      r:'Ogni visita viene organizzata e, dove possibile, le persone vengono identificate preventivamente: agli appuntamenti partecipano solo persone realmente interessate, non semplici curiosi.' }
+      r:'Ogni visita viene organizzata e, dove possibile, le persone vengono identificate preventivamente: agli appuntamenti partecipano solo persone realmente interessate, non semplici curiosi.' },
+    { t:'"Preferisco dare l\'incarico a più agenzie contemporaneamente, così ho più possibilità di vendere."',
+      r:'Affidare l\'immobile a più agenzie contemporaneamente sembra aumentare le possibilità, ma produce spesso l\'effetto opposto: nessuna agenzia investe realmente in marketing su un immobile che potrebbe vendere la concorrenza, e il prezzo tende a scendere rapidamente per anticipare gli altri. Un incarico in esclusiva permette di investire con convinzione in una strategia mirata — come il metodo Open House — ottenendo risultati più rapidi e a condizioni migliori.' }
   ];
   var obiezioniHtml = oggettoObiezioni.map(function(o,i){
     var n=i+1;
@@ -52020,8 +52021,8 @@ function kaApriKit(comune, zona, prospectNome){
           +'<i class="fa-solid fa-star mr-1.5"></i>[Spazio riservato a una recensione cliente — da inserire quando disponibile.]'
         +'</div>'
         +'<div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center gap-5 mb-10">'
-          +'<div class="flex-1 min-w-0"><h4 class="font-bold text-navy-900 text-sm mb-1"><i class="fa-solid fa-qrcode text-gold-600 mr-1.5"></i>Valutazione immediata dell\'immobile</h4><p class="text-xs text-slate-500">Inquadrando il codice con la fotocamera è possibile ottenere, in pochi secondi, una prima stima online gratuita e senza impegno.</p></div>'
-          +(qrLandingDataUrl?'<img src="'+qrLandingDataUrl+'" width="90" height="90" alt="QR valutazione immobile" class="flex-shrink-0 rounded-lg">':'')
+          +'<div class="flex-1 min-w-0"><h4 class="font-bold text-navy-900 text-sm mb-1"><i class="fa-brands fa-google text-gold-600 mr-1.5"></i>Recensioni Google — FRIMM Capital Casa Paestum</h4><p class="text-xs text-slate-500">Inquadrando il codice con la fotocamera è possibile consultare le recensioni reali dei clienti dell\'agenzia.</p></div>'
+          +(qrReviewDataUrl?'<img src="'+qrReviewDataUrl+'" width="90" height="90" alt="QR recensioni Google" class="flex-shrink-0 rounded-lg">':'')
         +'</div>'
         +'<div class="p-5 sm:p-6 rounded-2xl bg-white border border-gold-200" style="border-width:2px">'
           +'<h4 class="font-bold text-navy-900 text-sm mb-1"><i class="fa-solid fa-clipboard-check text-gold-600 mr-1.5"></i>Check-up in 5 domande</h4>'
@@ -52389,10 +52390,18 @@ var kitCss = ''
         +'[class~="p-6"]{padding:1rem!important}'
         +'[class~="p-8"]{padding:1.1rem!important}'
         +'[class~="my-6"]{margin-top:.9rem!important;margin-bottom:.9rem!important}'
+        +'[class~="mt-6"]{margin-top:.75rem!important}'
+        +'[class~="space-y-4"]>*+*{margin-top:.6rem!important}'
+        +'[class~="py-4"]{padding-top:.5rem!important;padding-bottom:.5rem!important}'
         +'.ka-photo-banner{height:120px!important;margin:-1.1rem -1.1rem 1rem -1.1rem!important}'
         +'.ka-cover-photo{height:230px!important}'
         +'.ka-faq-a{display:block!important}'
         +'[id^="objIcon-"]{display:none!important}'
+        +'[class~="sm:grid-cols-2"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}'
+        +'[class~="sm:grid-cols-3"]{grid-template-columns:repeat(3,minmax(0,1fr))!important}'
+        +'[class~="sm:grid-cols-4"]{grid-template-columns:repeat(4,minmax(0,1fr))!important}'
+        +'[class~="md:grid-cols-2"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}'
+        +'[class~="md:grid-cols-3"]{grid-template-columns:repeat(3,minmax(0,1fr))!important}'
         +'@page{margin:5mm}'
       +'}'
     +'</style></head>'
@@ -52485,14 +52494,13 @@ var kitCss = ''
                   +'<div><h3 class="font-bold text-navy-900 text-base">'+agente+'</h3><p class="text-xs text-gold-700 font-semibold">'+agenzia+'</p><p class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5"><i class="fa-solid fa-location-dot text-gold-600"></i>Operativo nel Cilento, con presenza diretta a '+esc(comune)+'</p></div>'
                 +'</div>'
                 +'<div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60">'
-                  +'Attività svolta nel Cilento — tra Agropoli, Capaccio Paestum e i borghi dell\'entroterra — con una filosofia precisa: non i grandi volumi indistinti, ma la cura sartoriale di ogni singola proprietà. Un numero limitato di immobili viene seguito contemporaneamente, per assicurare una presenza costante e risposte tempestive, dal primo contatto fino al rogito.'
+                  +'Attività svolta all\'interno di FRIMM Capital Casa Paestum, che unisce la conoscenza capillare delle dinamiche immobiliari della provincia di Salerno alla piattaforma MLS FRIMM, condivisa con migliaia di agenzie partner sul territorio nazionale. La filosofia operativa non si basa sui grandi volumi indistinti, ma sulla cura sartoriale di ogni singola proprietà: un numero limitato di immobili viene seguito per volta, per garantire una presenza costante e risposte immediate.'
                 +'</div>'
                 +'<div class="bg-navy-900 text-slate-200 p-5 rounded-2xl space-y-3 mt-6">'
                   +'<h4 class="font-semibold text-gold-400 text-sm flex items-center gap-2"><i class="fa-solid fa-star"></i> Impegni Professionali</h4>'
                   +'<ul class="space-y-2 text-xs">'
-                    +'<li class="flex items-start gap-2"><i class="fa-solid fa-check text-gold-400 mt-0.5"></i><span><strong>Ascolto attivo:</strong> le priorità del venditore (tempistiche, importo desiderato, riservatezza) vengono definite congiuntamente.</span></li>'
-                    +'<li class="flex items-start gap-2"><i class="fa-solid fa-check text-gold-400 mt-0.5"></i><span><strong>Verifica tecnica preventiva:</strong> controllo di documenti e dati prima di mettere l\'immobile sul mercato.</span></li>'
-                    +'<li class="flex items-start gap-2"><i class="fa-solid fa-check text-gold-400 mt-0.5"></i><span><strong>Marketing curato:</strong> foto, contenuti social e presenza sui principali portali.</span></li>'
+                    +'<li class="flex items-start gap-2"><i class="fa-solid fa-check text-gold-400 mt-0.5"></i><span><strong>Protezione legale:</strong> verifica tecnica completa prima di accettare qualsiasi proposta.</span></li>'
+                    +'<li class="flex items-start gap-2"><i class="fa-solid fa-check text-gold-400 mt-0.5"></i><span><strong>Rete MLS FRIMM:</strong> l\'immobile viene condiviso con la rete di agenzie partner della piattaforma, attiva su tutto il territorio nazionale.</span></li>'
                     +'<li class="flex items-start gap-2"><i class="fa-solid fa-heart text-gold-400 mt-0.5"></i><span><strong>Impegno sociale:</strong> una quota dell\'1% di ogni provvigione incassata viene destinata a enti no profit.</span></li>'
                   +'</ul>'
                 +'</div>'
@@ -52526,21 +52534,22 @@ var kitCss = ''
               +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-white mt-1">Il Metodo Open House</h2></div>'
             +'</div>'
             +'<div class="pb-6 border-b border-slate-100">'
-            +'<p class="text-slate-500 text-sm">Come il lancio dell\'immobile si trasforma in un evento di vendita, anziché in un\'attesa prolungata.</p>'
-            +'<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gold-50 text-gold-700 border border-gold-200 mt-3"><i class="fa-solid fa-door-open"></i> Massima visibilità in una sola giornata</span></div>'
+            +'<p class="text-slate-500 text-sm">Come il lancio dell\'immobile si trasforma in un evento di vendita ad alto impatto.</p>'
+            +'<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gold-50 text-gold-700 border border-gold-200 mt-3"><i class="fa-solid fa-door-open"></i> Massima resa di prezzo</span></div>'
             +'<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">'
-              +[['fa-house','Che cos\'è','Una giornata (o mezza giornata) dedicata, su appuntamento: l\'immobile viene mostrato a più persone realmente interessate in un\'unica occasione, anziché col contagocce nei mesi successivi.'],
-                ['fa-arrow-trend-up','Perché lo uso','Quando più persone vedono l\'immobile nello stesso momento, la trattativa si sposta sui fatti concreti — tempi, condizioni — invece che su un ribasso continuo "per provare".'],
-                ['fa-bullhorn','Come lo organizzo','Preparo l\'immobile (foto, eventuale home staging), lancio l\'annuncio su portali e social nei giorni precedenti e fisso gli appuntamenti solo con chi è davvero interessato.']
+              +[['fa-house','Che cos\'è','Un evento di vendita concentrato: in una singola giornata, o mezza giornata, previo appuntamento, l\'immobile viene mostrato a più acquirenti selezionati e qualificati.'],
+                ['fa-arrow-trend-up','Perché si utilizza','Crea un effetto di scarsità e competizione positiva tra gli acquirenti: quando più persone mostrano interesse nello stesso momento, la tendenza a proporre ribassi diminuisce, a favore di proposte più vicine al prezzo richiesto.'],
+                ['fa-bullhorn','Come si organizza','Allestimento dell\'immobile, servizio fotografico professionale ed eventuale tour virtuale, lancio pubblicitario sui portali e sui social nei 14 giorni precedenti l\'evento.']
               ].map(function(c){
                 return '<div class="p-5 rounded-2xl bg-white border border-slate-200"><i class="fa-solid '+c[0]+' text-gold-600 text-lg mb-3"></i><h4 class="font-bold text-navy-900 text-sm mb-1">'+c[1]+'</h4><p class="text-xs text-slate-500">'+c[2]+'</p></div>';
               }).join('')
             +'</div>'
-            +'<div class="flex items-start gap-2 mt-4"><i class="fa-solid fa-circle-check text-gold-600 text-sm mt-0.5"></i><p class="text-xs sm:text-sm text-slate-600"><strong>Nessun disagio ripetuto:</strong> la casa viene preparata una sola volta per tutte le visite, evitando la ripetizione settimanale per mesi.</p></div>'
+            +'<div class="flex items-start gap-2 mt-4"><i class="fa-solid fa-circle-check text-gold-600 text-sm mt-0.5"></i><p class="text-xs sm:text-sm text-slate-600"><strong>Zero stress:</strong> la casa viene preparata una sola volta per tutte le visite, evitando la ripetizione settimanale per mesi.</p></div>'
+            +'<div class="flex items-start gap-2 mt-2"><i class="fa-solid fa-circle-check text-gold-600 text-sm mt-0.5"></i><p class="text-xs sm:text-sm text-slate-600"><strong>Tempi ridotti:</strong> la concentrazione delle visite in un\'unica occasione riduce i tempi di vendita rispetto alla media di mercato.</p></div>'
             +'<div class="mt-8 p-6 rounded-2xl bg-slate-50 border border-slate-200/80">'
-              +'<h3 class="font-bold text-navy-900 text-xs tracking-wider uppercase mb-4 flex items-center gap-2"><i class="fa-solid fa-route text-gold-600"></i>Il percorso, passo dopo passo</h3>'
+              +'<h3 class="font-bold text-navy-900 text-xs tracking-wider uppercase mb-4 flex items-center gap-2"><i class="fa-solid fa-route text-gold-600"></i>Il piano in 7 passaggi operativi</h3>'
               +'<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">'
-                +[['1','Analisi & Stima'],['2','Preparazione'],['3','Lancio su portali e social'],['4','Giornata Open House'],['5','Qualifica offerte'],['6','Trattativa'],['7','Rogito notarile']]
+                +[['1','Audit Tecnico'],['2','Stima Comparabile'],['3','Home Staging'],['4','Lancio MLS'],['5','Open House'],['6','Qualifica Offerte'],['7','Rogito Notarile']]
                 .map(function(s){
                   return '<div class="flex items-center gap-2 bg-white rounded-xl p-3 border border-slate-200"><span class="w-7 h-7 rounded-full text-white font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-sm" style="background:linear-gradient(135deg,#1e293b,#0f172a)">'+s[0]+'</span><span class="text-xs text-navy-900 font-medium">'+s[1]+'</span></div>';
                 }).join('')
