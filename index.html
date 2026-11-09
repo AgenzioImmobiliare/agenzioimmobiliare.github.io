@@ -19502,7 +19502,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.9nov-KITCHECKUP5D';
+var APP_VERSION = 'v.9nov-KITLOGOPOLISH';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -51907,8 +51907,8 @@ function kaApriKit(comune, zona, prospectNome){
   }catch(e){}
 
   var badgeAgente=logo
-    ? '<img src="'+logo+'" class="w-12 h-12 rounded-lg object-cover shadow-lg">'
-    : '<div class="w-12 h-12 rounded-lg bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center font-bold text-white text-xl shadow-lg shadow-gold-500/20">'+iniziali+'</div>';
+    ? '<div class="h-12 rounded-lg bg-white shadow-lg flex items-center justify-center flex-shrink-0" style="min-width:48px;padding:4px"><img src="'+logo+'" class="h-full w-auto object-contain" style="max-width:130px"></div>'
+    : '<div class="w-12 h-12 rounded-lg bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center font-bold text-white text-xl shadow-lg shadow-gold-500/20 flex-shrink-0">'+iniziali+'</div>';
 
   var fotoAgenteBlock = fotoAgente
     ? '<img src="'+fotoAgente+'" class="w-20 h-20 rounded-full object-cover shadow-md flex-shrink-0" alt="'+agente+'">'
@@ -52104,12 +52104,16 @@ var kitCss = ''
     +'[class~="top-4"]{top:1rem}'
     +'[class~="right-4"]{right:1rem}'
     +'[class~="z-50"]{z-index:50}'
+    +'[class~="w-6"]{width:1.5rem}'
     +'[class~="w-7"]{width:1.75rem}'
     +'[class~="w-8"]{width:2rem}'
     +'[class~="w-9"]{width:2.25rem}'
     +'[class~="w-12"]{width:3rem}'
     +'[class~="w-14"]{width:3.5rem}'
     +'[class~="w-full"]{width:100%}'
+    +'[class~="w-auto"]{width:auto}'
+    +'[class~="h-full"]{height:100%}'
+    +'[class~="h-6"]{height:1.5rem}'
     +'[class~="h-7"]{height:1.75rem}'
     +'[class~="h-8"]{height:2rem}'
     +'[class~="h-9"]{height:2.25rem}'
@@ -52428,10 +52432,13 @@ var kitCss = ''
             +'<p class="text-slate-500 text-sm mt-1">Un approccio basato su etica, presenza sul territorio e trasparenza.</p></div>'
             +'<div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">'
               +'<div class="space-y-4 text-slate-600 text-sm leading-relaxed">'
-                +'<div class="flex items-center gap-4">'+fotoAgenteBlock
-                  +'<div><h3 class="font-bold text-navy-900 text-base">'+agente+'</h3><p class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5"><i class="fa-solid fa-location-dot text-gold-600"></i>Operativo nel Cilento, al tuo fianco a '+esc(comune)+'</p></div>'
+                +'<div class="flex items-center gap-4 p-4 rounded-2xl bg-white border border-slate-200/80 shadow-sm">'+fotoAgenteBlock
+                  +'<div><h3 class="font-bold text-navy-900 text-base">'+agente+'</h3><p class="text-xs text-gold-700 font-semibold">'+agenzia+'</p><p class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5"><i class="fa-solid fa-location-dot text-gold-600"></i>Operativo nel Cilento, al tuo fianco a '+esc(comune)+'</p></div>'
                 +'</div>'
-                +'<div class="bg-amber-50 border border-dashed border-amber-300 rounded-xl p-4 text-amber-800 text-xs italic">[Due o tre frasi su di te: da quanti anni fai questo lavoro, perché lo fai, cosa ti contraddistingue — scrivile con le tue parole]</div>'
+                +'<div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60">'
+                  +'Opero nel Cilento — tra Agropoli, Capaccio Paestum e i borghi dell\'entroterra — con una filosofia precisa: non i grandi volumi indistinti, ma la cura sartoriale di ogni singola proprietà. Seguo un numero limitato di immobili alla volta, per garantirti una presenza costante e risposte immediate, dal primo contatto fino al rogito.'
+                  +'<span class="block text-[11px] text-slate-400 italic mt-2"><i class="fa-solid fa-pen mr-1"></i>Bozza: personalizzala pure con le tue parole quando vuoi.</span>'
+                +'</div>'
                 +'<div class="bg-navy-900 text-slate-200 p-5 rounded-2xl space-y-3 mt-6">'
                   +'<h4 class="font-semibold text-gold-400 text-sm flex items-center gap-2"><i class="fa-solid fa-star"></i> Il Mio Impegno Con Te</h4>'
                   +'<ul class="space-y-2 text-xs">'
@@ -52475,15 +52482,16 @@ var kitCss = ''
                 ['fa-arrow-trend-up','Perché lo uso','Quando più persone vedono l\'immobile nello stesso momento, la trattativa si sposta sui fatti concreti — tempi, condizioni — invece che su un ribasso continuo "per provare".'],
                 ['fa-bullhorn','Come lo organizzo','Preparo l\'immobile (foto, eventuale home staging), lancio l\'annuncio su portali e social nei giorni precedenti e fisso gli appuntamenti solo con chi è davvero interessato.']
               ].map(function(c){
-                return '<div class="p-5 rounded-2xl bg-slate-50 border border-slate-200/80"><i class="fa-solid '+c[0]+' text-gold-600 text-lg mb-3"></i><h4 class="font-bold text-navy-900 text-sm mb-1">'+c[1]+'</h4><p class="text-xs text-slate-500">'+c[2]+'</p></div>';
+                return '<div class="p-5 rounded-2xl bg-white border border-slate-200"><i class="fa-solid '+c[0]+' text-gold-600 text-lg mb-3"></i><h4 class="font-bold text-navy-900 text-sm mb-1">'+c[1]+'</h4><p class="text-xs text-slate-500">'+c[2]+'</p></div>';
               }).join('')
             +'</div>'
-            +'<div class="mt-8 bg-navy-900 p-6 rounded-2xl">'
-              +'<h3 class="font-bold text-gold-400 text-xs tracking-wider uppercase mb-4 flex items-center gap-2"><i class="fa-solid fa-route"></i>Il percorso, passo dopo passo</h3>'
-              +'<div class="grid grid-cols-2 sm:grid-cols-3 gap-3">'
-                +[['1','Analisi & Stima'],['2','Preparazione'],['3','Lancio su portali e social'],['4','Giornata Open House'],['5','Raccolta e qualifica proposte'],['6','Trattativa e rogito']]
+            +'<div class="flex items-start gap-2 mt-4"><i class="fa-solid fa-circle-check text-gold-600 text-sm mt-0.5"></i><p class="text-xs sm:text-sm text-slate-600"><strong>Zero stress:</strong> prepari la casa una sola volta per tutte le visite, non ogni weekend per mesi.</p></div>'
+            +'<div class="mt-8 p-6 rounded-2xl bg-slate-50 border border-slate-200/80">'
+              +'<h3 class="font-bold text-navy-900 text-xs tracking-wider uppercase mb-4 flex items-center gap-2"><i class="fa-solid fa-route text-gold-600"></i>Il percorso, passo dopo passo</h3>'
+              +'<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">'
+                +[['1','Analisi & Stima'],['2','Preparazione'],['3','Lancio su portali e social'],['4','Giornata Open House'],['5','Qualifica offerte'],['6','Trattativa'],['7','Rogito notarile']]
                 .map(function(s){
-                  return '<div class="flex items-center gap-2 bg-white/5 rounded-xl p-3"><span class="w-6 h-6 rounded-full bg-gold-500 text-slate-950 font-bold text-xs flex items-center justify-center flex-shrink-0">'+s[0]+'</span><span class="text-xs text-slate-200 font-medium">'+s[1]+'</span></div>';
+                  return '<div class="flex items-center gap-2 bg-white rounded-xl p-3 border border-slate-200"><span class="w-6 h-6 rounded-full bg-navy-900 text-gold-400 font-bold text-xs flex items-center justify-center flex-shrink-0">'+s[0]+'</span><span class="text-xs text-navy-900 font-medium">'+s[1]+'</span></div>';
                 }).join('')
               +'</div>'
             +'</div>'
