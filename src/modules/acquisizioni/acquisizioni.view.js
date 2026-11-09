@@ -1083,10 +1083,16 @@ function wzValutazioni(){
 }
 function wzPasso3(){
   var W = wz(), c = C(), p = wzProp();
+  /* Kit Acquisizione [08 nov 2026]: qui il cliente e l'immobile sono già
+     inseriti (anche se non ancora salvati) — si può preparare il Kit
+     subito, senza aspettare di avviare il percorso. */
+  var h0 = '<div class="gx-info" style="border-left:4px solid ' + c.am + ';display:flex;flex-wrap:wrap;gap:10px;align-items:center">'
+    + '<span style="flex:1;min-width:240px"><b>Prepara il Kit Acquisizione</b> da mandare a ' + esc(bello(p.nome) || 'il proprietario') + ' prima dell\'appuntamento: chi sei, il tuo metodo, i dati di mercato e il modulo di incarico già pronto.</span>'
+    + '<button class="gx-btn pieno" onclick="_acqWzApriKit()">' + ico(I.doc) + ' Prepara Kit Acquisizione</button></div>';
   var M = [['valutazione', MODELLI.valutazione.nome, I.stella, 'prima si valuta, l\'incarico arriva dopo'],
            ['incarico', MODELLI.incarico.nome, I.firma, 'l\'incarico c\'è o sta per arrivare'],
            ['personalizzato', 'Personalizzato', I.matita, 'scegli tu passi e ordine']];
-  var h = '<div class="acq-wz-modi">' + M.map(function(m){
+  var h = h0 + '<div class="acq-wz-modi">' + M.map(function(m){
     var on = _modNuovo === m[0];
     var passi = MODELLI[m[0]] ? MODELLI[m[0]].passi.map(function(k){ return PASSI_ET[k]; }).join(' → ') : 'Documenti, Valutazione, Incarico e grazie, Foto: togli e sposta';
     return '<button class="acq-wz-modo' + (on ? ' on' : '') + '" onclick="_acqModNuovo(\'' + m[0] + '\')" title="' + esc(m[3]) + '">'
@@ -1211,6 +1217,18 @@ window._acqWzAvvia = function(vid){
   salva();
   _wz = null;
   vaiA('dettaglio', a.id);
+};
+window._acqWzApriKit = function(){
+  if(typeof window.kaApriKit !== 'function'){ avviso('Kit Acquisizione non disponibile in questa pagina'); return; }
+  var W = wz(), p = wzProp();
+  var im = W.imm ? immPerUuid(W.imm) : null;
+  var comune = (im && im.comune) || (W.ni && W.ni.comune) || '';
+  var zona = (im && im.zona) || '';
+  if(!comune){
+    comune = window.prompt('Comune della zona per il Kit Acquisizione:', '');
+    if(!comune || !comune.trim()) return;
+  }
+  window.kaApriKit(comune, zona, p.nome || '');
 };
 window._acqWzFirmato = function(){
   var X = wzScrivi();
