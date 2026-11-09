@@ -3,7 +3,7 @@
    IMPORTANTE: quando esce un aggiornamento, bumpa CACHE='lecase-vN'
    per invalidare la cache HTML/JS e forzare il telefono a scaricare il nuovo codice. */
 
-var CACHE = 'lecase-v187';            /* Kit Acquisizione: brand Frimm Capital Casa Paestum, numeri rete FRIMM (09/11/2026) */
+var CACHE = 'lecase-v188';            /* Kit Acquisizione: decorazione copertina, indirizzo immobile, nome completo (09/11/2026) */
 var FOTO_CACHE = 'lecase-foto-v1';
 
 self.addEventListener('install', function (e) { self.skipWaiting(); });
