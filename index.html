@@ -19502,7 +19502,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.8nov-KITACQPASSO3';
+var APP_VERSION = 'v.9nov-KITSTAMPAOPENHOUSE';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -51886,6 +51886,9 @@ function kaApriKit(comune, zona, prospectNome){
 
   var incaricoUrl='incarico_frimm.html';
   try{ incaricoUrl=new URL('incarico_frimm.html', window.location.href).href; }catch(e){}
+  var landingUrl='valuta-casa.html';
+  try{ landingUrl=new URL('valuta-casa.html', window.location.href).href; }catch(e){}
+  var qrLandingDataUrl=(typeof qrDataUrl==='function') ? qrDataUrl(landingUrl, 220) : null;
 
   /* Precompila il modulo di incarico con quel poco che il Kit già sa
      (nome, comune, zona) — stessa busta monouso usata dalla Pipeline, così
@@ -51948,54 +51951,6 @@ function kaApriKit(comune, zona, prospectNome){
       +'<div id="objContent-'+n+'" class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 text-xs sm:text-sm text-slate-600'+(n>1?' hidden':'')+'"><strong class="text-gold-700">La mia risposta:</strong> '+esc(o.r)+'</div></div>';
   }).join('');
 
-  var faqPrezzo = [
-    { q:'Qual è il giusto prezzo per vendere casa?',
-      a:'È il prezzo in linea con quello pagato dal mercato della zona per case simili, stimato con una valutazione che considera le caratteristiche specifiche dell\'immobile.' },
-    { q:'Di quanto si abbassa in media il prezzo in trattativa?',
-      a:'Secondo il sondaggio congiunturale di Banca d\'Italia, Tecnoborsa e Agenzia delle Entrate (II trimestre 2026), si attesta intorno al 7,1%, con sconti più contenuti al Nord-Est e più ampi al Sud e nelle Isole.' },
-    { q:'Quanto tempo ci vuole per vendere casa?',
-      a:'Intorno ai 5 mesi in media (5,2 mesi nel II trimestre 2026), ma il tempo varia molto in base alla zona, al prezzo di partenza e allo stato dell\'immobile.' },
-    { q:'Cosa succede se parto con un prezzo troppo alto?',
-      a:'La casa resta più a lungo sul mercato, le visite scarseggiano e spesso si arriva a ribassare dopo mesi — con il rischio che gli acquirenti la percepiscano come un immobile "problematico".' },
-    { q:'Meglio partire alto e poi trattare?',
-      a:'Conviene partire da un prezzo ragionato, con un margine di trattativa contenuto (5-7%), piuttosto che da un prezzo esageratamente alto seguito poi da forti ribassi.' },
-    { q:'Un prezzo basso fa vendere più in fretta?',
-      a:'Sì, ma riduce il ricavo netto del venditore. Il giusto prezzo non è il prezzo più basso, ma il valore reale che il mercato riconosce a immobili comparabili.' },
-    { q:'Quando conviene ribassare il prezzo?',
-      a:'Quando dopo alcune settimane arrivano poche richieste di visita o molte visite senza nessuna offerta: il momento e l\'entità del ribasso li valutiamo insieme, conoscendo la zona.' }
-  ];
-  var faqHtml = faqPrezzo.map(function(f,i){
-    var n=i+1;
-    return '<div class="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">'
-      +'<button onclick="toggleFaq('+n+')" class="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-slate-50 transition">'
-      +'<h4 class="font-bold text-navy-900 text-sm sm:text-base">'+esc(f.q)+'</h4>'
-      +'<i id="faqIcon-'+n+'" class="fa-solid fa-chevron-down text-slate-400 transition-transform flex-shrink-0 ml-2"></i></button>'
-      +'<div id="faqContent-'+n+'" class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 text-xs sm:text-sm text-slate-600 hidden">'+esc(f.a)+'</div></div>';
-  }).join('');
-
-  var faqInterventi = [
-    { q:'Conviene ristrutturare prima di vendere casa?',
-      a:'Non sempre: conviene quando l\'aumento di prezzo atteso supera il costo dei lavori. Un agente della zona può stimare il valore della casa "così com\'è" e "dopo gli interventi" per decidere sui numeri.' },
-    { q:'Quali interventi fanno vendere casa più velocemente?',
-      a:'I più efficaci rispetto al costo sono pulizia e ordine, tinteggiatura neutra, piccole riparazioni e home staging. Rifacimenti più costosi vanno valutati caso per caso.' },
-    { q:'Quanto aumenta il valore di una casa con l\'home staging?',
-      a:'Le stime di settore indicano un premio di prezzo medio nell\'ordine del 4-8%, ma i dati variano per fonte e per immobile: vanno intesi come ordine di grandezza, non come promessa.' },
-    { q:'Meglio vendere casa ristrutturata o da ristrutturare?',
-      a:'Dipende da zona, tempo e budget: in aree dove il valore dipende soprattutto dalla posizione, o con poco tempo a disposizione, può convenire vendere allo stato attuale con un prezzo coerente.' },
-    { q:'Cosa succede alla detrazione del Bonus Ristrutturazioni se vendo casa?',
-      a:'Le rate non ancora utilizzate passano, in assenza di accordo diverso, all\'acquirente persona fisica: conviene chiarire il punto nell\'atto con il notaio.' },
-    { q:'Qual è la cosa più importante per vendere in fretta?',
-      a:'Fissare un prezzo allineato al mercato fin dall\'inizio e avere la documentazione tecnica (urbanistica e catastale) perfettamente in regola, prima ancora di valutare qualsiasi lavoro estetico.' }
-  ];
-  var faqHtml2 = faqInterventi.map(function(f,i){
-    var n=i+1+faqPrezzo.length;
-    return '<div class="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">'
-      +'<button onclick="toggleFaq('+n+')" class="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-slate-50 transition">'
-      +'<h4 class="font-bold text-navy-900 text-sm sm:text-base">'+esc(f.q)+'</h4>'
-      +'<i id="faqIcon-'+n+'" class="fa-solid fa-chevron-down text-slate-400 transition-transform flex-shrink-0 ml-2"></i></button>'
-      +'<div id="faqContent-'+n+'" class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 text-xs sm:text-sm text-slate-600 hidden">'+esc(f.a)+'</div></div>';
-  }).join('');
-
   var coverQrBlock = qrWaDataUrl
     ? '<div class="bg-white p-2.5 rounded-xl inline-block shadow-lg"><img src="'+qrWaDataUrl+'" width="100" height="100" alt="QR WhatsApp" style="display:block"></div><p class="text-[10px] text-slate-400 mt-2 max-w-[130px] leading-snug">Scansiona per scrivermi su WhatsApp</p>'
     : '<div class="border border-dashed border-slate-600 rounded-xl p-4 text-[10px] text-slate-400 max-w-[150px] italic leading-snug">QR non disponibile: aggiungi un numero di telefono nel gestionale per attivarlo</div>';
@@ -52037,7 +51992,7 @@ function kaApriKit(comune, zona, prospectNome){
     : '';
 
   var retroHtml = ''
-    +'<div id="page-7" class="tab-page p-6 sm:p-10 flex-1">'
+    +'<div id="page-8" class="tab-page p-6 sm:p-10 flex-1">'
       +'<div>'
         +'<span class="text-xs font-bold text-gold-600 tracking-wider uppercase">Prima di incontrarci</span>'
         +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900 mt-1 mb-8">Cosa Succede Adesso</h2>'
@@ -52051,6 +52006,10 @@ function kaApriKit(comune, zona, prospectNome){
         +'</div>'
         +'<div class="p-5 rounded-2xl bg-amber-50 border border-dashed border-amber-300 text-amber-800 text-xs italic mb-10 leading-relaxed">'
           +'<i class="fa-solid fa-star mr-1.5"></i>[Spazio per una recensione reale di un cliente soddisfatto — es. uno screenshot o una citazione da Google. Scrivimi il testo quando lo hai e te lo preparo in formato grafico.]'
+        +'</div>'
+        +'<div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center gap-5">'
+          +'<div class="flex-1 min-w-0"><h4 class="font-bold text-navy-900 text-sm mb-1"><i class="fa-solid fa-qrcode text-gold-600 mr-1.5"></i>Scopri subito il valore della tua casa</h4><p class="text-xs text-slate-500">Inquadra il codice con la fotocamera: in pochi secondi hai una prima stima online, gratuita e senza impegno.</p></div>'
+          +(qrLandingDataUrl?'<img src="'+qrLandingDataUrl+'" width="90" height="90" alt="QR valuta la tua casa" class="flex-shrink-0 rounded-lg">':'')
         +'</div>'
       +'</div>'
       +'<div>'
@@ -52353,6 +52312,7 @@ var kitCss = ''
       +'.tab-page{display:none;flex-direction:column;justify-content:space-between}'
       +'.tab-page.active{display:flex}'
       +'@media print{'
+        +'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'
         +'.no-print{display:none!important}'
         +'body{background:white!important}'
         +'main{width:100%!important}'
@@ -52383,10 +52343,10 @@ var kitCss = ''
         +'<div class="bg-white rounded-2xl p-4 border border-slate-200/80 page-shadow lg:sticky lg:top-28">'
           +'<div class="px-3 py-2 border-b border-slate-100 mb-3 flex justify-between items-center">'
             +'<span class="text-xs font-bold text-slate-400 tracking-wider uppercase">Indice del Kit</span>'
-            +'<span class="text-xs font-bold text-gold-600 bg-gold-50 px-2 py-0.5 rounded-full" id="progressIndicator">1 / 7</span>'
+            +'<span class="text-xs font-bold text-gold-600 bg-gold-50 px-2 py-0.5 rounded-full" id="progressIndicator">1 / 8</span>'
           +'</div>'
           +'<nav class="space-y-1" id="tabNav">'
-            +[['1','Copertina'],['2','Benvenuto'],['3','Chi Sono & Metodo'],['4','Mercato & Dati'],['5','Dubbi e Risposte'],['6','Dossier & Incarico'],['7','Retro Busta']].map(function(t){
+            +[['1','Copertina'],['2','Benvenuto'],['3','Chi Sono & Metodo'],['4','Metodo Open House'],['5','Mercato & Dati'],['6','Dubbi e Risposte'],['7','Dossier & Incarico'],['8','Retro Busta']].map(function(t){
               return '<button onclick="switchTab('+t[0]+')" id="tabBtn-'+t[0]+'" class="tab-btn w-full flex items-center justify-between px-3 py-3 rounded-xl text-left text-sm font-medium transition text-slate-600 hover:bg-slate-100">'
                 +'<div class="flex items-center space-x-3"><span class="tab-icon w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold bg-slate-100 text-slate-500">'+t[0]+'</span><span>'+t[1]+'</span></div>'
                 +'<i class="fa-solid fa-chevron-right text-xs opacity-50"></i></button>';
@@ -52470,13 +52430,44 @@ var kitCss = ''
                 +'</div>'
               +'</div>'
             +'</div>'
+            +'<div class="mt-8 p-6 sm:p-8 rounded-2xl bg-navy-900 text-center">'
+              +'<i class="fa-solid fa-quote-left text-gold-500 text-xl"></i>'
+              +'<p class="font-serif text-lg sm:text-xl text-white italic leading-snug mt-3">"La qualità conta più della quantità. Un fuoricampo vale molto più di due basi valide."</p>'
+              +'<p class="text-xs text-gold-400 font-semibold mt-3 tracking-wide uppercase">— Steve Jobs</p>'
+            +'</div>'
           +'</div></div>'
 
-          // ═══ 4. MERCATO & DATI REALI ═══
+          // ═══ 4. IL METODO OPEN HOUSE ═══
           +'<div id="page-4" class="tab-page p-6 sm:p-10 flex-1">'
           +'<div>'
+            +'<div class="pb-6 border-b border-slate-100"><span class="text-xs font-bold text-gold-600 tracking-wider uppercase">Sezione 03</span>'
+            +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900 mt-1">Il Metodo Open House</h2>'
+            +'<p class="text-slate-500 text-sm mt-1">Come trasformo il lancio del tuo immobile in un evento di vendita, non in un\'attesa infinita.</p>'
+            +'<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gold-50 text-gold-700 border border-gold-200 mt-3"><i class="fa-solid fa-door-open"></i> Massima visibilità in una sola giornata</span></div>'
+            +'<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">'
+              +[['fa-house','Che cos\'è','Una giornata (o mezza giornata) dedicata, su appuntamento: mostro il tuo immobile a più persone realmente interessate, invece che col contagocce nei mesi successivi.'],
+                ['fa-arrow-trend-up','Perché lo uso','Quando più persone vedono l\'immobile nello stesso momento, la trattativa si sposta sui fatti concreti — tempi, condizioni — invece che su un ribasso continuo "per provare".'],
+                ['fa-bullhorn','Come lo organizzo','Preparo l\'immobile (foto, eventuale home staging), lancio l\'annuncio su portali e social nei giorni precedenti e fisso gli appuntamenti solo con chi è davvero interessato.']
+              ].map(function(c){
+                return '<div class="p-5 rounded-2xl bg-slate-50 border border-slate-200/80"><i class="fa-solid '+c[0]+' text-gold-600 text-lg mb-3"></i><h4 class="font-bold text-navy-900 text-sm mb-1">'+c[1]+'</h4><p class="text-xs text-slate-500">'+c[2]+'</p></div>';
+              }).join('')
+            +'</div>'
+            +'<div class="mt-8 bg-navy-900 p-6 rounded-2xl">'
+              +'<h3 class="font-bold text-gold-400 text-xs tracking-wider uppercase mb-4 flex items-center gap-2"><i class="fa-solid fa-route"></i>Il percorso, passo dopo passo</h3>'
+              +'<div class="grid grid-cols-2 sm:grid-cols-3 gap-3">'
+                +[['1','Analisi & Stima'],['2','Preparazione'],['3','Lancio su portali e social'],['4','Giornata Open House'],['5','Raccolta e qualifica proposte'],['6','Trattativa e rogito']]
+                .map(function(s){
+                  return '<div class="flex items-center gap-2 bg-white/5 rounded-xl p-3"><span class="w-6 h-6 rounded-full bg-gold-500 text-slate-950 font-bold text-xs flex items-center justify-center flex-shrink-0">'+s[0]+'</span><span class="text-xs text-slate-200 font-medium">'+s[1]+'</span></div>';
+                }).join('')
+              +'</div>'
+            +'</div>'
+          +'</div></div>'
+
+          // ═══ 5. MERCATO & DATI REALI ═══
+          +'<div id="page-5" class="tab-page p-6 sm:p-10 flex-1">'
+          +'<div>'
             +'<div class="pb-6 border-b border-slate-100 flex justify-between items-end flex-wrap gap-2">'
-              +'<div><span class="text-xs font-bold text-gold-600 tracking-wider uppercase">Sezione 03</span>'
+              +'<div><span class="text-xs font-bold text-gold-600 tracking-wider uppercase">Sezione 04</span>'
               +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900 mt-1">Mercato & Dati Reali</h2>'
               +'<p class="text-slate-500 text-sm mt-1">I numeri veri del nostro gestionale, non stime di marketing.</p></div>'
               +'<span class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-medium border border-slate-200"><i class="fa-solid fa-chart-line text-gold-600 mr-1"></i>Aggiornato al '+nowStr+'</span>'
@@ -52493,33 +52484,32 @@ var kitCss = ''
                 +'<div class="bg-white p-4 rounded-xl border border-slate-200"><span class="font-bold text-red-600 block mb-1"><i class="fa-solid fa-circle-xmark mr-1"></i>Prezzo fuori mercato</span><p class="text-slate-500">Un prezzo troppo alto "per vedere come va" scoraggia proprio gli acquirenti più motivati nei primi, decisivi, mesi. Dopo, l\'immobile si svaluta.</p></div>'
                 +'<div class="bg-white p-4 rounded-xl border border-slate-200"><span class="font-bold text-emerald-600 block mb-1"><i class="fa-solid fa-circle-check mr-1"></i>Valore reale di mercato</span><p class="text-slate-500">Attiriamo subito i migliori acquirenti, pronti a trattare sull\'immobile. Si chiude al miglior prezzo, nei tempi giusti.</p></div>'
               +'</div></div>'
+            +'<div class="mt-8 p-6 sm:p-8 rounded-2xl bg-navy-900 text-center">'
+              +'<i class="fa-solid fa-quote-left text-gold-500 text-xl"></i>'
+              +'<p class="font-serif text-lg sm:text-xl text-white italic leading-snug mt-3">"Il prezzo è quello che paghi. Il valore è quello che ottieni."</p>'
+              +'<p class="text-xs text-gold-400 font-semibold mt-3 tracking-wide uppercase">— Warren Buffett</p>'
+            +'</div>'
           +'</div></div>'
 
-          // ═══ 5. DUBBI E RISPOSTE ═══
-          +'<div id="page-5" class="tab-page p-6 sm:p-10 flex-1">'
+          // ═══ 6. DUBBI E RISPOSTE ═══
+          +'<div id="page-6" class="tab-page p-6 sm:p-10 flex-1">'
           +'<div>'
-            +'<div class="pb-6 border-b border-slate-100"><span class="text-xs font-bold text-gold-600 tracking-wider uppercase">Sezione 04</span>'
+            +'<div class="pb-6 border-b border-slate-100"><span class="text-xs font-bold text-gold-600 tracking-wider uppercase">Sezione 05</span>'
             +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900 mt-1">Risposte Chiare ai Tuoi Dubbi</h2>'
             +'<p class="text-slate-500 text-sm mt-1">Le domande più comuni, e come ci lavoro io.</p></div>'
             +'<div class="mt-6 space-y-4">'+obiezioniHtml+'</div>'
-            +'<div class="mt-10 pt-6 border-t border-slate-100">'
-              +'<h3 class="font-bold text-navy-900 text-base mb-1">Domande frequenti sul giusto prezzo</h3>'
-              +'<p class="text-slate-500 text-xs mb-4">Dati reali del mercato immobiliare italiano, non opinioni.</p>'
-              +'<div class="space-y-4">'+faqHtml+'</div>'
-              +'<p class="text-[11px] text-slate-400 italic mt-4">Fonte: sondaggio congiunturale sul mercato delle abitazioni, Banca d\'Italia, Tecnoborsa e Agenzia delle Entrate.</p>'
-            +'</div>'
-            +'<div class="mt-10 pt-6 border-t border-slate-100">'
-              +'<h3 class="font-bold text-navy-900 text-base mb-1">Domande frequenti sugli interventi prima di vendere</h3>'
-              +'<p class="text-slate-500 text-xs mb-4">Cosa conviene fare, e cosa no, prima di mettere in vendita.</p>'
-              +'<div class="space-y-4">'+faqHtml2+'</div>'
+            +'<div class="mt-8 p-6 sm:p-8 rounded-2xl bg-navy-900 text-center">'
+              +'<i class="fa-solid fa-quote-left text-gold-500 text-xl"></i>'
+              +'<p class="font-serif text-lg sm:text-xl text-white italic leading-snug mt-3">"Se piaci alle persone ti ascolteranno, ma se si fidano di te faranno affari con te."</p>'
+              +'<p class="text-xs text-gold-400 font-semibold mt-3 tracking-wide uppercase">— Zig Ziglar</p>'
             +'</div>'
           +'</div></div>'
 
-          // ═══ 6. DOSSIER & INCARICO ═══
-          +'<div id="page-6" class="tab-page p-6 sm:p-10 flex-1">'
+          // ═══ 7. DOSSIER & INCARICO ═══
+          +'<div id="page-7" class="tab-page p-6 sm:p-10 flex-1">'
           +'<div>'
             +'<div class="pb-6 border-b border-slate-100 flex justify-between items-center flex-wrap gap-2">'
-              +'<div><span class="text-xs font-bold text-gold-600 tracking-wider uppercase">Sezione 05</span>'
+              +'<div><span class="text-xs font-bold text-gold-600 tracking-wider uppercase">Sezione 06</span>'
               +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900 mt-1">Dossier & Incarico</h2>'
               +'<p class="text-slate-500 text-sm mt-1">Cosa verifico prima del nostro incontro, cosa trovi già pronto e quali documenti ti servono.</p></div>'
             +'</div>'
@@ -52557,13 +52547,13 @@ var kitCss = ''
             +'</div>'
           +'</div></div>'
 
-          // ═══ 7. RETRO BUSTA ═══
+          // ═══ 8. RETRO BUSTA ═══
           +retroHtml
 
           // footer nav
           +'<div class="p-4 sm:p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-between no-print">'
             +'<button id="prevBtn" onclick="navigatePage(-1)" class="px-4 py-2 bg-white border border-slate-200 hover:border-slate-300 text-slate-700 rounded-xl text-xs font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed" disabled><i class="fa-solid fa-arrow-left mr-2"></i>Precedente</button>'
-            +'<span class="text-xs font-semibold text-slate-400" id="pageIndicatorText">Pagina 1 di 7</span>'
+            +'<span class="text-xs font-semibold text-slate-400" id="pageIndicatorText">Pagina 1 di 8</span>'
             +'<button id="nextBtn" onclick="navigatePage(1)" class="px-5 py-2 bg-gradient-to-r from-gold-500 to-gold-600 text-slate-950 font-bold rounded-xl text-xs hover:brightness-110 transition shadow-sm">Successiva<i class="fa-solid fa-arrow-right ml-2"></i></button>'
           +'</div>'
 
@@ -52582,7 +52572,7 @@ var kitCss = ''
       +'</div></div>'
 
     +'<script>'
-      +'var currentPage=1,totalPages=7;'
+      +'var currentPage=1,totalPages=8;'
       +'function switchTab(n){currentPage=n;updateUI();}'
       +'function navigatePage(d){var n=currentPage+d;if(n>=1&&n<=totalPages){currentPage=n;updateUI();}}'
       +'function updateUI(){'
@@ -52604,12 +52594,6 @@ var kitCss = ''
       +'}'
       +'function toggleObj(n){'
         +'var c=document.getElementById("objContent-"+n),ic=document.getElementById("objIcon-"+n);'
-        +'var open=!c.classList.contains("hidden");'
-        +'c.classList.toggle("hidden");'
-        +'ic.style.transform=open?"rotate(0deg)":"rotate(180deg)";'
-      +'}'
-      +'function toggleFaq(n){'
-        +'var c=document.getElementById("faqContent-"+n),ic=document.getElementById("faqIcon-"+n);'
         +'var open=!c.classList.contains("hidden");'
         +'c.classList.toggle("hidden");'
         +'ic.style.transform=open?"rotate(0deg)":"rotate(180deg)";'
