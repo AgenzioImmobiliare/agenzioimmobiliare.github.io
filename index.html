@@ -19502,7 +19502,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.9nov-KITFORMALE';
+var APP_VERSION = 'v.9nov-KITFAQPRINT';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -51954,7 +51954,7 @@ function kaApriKit(comune, zona, prospectNome){
       +'<div class="flex items-center gap-3"><span class="w-8 h-8 rounded-full bg-gold-100 text-gold-700 font-bold text-xs flex items-center justify-center flex-shrink-0">0'+n+'</span>'
       +'<h3 class="font-bold text-navy-900 text-sm sm:text-base">'+esc(o.t)+'</h3></div>'
       +'<i id="objIcon-'+n+'" class="fa-solid fa-chevron-down text-slate-400 transition-transform flex-shrink-0 ml-2"></i></button>'
-      +'<div id="objContent-'+n+'" class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 text-xs sm:text-sm text-slate-600'+(n>1?' hidden':'')+'"><strong class="text-gold-700">Risposta:</strong> '+esc(o.r)+'</div></div>';
+      +'<div id="objContent-'+n+'" class="ka-faq-a px-6 py-4 border-t border-slate-100 bg-slate-50/50 text-xs sm:text-sm text-slate-600'+(n>1?' hidden':'')+'"><strong class="text-gold-700">Risposta:</strong> '+esc(o.r)+'</div></div>';
   }).join('');
 
   var coverQrBlock = qrContattiDataUrl
@@ -52385,6 +52385,8 @@ var kitCss = ''
         +'[class~="p-8"]{padding:1.1rem!important}'
         +'[class~="my-6"]{margin-top:.9rem!important;margin-bottom:.9rem!important}'
         +'.ka-photo-banner{height:120px!important;margin:-1.1rem -1.1rem 1rem -1.1rem!important}'
+        +'.ka-faq-a{display:block!important}'
+        +'[id^="objIcon-"]{display:none!important}'
         +'@page{margin:5mm}'
       +'}'
     +'</style></head>'
@@ -52606,7 +52608,7 @@ var kitCss = ''
             +'<div class="mt-6 bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-200">'
               +'<h3 class="font-bold text-navy-900 text-sm flex items-center gap-2 mb-1"><i class="fa-solid fa-folder-open text-gold-600"></i>Documenti da preparare per vendere casa</h3>'
               +'<p class="text-xs text-slate-500 mb-5">L\'elenco completo di quanto necessario per arrivare pronti al rogito. L\'eventuale mancanza di alcuni documenti non costituisce un problema: la verifica viene effettuata congiuntamente, con assistenza nel reperimento di quanto necessario.</p>'
-              +'<div class="space-y-3">'
+              +'<div class="grid grid-cols-1 md:grid-cols-2 gap-3">'
                 +[['Atto di provenienza','Attesta il diritto di proprietà (compravendita, successione, donazione).','Archivio personale o notaio che ha rogato l\'atto'],
                   ['Visura e planimetria catastale','Identificano l\'immobile e la sua distribuzione interna.','Agenzia delle Entrate, anche online'],
                   ['Verifica di conformità catastale','Controlla che lo stato di fatto corrisponda alla planimetria depositata.','Tecnico abilitato (geometra, architetto, ingegnere)'],
