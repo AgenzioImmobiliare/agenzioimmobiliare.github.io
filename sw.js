@@ -3,7 +3,7 @@
    IMPORTANTE: quando esce un aggiornamento, bumpa CACHE='lecase-vN'
    per invalidare la cache HTML/JS e forzare il telefono a scaricare il nuovo codice. */
 
-var CACHE = 'lecase-v179';            /* Kit Acquisizione: si apre a tutta pagina invece che in una finestra piccola (09/11/2026) */
+var CACHE = 'lecase-v180';            /* Kit Acquisizione: margini di stampa ridotti al minimo (09/11/2026) */
 var FOTO_CACHE = 'lecase-foto-v1';
 
 self.addEventListener('install', function (e) { self.skipWaiting(); });
