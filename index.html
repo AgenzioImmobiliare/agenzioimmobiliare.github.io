@@ -19502,7 +19502,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.9nov-KITPOSTER';
+var APP_VERSION = 'v.9nov-KITCHIARO';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -51958,46 +51958,47 @@ function kaApriKit(comune, zona, prospectNome){
   }).join('');
 
   var coverQrBlock = qrContattiDataUrl
-    ? '<div class="bg-white p-2.5 rounded-xl inline-block shadow-lg"><img src="'+qrContattiDataUrl+'" width="100" height="100" alt="QR contatti" style="display:block"></div><p class="text-[10px] text-slate-400 mt-2 max-w-[130px] leading-snug">Inquadrare il codice per contatti e servizi</p>'
-    : '<div class="border border-dashed border-slate-600 rounded-xl p-4 text-[10px] text-slate-400 max-w-[150px] italic leading-snug">QR non disponibile in questo browser</div>';
+    ? '<div class="bg-white border border-slate-200 p-2.5 rounded-xl inline-block shadow-sm"><img src="'+qrContattiDataUrl+'" width="100" height="100" alt="QR contatti" style="display:block"></div><p class="text-[10px] text-slate-400 mt-2 max-w-[130px] leading-snug">Inquadrare il codice per contatti e servizi</p>'
+    : '<div class="border border-dashed border-slate-200 rounded-xl p-4 text-[10px] text-slate-400 max-w-[150px] italic leading-snug">QR non disponibile in questo browser</div>';
 
   var coverHtml = ''
-    +'<div id="page-1" class="tab-page ka-hero text-white flex-1 active">'
-      +'<div class="ka-hero-bg" style="background-image:url(\''+heroImg+'\')"></div>'
-      +'<div class="ka-hero-overlay" style="background:linear-gradient(165deg,rgba(2,6,23,.55) 0%,rgba(2,6,23,.80) 55%,rgba(2,6,23,.97) 100%)"></div>'
-      +'<div class="ka-hero-inner" style="align-items:center;text-align:center">'
-      +'<div style="display:flex;flex-direction:column;align-items:center">'+badgeAgente
-        +'<div class="mt-3"><div class="text-xs font-bold tracking-wider uppercase text-gold-400">'+agenzia+'</div>'
-        +(tagline?'<div class="text-[11px] text-slate-400 mt-0.5">'+tagline+'</div>':'')
+    +'<div id="page-1" class="tab-page p-6 sm:p-10 flex-1 active">'
+      +'<div>'
+        +'<div class="ka-cover-photo"><img src="'+heroImg+'" alt=""><div class="ka-cover-photo-overlay"></div></div>'
+        +'<div class="mt-8" style="display:flex;flex-direction:column;align-items:center;text-align:center">'
+          +'<div style="display:flex;flex-direction:column;align-items:center">'+badgeAgente
+            +'<div class="mt-3"><div class="text-xs font-bold tracking-wider uppercase text-gold-700">'+agenzia+'</div>'
+            +(tagline?'<div class="text-[11px] text-slate-500 mt-0.5">'+tagline+'</div>':'')
+            +'</div>'
+          +'</div>'
+          +'<div style="max-width:42rem;display:flex;flex-direction:column;align-items:center">'
+            +'<div class="flex flex-wrap items-center justify-center gap-2 mt-6 mb-5">'
+              +'<span class="text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1.5 rounded-full whitespace-nowrap">Dossier Pre-Acquisizione</span>'
+              +'<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-gold-50 text-gold-700 border border-gold-200"><i class="fa-solid fa-lock"></i> Documentazione riservata</span>'
+            +'</div>'
+            +'<h1 class="text-3xl sm:text-5xl font-bold font-serif leading-[1.12] text-navy-900">Guida alla Valorizzazione <span class="text-gold-600">&amp; Vendita</span> dell\'Immobile</h1>'
+            +'<p class="text-slate-500 mt-5 text-sm sm:text-base">Analisi di mercato, metodo operativo e documentazione preliminare predisposta per la tutela del patrimonio immobiliare.</p>'
+            +'<div class="bg-gold-500" style="width:60px;height:2px;margin:2rem auto"></div>'
+            +'<div class="flex flex-wrap justify-center gap-x-10 gap-y-6">'
+              +'<div><span class="text-[11px] text-slate-400 uppercase tracking-wider block mb-1">Preparato per</span><span class="font-bold text-navy-900 text-xl">'+(primoNome?('Gentile '+primoNome):'Gentile Proprietario')+'</span></div>'
+              +'<div><span class="text-[11px] text-slate-400 uppercase tracking-wider block mb-1">Zona di riferimento</span><span class="font-bold text-navy-900 text-xl">'+dove+'</span></div>'
+              +'<div><span class="text-[11px] text-slate-400 uppercase tracking-wider block mb-1">Data</span><span class="font-bold text-navy-900 text-xl">'+nowStr+'</span></div>'
+            +'</div>'
+          +'</div>'
         +'</div>'
       +'</div>'
-      +'<div style="max-width:42rem;display:flex;flex-direction:column;align-items:center">'
-        +'<div class="flex flex-wrap items-center justify-center gap-2 mb-5">'
-          +'<span class="text-[11px] font-semibold bg-white/10 border border-white/15 px-3 py-1.5 rounded-full whitespace-nowrap">Dossier Pre-Acquisizione</span>'
-          +'<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-gold-500/10 text-gold-400 border border-gold-500/30"><i class="fa-solid fa-lock"></i> Documentazione riservata</span>'
-        +'</div>'
-        +'<h1 class="text-3xl sm:text-5xl font-bold font-serif leading-[1.12]">Guida alla Valorizzazione <span class="text-gold-400">&amp; Vendita</span> dell\'Immobile</h1>'
-        +'<p class="text-slate-400 mt-5 text-sm sm:text-base">Analisi di mercato, metodo operativo e documentazione preliminare predisposta per la tutela del patrimonio immobiliare.</p>'
-        +'<div class="bg-gold-500" style="width:60px;height:2px;margin:2rem auto"></div>'
-        +'<div class="flex flex-wrap justify-center gap-x-10 gap-y-6">'
-          +'<div><span class="text-[11px] text-slate-500 uppercase tracking-wider block mb-1">Preparato per</span><span class="font-bold text-white text-xl">'+(primoNome?('Gentile '+primoNome):'Gentile Proprietario')+'</span></div>'
-          +'<div><span class="text-[11px] text-slate-500 uppercase tracking-wider block mb-1">Zona di riferimento</span><span class="font-bold text-white text-xl">'+dove+'</span></div>'
-          +'<div><span class="text-[11px] text-slate-500 uppercase tracking-wider block mb-1">Data</span><span class="font-bold text-white text-xl">'+nowStr+'</span></div>'
-        +'</div>'
-      +'</div>'
-      +'<div style="display:flex;flex-direction:column;align-items:center;gap:1.25rem">'
-        +'<div><div class="text-[11px] text-slate-500 uppercase tracking-wider mb-1">Consulente di riferimento</div>'
-          +'<div class="font-serif font-bold text-lg">'+agente+'</div>'
-          +(tel?'<div class="text-sm text-gold-400 mt-0.5"><i class="fa-solid fa-phone mr-1.5"></i>'+esc(tel)+'</div>':'')
-          +'<p class="text-[11px] text-slate-500 italic mt-3 leading-snug" style="max-width:26rem;margin-left:auto;margin-right:auto">Dossier riservato, predisposto in vista dell\'incontro di acquisizione concordato.</p>'
+      +'<div class="pt-8 mt-8 border-t border-slate-100" style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:1.25rem">'
+        +'<div><div class="text-[11px] text-slate-400 uppercase tracking-wider mb-1">Consulente di riferimento</div>'
+          +'<div class="font-serif font-bold text-lg text-navy-900">'+agente+'</div>'
+          +(tel?'<div class="text-sm text-gold-700 mt-0.5"><i class="fa-solid fa-phone mr-1.5"></i>'+esc(tel)+'</div>':'')
+          +'<p class="text-[11px] text-slate-400 italic mt-3 leading-snug" style="max-width:26rem;margin-left:auto;margin-right:auto">Dossier riservato, predisposto in vista dell\'incontro di acquisizione concordato.</p>'
         +'</div>'
         +coverQrBlock
-      +'</div>'
       +'</div>'
     +'</div>';
 
   var retroQrBlock = qrContattiDataUrl
-    ? '<div class="bg-white p-2 rounded-xl text-center flex-shrink-0"><img src="'+qrContattiDataUrl+'" width="84" height="84" alt="QR contatti" style="display:block;margin:0 auto"><p class="text-[9px] text-slate-500 mt-1 max-w-[88px] leading-snug">Contatti e servizi</p></div>'
+    ? '<div class="bg-white border border-slate-200 p-2 rounded-xl text-center flex-shrink-0"><img src="'+qrContattiDataUrl+'" width="84" height="84" alt="QR contatti" style="display:block;margin:0 auto"><p class="text-[9px] text-slate-500 mt-1 max-w-[88px] leading-snug">Contatti e servizi</p></div>'
     : '';
 
   var retroHtml = ''
@@ -52045,10 +52046,10 @@ function kaApriKit(comune, zona, prospectNome){
         +'</div>'
       +'</div>'
       +'<div>'
-        +'<div class="p-6 sm:p-8 rounded-2xl bg-navy-900 text-white flex flex-wrap items-center justify-between gap-6">'
+        +'<div class="p-6 sm:p-8 rounded-2xl bg-slate-50 border border-gold-200 flex flex-wrap items-center justify-between gap-6" style="border-width:2px">'
           +'<div class="flex items-center gap-4">'+badgeAgente
-            +'<div><div class="font-serif font-bold text-lg">'+agente+'</div><div class="text-xs text-gold-400">'+agenzia+'</div>'
-            +(tel?'<div class="text-xs text-slate-400 mt-1"><i class="fa-solid fa-phone mr-1.5"></i>'+esc(tel)+'</div>':'')
+            +'<div><div class="font-serif font-bold text-lg text-navy-900">'+agente+'</div><div class="text-xs text-gold-700">'+agenzia+'</div>'
+            +(tel?'<div class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-phone mr-1.5"></i>'+esc(tel)+'</div>':'')
             +'</div>'
           +'</div>'
           +retroQrBlock
@@ -52355,12 +52356,17 @@ var kitCss = ''
       +'.ka-hero-overlay{position:absolute;inset:0}'
       +'.ka-hero-inner{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:space-between;flex:1;padding:1.5rem}'
       +'@media(min-width:640px){.ka-hero-inner{padding:2.5rem}}'
-      +'.ka-photo-banner{position:relative;overflow:hidden;height:150px;margin:-1.5rem -1.5rem 1.5rem -1.5rem}'
+      +'.ka-photo-banner{position:relative;overflow:hidden;height:150px;margin:-1.5rem -1.5rem 1.5rem -1.5rem;border-radius:0 0 1rem 1rem}'
       +'@media(min-width:640px){.ka-photo-banner{margin:-2.5rem -2.5rem 2rem -2.5rem;height:190px}}'
       +'.ka-photo-banner img{width:100%;height:100%;object-fit:cover;display:block}'
-      +'.ka-photo-banner-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,6,23,.15) 0%,rgba(2,6,23,.75) 100%)}'
+      +'.ka-photo-banner-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,23,42,.1) 0%,rgba(15,23,42,.58) 100%)}'
       +'.ka-photo-banner-text{position:absolute;left:1.5rem;right:1.5rem;bottom:1rem;color:#fff}'
+      +'.ka-photo-banner-text h2,.ka-photo-banner-text span{text-shadow:0 1px 4px rgba(0,0,0,.45)}'
       +'@media(min-width:640px){.ka-photo-banner-text{left:2.5rem;right:2.5rem}}'
+      +'.ka-cover-photo{position:relative;overflow:hidden;border-radius:1rem;height:260px}'
+      +'@media(min-width:640px){.ka-cover-photo{height:340px}}'
+      +'.ka-cover-photo img{width:100%;height:100%;object-fit:cover;display:block}'
+      +'.ka-cover-photo-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,23,42,0) 60%,rgba(15,23,42,.22) 100%)}'
       +'@media print{'
         +'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'
         +'.no-print{display:none!important}'
@@ -52384,6 +52390,7 @@ var kitCss = ''
         +'[class~="p-8"]{padding:1.1rem!important}'
         +'[class~="my-6"]{margin-top:.9rem!important;margin-bottom:.9rem!important}'
         +'.ka-photo-banner{height:120px!important;margin:-1.1rem -1.1rem 1rem -1.1rem!important}'
+        +'.ka-cover-photo{height:230px!important}'
         +'.ka-faq-a{display:block!important}'
         +'[id^="objIcon-"]{display:none!important}'
         +'@page{margin:5mm}'
