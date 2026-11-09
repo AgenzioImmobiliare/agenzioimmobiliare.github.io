@@ -19502,7 +19502,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.9nov-KITMARGINIMIN';
+var APP_VERSION = 'v.9nov-KITRESTYLE';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -51906,6 +51906,11 @@ function kaApriKit(comune, zona, prospectNome){
     }));
   }catch(e){}
 
+  var heroImg='https://images.unsplash.com/photo-1581416271259-abec87515f51?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NzMzMjZ8MHwxfGFsbHx8fHx8fHx8fDE3OTQyMzM5NTR8&ixlib=rb-4.1.0&q=80&w=1080';
+  var secImg='https://images.unsplash.com/photo-1782053492060-876804cb5416?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NzMzMjZ8MHwxfGFsbHx8fHx8fHx8fDE3OTQyMzM5NTV8&ixlib=rb-4.1.0&q=80&w=1080';
+  var secBadge=function(icon,n){
+    return '<div class="flex items-center gap-3 mb-2"><div class="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0 shadow-md" style="background:linear-gradient(135deg,#D4A72C,#8a6420)"><i class="fa-solid '+icon+'"></i></div><span class="text-xs font-bold text-gold-600 tracking-wider uppercase">Sezione '+n+'</span></div>';
+  };
   var badgeAgente=logo
     ? '<div class="h-12 rounded-lg bg-white shadow-lg flex items-center justify-center flex-shrink-0" style="min-width:48px;padding:4px"><img src="'+logo+'" class="h-full w-auto object-contain" style="max-width:130px"></div>'
     : '<div class="w-12 h-12 rounded-lg bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center font-bold text-white text-xl shadow-lg shadow-gold-500/20 flex-shrink-0">'+iniziali+'</div>';
@@ -51956,7 +51961,10 @@ function kaApriKit(comune, zona, prospectNome){
     : '<div class="border border-dashed border-slate-600 rounded-xl p-4 text-[10px] text-slate-400 max-w-[150px] italic leading-snug">QR non disponibile: aggiungi un numero di telefono nel gestionale per attivarlo</div>';
 
   var coverHtml = ''
-    +'<div id="page-1" class="tab-page bg-navy-950 text-white p-6 sm:p-10 flex-1 active">'
+    +'<div id="page-1" class="tab-page ka-hero text-white flex-1 active">'
+      +'<div class="ka-hero-bg" style="background-image:url(\''+heroImg+'\')"></div>'
+      +'<div class="ka-hero-overlay" style="background:linear-gradient(165deg,rgba(2,6,23,.55) 0%,rgba(2,6,23,.80) 55%,rgba(2,6,23,.97) 100%)"></div>'
+      +'<div class="ka-hero-inner">'
       +'<div>'
         +'<div class="flex flex-wrap items-center justify-between gap-4 pb-8 border-b border-white/10">'
           +'<div class="flex items-center gap-3">'+badgeAgente
@@ -51985,6 +51993,7 @@ function kaApriKit(comune, zona, prospectNome){
         +'</div>'
         +'<div class="text-center flex-shrink-0">'+coverQrBlock+'</div>'
       +'</div>'
+      +'</div>'
     +'</div>';
 
   var retroQrBlock = qrWaDataUrl
@@ -51994,8 +52003,10 @@ function kaApriKit(comune, zona, prospectNome){
   var retroHtml = ''
     +'<div id="page-8" class="tab-page p-6 sm:p-10 flex-1">'
       +'<div>'
-        +'<span class="text-xs font-bold text-gold-600 tracking-wider uppercase">Prima di incontrarci</span>'
-        +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900 mt-1 mb-8">Cosa Succede Adesso</h2>'
+        +'<div class="ka-photo-banner"><img src="'+secImg+'" alt=""><div class="ka-photo-banner-overlay"></div>'
+          +'<div class="ka-photo-banner-text"><span class="text-[11px] font-bold text-gold-400 tracking-wider uppercase">Prima di incontrarci</span>'
+          +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-white mt-1">Cosa Succede Adesso</h2></div>'
+        +'</div>'
         +'<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">'
           +[['1','Leggi con calma','Sfoglia questo dossier quando vuoi: non c\'è nessuna fretta.'],
             ['2','Ci vediamo di persona','Guardiamo insieme l\'immobile e rispondo a tutte le tue domande.'],
@@ -52336,14 +52347,26 @@ var kitCss = ''
       +'.page-shadow{box-shadow:0 20px 25px -5px rgba(15,23,42,.08),0 8px 10px -6px rgba(15,23,42,.04)}'
       +'.tab-page{display:none;flex-direction:column;justify-content:space-between}'
       +'.tab-page.active{display:flex}'
+      +'.ka-hero{position:relative;overflow:hidden;background:#0f172a}'
+      +'.ka-hero-bg{position:absolute;inset:0;background-size:cover;background-position:center}'
+      +'.ka-hero-overlay{position:absolute;inset:0}'
+      +'.ka-hero-inner{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:space-between;flex:1;padding:1.5rem}'
+      +'@media(min-width:640px){.ka-hero-inner{padding:2.5rem}}'
+      +'.ka-photo-banner{position:relative;overflow:hidden;height:150px;margin:-1.5rem -1.5rem 1.5rem -1.5rem}'
+      +'@media(min-width:640px){.ka-photo-banner{margin:-2.5rem -2.5rem 2rem -2.5rem;height:190px}}'
+      +'.ka-photo-banner img{width:100%;height:100%;object-fit:cover;display:block}'
+      +'.ka-photo-banner-overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(2,6,23,.15) 0%,rgba(2,6,23,.75) 100%)}'
+      +'.ka-photo-banner-text{position:absolute;left:1.5rem;right:1.5rem;bottom:1rem;color:#fff}'
+      +'@media(min-width:640px){.ka-photo-banner-text{left:2.5rem;right:2.5rem}}'
       +'@media print{'
         +'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'
         +'.no-print{display:none!important}'
         +'body{background:white!important}'
         +'main{width:100%!important}'
-        +'.page-shadow{box-shadow:none!important}'
+        +'.page-shadow{box-shadow:none!important;overflow:visible!important}'
         +'.tab-page{display:flex!important;page-break-before:always;min-height:0}'
         +'.tab-page:first-of-type{page-break-before:avoid}'
+        +'.ka-hero{min-height:calc(100vh - 4rem)}'
         +'@page{margin:5mm}'
       +'}'
     +'</style></head>'
@@ -52427,8 +52450,8 @@ var kitCss = ''
           // ═══ 3. CHI SONO & METODO ═══
           +'<div id="page-3" class="tab-page p-6 sm:p-10 flex-1">'
           +'<div>'
-            +'<div class="pb-6 border-b border-slate-100"><span class="text-xs font-bold text-gold-600 tracking-wider uppercase">Sezione 02</span>'
-            +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900 mt-1">Chi Sono & Il Mio Metodo di Lavoro</h2>'
+            +'<div class="pb-6 border-b border-slate-100">'+secBadge('fa-user-tie','02')
+            +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900">Chi Sono & Il Mio Metodo di Lavoro</h2>'
             +'<p class="text-slate-500 text-sm mt-1">Un approccio basato su etica, presenza sul territorio e trasparenza.</p></div>'
             +'<div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">'
               +'<div class="space-y-4 text-slate-600 text-sm leading-relaxed">'
@@ -52473,8 +52496,8 @@ var kitCss = ''
           // ═══ 4. IL METODO OPEN HOUSE ═══
           +'<div id="page-4" class="tab-page p-6 sm:p-10 flex-1">'
           +'<div>'
-            +'<div class="pb-6 border-b border-slate-100"><span class="text-xs font-bold text-gold-600 tracking-wider uppercase">Sezione 03</span>'
-            +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900 mt-1">Il Metodo Open House</h2>'
+            +'<div class="pb-6 border-b border-slate-100">'+secBadge('fa-door-open','03')
+            +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900">Il Metodo Open House</h2>'
             +'<p class="text-slate-500 text-sm mt-1">Come trasformo il lancio del tuo immobile in un evento di vendita, non in un\'attesa infinita.</p>'
             +'<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gold-50 text-gold-700 border border-gold-200 mt-3"><i class="fa-solid fa-door-open"></i> Massima visibilità in una sola giornata</span></div>'
             +'<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">'
@@ -52491,7 +52514,7 @@ var kitCss = ''
               +'<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">'
                 +[['1','Analisi & Stima'],['2','Preparazione'],['3','Lancio su portali e social'],['4','Giornata Open House'],['5','Qualifica offerte'],['6','Trattativa'],['7','Rogito notarile']]
                 .map(function(s){
-                  return '<div class="flex items-center gap-2 bg-white rounded-xl p-3 border border-slate-200"><span class="w-6 h-6 rounded-full bg-navy-900 text-gold-400 font-bold text-xs flex items-center justify-center flex-shrink-0">'+s[0]+'</span><span class="text-xs text-navy-900 font-medium">'+s[1]+'</span></div>';
+                  return '<div class="flex items-center gap-2 bg-white rounded-xl p-3 border border-slate-200"><span class="w-7 h-7 rounded-full text-white font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-sm" style="background:linear-gradient(135deg,#1e293b,#0f172a)">'+s[0]+'</span><span class="text-xs text-navy-900 font-medium">'+s[1]+'</span></div>';
                 }).join('')
               +'</div>'
             +'</div>'
@@ -52501,8 +52524,8 @@ var kitCss = ''
           +'<div id="page-5" class="tab-page p-6 sm:p-10 flex-1">'
           +'<div>'
             +'<div class="pb-6 border-b border-slate-100 flex justify-between items-end flex-wrap gap-2">'
-              +'<div><span class="text-xs font-bold text-gold-600 tracking-wider uppercase">Sezione 04</span>'
-              +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900 mt-1">Mercato & Dati Reali</h2>'
+              +'<div>'+secBadge('fa-chart-line','04')
+              +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900">Mercato & Dati Reali</h2>'
               +'<p class="text-slate-500 text-sm mt-1">I numeri veri del nostro gestionale, non stime di marketing.</p></div>'
               +'<span class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-medium border border-slate-200"><i class="fa-solid fa-chart-line text-gold-600 mr-1"></i>Aggiornato al '+nowStr+'</span>'
             +'</div>'
@@ -52528,8 +52551,8 @@ var kitCss = ''
           // ═══ 6. DUBBI E RISPOSTE ═══
           +'<div id="page-6" class="tab-page p-6 sm:p-10 flex-1">'
           +'<div>'
-            +'<div class="pb-6 border-b border-slate-100"><span class="text-xs font-bold text-gold-600 tracking-wider uppercase">Sezione 05</span>'
-            +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900 mt-1">Risposte Chiare ai Tuoi Dubbi</h2>'
+            +'<div class="pb-6 border-b border-slate-100">'+secBadge('fa-comments','05')
+            +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900">Risposte Chiare ai Tuoi Dubbi</h2>'
             +'<p class="text-slate-500 text-sm mt-1">Le domande più comuni, e come ci lavoro io.</p></div>'
             +'<div class="mt-6 space-y-4">'+obiezioniHtml+'</div>'
             +'<div class="mt-8 p-6 sm:p-8 rounded-2xl bg-navy-900 text-center">'
@@ -52543,8 +52566,8 @@ var kitCss = ''
           +'<div id="page-7" class="tab-page p-6 sm:p-10 flex-1">'
           +'<div>'
             +'<div class="pb-6 border-b border-slate-100 flex justify-between items-center flex-wrap gap-2">'
-              +'<div><span class="text-xs font-bold text-gold-600 tracking-wider uppercase">Sezione 06</span>'
-              +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900 mt-1">Dossier & Incarico</h2>'
+              +'<div>'+secBadge('fa-folder-open','06')
+              +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900">Dossier & Incarico</h2>'
               +'<p class="text-slate-500 text-sm mt-1">Cosa verifico prima del nostro incontro, cosa trovi già pronto e quali documenti ti servono.</p></div>'
             +'</div>'
             +'<div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">'
