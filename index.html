@@ -19502,7 +19502,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.9nov-KITRESTYLE';
+var APP_VERSION = 'v.9nov-KITFORMALE';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -51881,8 +51881,8 @@ function kaApriKit(comune, zona, prospectNome){
   var iniziali=(agente.replace(/<[^>]*>/g,'').split(/\s+/).map(function(w){return w[0];}).filter(Boolean).slice(0,2).join('')||'A').toUpperCase();
   var dove=zona?(esc(zona)+', '+esc(comune)):esc(comune);
   var primoNome=prospectNome?esc(prospectNome.split(' ')[0]):'';
-  var waMsg=encodeURIComponent('Ciao, confermo il nostro appuntamento per l\'immobile a '+dove.replace(/<[^>]*>/g,'')+'.');
-  var qrWaDataUrl=(telDigits && typeof qrDataUrl==='function') ? qrDataUrl('https://wa.me/'+telDigits+'?text='+waMsg, 220) : null;
+  var linkInBioUrl='https://agenzioimmobiliare.github.io/linkinbio.html';
+  var qrContattiDataUrl=(typeof qrDataUrl==='function') ? qrDataUrl(linkInBioUrl, 220) : null;
 
   var incaricoUrl='incarico_frimm.html';
   try{ incaricoUrl=new URL('incarico_frimm.html', window.location.href).href; }catch(e){}
@@ -51908,6 +51908,7 @@ function kaApriKit(comune, zona, prospectNome){
 
   var heroImg='https://images.unsplash.com/photo-1581416271259-abec87515f51?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NzMzMjZ8MHwxfGFsbHx8fHx8fHx8fDE3OTQyMzM5NTR8&ixlib=rb-4.1.0&q=80&w=1080';
   var secImg='https://images.unsplash.com/photo-1782053492060-876804cb5416?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NzMzMjZ8MHwxfGFsbHx8fHx8fHx8fDE3OTQyMzM5NTV8&ixlib=rb-4.1.0&q=80&w=1080';
+  var openHouseImg='https://images.unsplash.com/photo-1628744876497-eb30460be9f6?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NzMzMjZ8MHwxfGFsbHx8fHx8fHx8fDE3OTQyMzU3Mzl8&ixlib=rb-4.1.0&q=80&w=1080';
   var secBadge=function(icon,n){
     return '<div class="flex items-center gap-3 mb-2"><div class="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0 shadow-md" style="background:linear-gradient(135deg,#D4A72C,#8a6420)"><i class="fa-solid '+icon+'"></i></div><span class="text-xs font-bold text-gold-600 tracking-wider uppercase">Sezione '+n+'</span></div>';
   };
@@ -51923,13 +51924,13 @@ function kaApriKit(comune, zona, prospectNome){
     ? '<a href="tel:'+esc(tel)+'" class="hidden md:flex items-center gap-2 text-xs font-semibold text-slate-300 hover:text-gold-400 px-3 py-2 rounded-md hover:bg-navy-800 transition"><i class="fa-solid fa-phone text-gold-500"></i>'+esc(tel)+'</a>'
     : '';
   var waBlock = telDigits
-    ? '<a href="https://wa.me/'+telDigits+'" target="_blank" class="flex items-center justify-center gap-2 w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition"><i class="fa-brands fa-whatsapp text-sm"></i>Scrivi su WhatsApp</a>'
-    : '<div class="text-xs text-slate-400 text-center">Contattaci per telefono</div>';
+    ? '<a href="https://wa.me/'+telDigits+'" target="_blank" class="flex items-center justify-center gap-2 w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold transition"><i class="fa-brands fa-whatsapp text-sm"></i>Contatto WhatsApp</a>'
+    : '<div class="text-xs text-slate-400 text-center">Contatto telefonico</div>';
   var telModalRow = tel
     ? '<a href="tel:'+esc(tel)+'" class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-gold-500 hover:bg-gold-50/50 transition"><div class="w-9 h-9 rounded-lg bg-navy-900 text-gold-400 flex items-center justify-center"><i class="fa-solid fa-phone"></i></div><div><span class="text-xs text-slate-400 block">Telefono Diretto</span><span class="font-bold text-navy-900">'+esc(tel)+'</span></div></a>'
     : '';
   var waModalRow = telDigits
-    ? '<a href="https://wa.me/'+telDigits+'" target="_blank" class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 transition"><div class="w-9 h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center"><i class="fa-brands fa-whatsapp text-lg"></i></div><div><span class="text-xs text-slate-400 block">Messaggio Istantaneo</span><span class="font-bold text-navy-900">Chatta su WhatsApp</span></div></a>'
+    ? '<a href="https://wa.me/'+telDigits+'" target="_blank" class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 transition"><div class="w-9 h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center"><i class="fa-brands fa-whatsapp text-lg"></i></div><div><span class="text-xs text-slate-400 block">Messaggio Istantaneo</span><span class="font-bold text-navy-900">Contatto WhatsApp</span></div></a>'
     : '';
 
   var omiCard = omi
@@ -51938,13 +51939,13 @@ function kaApriKit(comune, zona, prospectNome){
 
   var oggettoObiezioni = [
     { t:'"Voglio prima provare a vendere da solo per risparmiare la provvigione."',
-      r:'Vendere da soli sembra conveniente, ma trattative impostate male, difetti non visti o sconti dell\'ultimo minuto fanno spesso perdere più del compenso che si pensava di risparmiare. Il mio lavoro è tutelare il tuo risultato finale, non solo "portare visite".' },
+      r:'Vendere autonomamente sembra conveniente, ma trattative impostate male, difetti non rilevati o sconti dell\'ultimo minuto comportano spesso una perdita superiore al compenso che si intendeva risparmiare. L\'attività svolta è orientata a tutelare il risultato finale del venditore, non semplicemente a "portare visite".' },
     { t:'"Non voglio vincolarmi con un mandato lungo o con un\'agenzia che poi sparisce."',
-      r:'È una preoccupazione legittima. Per questo riceverai aggiornamenti scritti periodici — visite fatte, riscontri ricevuti, contatti in corso — non un silenzio di mesi.' },
+      r:'Si tratta di una preoccupazione legittima. Per questo motivo sono previsti aggiornamenti scritti periodici — visite effettuate, riscontri ricevuti, contatti in corso — e non un\'assenza di comunicazione per mesi.' },
     { t:'"Un\'altra agenzia mi ha promesso una cifra più alta."',
-      r:'Sovrastimare l\'immobile per prendere l\'incarico è una tecnica diffusa, che porta quasi sempre a ribassi ripetuti dopo mesi di immobilismo. Preferisco mostrarti i dati veri delle compravendite comparabili a '+dove+' e lavorare sul prezzo che il mercato è davvero disposto a pagare.' },
+      r:'Sovrastimare l\'immobile per acquisire l\'incarico è una tecnica diffusa, che porta quasi sempre a ribassi ripetuti dopo mesi di immobilismo. Si preferisce illustrare i dati reali delle compravendite comparabili a '+dove+' e lavorare sul prezzo che il mercato è realmente disposto a riconoscere.' },
     { t:'"Non voglio sconosciuti che girano per casa a tutte le ore."',
-      r:'Ogni visita viene organizzata e, dove possibile, le persone vengono conosciute prima: a casa tua arrivano solo persone realmente interessate, non curiosi.' }
+      r:'Ogni visita viene organizzata e, dove possibile, le persone vengono identificate preventivamente: agli appuntamenti partecipano solo persone realmente interessate, non semplici curiosi.' }
   ];
   var obiezioniHtml = oggettoObiezioni.map(function(o,i){
     var n=i+1;
@@ -51953,12 +51954,12 @@ function kaApriKit(comune, zona, prospectNome){
       +'<div class="flex items-center gap-3"><span class="w-8 h-8 rounded-full bg-gold-100 text-gold-700 font-bold text-xs flex items-center justify-center flex-shrink-0">0'+n+'</span>'
       +'<h3 class="font-bold text-navy-900 text-sm sm:text-base">'+esc(o.t)+'</h3></div>'
       +'<i id="objIcon-'+n+'" class="fa-solid fa-chevron-down text-slate-400 transition-transform flex-shrink-0 ml-2"></i></button>'
-      +'<div id="objContent-'+n+'" class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 text-xs sm:text-sm text-slate-600'+(n>1?' hidden':'')+'"><strong class="text-gold-700">La mia risposta:</strong> '+esc(o.r)+'</div></div>';
+      +'<div id="objContent-'+n+'" class="px-6 py-4 border-t border-slate-100 bg-slate-50/50 text-xs sm:text-sm text-slate-600'+(n>1?' hidden':'')+'"><strong class="text-gold-700">Risposta:</strong> '+esc(o.r)+'</div></div>';
   }).join('');
 
-  var coverQrBlock = qrWaDataUrl
-    ? '<div class="bg-white p-2.5 rounded-xl inline-block shadow-lg"><img src="'+qrWaDataUrl+'" width="100" height="100" alt="QR WhatsApp" style="display:block"></div><p class="text-[10px] text-slate-400 mt-2 max-w-[130px] leading-snug">Scansiona per scrivermi su WhatsApp</p>'
-    : '<div class="border border-dashed border-slate-600 rounded-xl p-4 text-[10px] text-slate-400 max-w-[150px] italic leading-snug">QR non disponibile: aggiungi un numero di telefono nel gestionale per attivarlo</div>';
+  var coverQrBlock = qrContattiDataUrl
+    ? '<div class="bg-white p-2.5 rounded-xl inline-block shadow-lg"><img src="'+qrContattiDataUrl+'" width="100" height="100" alt="QR contatti" style="display:block"></div><p class="text-[10px] text-slate-400 mt-2 max-w-[130px] leading-snug">Inquadrare il codice per contatti e servizi</p>'
+    : '<div class="border border-dashed border-slate-600 rounded-xl p-4 text-[10px] text-slate-400 max-w-[150px] italic leading-snug">QR non disponibile in questo browser</div>';
 
   var coverHtml = ''
     +'<div id="page-1" class="tab-page ka-hero text-white flex-1 active">'
@@ -51976,12 +51977,12 @@ function kaApriKit(comune, zona, prospectNome){
         +'</div>'
         +'<div class="py-10 sm:py-14">'
           +'<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-gold-500/10 text-gold-400 border border-gold-500/30 mb-5"><i class="fa-solid fa-lock"></i> Documentazione riservata</span>'
-          +'<h1 class="text-3xl sm:text-5xl font-bold font-serif leading-[1.12] max-w-2xl">Guida alla Valorizzazione <span class="text-gold-400">&amp; Vendita</span> del Tuo Immobile</h1>'
-          +'<p class="text-slate-400 mt-5 max-w-lg text-sm sm:text-base">Analisi di mercato, metodo operativo e documentazione preliminare predisposta per la tutela della tua casa.</p>'
-          +'<div class="mt-10 flex flex-wrap gap-x-10 gap-y-4 text-sm">'
-            +'<div><span class="text-[11px] text-slate-500 uppercase tracking-wider block">Preparato per</span><span class="font-bold text-white">'+(primoNome?('Gentile '+primoNome):'Gentile Proprietario')+'</span></div>'
-            +'<div><span class="text-[11px] text-slate-500 uppercase tracking-wider block">Zona di riferimento</span><span class="font-bold text-white">'+dove+'</span></div>'
-            +'<div><span class="text-[11px] text-slate-500 uppercase tracking-wider block">Data</span><span class="font-bold text-white">'+nowStr+'</span></div>'
+          +'<h1 class="text-3xl sm:text-5xl font-bold font-serif leading-[1.12] max-w-2xl">Guida alla Valorizzazione <span class="text-gold-400">&amp; Vendita</span> dell\'Immobile</h1>'
+          +'<p class="text-slate-400 mt-5 max-w-lg text-sm sm:text-base">Analisi di mercato, metodo operativo e documentazione preliminare predisposta per la tutela del patrimonio immobiliare.</p>'
+          +'<div class="mt-10 grid grid-cols-1 sm:grid-cols-3 gap-6" style="border-top:1px solid rgba(255,255,255,.12);border-bottom:1px solid rgba(255,255,255,.12);padding:1.25rem 0">'
+            +'<div><span class="text-[11px] text-slate-500 uppercase tracking-wider block mb-1">Preparato per</span><span class="font-bold text-white text-xl">'+(primoNome?('Gentile '+primoNome):'Gentile Proprietario')+'</span></div>'
+            +'<div><span class="text-[11px] text-slate-500 uppercase tracking-wider block mb-1">Zona di riferimento</span><span class="font-bold text-white text-xl">'+dove+'</span></div>'
+            +'<div><span class="text-[11px] text-slate-500 uppercase tracking-wider block mb-1">Data</span><span class="font-bold text-white text-xl">'+nowStr+'</span></div>'
           +'</div>'
         +'</div>'
       +'</div>'
@@ -51989,15 +51990,15 @@ function kaApriKit(comune, zona, prospectNome){
         +'<div><div class="text-[11px] text-slate-500 uppercase tracking-wider mb-1">Consulente di riferimento</div>'
           +'<div class="font-serif font-bold text-lg">'+agente+'</div>'
           +(tel?'<div class="text-sm text-gold-400 mt-0.5"><i class="fa-solid fa-phone mr-1.5"></i>'+esc(tel)+'</div>':'')
-          +'<p class="text-[11px] text-slate-500 italic mt-3 max-w-xs leading-snug">Dossier riservato, consegnato in vista del nostro incontro di acquisizione.</p>'
+          +'<p class="text-[11px] text-slate-500 italic mt-3 max-w-xs leading-snug">Dossier riservato, predisposto in vista dell\'incontro di acquisizione concordato.</p>'
         +'</div>'
         +'<div class="text-center flex-shrink-0">'+coverQrBlock+'</div>'
       +'</div>'
       +'</div>'
     +'</div>';
 
-  var retroQrBlock = qrWaDataUrl
-    ? '<div class="bg-white p-2 rounded-xl text-center flex-shrink-0"><img src="'+qrWaDataUrl+'" width="84" height="84" alt="QR WhatsApp" style="display:block;margin:0 auto"><p class="text-[9px] text-slate-500 mt-1 max-w-[88px] leading-snug">Scrivimi su WhatsApp</p></div>'
+  var retroQrBlock = qrContattiDataUrl
+    ? '<div class="bg-white p-2 rounded-xl text-center flex-shrink-0"><img src="'+qrContattiDataUrl+'" width="84" height="84" alt="QR contatti" style="display:block;margin:0 auto"><p class="text-[9px] text-slate-500 mt-1 max-w-[88px] leading-snug">Contatti e servizi</p></div>'
     : '';
 
   var retroHtml = ''
@@ -52008,29 +52009,29 @@ function kaApriKit(comune, zona, prospectNome){
           +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-white mt-1">Cosa Succede Adesso</h2></div>'
         +'</div>'
         +'<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">'
-          +[['1','Leggi con calma','Sfoglia questo dossier quando vuoi: non c\'è nessuna fretta.'],
-            ['2','Ci vediamo di persona','Guardiamo insieme l\'immobile e rispondo a tutte le tue domande.'],
-            ['3','Decidi senza obblighi','Solo con tutte le informazioni in mano, con calma.']
+          +[['1','Lettura del dossier','Il documento può essere consultato con la massima calma, senza alcuna urgenza.'],
+            ['2','Incontro conoscitivo','Sopralluogo dell\'immobile e chiarimento di ogni aspetto rilevante.'],
+            ['3','Valutazione senza impegno','La decisione viene presa con tutte le informazioni necessarie, senza alcun vincolo.']
           ].map(function(s){
             return '<div class="p-5 rounded-2xl bg-slate-50 border border-slate-200"><div class="w-8 h-8 rounded-full bg-navy-900 text-gold-400 font-bold text-xs flex items-center justify-center mb-3">'+s[0]+'</div><h4 class="font-bold text-navy-900 text-sm mb-1">'+s[1]+'</h4><p class="text-xs text-slate-500">'+s[2]+'</p></div>';
           }).join('')
         +'</div>'
         +'<div class="p-5 rounded-2xl bg-amber-50 border border-dashed border-amber-300 text-amber-800 text-xs italic mb-10 leading-relaxed">'
-          +'<i class="fa-solid fa-star mr-1.5"></i>[Spazio per una recensione reale di un cliente soddisfatto — es. uno screenshot o una citazione da Google. Scrivimi il testo quando lo hai e te lo preparo in formato grafico.]'
+          +'<i class="fa-solid fa-star mr-1.5"></i>[Spazio riservato a una recensione cliente — da inserire quando disponibile.]'
         +'</div>'
         +'<div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center gap-5 mb-10">'
-          +'<div class="flex-1 min-w-0"><h4 class="font-bold text-navy-900 text-sm mb-1"><i class="fa-solid fa-qrcode text-gold-600 mr-1.5"></i>Scopri subito il valore della tua casa</h4><p class="text-xs text-slate-500">Inquadra il codice con la fotocamera: in pochi secondi hai una prima stima online, gratuita e senza impegno.</p></div>'
-          +(qrLandingDataUrl?'<img src="'+qrLandingDataUrl+'" width="90" height="90" alt="QR valuta la tua casa" class="flex-shrink-0 rounded-lg">':'')
+          +'<div class="flex-1 min-w-0"><h4 class="font-bold text-navy-900 text-sm mb-1"><i class="fa-solid fa-qrcode text-gold-600 mr-1.5"></i>Valutazione immediata dell\'immobile</h4><p class="text-xs text-slate-500">Inquadrando il codice con la fotocamera è possibile ottenere, in pochi secondi, una prima stima online gratuita e senza impegno.</p></div>'
+          +(qrLandingDataUrl?'<img src="'+qrLandingDataUrl+'" width="90" height="90" alt="QR valutazione immobile" class="flex-shrink-0 rounded-lg">':'')
         +'</div>'
         +'<div class="p-5 sm:p-6 rounded-2xl bg-white border border-gold-200" style="border-width:2px">'
-          +'<h4 class="font-bold text-navy-900 text-sm mb-1"><i class="fa-solid fa-clipboard-check text-gold-600 mr-1.5"></i>Il tuo check-up in 5 domande</h4>'
-          +'<p class="text-xs text-slate-500 mb-4">Prima del nostro appuntamento, rispondi con sincerità: ti aiuta a capire se sei pronto/a a procedere.</p>'
+          +'<h4 class="font-bold text-navy-900 text-sm mb-1"><i class="fa-solid fa-clipboard-check text-gold-600 mr-1.5"></i>Check-up in 5 domande</h4>'
+          +'<p class="text-xs text-slate-500 mb-4">Prima dell\'appuntamento è utile rispondere con sincerità alle seguenti domande, per valutare la propria disponibilità a procedere.</p>'
           +'<div class="space-y-3">'
-            +[ 'Il mio modo di lavorare, spiegato in questo dossier, ti è sembrato chiaro e concreto?',
-               'I dati di mercato che hai letto ti sembrano seri, non una stima gonfiata per convincerti?',
-               'Le risposte alle tue obiezioni, nella sezione "Dubbi e Risposte", ti hanno tolto qualche dubbio?',
-               'Il metodo Open House ti sembra un modo sensato per vendere al prezzo giusto, senza perdere tempo?',
-               'Ti senti pronto/a a parlarne di persona, sapendo che il modulo di incarico è già pronto da completare insieme?'
+            +[ 'Il metodo di lavoro descritto in questo dossier risulta chiaro e concreto?',
+               'I dati di mercato riportati risultano attendibili, e non una stima sovrastimata per acquisire l\'incarico?',
+               'Le risposte fornite nella sezione "Dubbi e Risposte" hanno chiarito eventuali perplessità?',
+               'Il metodo Open House risulta una soluzione efficace per vendere al prezzo corretto, nei tempi adeguati?',
+               'Sussiste la disponibilità a un incontro conoscitivo, considerato che il modulo di incarico è già predisposto?'
             ].map(function(q,i){
               return '<div class="flex items-center justify-between gap-3">'
                 +'<span class="text-xs sm:text-sm text-slate-700 flex-1">'+(i+1)+'. '+q+'</span>'
@@ -52041,7 +52042,7 @@ function kaApriKit(comune, zona, prospectNome){
               +'</div>';
             }).join('')
           +'</div>'
-          +'<p class="text-xs text-navy-900 font-semibold mt-5 bg-gold-50 p-3 rounded-xl border border-gold-200"><i class="fa-solid fa-circle-check text-gold-600 mr-1"></i>3 "Sì" su 5? Possiamo procedere con l\'appuntamento già concordato. Meno di 3? Nessun problema: ne riparliamo insieme, con calma, al nostro incontro.</p>'
+          +'<p class="text-xs text-navy-900 font-semibold mt-5 bg-gold-50 p-3 rounded-xl border border-gold-200"><i class="fa-solid fa-circle-check text-gold-600 mr-1"></i>In presenza di almeno 3 risposte affermative su 5, si può procedere con l\'appuntamento concordato. In caso contrario, l\'argomento potrà essere approfondito in occasione dell\'incontro.</p>'
         +'</div>'
       +'</div>'
       +'<div>'
@@ -52089,6 +52090,7 @@ var kitCss = ''
     +'[class~="justify-center"]{justify-content:center}'
     +'[class~="justify-between"]{justify-content:space-between}'
     +'[class~="grid-cols-1"]{grid-template-columns:repeat(1,minmax(0,1fr))}'
+    +'[class~="grid-cols-2"]{grid-template-columns:repeat(2,minmax(0,1fr))}'
     +'[class~="gap-1.5"]{gap:.375rem}'
     +'[class~="gap-2"]{gap:.5rem}'
     +'[class~="gap-3"]{gap:.75rem}'
@@ -52322,12 +52324,14 @@ var kitCss = ''
     +'[class~="sm:text-5xl"]{font-size:3rem;line-height:1}'
     +'[class~="sm:grid-cols-2"]{grid-template-columns:repeat(2,minmax(0,1fr))}'
     +'[class~="sm:grid-cols-3"]{grid-template-columns:repeat(3,minmax(0,1fr))}'
+    +'[class~="sm:grid-cols-4"]{grid-template-columns:repeat(4,minmax(0,1fr))}'
     +'[class~="sm:inline"]{display:inline}'
     +'[class~="sm:space-x-3"]>*+*{margin-left:.75rem}'
     +'}'
     +'@media (min-width:768px){'
     +'[class~="md:flex"]{display:flex}'
     +'[class~="md:grid-cols-2"]{grid-template-columns:repeat(2,minmax(0,1fr))}'
+    +'[class~="md:grid-cols-3"]{grid-template-columns:repeat(3,minmax(0,1fr))}'
     +'}'
     +'@media (min-width:1024px){'
     +'[class~="lg:flex-row"]{flex-direction:row}'
@@ -52365,8 +52369,22 @@ var kitCss = ''
         +'main{width:100%!important}'
         +'.page-shadow{box-shadow:none!important;overflow:visible!important}'
         +'.tab-page{display:flex!important;page-break-before:always;min-height:0}'
+        +'.tab-page:not(.ka-hero){padding:1.1rem!important}'
         +'.tab-page:first-of-type{page-break-before:avoid}'
         +'.ka-hero{min-height:calc(100vh - 4rem)}'
+        +'.ka-hero .ka-hero-inner{padding:1.1rem!important}'
+        +'html{font-size:14px}'
+        +'[class~="mt-8"]{margin-top:1rem!important}'
+        +'[class~="mt-10"]{margin-top:1.25rem!important}'
+        +'[class~="mb-8"]{margin-bottom:1rem!important}'
+        +'[class~="mb-10"]{margin-bottom:1.25rem!important}'
+        +'[class~="py-10"]{padding-top:1.1rem!important;padding-bottom:1.1rem!important}'
+        +'[class~="pb-8"]{padding-bottom:1rem!important}'
+        +'[class~="pt-8"]{padding-top:1rem!important}'
+        +'[class~="p-6"]{padding:1rem!important}'
+        +'[class~="p-8"]{padding:1.1rem!important}'
+        +'[class~="my-6"]{margin-top:.9rem!important;margin-bottom:.9rem!important}'
+        +'.ka-photo-banner{height:120px!important;margin:-1.1rem -1.1rem 1rem -1.1rem!important}'
         +'@page{margin:5mm}'
       +'}'
     +'</style></head>'
@@ -52381,7 +52399,7 @@ var kitCss = ''
         +'</div>'
         +'<div class="flex items-center space-x-2 sm:space-x-3">'+telRow
           +'<button onclick="window.print()" class="flex items-center gap-2 text-xs font-medium bg-navy-800 border border-slate-700 text-slate-200 hover:text-white hover:border-gold-500 px-3 sm:px-4 py-2 rounded-lg transition"><i class="fa-solid fa-print"></i><span class="hidden sm:inline">Stampa Kit</span></button>'
-          +'<button onclick="toggleModal()" class="flex items-center gap-2 text-xs font-semibold bg-gradient-to-r from-gold-500 to-gold-600 text-slate-950 hover:brightness-110 px-3 sm:px-4 py-2 rounded-lg transition shadow-md"><i class="fa-solid fa-paper-plane"></i><span class="hidden sm:inline">Contattaci</span></button>'
+          +'<button onclick="toggleModal()" class="flex items-center gap-2 text-xs font-semibold bg-gradient-to-r from-gold-500 to-gold-600 text-slate-950 hover:brightness-110 px-3 sm:px-4 py-2 rounded-lg transition shadow-md"><i class="fa-solid fa-paper-plane"></i><span class="hidden sm:inline">Contatti</span></button>'
         +'</div>'
       +'</div></header>'
 
@@ -52401,8 +52419,8 @@ var kitCss = ''
             }).join('')
           +'</nav>'
           +'<div class="mt-6 p-4 rounded-xl bg-slate-900 text-white relative overflow-hidden">'
-            +'<p class="text-xs text-gold-400 font-semibold mb-1">Hai domande immediate?</p>'
-            +'<p class="text-sm font-bold text-slate-100 mb-2">Parla con '+agente+'</p>'+waBlock
+            +'<p class="text-xs text-gold-400 font-semibold mb-1">Per informazioni immediate</p>'
+            +'<p class="text-sm font-bold text-slate-100 mb-2">Contattare '+agente+'</p>'+waBlock
           +'</div>'
         +'</div>'
       +'</aside>'
@@ -52418,32 +52436,32 @@ var kitCss = ''
           +'<div>'
             +'<div class="flex flex-wrap justify-between items-start gap-4 pb-8 border-b border-slate-100">'
               +'<div><span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gold-50 text-gold-700 border border-gold-200 mb-3"><i class="fa-solid fa-shield-halved"></i> Kit Riservato di Pre-Acquisizione</span>'
-              +'<h2 class="text-2xl sm:text-4xl font-bold font-serif text-navy-900 leading-tight">Guida alla Valorizzazione & Vendita del Tuo Immobile</h2>'
-              +'<p class="text-slate-500 mt-2 text-sm sm:text-base">Tutti gli elementi di chiarezza, dati operativi e trasparenza prima di incontrarci.</p></div>'
+              +'<h2 class="text-2xl sm:text-4xl font-bold font-serif text-navy-900 leading-tight">Guida alla Valorizzazione & Vendita dell\'Immobile</h2>'
+              +'<p class="text-slate-500 mt-2 text-sm sm:text-base">Elementi di chiarezza, dati operativi e trasparenza in vista dell\'incontro.</p></div>'
               +'<div class="text-right"><span class="text-xs font-bold text-slate-400 tracking-wider uppercase block">Zona di riferimento</span><span class="text-sm font-bold text-navy-900 block">'+dove+'</span></div>'
             +'</div>'
             +'<div class="mt-8 space-y-6 text-slate-600 leading-relaxed text-sm sm:text-base">'
               +'<div class="flex items-start gap-4 p-5 bg-slate-50 rounded-2xl border border-slate-100">'
                 +'<div class="w-12 h-12 rounded-full bg-navy-900 text-gold-400 flex items-center justify-center font-serif text-xl font-bold flex-shrink-0 shadow-md">'+iniziali+'</div>'
-                +'<div><h3 class="font-bold text-navy-900 text-lg">Car'+(prospectNome?'o '+primoNome:'o Proprietario')+',</h3>'
-                +'<p class="text-xs text-slate-500">Grazie per il tempo che mi stai dedicando prima del nostro incontro.</p></div>'
+                +'<div><h3 class="font-bold text-navy-900 text-lg">Gentile '+(prospectNome?primoNome:'Proprietario')+',</h3>'
+                +'<p class="text-xs text-slate-500">Si ringrazia per il tempo dedicato alla lettura del presente documento, predisposto in vista dell\'incontro.</p></div>'
               +'</div>'
               +'<p>Vendere un immobile a <strong>'+dove+'</strong> non significa semplicemente "mettere un cartello ed aspettare".</p>'
-              +'<p>Significa tutelare un valore economico e sentimentale costruito con il tempo. In questo kit ho raccolto la mia visione professionale: nessuna falsa promessa, nessuna valutazione gonfiata per prendere l\'incarico al volo, ma dati reali, risposte alle tue domande più legittime e totale trasparenza.</p>'
+              +'<p>Significa tutelare un valore economico e sentimentale costruito nel tempo. Il presente kit raccoglie l\'approccio professionale adottato: nessuna falsa promessa, nessuna valutazione gonfiata per acquisire rapidamente l\'incarico, ma dati reali, risposte alle richieste più frequenti e totale trasparenza.</p>'
               +'<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 my-6">'
-                +'<div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60"><i class="fa-solid fa-calculator text-gold-600 text-xl mb-2"></i><h4 class="font-bold text-navy-900 text-sm">Valutazioni Oggettive</h4><p class="text-xs text-slate-500 mt-1">Stime basate su dati reali di zona, non su una cifra "per prenderti".</p></div>'
-                +'<div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60"><i class="fa-solid fa-user-shield text-gold-600 text-xl mb-2"></i><h4 class="font-bold text-navy-900 text-sm">Clienti Qualificati</h4><p class="text-xs text-slate-500 mt-1">A casa tua arrivano solo persone realmente interessate.</p></div>'
-                +'<div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60"><i class="fa-solid fa-file-contract text-gold-600 text-xl mb-2"></i><h4 class="font-bold text-navy-900 text-sm">Zero Sorprese</h4><p class="text-xs text-slate-500 mt-1">In questa stessa busta trovi anche la bozza dell\'incarico, già compilata.</p></div>'
+                +'<div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60"><i class="fa-solid fa-calculator text-gold-600 text-xl mb-2"></i><h4 class="font-bold text-navy-900 text-sm">Valutazioni Oggettive</h4><p class="text-xs text-slate-500 mt-1">Stime basate su dati reali di zona, non su una cifra indicata solo per acquisire l\'incarico.</p></div>'
+                +'<div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60"><i class="fa-solid fa-user-shield text-gold-600 text-xl mb-2"></i><h4 class="font-bold text-navy-900 text-sm">Clienti Qualificati</h4><p class="text-xs text-slate-500 mt-1">Agli appuntamenti partecipano solo persone realmente interessate.</p></div>'
+                +'<div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60"><i class="fa-solid fa-file-contract text-gold-600 text-xl mb-2"></i><h4 class="font-bold text-navy-900 text-sm">Zero Sorprese</h4><p class="text-xs text-slate-500 mt-1">La busta contiene anche la bozza dell\'incarico, già compilata.</p></div>'
               +'</div>'
               +'<div class="flex items-start gap-3 p-4 rounded-xl bg-gold-50 border border-gold-200 my-6">'
                 +'<i class="fa-solid fa-heart text-gold-600 text-lg mt-0.5"></i>'
-                +'<div><h4 class="font-bold text-navy-900 text-sm">Un impegno in più: l\'1% per il sociale</h4><p class="text-xs text-slate-600 mt-1">Destino l\'1% di ogni provvigione incassata a enti no profit: vendere casa con me lascia qualcosa di buono anche fuori da questa trattativa.</p></div>'
+                +'<div><h4 class="font-bold text-navy-900 text-sm">Un impegno aggiuntivo: l\'1% per il sociale</h4><p class="text-xs text-slate-600 mt-1">Una quota pari all\'1% di ogni provvigione incassata viene destinata a enti no profit: un impegno concreto che va oltre la singola trattativa.</p></div>'
               +'</div>'
-              +'<p>Leggi questa guida con calma. Nel nostro incontro ripartiremo proprio da qui.</p>'
+              +'<p>Si consiglia una lettura attenta del presente documento, che costituirà la base per l\'incontro successivo.</p>'
             +'</div>'
           +'</div>'
           +'<div class="pt-8 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4 mt-8">'
-            +'<div><p class="text-xs text-slate-400 font-medium">A presto,</p><p class="font-serif font-bold text-navy-900 text-lg">'+agente+'</p><p class="text-xs text-gold-700 font-medium">'+agenzia+'</p></div>'
+            +'<div><p class="text-xs text-slate-400 font-medium">Cordiali saluti,</p><p class="font-serif font-bold text-navy-900 text-lg">'+agente+'</p><p class="text-xs text-gold-700 font-medium">'+agenzia+'</p></div>'
             +(tel?'<span class="font-bold text-navy-900 text-sm bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200"><i class="fa-solid fa-phone text-gold-600 mr-1.5"></i>'+esc(tel)+'</span>':'')
           +'</div></div>'
 
@@ -52456,19 +52474,18 @@ var kitCss = ''
             +'<div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">'
               +'<div class="space-y-4 text-slate-600 text-sm leading-relaxed">'
                 +'<div class="flex items-center gap-4 p-4 rounded-2xl bg-white border border-slate-200/80 shadow-sm">'+fotoAgenteBlock
-                  +'<div><h3 class="font-bold text-navy-900 text-base">'+agente+'</h3><p class="text-xs text-gold-700 font-semibold">'+agenzia+'</p><p class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5"><i class="fa-solid fa-location-dot text-gold-600"></i>Operativo nel Cilento, al tuo fianco a '+esc(comune)+'</p></div>'
+                  +'<div><h3 class="font-bold text-navy-900 text-base">'+agente+'</h3><p class="text-xs text-gold-700 font-semibold">'+agenzia+'</p><p class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5"><i class="fa-solid fa-location-dot text-gold-600"></i>Operativo nel Cilento, con presenza diretta a '+esc(comune)+'</p></div>'
                 +'</div>'
                 +'<div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60">'
-                  +'Opero nel Cilento — tra Agropoli, Capaccio Paestum e i borghi dell\'entroterra — con una filosofia precisa: non i grandi volumi indistinti, ma la cura sartoriale di ogni singola proprietà. Seguo un numero limitato di immobili alla volta, per garantirti una presenza costante e risposte immediate, dal primo contatto fino al rogito.'
-                  +'<span class="block text-[11px] text-slate-400 italic mt-2"><i class="fa-solid fa-pen mr-1"></i>Bozza: personalizzala pure con le tue parole quando vuoi.</span>'
+                  +'Attività svolta nel Cilento — tra Agropoli, Capaccio Paestum e i borghi dell\'entroterra — con una filosofia precisa: non i grandi volumi indistinti, ma la cura sartoriale di ogni singola proprietà. Un numero limitato di immobili viene seguito contemporaneamente, per assicurare una presenza costante e risposte tempestive, dal primo contatto fino al rogito.'
                 +'</div>'
                 +'<div class="bg-navy-900 text-slate-200 p-5 rounded-2xl space-y-3 mt-6">'
-                  +'<h4 class="font-semibold text-gold-400 text-sm flex items-center gap-2"><i class="fa-solid fa-star"></i> Il Mio Impegno Con Te</h4>'
+                  +'<h4 class="font-semibold text-gold-400 text-sm flex items-center gap-2"><i class="fa-solid fa-star"></i> Impegni Professionali</h4>'
                   +'<ul class="space-y-2 text-xs">'
-                    +'<li class="flex items-start gap-2"><i class="fa-solid fa-check text-gold-400 mt-0.5"></i><span><strong>Ascolto attivo:</strong> definiamo insieme le tue priorità (tempi, realizzo, riservatezza).</span></li>'
+                    +'<li class="flex items-start gap-2"><i class="fa-solid fa-check text-gold-400 mt-0.5"></i><span><strong>Ascolto attivo:</strong> le priorità del venditore (tempistiche, importo desiderato, riservatezza) vengono definite congiuntamente.</span></li>'
                     +'<li class="flex items-start gap-2"><i class="fa-solid fa-check text-gold-400 mt-0.5"></i><span><strong>Verifica tecnica preventiva:</strong> controllo di documenti e dati prima di mettere l\'immobile sul mercato.</span></li>'
                     +'<li class="flex items-start gap-2"><i class="fa-solid fa-check text-gold-400 mt-0.5"></i><span><strong>Marketing curato:</strong> foto, contenuti social e presenza sui principali portali.</span></li>'
-                    +'<li class="flex items-start gap-2"><i class="fa-solid fa-heart text-gold-400 mt-0.5"></i><span><strong>Impegno sociale:</strong> destino l\'1% di ogni provvigione incassata a enti no profit.</span></li>'
+                    +'<li class="flex items-start gap-2"><i class="fa-solid fa-heart text-gold-400 mt-0.5"></i><span><strong>Impegno sociale:</strong> una quota dell\'1% di ogni provvigione incassata viene destinata a enti no profit.</span></li>'
                   +'</ul>'
                 +'</div>'
               +'</div>'
@@ -52477,7 +52494,7 @@ var kitCss = ''
                 +'<div class="space-y-4">'
                   +[['1','gold-500 text-slate-950','Analisi Documentale & Stima Reale','Prezzo basato sui dati reali di mercato della zona, non su una stima a sensazione.'],
                     ['2','navy-900 text-gold-400','Piano di Marketing Focalizzato','Portali immobiliari, social media, zona (volantini e segnalazione ai vicini), rete di contatti.'],
-                    ['3','navy-900 text-gold-400','Pre-Qualifica Acquirenti & Visite','Selezione delle persone realmente interessate prima di farle entrare in casa tua.'],
+                    ['3','navy-900 text-gold-400','Pre-Qualifica Acquirenti & Visite','Selezione delle persone realmente interessate prima dell\'accesso all\'immobile.'],
                     ['4','navy-900 text-gold-400','Trattativa & Assistenza al Rogito','Gestisco io ogni passaggio, dalla proposta scritta fino alla firma dal notaio.']
                   ].map(function(f){
                     return '<div class="flex items-start gap-3"><div class="w-7 h-7 rounded-full bg-'+f[1].split(' ')[0]+' '+f[1].split(' ').slice(1).join(' ')+' font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">'+f[0]+'</div>'
@@ -52496,19 +52513,22 @@ var kitCss = ''
           // ═══ 4. IL METODO OPEN HOUSE ═══
           +'<div id="page-4" class="tab-page p-6 sm:p-10 flex-1">'
           +'<div>'
-            +'<div class="pb-6 border-b border-slate-100">'+secBadge('fa-door-open','03')
-            +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900">Il Metodo Open House</h2>'
-            +'<p class="text-slate-500 text-sm mt-1">Come trasformo il lancio del tuo immobile in un evento di vendita, non in un\'attesa infinita.</p>'
+            +'<div class="ka-photo-banner"><img src="'+openHouseImg+'" alt=""><div class="ka-photo-banner-overlay"></div>'
+              +'<div class="ka-photo-banner-text"><span class="text-[11px] font-bold text-gold-400 tracking-wider uppercase">Sezione 03</span>'
+              +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-white mt-1">Il Metodo Open House</h2></div>'
+            +'</div>'
+            +'<div class="pb-6 border-b border-slate-100">'
+            +'<p class="text-slate-500 text-sm">Come il lancio dell\'immobile si trasforma in un evento di vendita, anziché in un\'attesa prolungata.</p>'
             +'<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gold-50 text-gold-700 border border-gold-200 mt-3"><i class="fa-solid fa-door-open"></i> Massima visibilità in una sola giornata</span></div>'
             +'<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">'
-              +[['fa-house','Che cos\'è','Una giornata (o mezza giornata) dedicata, su appuntamento: mostro il tuo immobile a più persone realmente interessate, invece che col contagocce nei mesi successivi.'],
+              +[['fa-house','Che cos\'è','Una giornata (o mezza giornata) dedicata, su appuntamento: l\'immobile viene mostrato a più persone realmente interessate in un\'unica occasione, anziché col contagocce nei mesi successivi.'],
                 ['fa-arrow-trend-up','Perché lo uso','Quando più persone vedono l\'immobile nello stesso momento, la trattativa si sposta sui fatti concreti — tempi, condizioni — invece che su un ribasso continuo "per provare".'],
                 ['fa-bullhorn','Come lo organizzo','Preparo l\'immobile (foto, eventuale home staging), lancio l\'annuncio su portali e social nei giorni precedenti e fisso gli appuntamenti solo con chi è davvero interessato.']
               ].map(function(c){
                 return '<div class="p-5 rounded-2xl bg-white border border-slate-200"><i class="fa-solid '+c[0]+' text-gold-600 text-lg mb-3"></i><h4 class="font-bold text-navy-900 text-sm mb-1">'+c[1]+'</h4><p class="text-xs text-slate-500">'+c[2]+'</p></div>';
               }).join('')
             +'</div>'
-            +'<div class="flex items-start gap-2 mt-4"><i class="fa-solid fa-circle-check text-gold-600 text-sm mt-0.5"></i><p class="text-xs sm:text-sm text-slate-600"><strong>Zero stress:</strong> prepari la casa una sola volta per tutte le visite, non ogni weekend per mesi.</p></div>'
+            +'<div class="flex items-start gap-2 mt-4"><i class="fa-solid fa-circle-check text-gold-600 text-sm mt-0.5"></i><p class="text-xs sm:text-sm text-slate-600"><strong>Nessun disagio ripetuto:</strong> la casa viene preparata una sola volta per tutte le visite, evitando la ripetizione settimanale per mesi.</p></div>'
             +'<div class="mt-8 p-6 rounded-2xl bg-slate-50 border border-slate-200/80">'
               +'<h3 class="font-bold text-navy-900 text-xs tracking-wider uppercase mb-4 flex items-center gap-2"><i class="fa-solid fa-route text-gold-600"></i>Il percorso, passo dopo passo</h3>'
               +'<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">'
@@ -52568,24 +52588,24 @@ var kitCss = ''
             +'<div class="pb-6 border-b border-slate-100 flex justify-between items-center flex-wrap gap-2">'
               +'<div>'+secBadge('fa-folder-open','06')
               +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900">Dossier & Incarico</h2>'
-              +'<p class="text-slate-500 text-sm mt-1">Cosa verifico prima del nostro incontro, cosa trovi già pronto e quali documenti ti servono.</p></div>'
+              +'<p class="text-slate-500 text-sm mt-1">Verifiche preliminari, documentazione già predisposta e documenti necessari alla vendita.</p></div>'
             +'</div>'
             +'<div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">'
               +'<div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col justify-between">'
-                +'<div><div class="flex items-center justify-between mb-3"><h3 class="font-bold text-navy-900 text-sm flex items-center gap-2"><i class="fa-solid fa-file-lines text-gold-600"></i>Cosa verifico prima di incontrarci</h3></div>'
-                +'<p class="text-xs text-slate-500 mb-4">Prima di parlare di numeri, controllo sempre gli elementi di base: dati catastali, intestazione, eventuali ipoteche, conformità della planimetria. Se emerge qualcosa, ne parliamo subito — niente sorprese a metà trattativa.</p></div>'
-                +'<div class="pt-3 border-t border-slate-200 text-xs text-slate-400">Ne parliamo insieme al nostro incontro</div>'
+                +'<div><div class="flex items-center justify-between mb-3"><h3 class="font-bold text-navy-900 text-sm flex items-center gap-2"><i class="fa-solid fa-file-lines text-gold-600"></i>Verifiche preliminari all\'incontro</h3></div>'
+                +'<p class="text-xs text-slate-500 mb-4">Prima di trattare i dati economici, vengono sempre controllati gli elementi di base: dati catastali, intestazione, eventuali ipoteche, conformità della planimetria. Eventuali criticità vengono comunicate tempestivamente, evitando sorprese a trattativa avanzata.</p></div>'
+                +'<div class="pt-3 border-t border-slate-200 text-xs text-slate-400">Argomento da approfondire nel corso dell\'incontro</div>'
               +'</div>'
               +'<div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col justify-between">'
                 +'<div><div class="flex items-center justify-between mb-3"><h3 class="font-bold text-navy-900 text-sm flex items-center gap-2"><i class="fa-solid fa-signature text-gold-600"></i>Il modulo di incarico</h3></div>'
-                +'<p class="text-xs text-slate-500 mb-4">In questa stessa busta trovi anche il modulo di incarico di mediazione, già precompilato con zona e nominativo — non per darti fretta, ma perché quando arrivo voglio parlare di come vendere casa tua al meglio, non perdere tempo con la carta. Le condizioni (durata, compenso) le decidiamo insieme, per iscritto.</p></div>'
+                +'<p class="text-xs text-slate-500 mb-4">La busta contiene inoltre il modulo di incarico di mediazione, già precompilato con zona e nominativo, predisposto per ottimizzare i tempi dell\'incontro e concentrare la discussione sulla strategia di vendita dell\'immobile. Le condizioni (durata, compenso) vengono definite congiuntamente, in forma scritta.</p></div>'
                 +'<a href="'+incaricoUrl+'" target="_blank" class="no-print flex items-center justify-center gap-2 py-2 bg-navy-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition mb-3"><i class="fa-solid fa-file-signature"></i>Apri e completa il modulo</a>'
                 +'<div class="pt-3 border-t border-slate-200 text-xs text-emerald-700 font-semibold"><i class="fa-solid fa-check mr-1"></i>Da completare, stampare e inserire in questa busta</div>'
               +'</div>'
             +'</div>'
             +'<div class="mt-6 bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-200">'
               +'<h3 class="font-bold text-navy-900 text-sm flex items-center gap-2 mb-1"><i class="fa-solid fa-folder-open text-gold-600"></i>Documenti da preparare per vendere casa</h3>'
-              +'<p class="text-xs text-slate-500 mb-5">L\'elenco completo di quello che serve per arrivare pronti al rogito. Non preoccuparti se non li hai già tutti: li verifichiamo insieme e ti aiuto a recuperare quello che manca.</p>'
+              +'<p class="text-xs text-slate-500 mb-5">L\'elenco completo di quanto necessario per arrivare pronti al rogito. L\'eventuale mancanza di alcuni documenti non costituisce un problema: la verifica viene effettuata congiuntamente, con assistenza nel reperimento di quanto necessario.</p>'
               +'<div class="space-y-3">'
                 +[['Atto di provenienza','Attesta il diritto di proprietà (compravendita, successione, donazione).','Archivio personale o notaio che ha rogato l\'atto'],
                   ['Visura e planimetria catastale','Identificano l\'immobile e la sua distribuzione interna.','Agenzia delle Entrate, anche online'],
