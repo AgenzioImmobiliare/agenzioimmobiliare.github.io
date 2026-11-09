@@ -19502,7 +19502,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.9nov-KITCONTENUTI';
+var APP_VERSION = 'v.9nov-KITFRIMM';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -51582,7 +51582,7 @@ var _APP_CONFIG_KEY = '_app_config';
 
 var _APP_CONFIG_DEFAULT = {
   brand: {
-    nome_agenzia: 'Le case dalla A allo Z.io',
+    nome_agenzia: 'Frimm Capital Casa Paestum',
     tagline:      'La tua agenzia di fiducia',
     logo_url:     '',
     nome_agente:  'Vincenzo Carnicelli',
@@ -52500,7 +52500,7 @@ var kitCss = ''
                   +'<h4 class="font-semibold text-gold-400 text-sm flex items-center gap-2"><i class="fa-solid fa-star"></i> Impegni Professionali</h4>'
                   +'<ul class="space-y-2 text-xs">'
                     +'<li class="flex items-start gap-2"><i class="fa-solid fa-check text-gold-400 mt-0.5"></i><span><strong>Protezione legale:</strong> verifica tecnica completa prima di accettare qualsiasi proposta.</span></li>'
-                    +'<li class="flex items-start gap-2"><i class="fa-solid fa-check text-gold-400 mt-0.5"></i><span><strong>Rete MLS FRIMM:</strong> l\'immobile viene condiviso con la rete di agenzie partner della piattaforma, attiva su tutto il territorio nazionale.</span></li>'
+                    +'<li class="flex items-start gap-2"><i class="fa-solid fa-check text-gold-400 mt-0.5"></i><span><strong>Rete Listing+:</strong> l\'immobile viene condiviso con oltre 3.000 agenti FRIMM collegati in tempo reale su tutto il territorio nazionale.</span></li>'
                     +'<li class="flex items-start gap-2"><i class="fa-solid fa-heart text-gold-400 mt-0.5"></i><span><strong>Impegno sociale:</strong> una quota dell\'1% di ogni provvigione incassata viene destinata a enti no profit.</span></li>'
                   +'</ul>'
                 +'</div>'
@@ -52508,7 +52508,7 @@ var kitCss = ''
               +'<div class="bg-slate-50 p-6 rounded-2xl border border-slate-200/80 flex flex-col justify-between">'
                 +'<h3 class="font-bold text-navy-900 text-sm tracking-wider uppercase mb-4 flex items-center gap-2"><i class="fa-solid fa-list-check text-gold-600"></i>Le 4 fasi del mio metodo</h3>'
                 +'<div class="space-y-4">'
-                  +[['1','gold-500 text-slate-950','Analisi Documentale & Stima Reale','Prezzo basato sui dati reali di mercato della zona, non su una stima a sensazione.'],
+                  +[['1','gold-500 text-slate-950','Analisi Documentale & Stima Reale','Prezzo individuato tramite i dati ufficiali OMI e il calcolatore ValuCasa FRIMM, non su una stima a sensazione.'],
                     ['2','navy-900 text-gold-400','Piano di Marketing Focalizzato','Portali immobiliari, social media, zona (volantini e segnalazione ai vicini), rete di contatti.'],
                     ['3','navy-900 text-gold-400','Pre-Qualifica Acquirenti & Visite','Selezione delle persone realmente interessate prima dell\'accesso all\'immobile.'],
                     ['4','navy-900 text-gold-400','Trattativa & Assistenza al Rogito','Gestisco io ogni passaggio, dalla proposta scritta fino alla firma dal notaio.']
@@ -52518,6 +52518,12 @@ var kitCss = ''
                   }).join('')
                 +'</div>'
               +'</div>'
+            +'</div>'
+            +'<div class="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">'
+              +[['25','Anni di esperienza FRIMM'],['99','Giorni medi per vendere con FRIMM'],['3.000+','Agenti in rete su Listing+'],['300.000+','Acquirenti interessati ogni anno su Listing+']]
+              .map(function(s){
+                return '<div class="p-3 rounded-xl bg-gold-50 border border-gold-200"><div class="text-xl font-bold font-serif text-navy-900">'+s[0]+'</div><div class="text-[10px] text-slate-500 mt-1 leading-snug">'+s[1]+'</div></div>';
+              }).join('')
             +'</div>'
             +'<div class="mt-8 p-6 sm:p-8 rounded-2xl bg-navy-900 text-center">'
               +'<i class="fa-solid fa-quote-left text-gold-500 text-xl"></i>'
