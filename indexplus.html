@@ -5521,7 +5521,7 @@ hubTema();
     </div>
     <div>
       <div class="logo-text" id="hdr-agency">Le case dalla A allo Z.io</div>
-      <div class="logo-sub">IndexPlus · Marketing Hub <span style="background:#1A7A4A;color:#fff;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:800;margin-left:6px;letter-spacing:.5px">v.28ott-FIXLINKBIO</span></div>
+      <div class="logo-sub">IndexPlus · Marketing Hub <span style="background:#1A7A4A;color:#fff;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:800;margin-left:6px;letter-spacing:.5px">v.10nov-HYPERFRAME</span></div>
     </div>
   </div>
   <div class="hub-destra" style="display:flex;gap:10px;align-items:center">
@@ -5602,6 +5602,18 @@ hubTema();
         <div class="nav-item" onclick="switchSection('libgrafiche')" title="Le schede e finestre animate (icona+titolo, scheda immobile...) da riusare in più video: create a mano, con l'AI o caricate da fuori">
           <div class="ni-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 9l2.5 2.5L15 7l4 5"/><circle cx="8.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/></svg></div>
           <span>Libreria Clip Grafiche</span>
+          <span class="nav-badge" style="background:#7C3AED;color:white">NUOVA</span>
+        </div>
+        <!-- [10 nov 2026] Hyperframe: caroselli immagine (app esterna, stesso stile del Kit Acquisizione) -->
+        <div class="nav-item" onclick="apriHyperframe()" title="App esterna: compila indirizzo, prezzo e foto e scarica 4 slide pronte per un carosello Instagram/Facebook">
+          <div class="ni-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
+          <span>Caroselli Immobile</span>
+          <span class="nav-badge" style="background:#7C3AED;color:white">NUOVA</span>
+        </div>
+        <!-- [10 nov 2026] Reel Remotion: non è un'app autonoma, serve chiedere a Claude di generarlo -->
+        <div class="nav-item" onclick="apriVideoReelRemotion()" title="Reel verticale foto+prezzo: scrivi a Claude indirizzo, prezzo e foto, te lo genera e te lo invia pronto">
+          <div class="ni-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 6h4M10 18h4"/></svg></div>
+          <span>Reel Foto+Prezzo</span>
           <span class="nav-badge" style="background:#7C3AED;color:white">NUOVA</span>
         </div>
       </div>
@@ -11614,6 +11626,22 @@ function apriEsterno(url){
   try{ window.open(url,'_blank','noopener'); }catch(e){}
 }
 window.apriEsterno = apriEsterno;
+
+/* [10 nov 2026] Hyperframe: generatore di caroselli immagine, app esterna separata
+   (repo "hyperframe", pubblicata su GitHub Pages). Nessun dato del gestionale viene
+   condiviso: Enzo compila i campi a mano nell'app esterna. */
+function apriHyperframe(){
+  apriEsterno('https://agenzioimmobiliare.github.io/hyperframe/');
+}
+window.apriHyperframe = apriHyperframe;
+
+/* [10 nov 2026] Reel Remotion (foto+prezzo): a differenza di Hyperframe non è
+   un'app che si apre da sola — è un progetto video che genera Claude su richiesta,
+   dati indirizzo/prezzo/foto in chat. Qui spieghiamo solo come chiederlo. */
+function apriVideoReelRemotion(){
+  toast('Per il Reel Foto+Prezzo: scrivi a Claude in chat indirizzo, prezzo, foto dell\'immobile (e agente/agenzia se diversi dai soliti). Genera il video e te lo invia pronto da scaricare.', 'success');
+}
+window.apriVideoReelRemotion = apriVideoReelRemotion;
 /* [11 ott 2026] Numero per WhatsApp: prima l'Hub metteva SEMPRE "39" davanti,
    così "+39 333…" diventava "3939333…". Stessa regola di _waNumero nel
    gestionale: se il prefisso c'è già si lascia, se manca (9-10 cifre) si mette. */
