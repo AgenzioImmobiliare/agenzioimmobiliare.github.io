@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f6b52">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Esame Mediatore">
+<style>html,body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Mappe Esame Mediatore</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap">
+<style>
+/* Layout: indice in alto, una scheda per materia; ogni scheda = mappa ad albero + numeri + trappole */
+:root{
+  --bg:#f6f7f4; --card:#ffffff; --fg:#1c2420; --muted:#5b665f; --line:#cfd6cf;
+  --accent:#0f6b52; --accent-soft:#dcefe7; --warn:#9a4a00; --warn-soft:#fbead6; --num:#1d4f91; --num-soft:#e1ebf8;
+  --display:"Space Grotesk",system-ui,sans-serif; --body:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#121614; --card:#1b211e; --fg:#e7ece8; --muted:#9aa69f; --line:#34403a;
+  --accent:#5fcfa9; --accent-soft:#17392e; --warn:#f0a85a; --warn-soft:#3a2a14; --num:#8db8f2; --num-soft:#182a44; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#121614; --card:#1b211e; --fg:#e7ece8; --muted:#9aa69f; --line:#34403a;
+  --accent:#5fcfa9; --accent-soft:#17392e; --warn:#f0a85a; --warn-soft:#3a2a14; --num:#8db8f2; --num-soft:#182a44; color-scheme:dark }
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.5}
+.wrap{max-width:980px;margin:0 auto;padding-block:28px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:22px}
+h1{font-family:var(--display);font-size:clamp(26px,5vw,38px);line-height:1.1;margin:0;text-wrap:balance}
+h2{font-family:var(--display);font-size:22px;margin:0;text-wrap:balance}
+h3{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 0 6px;font-weight:600}
+p{margin:0}
+.lead{color:var(--muted);max-width:68ch}
+nav{display:flex;flex-wrap:wrap;gap:6px}
+nav a{font-size:13px;text-decoration:none;color:var(--accent);border:1px solid var(--line);padding:4px 10px;border-radius:999px;background:var(--card)}
+nav a:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px 18px 20px;min-width:0}
+.tag{font-size:12px;color:var(--muted);font-weight:500}
+/* mappa ad albero */
+.map,.map ul{list-style:none;margin:0;padding:0}
+.map{margin-top:10px}
+.map>li{margin-top:10px}
+.map>li>b{display:inline-block;background:var(--accent-soft);color:var(--accent);padding:3px 10px;border-radius:6px;font-weight:600}
+.map ul{margin-left:10px;border-left:2px solid var(--line);padding-left:14px}
+.map ul li{position:relative;padding:3px 0}
+.map ul li::before{content:"";position:absolute;left:-14px;top:14px;width:10px;border-top:2px solid var(--line)}
+.map i{font-style:normal;color:var(--num);font-weight:600;font-variant-numeric:tabular-nums}
+.trap{background:var(--warn-soft);border-radius:8px;padding:10px 14px;margin-top:12px}
+.trap b{color:var(--warn)}
+.trap ul{margin:6px 0 0;padding-left:18px}
+.tw{overflow-x:auto;margin-top:8px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600}
+td:last-child{font-weight:600;color:var(--num);font-variant-numeric:tabular-nums}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.grid>div{min-width:0}
+ol.steps{margin:8px 0 0;padding-left:20px}
+ol.steps li{margin:4px 0}
+</style>
+<div class="wrap">
+<header>
+  <p class="tag">Camera di Commercio · quiz versione 22/01/2014 · 1.545 domande, tutti i 35 test</p>
+  <h1>Esame agente d'affari in mediazione: mappe e teoria</h1>
+  <p class="lead" style="margin-top:10px">Ogni scheda ricostruisce la teoria a partire dalle domande e dalle risposte esatte dei tuoi test. I numeri in blu sono quelli che i quiz chiedono a memoria. Le risposte sono quelle della banca dati: all'esame vale quella, anche dove la legge oggi è cambiata.</p>
+</header>
+<nav>
+ <a href="index.html" style="font-weight:700">← Simulatore</a>
+ <a href="#med">Mediazione</a><a href="#cond">Condominio</a><a href="#civ">Civile e diritti reali</a><a href="#loc">Locazioni</a><a href="#obb">Obbligazioni e ipoteca</a><a href="#con">Contratti</a><a href="#man">Mandato e atipici</a><a href="#fin">Finanziamenti</a><a href="#tit">Titoli di credito</a><a href="#soc">Impresa e società</a><a href="#fal">Fallimento</a><a href="#tri">Tributi</a><a href="#eg">Estimo generale</a><a href="#ea">Estimo agrario</a><a href="#cat">Catasto</a><a href="#el">Estimo legale</a><a href="#fab">Fabbricati e aree</a><a href="#occhio">Risposte corte rilette</a>
+</nav>
+
+<section id="med"><h2>Legislazione sulla mediazione</h2><p class="tag">134 domande · è la materia che pesa di più</p>
+<ul class="map">
+<li><b>Chi è il mediatore</b><ul>
+ <li>Mette in relazione due o più parti per la conclusione di un affare (c.c. artt. <i>1754–1765</i>)</li>
+ <li>Carattere essenziale: imparzialità e neutralità; fa prevalere gli interessi di entrambe le parti</li>
+ <li>Legge professionale: <i>L. 3/2/1989 n. 39</i>; requisiti professionali modificati dalla <i>L. 57/2001 art. 18</i>; regolamento D.M. 452/1990</li>
+ <li>Può operare su tutto il territorio nazionale</li></ul></li>
+<li><b>Accesso alla professione</b><ul>
+ <li>Diploma di scuola secondaria di secondo grado + corso + esame in Camera di Commercio. Nessun titolo dà iscrizione automatica</li>
+ <li>Requisiti morali (autocertificati) e professionali. Reati ostativi: quelli previsti dalla L. 39/89 (furto, rapina, estorsione…): ci si iscrive solo dopo la riabilitazione. Assegno a vuoto: non ostativo (depenalizzato)</li>
+ <li>Interdetto: no, salvo revoca dell'interdizione. Cittadino UE: sì con i requisiti. Extracomunitario: permesso di soggiorno</li>
+ <li>SCIA (segnalazione certificata di inizio attività) al Registro Imprese: autocertifica i requisiti e consente l'inizio immediato. Si presenta dal momento in cui si inizia</li>
+ <li>Dove: Registro Imprese della provincia in cui si esercita (nato a Roma, residente a Frascati, opera a Rieti → Rieti). Società: provincia della sede legale</li>
+ <li>Ruolo e Commissione provinciale: soppressi. Oggi Registro Imprese/REA</li>
+ <li>Sezioni: <i>quattro</i> (immobiliari, merceologici, mandatari a titolo oneroso, servizi vari). I mediatori creditizi non rientrano. Immobili e aziende → sezione agenti immobiliari. Ci si può iscrivere in più sezioni</li>
+ <li>Mediatore marittimo: L. 478/1968, non L. 39/89</li>
+ <li>Verifica dei requisiti ogni <i>4 anni</i>. Chi cessa l'attività chiede entro <i>90 giorni</i> l'iscrizione nell'apposita sezione REA</li>
+ <li>Attività occasionale: ammessa fino a <i>60 giorni</i> l'anno, ma l'iscrizione REA è comunque obbligatoria</li></ul></li>
+<li><b>Polizza assicurativa (obbligatoria, dall'inizio attività)</b><ul>
+ <li>Ditta individuale <i>€ 260.000</i> · società di persone <i>€ 520.000</i> · società di capitali <i>€ 1.550.000</i></li>
+ <li>Funzione: coprire i rischi professionali e tutelare i clienti</li></ul></li>
+<li><b>Incompatibilità</b><ul>
+ <li>No: geometra, avvocato, commerciante, legale rappresentante di altra società con attività diversa, acquisto di immobili in proprio per rivenderli</li>
+ <li>Sì: dipendente di società di mediazione; lavoro subordinato o altri albi purché non nello stesso settore merceologico e senza conflitto di interessi</li>
+ <li>Attività incompatibile → cancellazione</li>
+ <li>In società: requisiti per legali rappresentanti e per tutti quelli che esercitano la mediazione per conto della società; unità locale: almeno un abilitato. Delega solo ad altro mediatore abilitato</li></ul></li>
+<li><b>Provvigione</b><ul>
+ <li>Nasce quando l'affare è concluso per effetto dell'intervento del mediatore (contratto concluso = il proponente conosce l'accettazione). Spetta anche con il preliminare</li>
+ <li>Solo all'iscritto: l'abusivo non ha mai diritto</li>
+ <li>Misura: patto → tariffe → usi → equità del giudice (un quiz indica la Giunta camerale sulla base della Raccolta usi)</li>
+ <li>Obbligazione delle parti: parziaria. Più mediatori: una quota ciascuno. A carico di una sola parte: possibile per i mandatari a titolo oneroso</li>
+ <li>Condizione sospensiva → provvigione al verificarsi; condizione risolutiva → subito alla conclusione</li>
+ <li>Contratto annullabile o rescindibile → spetta solo se il mediatore non conosceva la causa di invalidità. Oggetto illecito → nullo, niente provvigione</li>
+ <li>Rimborso spese anche se l'affare non si conclude, salvo patto contrario. Prescrizione: <i>1 anno</i></li>
+ <li>Fisco: IVA sì, partita IVA sempre, reddito d'impresa, IRAP sì, INPS sì</li></ul></li>
+<li><b>Obblighi e facoltà</b><ul>
+ <li>Comunicare alle parti le circostanze note che influiscono sull'affare; responsabile dei vizi occulti solo se li conosceva e ha taciuto</li>
+ <li>Segreto professionale sempre; garantisce l'autenticità delle sottoscrizioni</li>
+ <li>Può tacere il nome di un contraente; può prestare fideiussione; può rappresentare una parte solo nell'esecuzione del contratto</li>
+ <li>Mandatario a titolo oneroso: agisce in nome e per conto solo con procura</li>
+ <li>Moduli e formulari: chiari, comprensibili, ispirati a buona fede; depositati in Camera di Commercio. Incarico scritto a mano: valido anche se non depositato</li></ul></li>
+<li><b>Sanzioni</b><ul>
+ <li>Disciplinari (Giunta camerale): sospensione (max <i>6 mesi</i>), cancellazione, inibizione perpetua (ex radiazione). La censura non esiste</li>
+ <li>Inibizione perpetua: dopo <i>3</i> sospensioni, oppure se si lavora durante la sospensione</li>
+ <li>Imputato per delitti contro la P.A. → sospeso. Perdita di un requisito → cancellazione</li>
+ <li>Abusivismo: sanzione pecuniaria da <i>€ 7.500 a 15.000</i>; dopo <i>una</i> sanzione, denuncia alla Procura</li>
+ <li>Moduli non depositati: <i>€ 1.549</i>. Moduli usati diversi da quelli depositati: <i>€ 516</i></li>
+ <li>Ricorso contro il divieto di prosecuzione: Ministero dello Sviluppo Economico</li></ul></li>
+</ul>
+<div class="trap"><b>Trappole</b><ul>
+<li>«Il rapporto di mediazione si conclude»: quando le parti pagano il compenso. «Il diritto al compenso nasce»: alla conclusione dell'affare.</li>
+<li>Persona notoriamente insolvente: un quiz risponde «sanzione disciplinare», un altro «sì, perché previsto dal codice civile». Leggi la formulazione.</li>
+<li>Camera di Commercio: opera nei confini della provincia; la Giunta è un suo organo collegiale.</li>
+<li>Periti ed esperti: accesso dopo <i>3 anni</i> di iscrizione.</li></ul></div>
+</section>
+
+<section id="cond"><h2>Condominio</h2>
+<ul class="map">
+<li><b>Parti comuni e proprietà</b><ul>
+ <li>Diritto sulle parti comuni proporzionale al valore dell'unità. Comune: vano scale. Non comune: cantine</li>
+ <li>Bastano due condomini per avere un condominio</li>
+ <li>Sopraelevazione: spetta al proprietario dell'ultimo piano, se statica e norme lo consentono; indennizzo a tutti i condomini</li></ul></li>
+<li><b>Amministratore</b><ul>
+ <li>Organo esecutivo, rappresenta il condominio in giudizio, disciplina l'uso delle cose comuni</li>
+ <li>Obbligatorio con più di <i>8</i> condomini; nominato dall'assemblea; nel quiz il mandato dura <i>2 anni</i></li>
+ <li>Riscossione forzosa entro <i>6 mesi</i> dall'esigibilità</li>
+ <li>Polizza: solo se richiesta dall'assemblea; massimali non inferiori all'ultimo consuntivo, da adeguare per lavori straordinari</li></ul></li>
+<li><b>Regolamento e maggioranze</b><ul>
+ <li>Regolamento obbligatorio con più di <i>10</i> condomini; quello contrattuale si modifica solo all'unanimità</li>
+ <li>Art. <i>1136</i> = maggioranze. Art. <i>1124</i> = scale e ascensori. Tabelle millesimali: approvazione e modifica all'unanimità (secondo il quiz)</li></ul></li>
+<li><b>Millesimi</b><ul>
+ <li>Di proprietà (spese indipendenti dall'uso, calcolo maggioranze) e d'uso (riscaldamento)</li>
+ <li>Calcolo: superficie reale × coefficienti = superficie virtuale. Coefficienti: altezza di piano, prospetto, esposizione, orientamento. Aspetto economico: valore di mercato</li>
+ <li>Scale e ascensore: metà per millesimi di proprietà, metà per altezza di piano (paga anche il piano terra)</li>
+ <li>Lastrico solare a uso esclusivo: <i>1/3</i> a chi lo usa, 2/3 agli altri</li>
+ <li>Più corpi di fabbrica: il tetto lo pagano solo le unità che copre</li></ul></li>
+</ul></section>
+
+<section id="civ"><h2>Diritto civile e diritti reali</h2><p class="tag">Comprende «Capacità giuridica e di agire» e «Diritti reali I, II, III»</p>
+<div class="grid"><div>
+<ul class="map">
+<li><b>Persone e capacità</b><ul>
+ <li>Capacità giuridica: essere titolare di diritti e doveri, dalla nascita. Capacità di agire: compiere atti giuridici, dai <i>18 anni</i></li>
+ <li>Minore: può essere proprietario; rappresentanza legale di chi ha la responsabilità genitoriale; i suoi atti sono annullabili; per vendere serve il giudice tutelare</li>
+ <li>Emancipato: minore sposato con autorizzazione del tribunale; solo ordinaria amministrazione; curatela (curatore = il coniuge maggiorenne)</li>
+ <li>Interdetto giudiziale: incapacità assoluta, come il minore, nessun atto; tutore (rappresenta), scelto dal giudice tutelare</li>
+ <li>Inabilitato: curatore (assiste) per gli atti di straordinaria amministrazione</li>
+ <li>Interdizione legale: pena accessoria per condanne oltre <i>5 anni</i></li>
+ <li>Amministratore di sostegno: affianca disabili e anziani. Incapacità naturale: transitoria</li>
+ <li>Residenza: dove si vive abitualmente. Domicilio: sede principale di affari e interessi. Domicilio fiscale: Comune di residenza</li>
+ <li>Scomparso: non può ereditare. Morte presunta: dopo <i>5 anni</i>, stessi effetti della morte; se torna riprende solo ciò che resta</li>
+ <li>Persone giuridiche: autonomia patrimoniale perfetta. Associazioni non riconosciute ed enti di fatto: non ce l'hanno</li>
+ <li>Norme: astratte, derogabili o inderogabili, in vigore <i>15 giorni</i> dopo la Gazzetta Ufficiale. Codici = legge ordinaria</li></ul></li>
+<li><b>Famiglia</b><ul>
+ <li>Regime legale: comunione dei beni. Esclusi i beni per la professione</li>
+ <li>Amministrazione ordinaria disgiunta; straordinaria senza consenso → annullabile (immobili, mobili registrati)</li>
+ <li>Creditori personali: sui beni comuni in via sussidiaria, fino alla quota</li>
+ <li>Usufrutto legale dei genitori: non cedibile</li>
+ <li>Presunzione di concepimento: nato entro <i>300 giorni</i></li></ul></li>
+<li><b>Successioni</b><ul>
+ <li>Eredi legittimi: senza testamento valido. Legittimari: quota di riserva intoccabile</li>
+ <li>Olografo: scritto, datato, firmato di pugno. Il testamento è sempre revocabile</li>
+ <li>Legato = a titolo particolare. Beneficio d'inventario = patrimoni distinti</li>
+ <li>Collazione: conferire le donazioni ricevute (escluse spese di mantenimento ed educazione)</li>
+ <li>La divisione si può solo ritardare; porzioni uguali estratte a sorte</li>
+ <li>Dichiarazione di successione entro <i>12 mesi</i>; apertura = giorno della morte</li>
+ <li>Coniuge superstite: diritto di abitazione</li></ul></li>
+</ul></div><div>
+<ul class="map">
+<li><b>Tempo e tutela</b><ul>
+ <li>Prescrizione: estinzione del diritto per mancato esercizio; decorre da quando si può far valere</li>
+ <li>Decadenza: termine non rispettato che impedisce di esercitare il diritto</li>
+ <li>Rivendicazione: il proprietario riprende il bene da chi lo possiede</li>
+ <li>Sequestro conservativo: protegge la garanzia del credito</li>
+ <li>Danno: risarcibile se ingiusto, con dolo o colpa; non patrimoniale solo nei casi di legge; biologico = integrità psico-fisica</li></ul></li>
+<li><b>Trascrizione</b><ul>
+ <li>Conservatoria dei Registri Immobiliari (registri pubblici)</li>
+ <li>Titolo: atto pubblico, scrittura privata autenticata, sentenza</li>
+ <li>Effetto: pubblicità dichiarativa, opponibilità ai terzi. Si è proprietari anche senza trascrivere</li>
+ <li>Preliminare: trascrivibile se atto pubblico o scrittura autenticata</li></ul></li>
+<li><b>Proprietà e possesso</b><ul>
+ <li>Diritti reali: categoria tipica (numero chiuso). La proprietà immobiliare è imprescrittibile. Atti emulativi vietati: solo per nuocere</li>
+ <li>Acquisto a titolo originario: accessione, usucapione, occupazione (cose abbandonate), invenzione (cose smarrite)</li>
+ <li>Usucapione: su mobili, immobili, mobili registrati; si interrompe citando il possessore</li>
+ <li>Possesso: potere di fatto corrispondente a un diritto reale; anche indiretto, tramite chi detiene. Il locatario è detentore</li>
+ <li>Buona fede sempre presunta. «Possesso vale titolo»: solo beni mobili; in buona fede senza titolo, <i>10 anni</i></li>
+ <li>Azioni: rivendicazione (proprietario); reintegrazione e manutenzione (possessore)</li>
+ <li>Immissioni: fumo, calore, rumori. Pertinenze: a servizio o ornamento. Fungibili: sostituibili</li>
+ <li>Demanio: solo Stato ed enti territoriali, inalienabile. Requisizione: temporanea, per necessità gravi e urgenti</li></ul></li>
+<li><b>Diritti reali su cosa altrui</b><ul>
+ <li>Usufrutto: cedibile, ipotecabile, pignorabile; l'usufruttuario può locare, paga spese ordinarie, IMU, imposte sul reddito. Persone fisiche: a vita; giuridiche: max <i>30 anni</i></li>
+ <li>Nuda proprietà: vendibile sempre</li>
+ <li>Uso e abitazione: strettamente personali, non cedibili né locabili</li>
+ <li>Superficie: costruire sopra o sotto suolo altrui, a tempo o perpetuo; si estingue per prescrizione</li>
+ <li>Servitù: peso su un fondo (servente) a utilità di un altro; si estingue per non uso di <i>20 anni</i></li>
+ <li>Comunione: quote presunte uguali. Multiproprietà: godimento a turni</li></ul></li>
+<li><b>Garanzie</b><ul>
+ <li>Personali: fideiussione (tutto il patrimonio del garante)</li>
+ <li>Reali: pegno (mobili, universalità, crediti), ipoteca</li>
+ <li>Privilegio: prelazione concessa dalla legge; generale = su tutti i mobili</li>
+ <li>Patto commissorio: nullo</li></ul></li>
+</ul></div></div>
+</section>
+
+<section id="loc"><h2>Locazioni</h2>
+<div class="tw"><table><tr><th>Tipo</th><th>Regola</th><th>Numero</th></tr>
+<tr><td>Abitativa canone libero (L. 431/1998)</td><td>forma scritta a pena di nullità</td><td>4+4</td></tr>
+<tr><td>Abitativa canone concordato</td><td>canone più basso</td><td>3+2</td></tr>
+<tr><td>Commerciale, uffici, partiti e sindacati (L. 392/1978)</td><td>durata minima</td><td>6+6</td></tr>
+<tr><td>Alberghiera</td><td>durata minima</td><td>9+9</td></tr>
+<tr><td>Indennità di avviamento</td><td>commerciale / alberghiera</td><td>18 / 21 mensilità</td></tr>
+<tr><td>Doppia indennità</td><td>se il locatore apre attività simile entro</td><td>1 anno</td></tr>
+<tr><td>Prelazione del conduttore commerciale</td><td>da esercitare entro; se violata → riscatto</td><td>60 giorni</td></tr>
+<tr><td>Recesso del conduttore abitativo</td><td>gravi motivi, preavviso</td><td>6 mesi</td></tr>
+<tr><td>Registrazione (Agenzia delle Entrate)</td><td>entro</td><td>30 giorni</td></tr>
+<tr><td>Trascrizione del contratto</td><td>se dura oltre</td><td>9 anni</td></tr>
+<tr><td>Portineria</td><td>conduttore / locatore</td><td>90% / 10%</td></tr></table></div>
+<ul class="map">
+<li><b>Regole</b><ul>
+ <li>Locazione: contratto oneroso; il conduttore è detentore; restituisce il bene come l'ha ricevuto</li>
+ <li>Locatore: consegna, mantiene, garantisce il godimento. Conduttore: non è obbligato a migliorare; per i miglioramenti indennità solo se autorizzati</li>
+ <li>Sublocazione totale: serve il consenso; parziale: sì salvo patto contrario, con comunicazione</li>
+ <li>Prelazione legale: solo per uso diverso dall'abitativo</li>
+ <li>Cedolare secca: niente bollo e registro, niente aumenti (nemmeno ISTAT), solo categorie A/1–A/11 esclusa A/10</li>
+ <li>Interessi sulla cauzione: al conduttore. Immobile pignorato: non si può affittare</li>
+ <li>Comodato: gratuito, reale; il comodatario non può locare senza consenso</li></ul></li></ul>
+</section>
+
+<section id="obb"><h2>Obbligazioni e ipoteca</h2>
+<div class="grid"><div><ul class="map">
+<li><b>Obbligazione = vincolo giuridico</b><ul>
+ <li>Diritto relativo: verso persone determinate</li>
+ <li>Parziaria: ognuno la sua parte. Solidale: ciascuno per l'intero. Alternativa: una o l'altra prestazione</li>
+ <li>Naturale: solo dovere morale; pagato non si ripete (debito prescritto, gioco)</li>
+ <li>Di mezzi: non si garantisce il risultato. Di valore: diventa pecuniaria alla liquidazione</li>
+ <li>Il debitore risponde con tutti i beni presenti e futuri</li></ul></li>
+<li><b>Adempimento</b><ul>
+ <li>Denaro: al domicilio del creditore. Interessi sui crediti liquidi ed esigibili: automatici, al tasso legale; ultralegali solo per iscritto</li>
+ <li>Terzo: può adempiere se la prestazione è fungibile</li>
+ <li>Parziale: il creditore può rifiutare. Creditore apparente: libera se buona fede e circostanze univoche</li>
+ <li>Mora del debitore: ritardo + richiesta scritta. Mora del creditore: offerta solenne rifiutata</li></ul></li>
+<li><b>Estinzione diversa dall'adempimento</b><ul>
+ <li>Novazione (nuovo oggetto o titolo), remissione (rinuncia), compensazione (crediti omogenei, liquidi, esigibili), confusione, impossibilità sopravvenuta</li>
+ <li>La morte del creditore non estingue</li></ul></li>
+<li><b>Modifiche soggettive</b><ul>
+ <li>Cessione del credito: senza consenso del debitore; il cedente garantisce l'esistenza, la solvenza solo se pattuito</li>
+ <li>Accollo: accordo debitore–terzo. Espromissione: il terzo si obbliga spontaneamente col creditore</li>
+ <li>Surrogatoria: contro l'inerzia del debitore. Regresso: il fideiussore che ha pagato</li></ul></li>
+</ul></div><div><ul class="map">
+<li><b>Ipoteca</b><ul>
+ <li>Diritto reale di garanzia su immobili, mobili registrati, usufrutto, quota indivisa</li>
+ <li>Iscrizione: costitutiva. Grado = data di iscrizione. Dura <i>20 anni</i>, da rinnovare prima della scadenza (dopo perde il grado)</li>
+ <li>Volontaria (contratto, tipica del mutuo), legale (dalla legge), giudiziale</li>
+ <li>Importo iscritto superiore al mutuo. Più ipoteche sullo stesso bene: sì</li>
+ <li>Il bene resta al debitore, che può venderlo: diritto di sequela, l'esecuzione colpisce anche il terzo acquirente</li>
+ <li>Il creditore non diventa proprietario (patto commissorio nullo): fa vendere e si soddisfa con prelazione</li>
+ <li>Chirografari: senza prelazione</li>
+ <li>Ritenzione: trattenere la cosa finché non si è pagati</li></ul></li>
+</ul>
+<div class="trap"><b>Trappola</b><ul><li>«Beni ipotecati insufficienti»: la risposta della banca dati è che il creditore non può soddisfarsi. Studiala così com'è.</li></ul></div>
+</div></div>
+</section>
+
+<section id="con"><h2>Negozio giuridico e contratto</h2>
+<div class="grid"><div><ul class="map">
+<li><b>Elementi</b><ul>
+ <li>Essenziali: accordo, causa, oggetto, forma (quando prescritta a pena di nullità)</li>
+ <li>Accidentali: condizione, termine, modo</li>
+ <li>Oggetto: possibile, lecito, determinato o determinabile (la materialità non serve)</li>
+ <li>Causa: funzione economico-sociale. Motivi: irrilevanti, salvo illeciti e comuni</li>
+ <li>Autonomia contrattuale (art. <i>1322</i>): contenuto libero, contratti atipici se meritevoli di tutela</li></ul></li>
+<li><b>Conclusione</b><ul>
+ <li>Concluso quando il proponente conosce l'accettazione (presunzione: arrivo all'indirizzo)</li>
+ <li>Proposta revocabile finché il contratto non è concluso</li>
+ <li>Consensuali: basta il consenso (compravendita). Reali: serve la consegna (comodato, mutuo, deposito)</li>
+ <li>Effetti reali: la proprietà passa col consenso</li>
+ <li>Responsabilità precontrattuale: mancata buona fede nelle trattative</li>
+ <li>Per adesione: clausole predisposte da uno; nel dubbio a favore dell'aderente; le clausole aggiunte prevalgono (art. <i>1342</i>)</li></ul></li>
+<li><b>Figure</b><ul>
+ <li>Preliminare: obbligo di stipulare il definitivo, stessa forma</li>
+ <li>Opzione: una parte vincolata, l'altra libera di accettare</li>
+ <li>Offerta al pubblico: proposta a destinatari indeterminati</li>
+ <li>Per persona da nominare: nomina entro <i>3 giorni</i>, effetto retroattivo; altrimenti resta tra gli originari</li>
+ <li>A favore di terzo: stipulante, promittente; il beneficiario non è parte</li>
+ <li>Cessione del contratto: serve il consenso del ceduto</li>
+ <li>Caparra penitenziale: prezzo del recesso (non si può chiedere l'adempimento). Recesso: finché non c'è inizio di esecuzione</li></ul></li>
+</ul></div><div><ul class="map">
+<li><b>Condizione</b><ul>
+ <li>Sospensiva: effetti rinviati («se il Comune rilascia la concessione»). Risolutiva: effetti che cessano</li>
+ <li>Illecita: sempre nullo. Sospensiva impossibile: nullo</li></ul></li>
+<li><b>Patologia</b><ul>
+ <li>Nullità: manca un elemento essenziale, oggetto indeterminato; chiunque interessato, rilevabile d'ufficio, non solo testuale</li>
+ <li>Annullabilità: incapacità, errore (essenziale e riconoscibile), violenza morale anche del terzo, dolo determinante. Dolo incidente: avrebbe contrattato a condizioni diverse. Convalida da chi può chiedere l'annullamento. Minore che ha nascosto l'età con raggiri: non annullabile</li>
+ <li>Rescissione: stato di pericolo; stato di bisogno con lesione</li>
+ <li>Risoluzione (fatti successivi): inadempimento (art. <i>1453</i>), impossibilità sopravvenuta, eccessiva onerosità (evitabile con equa modifica)</li></ul></li>
+<li><b>Compravendita</b><ul>
+ <li>Consensuale. Venditore: consegna, garanzia per evizione e vizi. Spese del contratto: compratore</li>
+ <li>Azione estimatoria = riduzione del prezzo. Redibitoria = risoluzione</li>
+ <li>Pertinenze comprese salvo patto contrario</li>
+ <li>Scrittura privata semplice: vendita valida ma non trascrivibile</li>
+ <li>Terreno: allegare il certificato di destinazione urbanistica</li></ul></li>
+<li><b>Donazione</b><ul><li>Atto pubblico; modico valore di mobili: basta la consegna</li></ul></li>
+</ul></div></div>
+</section>
+
+<section id="man"><h2>Mandato, procura e contratti atipici</h2>
+<ul class="map">
+<li><b>Mandato</b><ul>
+ <li>Contratto consensuale a effetti obbligatori: compiere uno o più atti giuridici per conto del mandante. Si presume oneroso</li>
+ <li>Con rappresentanza: in nome e per conto, effetti diretti. Senza: in nome proprio, serve un secondo negozio di trasferimento</li>
+ <li>Procura: negozio unilaterale. Mandato a vendere e procura a vendere non coincidono</li>
+ <li>Eccesso dai limiti: a carico del mandatario se non ratificato</li>
+ <li>Revoca sempre possibile; senza giusta causa (o senza preavviso se a tempo indeterminato) → risarcimento. Lo stesso per la rinuncia del mandatario</li>
+ <li>Esclusiva: se il mandante conclude da solo, il compenso è comunque dovuto</li>
+ <li>Estinzione per morte, salvo mandato per l'esercizio di un'impresa che continua</li></ul></li>
+<li><b>Altri contratti tipici</b><ul>
+ <li>Mutuo: reale; interessi usurari → clausola nulla, nessun interesse; mancato pagamento interessi → risoluzione</li>
+ <li>Somministrazione: prestazioni periodiche o continuative. Appalto: anche servizi. Transazione: reciproche concessioni per chiudere o prevenire una lite</li>
+ <li>Assicurazione: forma scritta solo per la prova; anche a favore di terzi</li></ul></li>
+<li><b>Atipici</b><ul>
+ <li>Leasing: locazione finanziaria di mobili o immobili; canoni deducibili; riscatto a fine contratto; assimilato alla vendita con riserva di proprietà; la società non produce il bene; l'utilizzatore non può recedere</li>
+ <li>Factoring (L. <i>52/1991</i>): cessione in blocco dei crediti; pro soluto = rischio al factor; il factor anticipa; è intermediario finanziario</li>
+ <li>Franchising: tra produttore e distributore, dare e fare, dietro canone. Forfaiting: smobilizzo di crediti export</li></ul></li>
+</ul></section>
+
+<section id="fin"><h2>Finanziamenti</h2>
+<ul class="map">
+<li><b>Mutuo bancario</b><ul>
+ <li>Mutuante concede, mutuatario riceve. Atto notarile necessario. Ipoteca non obbligatoria; possibile anche in terza ipoteca; terzo datore ammesso</li>
+ <li>Ipotecario = medio-lungo termine. Rata = quota capitale + quota interessi, anticipata o posticipata</li>
+ <li>Preammortamento: dall'erogazione alla fine del trimestre o semestre in corso</li>
+ <li>Estinzione parziale: sì. Azione legale: dopo la <i>terza</i> rata insoluta. Risoluzione: distruzione dell'immobile</li>
+ <li>Detrazione IRPEF interessi: <i>19%</i></li></ul></li>
+<li><b>Tassi</b><ul>
+ <li>TAEG: costo percentuale annuo effettivo. Euribor: scambi interbancari a breve. Tasso d'ingresso: primo periodo</li>
+ <li>Usura: oltre il tasso soglia al momento della pattuizione</li>
+ <li>Crediti personali: tasso fisso</li></ul></li>
+<li><b>Lessico</b><ul>
+ <li>Fido: massimo credito concedibile. Credito indiretto: tramite intermediari</li>
+ <li>Fonti di finanziamento: capitale proprio e di terzi. Azienda capitalizzata: proprio &gt; terzi</li>
+ <li>Le società di persone non sono intermediari finanziari. Mutuo artigiano: imprese iscritte all'Albo artigiani</li></ul></li>
+</ul></section>
+
+<section id="tit"><h2>Titoli di credito</h2>
+<ul class="map">
+<li><b>Caratteri</b><ul>
+ <li>Incorporazione (circola come un bene mobile), letteralità, autonomia (diritto originario), astrattezza (non cita il rapporto fondamentale). L'atipicità non è un carattere</li>
+ <li>Circolazione: al portatore (consegna), all'ordine (girata), nominativi (girata piena + annotazione nel registro)</li>
+ <li>Ammortamento: toglie efficacia al titolo smarrito; domanda al Presidente del Tribunale; escluso per i titoli al portatore</li></ul></li>
+<li><b>Cambiale</b><ul>
+ <li>Pagherò: promessa. Soggetti: emittente e prenditore. Obbligato principale: emittente</li>
+ <li>Tratta: ordine. Soggetti: traente, trattario, beneficiario. Obbligato principale: trattario se accetta; non accettata non ha obbligato principale; traente obbligato di regresso</li>
+ <li>Provvista: tra traente e trattario</li>
+ <li>Azione diretta: <i>3 anni</i>. Regresso: <i>1 anno</i>, dopo il protesto, contro giranti e avallanti</li>
+ <li>Protesto: accertamento ufficiale del mancato pagamento (notaio). Avallo: garanzia</li>
+ <li>Senza bollo: valida ma non esecutiva. In bianco: incompleta. Domiciliata: pagabile in banca. Scadenza e luogo di emissione non sono essenziali</li>
+ <li>Girata piena: firma + nome del giratario. Per l'incasso: nessuna garanzia</li></ul></li>
+<li><b>Assegni</b><ul>
+ <li>Bancario: mezzo di pagamento, firmato dal correntista. Senza provvista: illecito amministrativo. Postdatato: non è reato</li>
+ <li>Circolare: emesso da banca autorizzata dalla Banca d'Italia; dà più certezze</li>
+ <li>Non trasferibile: obbligatorio da <i>€ 1.000</i></li>
+ <li>Bancomat: documento di legittimazione</li></ul></li>
+</ul></section>
+
+<section id="soc"><h2>Impresa e società</h2>
+<div class="grid"><div><ul class="map">
+<li><b>Imprenditore e azienda</b><ul>
+ <li>Attività economica organizzata, esercitata professionalmente. La qualità si acquista con l'esercizio di fatto</li>
+ <li>Commerciale: registro imprese, scritture contabili (libro giornale, inventari), procedure concorsuali</li>
+ <li>Agricolo: coltivazione, silvicoltura, allevamento, attività connesse (agriturismo)</li>
+ <li>Institore: subordinato, rappresentante generale. Lo spedizioniere non è subordinato</li>
+ <li>Azienda (art. <i>2555</i>): complesso di beni organizzati. Avviamento: qualità dell'azienda. Cessione: forma scritta per la prova; divieto di concorrenza per il cedente <i>5 anni</i>; subentro nei contratti non personali</li>
+ <li>Ditta: nome dell'imprenditore; si trasferisce solo con l'azienda</li>
+ <li>Brevetto: <i>20 anni</i>. Marchio collettivo: «pura lana vergine». Concorrenza sleale: illecito civile</li></ul></li>
+<li><b>Società di persone</b><ul>
+ <li>Semplice: attività non commerciale; responsabilità illimitata e solidale</li>
+ <li>S.n.c.: commerciale; iscrizione dichiarativa; beneficio di escussione; patto limitativo inefficace verso terzi; irregolare fallisce</li>
+ <li>S.a.s.: accomandatari illimitati, accomandanti per la quota; l'accomandante che amministra diventa illimitato</li>
+ <li>Socio d'opera: solo qui. Morte del socio: nessun subentro automatico</li>
+ <li>Patto leonino: nullo</li></ul></li>
+</ul></div><div><ul class="map">
+<li><b>Società di capitali</b><ul>
+ <li>S.p.a.: atto pubblico; personalità giuridica con l'iscrizione (costitutiva); capitale tutto sottoscritto, versati i <i>3/10</i> (nel quiz) dei conferimenti in denaro</li>
+ <li>Assemblea: organo deliberativo. Ordinaria in prima convocazione: metà del capitale. Straordinaria: modifiche dell'atto, fusione</li>
+ <li>Amministratori anche non soci; se omettono, convoca il collegio sindacale</li>
+ <li>Azioni privilegiate: preferenza sugli utili. Obbligazionisti: interessi e rimborso</li>
+ <li>Riduzione obbligatoria del capitale: perdite oltre <i>1/3</i></li>
+ <li>Delibera nulla: non sanabile. Socio unico: la S.p.a. continua</li>
+ <li>S.a.p.a.: accomandatari amministratori di diritto, illimitati</li>
+ <li>S.r.l.: nel quiz non emette obbligazioni; azione di responsabilità anche del singolo socio</li>
+ <li>Cooperative: scopo mutualistico, capitale variabile</li>
+ <li>Bilancio abbreviato: stato patrimoniale e conto economico. Consolidato: del gruppo. CONSOB: trasparenza del mercato</li></ul></li>
+</ul></div></div>
+</section>
+
+<section id="fal"><h2>Fallimento e procedure concorsuali</h2>
+<ul class="map">
+<li><b>Presupposti</b><ul><li>Soggettivo: imprenditore commerciale (esclusi piccoli, agricoli, artigiani). Oggettivo: insolvenza</li>
+ <li>Falliscono anche i soci illimitatamente responsabili. Dichiarazione: creditori, debitore, PM, d'ufficio (nel quiz). Sentenza provvisoriamente esecutiva</li></ul></li>
+<li><b>Organi</b><ul><li>Tribunale · giudice delegato (direzione e controllo) · curatore (funzioni esecutive, azioni revocatorie) · comitato dei creditori (consultivo)</li></ul></li>
+<li><b>Effetti e fasi</b><ul>
+ <li>Il fallito perde la disponibilità dei beni; si sciolgono conto corrente e mandato</li>
+ <li>Revocatoria: rende inefficaci gli atti. Liberalità e pagamenti di debiti non scaduti: inefficaci</li>
+ <li>Sigilli → accertamento del passivo → liquidazione dell'attivo → riparto (anche in più fasi) → chiusura</li>
+ <li>Par condicio: solo tra chirografari</li></ul></li>
+<li><b>Concordati e reati</b><ul>
+ <li>Concordato fallimentare: omologato vincola tutti. Preventivo: evita il fallimento; nel quiz almeno il <i>40%</i> ai chirografari</li>
+ <li>Bancarotta fraudolenta: reato doloso</li></ul></li>
+</ul></section>
+
+<section id="tri"><h2>Tributi e imposte</h2>
+<div class="grid"><div><ul class="map">
+<li><b>Tributi</b><ul>
+ <li>Imposta: per capacità contributiva, finanzia servizi generali. Tassa: corrispettivo di un servizio richiesto. Contributo: terzo tipo di tributo</li>
+ <li>Progressiva: aliquota cresce con l'imponibile (a scaglioni). Regressiva: diminuisce. Proporzionale: costante</li>
+ <li>Costituzione: capacità contributiva e progressività dell'intero sistema</li>
+ <li>Pressione tributaria = tributi / reddito nazionale. Fiscal drag: imposte progressive</li>
+ <li>Dirette: IRPEF (personale, progressiva), IRES (proporzionale). Indirette: IVA, registro, bollo, ipotecarie e catastali (imposte sugli affari)</li>
+ <li>Fonti: leggi e atti equiparati; una circolare non può istituire tributi</li></ul></li>
+<li><b>IVA e adempimenti</b><ul>
+ <li>Indiretta, proporzionale; esenti le operazioni di finanziamento. Ristrutturazioni: <i>10%</i></li>
+ <li>Acconto: <i>27 dicembre</i>. IV trimestre: <i>16 marzo</i>. Registrazione fatture emesse: <i>15 giorni</i></li>
+ <li>F23: registro. F24: IRPEF e addizionali</li>
+ <li>Comunicazione dell'Agenzia: <i>30 giorni</i> per regolarizzare, poi ruolo</li></ul></li>
+</ul></div><div><ul class="map">
+<li><b>Casa</b><ul>
+ <li>Registro prima casa: <i>2%</i>. Prezzo-valore: base catastale per abitazioni e pertinenze acquistate da persona fisica senza partita IVA</li>
+ <li>Residenza richiesta a tutti, tranne Forze armate e di polizia</li>
+ <li>Provvigione del mediatore: detraibile fino a <i>€ 1.000</i></li>
+ <li>Plusvalenza: tassata se si rivende entro <i>5 anni</i> (dal 1/1/2006); escluse successione e prima casa; aree edificabili sempre tassate</li>
+ <li>Caparra confirmatoria registrata: tassata. Penale per revoca incarico: niente IVA</li>
+ <li>D.Lgs. <i>122/2005</i>: fideiussione del costruttore per immobili da costruire</li></ul></li>
+<li><b>IMU</b><ul>
+ <li>Imposta reale sul patrimonio; paga il proprietario (o l'usufruttuario); gettito al Comune salvo categoria D</li>
+ <li>Fabbricati: rendita rivalutata. Terreni: dominicale +<i>25%</i> × <i>135</i>. Aree edificabili: valore venale</li>
+ <li>Prima casa esente tranne A/1, A/8, A/9. Rurali strumentali esenti</li></ul></li>
+<li><b>Contenzioso</b><ul>
+ <li>Commissioni tributarie: giudici speciali. Senza difensore fino a <i>€ 2.582,28</i>. Sospensione feriale <i>1 agosto – 15 settembre</i> (nel quiz)</li>
+ <li>Il verbale della Guardia di Finanza non è impugnabile da solo</li></ul></li>
+</ul></div></div>
+</section>
+
+<section id="eg"><h2>Estimo generale</h2>
+<ul class="map">
+<li><b>Principi</b><ul>
+ <li>Disciplina che dà giudizi di valore: sono previsioni. Un bene ha più valori secondo lo scopo della stima</li>
+ <li>Ordinarietà: condizioni medie (concetto statistico). Prezzo = fatto storico; valore = previsione</li>
+ <li>Metodo unico: il confronto con beni simili. Procedimenti: <i>2</i>, sintetico e analitico</li></ul></li>
+<li><b>I sei aspetti economici</b><ul>
+ <li>Mercato: libera contrattazione</li>
+ <li>Costo (di ricostruzione deprezzato): edifici pubblici, senza mercato, danneggiati</li>
+ <li>Trasformazione = valore del bene trasformato − costo: aree edificabili, sopraelevazioni, nuove destinazioni</li>
+ <li>Complementare = valore dell'intero − valore della parte residua: esproprio parziale</li>
+ <li>Surrogazione: valore di un bene sostitutivo (mai per fabbricati civili)</li>
+ <li>Capitalizzazione: V = Bf / r</li></ul></li>
+<li><b>Stima sintetica</b><ul><li>Parametrica (parametri tecnici misurabili o economici in moneta), per valori unitari, per coefficienti. Prezzi recenti di beni simili della zona</li></ul></li>
+<li><b>Stima analitica</b><ul>
+ <li>Beneficio fondiario = canone lordo annuo − spese del proprietario (quote, sfitto e inesigibilità, imposte…); spese circa <i>40–50%</i></li>
+ <li>Saggio r: fruttuosità media; i comodi lo abbassano, gli scomodi lo alzano</li>
+ <li>Richiede redditi costanti, continuativi, illimitati</li></ul></li>
+<li><b>Dal valore ordinario al valore reale</b><ul>
+ <li>Aggiunte (fabbricato eccedente, redditi transitori superiori) e detrazioni (mutuo residuo, usufrutto): in denaro</li>
+ <li>Comodi e scomodi: non valutabili direttamente, agiscono sul saggio. La vista panoramica è un comodo, non un'aggiunta</li></ul></li>
+</ul></section>
+
+<section id="ea"><h2>Estimo agrario</h2>
+<ul class="map">
+<li><b>Capitali dell'azienda</b><ul>
+ <li>Fondiario: terra e investimenti stabili (frutteti, viabilità, fabbricati)</li>
+ <li>Agrario o di esercizio: scorte vive (bestiame) e morte (macchine, prodotti)</li>
+ <li>Cancello aperto: fondo senza scorte (usato nelle successioni). Cancello chiuso: con scorte</li></ul></li>
+<li><b>Stima del fondo</b><ul>
+ <li>Analitica: capitalizzazione del Bf dedotto dal bilancio in ordinarietà, proprietario conduttore, tornaconto zero</li>
+ <li>Sintetica: parametri tecnici (quantità prodotta) o economici (PLV)</li>
+ <li>Mai al costo. Piccolo appezzamento: sintetica; se si unisce al fondo vicino: valore complementare</li>
+ <li>Caratteristiche intrinseche: fertilità, giacitura, esposizione, acqua</li></ul></li>
+<li><b>Scorte e prodotti</b><ul>
+ <li>Bestiame e foraggi eccedenti: mercato. Foraggi consumati in azienda: trasformazione. Letame: surrogazione</li>
+ <li>Macchine: valore a nuovo meno deprezzamento</li>
+ <li>Frutti pendenti: vicino al raccolto, redditi futuri. Anticipazioni colturali: spese già sostenute</li></ul></li>
+<li><b>Fabbricati rurali eccedenti</b><ul>
+ <li>Utilizzabile: ricostruzione deprezzata. Riconvertibile: trasformazione. Pericolante: demolizione</li>
+ <li>Quelli ordinari si stimano col fondo, mai separati</li></ul></li>
+<li><b>Miglioramenti</b><ul>
+ <li>Costo = spese dirette + mancati redditi − contributi. Fruttuosità = incremento di reddito / costo</li>
+ <li>Affittuario indennizzato in base al «migliorato»</li></ul></li>
+<li><b>Misure</b><ul><li>1 ha = 10.000 mq, 1 ara = 100 mq, 1 centiara = 1 mq. <i>12.75.00</i> ha = 127.500 mq</li></ul></li>
+</ul></section>
+
+<section id="cat"><h2>Catasto</h2><p class="tag">Comprende Catasto I, II e III. Il terzo set contiene anche domande su preliminare, privacy e cessione di fabbricato</p>
+<ul class="map">
+<li><b>Natura</b><ul>
+ <li>Geometrico, particellare, per qualità, classi e tariffe; non probatorio (probatorio solo nell'ex catasto tavolare, es. Trieste). Scopo fiscale. Fa parte dell'Agenzia delle Entrate. Fase attuale: conservazione</li>
+ <li>La proprietà si accerta in Conservatoria, non al Catasto</li></ul></li>
+<li><b>Catasto terreni</b><ul>
+ <li>Particella: porzione continua, stesso Comune, possessore, qualità e classe. Qualità = coltura (es. seminativo). Classi: max <i>5</i></li>
+ <li>Qualificazione → classificazione → classamento → tariffe</li>
+ <li>Reddito dominicale: al proprietario. Reddito agrario: a chi coltiva (affittuario)</li>
+ <li>Mappa: scala <i>1:2000</i> (2 cm = 40 m), foglio 1 × 0,70 m; quadro d'unione 1:20.000 o più piccolo</li>
+ <li>Linea continua: confine di particella. Tratteggiata: strada poderale</li></ul></li>
+<li><b>Catasto fabbricati</b><ul>
+ <li>Unità immobiliare: autonomia funzionale e reddituale. Identificativi: foglio, particella, subalterno</li>
+ <li>Rendita = consistenza × tariffa. Classe = redditività</li>
+ <li>Consistenza: gruppo A in vani, B in metri cubi, C in metri quadri</li>
+ <li>Accessori diretti (bagno) <i>1/3</i> di vano; complementari <i>1/4</i>. Cucina: vano utile</li>
+ <li>A/2 civile · A/7 villini · A/10 uffici privati · B/1 caserme e collegi · B/4 uffici pubblici · C/1 negozi · C/2 cantine · C/6 autorimesse</li>
+ <li>Posto auto condominiale e giardino esclusivo: accessori complementari</li>
+ <li>Classi: chiuse nei terreni, aperte e in numero indeterminato nei fabbricati</li>
+ <li>Valore catastale = rendita non rivalutata × <i>115,5</i> prima casa · × <i>126</i> gruppo A · × <i>63</i> A/10</li></ul></li>
+<li><b>Atti e procedure</b><ul>
+ <li>Voltura: cambio di intestazione (notaio o eredi). Frazionamento: divisione, da tecnico abilitato; il tipo va depositato prima in Comune</li>
+ <li>Tipo mappale: nuova costruzione sulla mappa. DOCFA: fabbricati. Nuova costruzione da dichiarare entro <i>30 giorni</i></li>
+ <li>Visure: per soggetto, per immobile, per partita. Planimetrie: solo proprietari o delegati</li>
+ <li>Partita 0: numeri di mappa soppressi</li>
+ <li>Visura: chiunque, senza motivazione. Voltura terreni: modello <i>13 TP/A</i>; fabbricati: <i>98 TP</i></li>
+ <li>DOCFA: planimetrie di ogni unità + elaborato dei subalterni; lo presenta il proprietario o possessore tramite tecnico (non l'affittuario; l'utilizzatore in leasing solo se delegato)</li>
+ <li>Scala 1:100: 0,5 cm sulla carta = 0,5 m reali</li></ul></li>
+<li><b>Pratica dell'agente (domande di Catasto III)</b><ul>
+ <li>Preliminare: lo redigono le parti o il notaio; registrazione obbligatoria, trascrizione facoltativa; va indicato l'intervento del mediatore</li>
+ <li>Privacy: titolare del trattamento è il responsabile dell'agenzia; il conferimento dei dati è necessario per gli obblighi contrattuali e legali</li>
+ <li>Il mediatore assiste entrambe le parti; rimborso spese e provvigione dopo la scadenza dell'incarico solo se previsti nell'incarico</li>
+ <li>Cessione di fabbricato: la comunica il cedente (non il mediatore) entro <i>48 ore</i>, anche con raccomandata, nei casi ancora previsti</li>
+ <li>L.R. <i>21/2009</i> (piano casa del Lazio): mantenimento della destinazione <i>10 anni</i>; limite di ampliamento <i>20%</i> residenziale (max <i>62,5 mq</i>), <i>10%</i> non residenziale</li></ul></li>
+</ul></section>
+
+<section id="el"><h2>Estimo legale</h2>
+<ul class="map">
+<li><b>Usufrutto e nuda proprietà</b><ul>
+ <li>Valore usufrutto = accumulazione dei redditi netti futuri. Nuda proprietà = piena proprietà − usufrutto; pesa l'età dell'usufruttuario</li>
+ <li>Fiscale: valore pieno × saggio legale × coefficiente per età</li>
+ <li>Uso e abitazione si stimano come l'usufrutto</li></ul></li>
+<li><b>Servitù</b><ul>
+ <li>Indennizzo al fondo servente, al lordo delle imposte, con i danni permanenti. Tributi restano sul servente</li>
+ <li>Temporanea: meno di <i>9 anni</i>; diventa permanente pagando l'altro 50%</li>
+ <li>Elettrodotto su area edificabile: valore complementare</li></ul></li>
+<li><b>Espropri</b><ul>
+ <li>Area edificabile o costruzione legittima: valore venale. Area non edificabile: valore agricolo. Parziale: valore complementare</li>
+ <li>Coltivatore diretto: indennità aggiuntiva pari al VAM</li>
+ <li>Occupazione temporanea: <i>1/12</i> l'anno, max <i>5 anni</i>. Vincolo preordinato: <i>5 anni</i>. Retrocessione: opera non iniziata dopo <i>10 anni</i></li></ul></li>
+<li><b>Danni e assicurazione</b><ul>
+ <li>Danno emergente: perdita effettiva. Lucro cessante: redditi futuri perduti</li>
+ <li>Incendio: costo di ricostruzione (parziale: meno parte illesa e materiali recuperati; l'area non si conta)</li>
+ <li>Indennizzo = (valore assicurato / valore reale) × (danno − franchigia)</li></ul></li>
+<li><b>Stime cauzionali</b><ul>
+ <li>Valore prudente a garanzia del finanziamento (90–95% del commerciale). Mutuo fondiario non oltre metà del valore ipotecato</li></ul></li>
+<li><b>Leggi da riconoscere</b><ul>
+ <li><i>392/78</i> locazioni non abitative · <i>431/98</i> abitative · <i>203/82 art. 45</i> patti agrari in deroga · <i>167/62 + 865/71</i> edilizia popolare in diritto di superficie · <i>266/2005</i> plusvalenze</li></ul></li>
+</ul></section>
+
+<section id="fab"><h2>Stima di fabbricati e aree edificabili</h2>
+<ul class="map">
+<li><b>Fabbricati</b><ul>
+ <li>Mercato segmentato e locale. Ordinario = tipologia più diffusa in zona</li>
+ <li>Intrinseche: ascensore, riscaldamento, verde condominiale. Estrinseche: parcheggi, scuole, salubrità</li>
+ <li>Analitica: se il mercato degli affitti è attivo. Costo: se manca mercato, edifici pubblici</li>
+ <li>Demolizione = area + materiali − costi di demolizione</li>
+ <li>Superficie commerciale: calpestabile corretta; tramezzi 100%, muri in comune 50%, balcone fino a 1,20 m dal 33 al 50%, posto auto in periferia × 0,5, muri portanti d'epoca fino al 20% (max 50 cm), grande terrazza 10%</li>
+ <li>Valore catastale = rendita rivalutata × coefficiente</li>
+ <li>Computo metrico: quantità dei lavori; estimativo: anche i costi</li></ul></li>
+<li><b>Aree edificabili</b><ul>
+ <li>Stima: mercato oppure trasformazione (valore del costruito − costo di costruzione)</li>
+ <li>Indice di edificabilità: mc per mq (5% = 5 mc ogni 100 mq), fissato dal Consiglio comunale. Indice di copertura: superficie copribile / lotto</li>
+ <li>Certificato di destinazione urbanistica: dal Comune; da allegare per i terreni, salvo pertinenze sotto <i>5.000 mq</i></li>
+ <li>Zone omogenee: D.M. <i>1444/1968</i>, lettere dalla A. Reliquato: residuo di area</li></ul></li>
+<li><b>Edilizia e vendibilità</b><ul>
+ <li>Atto: estremi del titolo edilizio oppure inizio lavori prima del <i>1° settembre 1967</i>; conformità catastale sempre</li>
+ <li>Permesso di costruire: inizio entro <i>1 anno</i>, fine entro <i>3 anni</i>. Tramezzi interni: manutenzione straordinaria (CILA)</li>
+ <li>Agibilità: SCIA allo Sportello unico entro <i>15 giorni</i> dalla fine lavori</li>
+ <li>Accertamento di conformità: sanatoria con doppia conformità</li></ul></li>
+<li><b>Impianti ed energia</b><ul>
+ <li>D.M. <i>37/2008</i>: tutti gli edifici. Impianto di terra: verifica ogni <i>5 anni</i> (2 nei luoghi a rischio)</li>
+ <li>APE: dura <i>10 anni</i>, con libretti di caldaia; classe energetica obbligatoria negli annunci; D.L. <i>63/2013</i></li>
+ <li>Vaso di espansione: assorbe la dilatazione dell'acqua</li></ul></li>
+</ul></section>
+
+<section id="occhio"><h2>Risposte corte rilette dai PDF</h2>
+<p class="lead">In queste domande la prima lettura automatica non aveva colto la risposta esatta perché troppo corta. Le ho rilette una per una dalle tue scansioni: sono le risposte segnate in verde nella banca dati.</p>
+<div class="tw"><table><tr><th>Test</th><th>Domanda</th><th>Risposta esatta</th></tr>
+<tr><td>Mediazione I, 50</td><td>Partita IVA per chi inizia in proprio</td><td>Sempre</td></tr>
+<tr><td>Mediazione II, 1</td><td>Iscrizione INPS dell'agente</td><td>Sì</td></tr>
+<tr><td>Mediazione II, 47</td><td>Provvigione con il preliminare</td><td>Sì</td></tr>
+<tr><td>Condominio, 27</td><td>Regolamento obbligatorio oltre</td><td>10 condomini</td></tr>
+<tr><td>Diritti reali III, 34</td><td>L'usufruttuario può locare l'abitazione</td><td>Sì</td></tr>
+<tr><td>Finanziamenti, 5</td><td>IVA sulla rata di leasing</td><td>22%</td></tr>
+<tr><td>Tributi I, 47</td><td>IVA sulla penale per revoca dell'incarico</td><td>No</td></tr>
+<tr><td>Tributi II, 50</td><td>Plusvalenza su area edificabile</td><td>Sì, IRPEF</td></tr>
+<tr><td>Tributi III, 16</td><td>IVA ristrutturazione edilizia</td><td>10%</td></tr>
+<tr><td>Catasto I, 42</td><td>Visura per soggetto cumulativa</td><td>Sì</td></tr>
+<tr><td>Catasto II, 5 e 15</td><td>Palestra / tettoia inamovibile</td><td>C/4 · C/7</td></tr>
+<tr><td>Catasto III, 5</td><td>Muro di 0,5 cm in scala 1:100</td><td>0,5 m</td></tr>
+<tr><td>Catasto III, 23 · 24 · 46</td><td>Ufficio pubblico / cantina / cantina pertinente</td><td>B/4 · C/2 · C/2</td></tr>
+<tr><td>Catasto III, 31 · 33</td><td>Dati diffusi / mancato conferimento blocca il contratto</td><td>in forma anonima · Sì</td></tr>
+<tr><td>Catasto III, 49 · 50 · 51</td><td>L.R. 21/2009: residenziale / limite mq / non residenziale</td><td>20% · 62,5 · 10%</td></tr>
+<tr><td>Estimo legale II, 21</td><td>Aliquota sostitutiva plusvalenza</td><td>20%</td></tr>
+<tr><td>Estimo legale III, 22</td><td>Durata minima locazione commerciale</td><td>6 + 6</td></tr>
+<tr><td>Fabbricati I, 46 · 47</td><td>Muri perimetrali condivisi / balcone fino a 1,20 m</td><td>50% · 33–50%</td></tr>
+<tr><td>Fabbricati I, 48 · 49</td><td>Tramezzi interni / posto auto in periferia</td><td>100% · × 0,5</td></tr>
+<tr><td>Fabbricati II, 50</td><td>Portineria</td><td>90% conduttore</td></tr></table></div>
+<h3>Dove il quiz non coincide con la legge di oggi</h3>
+<p class="lead">La banca dati è del 2014. All'esame rispondi come il quiz: mandato dell'amministratore 2 anni, S.p.a. 3/10, concordato preventivo 40%, fallimento d'ufficio, Commissioni tributarie, sospensione feriale fino al 15 settembre, S.r.l. senza obbligazioni, tabelle millesimali all'unanimità.</p>
+</section>
+</div>
+
+</body>
+</html>
