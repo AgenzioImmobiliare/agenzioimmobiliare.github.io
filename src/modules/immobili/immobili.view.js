@@ -1671,6 +1671,19 @@ ${_sciPannello}
                   </a>
                 </div>
               </div>`:''}
+              <!-- [10 nov 2026] Contenuti social: niente da ricopiare a mano, i dati
+                   e le foto dell'immobile passano già pronti a Hyperframe/Reel. -->
+              <div style="grid-column:1/-1">
+                <div class="flabel">Contenuti social</div>
+                <div style="margin-top:5px;display:flex;gap:8px;flex-wrap:wrap">
+                  <button onclick="immGeneraCaroselli(${i})" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#FFFBEB;border:1.5px solid #FCD34D;border-radius:8px;color:#B45309;font-size:0.82rem;font-weight:700;cursor:pointer">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.2"/><rect x="14" y="3" width="7" height="7" rx="1.2"/><rect x="3" y="14" width="7" height="7" rx="1.2"/><rect x="14" y="14" width="7" height="7" rx="1.2"/></svg> Genera Caroselli
+                  </button>
+                  <button onclick="immGeneraReel(${i})" style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:#FFFBEB;border:1.5px solid #FCD34D;border-radius:8px;color:#B45309;font-size:0.82rem;font-weight:700;cursor:pointer">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 6h4M10 18h4"/></svg> Genera Reel
+                  </button>
+                </div>
+              </div>
               ${/* [14 ott 2026] cartella delle foto su Google Drive (pagina Acquisizioni) */
                 (im.cartellaFoto&&/^https:\/\/drive\.google\.com\//.test(im.cartellaFoto.url||''))?`<div style="grid-column:1/-1">
                 <div class="flabel">Cartella foto (Google Drive)</div>
@@ -2051,6 +2064,39 @@ function brochureImmobile(i){
   }
 }
 
+/* [10 nov 2026] Contenuti social dalla scheda immobile: stessi dati già in
+   anagrafica (indirizzo, prezzo, mq, locali, piano, foto), niente da
+   ricopiare a mano. Il Reel non è un'app autonoma (lo genera Claude su
+   richiesta): qui solo il promemoria, come nel Marketing Hub. */
+function _immFotoUrls(im){
+  var arr = Array.isArray(im.foto) ? im.foto : (im.foto ? [im.foto] : []);
+  return arr.filter(function(f){ return typeof f === 'string' && /^https?:\/\//.test(f); });
+}
+function immGeneraCaroselli(i){
+  var im = D.immobili[i];
+  if(!im){ if(typeof showToast==='function') showToast('Immobile non trovato','','#DC2626'); return; }
+  var foto = _immFotoUrls(im);
+  var p = new URLSearchParams();
+  if(im.indirizzo) p.set('indirizzo', im.indirizzo);
+  var zonaTxt = [im.comune, im.zona].filter(Boolean).join(' — ');
+  if(zonaTxt) p.set('comune', zonaTxt);
+  if(im.prezzo) p.set('prezzo', Number(im.prezzo).toLocaleString('it-IT',{style:'currency',currency:'EUR',maximumFractionDigits:0}));
+  if(im.mq) p.set('mq', im.mq);
+  var locali = [im.locali, im.camere].filter(Boolean).join('/');
+  if(locali) p.set('locali', locali);
+  if(im.piano) p.set('piano', im.piano);
+  if(foto[0]) p.set('foto1', foto[0]);
+  if(foto[1]) p.set('foto2', foto[1]);
+  window.open('https://agenzioimmobiliare.github.io/hyperframe/?' + p.toString(), '_blank', 'noopener');
+  if(!foto.length && typeof showToast==='function') showToast('Nessuna foto trovata su questo immobile: caricala direttamente in Hyperframe','','#D97706');
+}
+function immGeneraReel(i){
+  var im = D.immobili[i];
+  var dove = im ? [im.comune, im.indirizzo].filter(Boolean).join(' · ') : '';
+  var msg = 'Per il Reel scrivi a Claude indirizzo, prezzo e foto' + (dove ? (' di "'+dove+'"') : " dell'immobile") + ': genera il video e te lo invia pronto da scaricare.';
+  if(typeof showToast==='function') showToast(msg,'','#B45309'); else alert(msg);
+}
+
 // --- BRIDGE window ---
 Object.assign(window, {
   brochureImmobile,
@@ -2062,7 +2108,7 @@ Object.assign(window, {
   delImmobile, delImmobileFromScheda, setImView, resetImmFiltri, toggleImmFiltriPanel,
   setImmFilter, _initImmDefaults, setImmStatoPill, updatePillCounts, immSearchDropdown,
   immSearchSelect, immSearchHide, renderImmobili, openSchedaImmobile, renderDistanze,
-  renderSchedaImmobile,
+  renderSchedaImmobile, immGeneraCaroselli, immGeneraReel,
 });
 
-export { renderImmobili, openSchedaImmobile, renderSchedaImmobile, saveImmobile, delImmobile, openImmobileModal };
+export { renderImmobili, openSchedaImmobile, renderSchedaImmobile, saveImmobile, delImmobile, openImmobileModal, immGeneraCaroselli, immGeneraReel };
