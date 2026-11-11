@@ -5521,7 +5521,7 @@ hubTema();
     </div>
     <div>
       <div class="logo-text" id="hdr-agency">Le case dalla A allo Z.io</div>
-      <div class="logo-sub">IndexPlus · Marketing Hub <span style="background:#1A7A4A;color:#fff;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:800;margin-left:6px;letter-spacing:.5px">v.10nov-HYPERFRAME</span></div>
+      <div class="logo-sub">IndexPlus · Marketing Hub <span style="background:#1A7A4A;color:#fff;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:800;margin-left:6px;letter-spacing:.5px">v.11nov-SOCIALHUB</span></div>
     </div>
   </div>
   <div class="hub-destra" style="display:flex;gap:10px;align-items:center">
@@ -5604,14 +5604,14 @@ hubTema();
           <span>Libreria Clip Grafiche</span>
           <span class="nav-badge" style="background:#7C3AED;color:white">NUOVA</span>
         </div>
-        <!-- [10 nov 2026] Hyperframe: caroselli immagine (app esterna, stesso stile del Kit Acquisizione) -->
-        <div class="nav-item" onclick="apriHyperframe()" title="App esterna: compila indirizzo, prezzo e foto e scarica 4 slide pronte per un carosello Instagram/Facebook">
+        <!-- [11 nov 2026] Caroselli Immobile: Hyperframe incorporato nel Hub (scelta/foto/dati dall'immobile, niente scheda esterna) -->
+        <div class="nav-item" onclick="switchSection('caroselli')" title="Scegli l'immobile e scarica 4 slide pronte per un carosello Instagram/Facebook — foto e dati già precompilati">
           <div class="ni-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
           <span>Caroselli Immobile</span>
           <span class="nav-badge" style="background:#7C3AED;color:white">NUOVA</span>
         </div>
-        <!-- [10 nov 2026] Reel Remotion: non è un'app autonoma, serve chiedere a Claude di generarlo -->
-        <div class="nav-item" onclick="apriVideoReelRemotion()" title="Reel verticale foto+prezzo: scrivi a Claude indirizzo, prezzo e foto, te lo genera e te lo invia pronto">
+        <!-- [11 nov 2026] Reel Foto+Prezzo: il Reel lo genera Claude, qui si prepara la richiesta pronta da incollare -->
+        <div class="nav-item" onclick="switchSection('reelcomposer')" title="Scegli l'immobile: prepara il messaggio pronto da incollare a Claude per generare il Reel verticale">
           <div class="ni-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 6h4M10 18h4"/></svg></div>
           <span>Reel Foto+Prezzo</span>
           <span class="nav-badge" style="background:#7C3AED;color:white">NUOVA</span>
@@ -7175,6 +7175,77 @@ Un caro saluto,
     <!-- ══════════════ LIBRERIA CLIP GRAFICHE [2 nov 2026] ══════════════ -->
     <div id="sec-libgrafiche" class="section-panel">
       <div id="libfin-root"></div>
+    </div>
+
+    <!-- ══════════════ CAROSELLI IMMOBILE [11 nov 2026] ══════════════
+         Hyperframe (repo a parte, pubblicato su GitHub Pages) incorporato qui
+         via iframe: si sceglie l'immobile dall'elenco già sincronizzato nel
+         Hub, dati e foto arrivano precompilati via query string — stesso
+         meccanismo già usato dal pulsante sulla scheda immobile. -->
+    <div id="sec-caroselli" class="section-panel">
+      <div class="page-title-row">
+        <div>
+          <div class="page-title">Caroselli <span>Immobile</span></div>
+          <div class="page-subtitle">Scegli l'immobile: indirizzo, prezzo, caratteristiche e foto arrivano già pronti. Scarichi lo ZIP con le 4 slide per Instagram/Facebook.</div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-body">
+          <div class="frow">
+            <label class="flabel" style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10"/></svg> Immobile</label>
+            <select class="fselect" id="car-imm-select" onchange="carPickImmobile()">
+              <option value="">— Scegli un immobile —</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div id="car-empty" style="text-align:center;padding:30px 20px;color:var(--text3)">
+        <div style="font-weight:700;font-size:.9rem;color:var(--text2)">Scegli un immobile per generare i caroselli</div>
+        <div style="font-size:.78rem;margin-top:6px">Se all'immobile manca una foto con link, potrai comunque caricarla direttamente qui sotto.</div>
+      </div>
+      <div id="car-frame-wrap" style="display:none">
+        <div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <a id="car-open-tab" href="#" target="_blank" rel="noopener" class="btn btn-outline btn-sm">Apri a schermo intero in una scheda</a>
+        </div>
+        <iframe id="car-iframe" style="width:100%;height:1080px;border:1px solid var(--border);border-radius:12px;background:#fff" title="Caroselli Immobile"></iframe>
+      </div>
+    </div>
+
+    <!-- ══════════════ REEL FOTO+PREZZO [11 nov 2026] ══════════════
+         Il Reel (progetto Remotion) non è un'app self-service: lo genera
+         Claude su richiesta. Qui si prepara solo il messaggio con i dati
+         già pronti, da copiare e incollare in chat. -->
+    <div id="sec-reelcomposer" class="section-panel">
+      <div class="page-title-row">
+        <div>
+          <div class="page-title">Reel <span>Foto+Prezzo</span></div>
+          <div class="page-subtitle">Scegli l'immobile: copia il messaggio già pronto e incollalo in chat con Claude per avere il Reel verticale.</div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-body">
+          <div class="frow">
+            <label class="flabel" style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7"/><path d="M5 10v10a1 1 0 001 1h12a1 1 0 001-1V10"/></svg> Immobile</label>
+            <select class="fselect" id="reel-imm-select" onchange="reelPickImmobile()">
+              <option value="">— Scegli un immobile —</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div id="reel-empty" style="text-align:center;padding:30px 20px;color:var(--text3)">
+        <div style="font-weight:700;font-size:.9rem;color:var(--text2)">Scegli un immobile per preparare la richiesta del Reel</div>
+      </div>
+      <div id="reel-result" style="display:none">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Messaggio pronto per Claude</span>
+            <button class="btn btn-primary btn-sm" onclick="reelCopia()"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copia messaggio</span></button>
+          </div>
+          <div class="card-body">
+            <textarea id="reel-testo" class="finput" rows="7" readonly style="font-family:inherit"></textarea>
+            <div id="reel-foto-hint" style="margin-top:10px;font-size:.8rem;color:var(--text3)"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ══════════════ PACCHETTO YOUTUBE [29 ott 2026] ══════════════ -->
@@ -8950,7 +9021,9 @@ function bridgeHandleQueryString(){
       'log':           'log',
       'ai':            'ai',
       'report-mensile':'log',  /* fallback: log = storico */
-      'planning':      'settimana'   /* [11 ott 2026] il Planning Marketing non c'è più: si apre il Piano Social */
+      'planning':      'settimana',  /* [11 ott 2026] il Planning Marketing non c'è più: si apre il Piano Social */
+      'caroselli':     'caroselli',  /* [11 nov 2026] dal pulsante "Genera Caroselli" sulla scheda immobile */
+      'reel':          'reelcomposer'  /* [11 nov 2026] dal pulsante "Genera Reel" sulla scheda immobile */
     };
     const sec = map[tool] || tool;
     if(typeof switchSection==='function'){
@@ -8969,6 +9042,12 @@ function bridgeHandleQueryString(){
           const i = parseInt(imm);
           if(sec === 'volantino' && typeof volSelImm === 'function'){
             try { volSelImm(i); } catch(e){}
+          }
+          if(sec === 'caroselli' && typeof carSelImm === 'function'){
+            try { carSelImm(i); } catch(e){}
+          }
+          if(sec === 'reelcomposer' && typeof reelSelImm === 'function'){
+            try { reelSelImm(i); } catch(e){}
           }
           toast('Tool aperto da gestionale (immobile #'+(i+1)+')', 'success');
         } else {
@@ -10688,6 +10767,8 @@ function _vaiSwitchSectionCore(name){
   if(name === 'videoai') { _safe(window.vaiInit,'videoai'); }
   if(name === 'settimana') { _safe(window.settRender,'settimana'); }
   if(name === 'regali') { _safe(window.rgRender,'regali'); }
+  if(name === 'caroselli') { _safe(window.carInit,'caroselli'); }
+  if(name === 'reelcomposer') { _safe(window.reelInit,'reelcomposer'); }
   if(typeof aiAssistUpdateFab==='function') { try{ aiAssistUpdateFab(); }catch(e){} }
   // se dopo il render il pannello è praticamente vuoto, avvisa in chiaro
   if(_lastErr && panel){
@@ -10730,7 +10811,7 @@ const SECTION_LABEL = {
   libreria:'Libreria Cilento', libgrafiche:'Libreria Clip Grafiche', openhouse:'Open House',
   compleanni:'Compleanni', recensioni:'Recensioni Google', templates:'Template Messaggi',
   settimana:'Piano Social', linkinbio:'Link in Bio', timeline:'Timeline Contatti', regali:'Liste regali',
-  ai:'Genera con AI', log:'Log Attività'
+  ai:'Genera con AI', log:'Log Attività', caroselli:'Caroselli Immobile', reelcomposer:'Reel Foto+Prezzo'
 };
 
 /* Avanti/indietro nella CRONOLOGIA delle finestre aperte (non in ordine fisso di menu) */
@@ -11627,22 +11708,7 @@ function apriEsterno(url){
 }
 window.apriEsterno = apriEsterno;
 
-/* [10 nov 2026] Hyperframe: generatore di caroselli immagine, app esterna separata
-   (repo "hyperframe", pubblicata su GitHub Pages). Nessun dato del gestionale viene
-   condiviso: Enzo compila i campi a mano nell'app esterna. */
-function apriHyperframe(){
-  apriEsterno('https://agenzioimmobiliare.github.io/hyperframe/');
-}
-window.apriHyperframe = apriHyperframe;
-
-/* [10 nov 2026] Reel Remotion (foto+prezzo): a differenza di Hyperframe non è
-   un'app che si apre da sola — è un progetto video che genera Claude su richiesta,
-   dati indirizzo/prezzo/foto in chat. Qui spieghiamo solo come chiederlo. */
-function apriVideoReelRemotion(){
-  toast('Per il Reel Foto+Prezzo: scrivi a Claude in chat indirizzo, prezzo, foto dell\'immobile (e agente/agenzia se diversi dai soliti). Genera il video e te lo invia pronto da scaricare.', 'success');
-}
-window.apriVideoReelRemotion = apriVideoReelRemotion;
-/* [11 ott 2026] Numero per WhatsApp: prima l'Hub metteva SEMPRE "39" davanti,
+/* [11 nov 2026] Numero per WhatsApp: prima l'Hub metteva SEMPRE "39" davanti,
    così "+39 333…" diventava "3939333…". Stessa regola di _waNumero nel
    gestionale: se il prefisso c'è già si lascia, se manca (9-10 cifre) si mette. */
 function waNumero(tel){
@@ -17019,6 +17085,117 @@ function ytSetTipo(btn){
 function ytInit(){
   ytFillImmSelect();
 }
+
+/* ══════════ CAROSELLI IMMOBILE [11 nov 2026] ══════════
+   Hyperframe (repo a parte) incorporato via iframe: stessa logica di
+   costruzione URL già usata da immGeneraCaroselli() nel gestionale. */
+function carFillImmSelect(){
+  const sel = document.getElementById('car-imm-select');
+  if(!sel) return;
+  const cur = sel.value;
+  const opts = ['<option value="">— Scegli un immobile —</option>'];
+  (D.immobili||[]).forEach((im,idx)=>{
+    const label = [(im.tipo||'Immobile'), im.comune, im.indirizzo, im.prezzo?fmtE(im.prezzo):''].filter(Boolean).join(' · ');
+    opts.push('<option value="'+idx+'">'+_descEsc(label)+'</option>');
+  });
+  sel.innerHTML = opts.join('');
+  if(cur) sel.value = cur;
+}
+function _mktFotoUrls(im){
+  const arr = Array.isArray(im.foto) ? im.foto : (im.foto ? [im.foto] : []);
+  return arr.filter(f => typeof f === 'string' && /^https?:\/\//.test(f));
+}
+function carBuildUrl(im){
+  const foto = _mktFotoUrls(im);
+  const p = new URLSearchParams();
+  if(im.indirizzo) p.set('indirizzo', im.indirizzo);
+  const zona = [im.comune, im.zona].filter(Boolean).join(' — ');
+  if(zona) p.set('comune', zona);
+  if(im.prezzo) p.set('prezzo', Number(im.prezzo).toLocaleString('it-IT',{style:'currency',currency:'EUR',maximumFractionDigits:0}));
+  if(im.mq) p.set('mq', im.mq);
+  const locali = [im.locali, im.camere].filter(Boolean).join('/');
+  if(locali) p.set('locali', locali);
+  if(im.piano) p.set('piano', im.piano);
+  if(foto[0]) p.set('foto1', foto[0]);
+  if(foto[1]) p.set('foto2', foto[1]);
+  return 'https://agenzioimmobiliare.github.io/hyperframe/?' + p.toString();
+}
+function carPickImmobile(){
+  const sel = document.getElementById('car-imm-select');
+  const idx = sel ? sel.value : '';
+  const im = (idx!=='' && (D.immobili||[])[idx]) ? (D.immobili||[])[idx] : null;
+  const wrap = document.getElementById('car-frame-wrap'), empty = document.getElementById('car-empty');
+  if(!im){ if(wrap) wrap.style.display='none'; if(empty) empty.style.display=''; return; }
+  const url = carBuildUrl(im);
+  const iframe = document.getElementById('car-iframe'), openTab = document.getElementById('car-open-tab');
+  if(iframe) iframe.src = url;
+  if(openTab) openTab.href = url;
+  if(wrap) wrap.style.display=''; if(empty) empty.style.display='none';
+}
+function carSelImm(idx){
+  const sel = document.getElementById('car-imm-select');
+  if(sel){ sel.value = String(idx); carPickImmobile(); }
+}
+function carInit(){ carFillImmSelect(); }
+
+/* ══════════ REEL FOTO+PREZZO [11 nov 2026] ══════════
+   Non un'app self-service: prepara solo il messaggio pronto da incollare
+   in chat con Claude, con i dati reali dell'immobile già dentro. */
+function reelFillImmSelect(){
+  const sel = document.getElementById('reel-imm-select');
+  if(!sel) return;
+  const cur = sel.value;
+  const opts = ['<option value="">— Scegli un immobile —</option>'];
+  (D.immobili||[]).forEach((im,idx)=>{
+    const label = [(im.tipo||'Immobile'), im.comune, im.indirizzo, im.prezzo?fmtE(im.prezzo):''].filter(Boolean).join(' · ');
+    opts.push('<option value="'+idx+'">'+_descEsc(label)+'</option>');
+  });
+  sel.innerHTML = opts.join('');
+  if(cur) sel.value = cur;
+}
+function reelBuildMessaggio(im){
+  const foto = _mktFotoUrls(im);
+  const zona = [im.comune, im.zona].filter(Boolean).join(' — ');
+  const prezzo = im.prezzo ? Number(im.prezzo).toLocaleString('it-IT',{style:'currency',currency:'EUR',maximumFractionDigits:0}) : '';
+  let msg = 'Genera il Reel (foto + prezzo) per questo immobile:\n';
+  if(im.indirizzo) msg += '- Indirizzo: '+im.indirizzo+'\n';
+  if(zona) msg += '- Comune/zona: '+zona+'\n';
+  if(prezzo) msg += '- Prezzo: '+prezzo+'\n';
+  if(im.mq) msg += '- Superficie: '+im.mq+' m²\n';
+  msg += '- Agenzia: Frimm Capital Casa Paestum\n- Agente: Enzo Carnicelli\n';
+  msg += foto[0] ? ('- Foto: '+foto[0]+'\n') : '- Foto: nessuna con link trovata — la allego qui in chat\n';
+  return msg;
+}
+function reelPickImmobile(){
+  const sel = document.getElementById('reel-imm-select');
+  const idx = sel ? sel.value : '';
+  const im = (idx!=='' && (D.immobili||[])[idx]) ? (D.immobili||[])[idx] : null;
+  const result = document.getElementById('reel-result'), empty = document.getElementById('reel-empty');
+  if(!im){ if(result) result.style.display='none'; if(empty) empty.style.display=''; return; }
+  const ta = document.getElementById('reel-testo');
+  if(ta) ta.value = reelBuildMessaggio(im);
+  const foto = Array.isArray(im.foto) ? im.foto : (im.foto ? [im.foto] : []);
+  const hint = document.getElementById('reel-foto-hint');
+  if(hint) hint.textContent = foto.length ? 'Foto trovata automaticamente dalla scheda immobile.' : 'Nessuna foto trovata sulla scheda: allegala direttamente nel messaggio a Claude.';
+  if(result) result.style.display=''; if(empty) empty.style.display='none';
+}
+function reelSelImm(idx){
+  const sel = document.getElementById('reel-imm-select');
+  if(sel){ sel.value = String(idx); reelPickImmobile(); }
+}
+function reelCopia(){
+  const ta = document.getElementById('reel-testo');
+  if(!ta || !ta.value) return;
+  const fatto = () => { if(typeof toast==='function') toast('Messaggio copiato: incollalo in chat con Claude','success'); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(ta.value).then(fatto).catch(()=>{
+      try{ ta.removeAttribute('readonly'); ta.select(); document.execCommand('copy'); ta.setAttribute('readonly', ''); fatto(); }catch(e){}
+    });
+  } else {
+    try{ ta.removeAttribute('readonly'); ta.select(); document.execCommand('copy'); ta.setAttribute('readonly', ''); fatto(); }catch(e){}
+  }
+}
+function reelInit(){ reelFillImmSelect(); }
 
 /* Riconosce sottotitoli con tempi (SRT o VTT) dentro il testo incollato.
    Senza tempi riconoscibili tratta tutto come un unico blocco di parlato,
