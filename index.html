@@ -19503,7 +19503,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.14nov-KITCAPITALCASA';
+var APP_VERSION = 'v.14nov-INDIRIZZOEMAIL';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -49145,6 +49145,8 @@ function copiaMessaggioAnniversarioRogito(){
           <div class="adm2-c"><label for="pers_tagline">Frase sotto il nome</label><input class="adm2-in" type="text" id="pers_tagline" oninput="pers_livePreview()"></div>
           <div class="adm2-c"><label for="pers_nome_agente">Nome del titolare</label><input class="adm2-in" type="text" id="pers_nome_agente"></div>
           <div class="adm2-c"><label for="pers_telefono">Telefono (per QR WhatsApp e contatti nei documenti)</label><input class="adm2-in" type="tel" id="pers_telefono" placeholder="338 1234567"></div>
+          <div class="adm2-c"><label for="pers_indirizzo">Indirizzo agenzia (per i documenti)</label><input class="adm2-in" type="text" id="pers_indirizzo" placeholder="Via Esempio 1, Comune (Prov)"></div>
+          <div class="adm2-c"><label for="pers_email">Email agenzia (per i documenti)</label><input class="adm2-in" type="email" id="pers_email" placeholder="nome@agenzia.it"></div>
           <div class="adm2-c"><label for="pers_logo_url">Logo (indirizzo o file)</label>
             <div style="display:flex;gap:6px">
               <input class="adm2-in" type="text" id="pers_logo_url" placeholder="https://… oppure carica un file" oninput="pers_livePreview()">
@@ -51590,6 +51592,8 @@ var _APP_CONFIG_DEFAULT = {
     logo_url:     '',
     nome_agente:  'Vincenzo Carnicelli',
     telefono:     '',
+    indirizzo:    '',
+    email:        '',
     foto_agente:  ''
   },
   tema: {
@@ -51823,7 +51827,24 @@ function getTelefonoAgenzia(){
     ? String(_brchState.agTel).trim()
     : '';
 }
-try{ window.getNomeAgente=getNomeAgente; window.getTaglineAg=getTaglineAg; window.getTelefonoAgenzia=getTelefonoAgenzia; }catch(e){}
+// ── getIndirizzoAgenzia / getEmailAgenzia — per il footer dei documenti ──
+function getIndirizzoAgenzia(){
+  try{
+    var cfg = loadAppConfig();
+    if(cfg.brand && cfg.brand.indirizzo && cfg.brand.indirizzo.trim())
+      return cfg.brand.indirizzo.trim();
+  }catch(e){}
+  return '';
+}
+function getEmailAgenzia(){
+  try{
+    var cfg = loadAppConfig();
+    if(cfg.brand && cfg.brand.email && cfg.brand.email.trim())
+      return cfg.brand.email.trim();
+  }catch(e){}
+  return '';
+}
+try{ window.getNomeAgente=getNomeAgente; window.getTaglineAg=getTaglineAg; window.getTelefonoAgenzia=getTelefonoAgenzia; window.getIndirizzoAgenzia=getIndirizzoAgenzia; window.getEmailAgenzia=getEmailAgenzia; }catch(e){}
 
 /* ═══ KIT ACQUISIZIONE — [08 nov 2026] ═══
    Richiesto dopo il corso "Agente del Futuro" (Riccione, nov 2026): un documento
@@ -51880,6 +51901,8 @@ function kaApriKit(comune, zona, prospectNome, indirizzo){
   var logo=(typeof getLogoAgenzia==='function')?getLogoAgenzia():'';
   var fotoAgente=(typeof getFotoAgente==='function')?getFotoAgente():'';
   var tel=(typeof getTelefonoAgenzia==='function') ? getTelefonoAgenzia() : '';
+  var indirizzoAgenzia=(typeof getIndirizzoAgenzia==='function') ? esc(getIndirizzoAgenzia()) : '';
+  var emailAgenzia=(typeof getEmailAgenzia==='function') ? esc(getEmailAgenzia()) : '';
   var telDigits=tel.replace(/[^\d]/g,'');
   var tagline=(typeof getTaglineAg==='function') ? esc(getTaglineAg()) : '';
   var iniziali=(agente.replace(/<[^>]*>/g,'').split(/\s+/).map(function(w){return w[0];}).filter(Boolean).slice(0,2).join('')||'A').toUpperCase();
@@ -52071,7 +52094,9 @@ function kaApriKit(comune, zona, prospectNome, indirizzo){
         +'<div class="p-6 sm:p-8 rounded-2xl bg-slate-50 border border-gold-200 flex flex-wrap items-center justify-between gap-6" style="border-width:2px">'
           +'<div class="flex items-center gap-4">'+badgeAgente
             +'<div><div class="font-serif font-bold text-lg text-navy-900">'+agente+'</div><div class="text-xs text-gold-700">'+agenzia+'</div>'
+            +(indirizzoAgenzia?'<div class="text-xs text-slate-500 mt-1">'+indirizzoAgenzia+'</div>':'')
             +(tel?'<div class="text-xs text-slate-500 mt-1"><i class="fa-solid fa-phone mr-1.5"></i>'+esc(tel)+'</div>':'')
+            +(emailAgenzia?'<div class="text-xs text-slate-500 mt-0.5"><i class="fa-solid fa-envelope mr-1.5"></i>'+emailAgenzia+'</div>':'')
             +'</div>'
           +'</div>'
           +retroQrBlock
@@ -52822,6 +52847,8 @@ function pers_loadIntoForm(){
   n('pers_tagline',      cfg.brand.tagline);
   n('pers_nome_agente',  cfg.brand.nome_agente);
   n('pers_telefono',     cfg.brand.telefono);
+  n('pers_indirizzo',    cfg.brand.indirizzo);
+  n('pers_email',        cfg.brand.email);
   n('pers_logo_url',     cfg.brand.logo_url);
   n('pers_foto_agente',  cfg.brand.foto_agente);
 
@@ -52950,6 +52977,8 @@ function pers_save(){
       logo_url:     (document.getElementById('pers_logo_url')||{}).value     || '',
       nome_agente:  (document.getElementById('pers_nome_agente')||{}).value  || _APP_CONFIG_DEFAULT.brand.nome_agente,
       telefono:     (document.getElementById('pers_telefono')||{}).value     || '',
+      indirizzo:    (document.getElementById('pers_indirizzo')||{}).value    || '',
+      email:        (document.getElementById('pers_email')||{}).value        || '',
       foto_agente:  (document.getElementById('pers_foto_agente')||{}).value  || ''
     },
     tema: {
