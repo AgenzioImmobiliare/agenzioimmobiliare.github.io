@@ -19503,7 +19503,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.11nov-SOCIALHUB';
+var APP_VERSION = 'v.14nov-KITCAPITALCASA';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -51943,16 +51943,24 @@ function kaApriKit(comune, zona, prospectNome, indirizzo){
     : '<div class="p-5 rounded-2xl bg-amber-50 border border-dashed border-amber-300 text-amber-800 text-xs italic">Nessun valore OMI trovato per questo comune/zona nella tabella del gestionale.</div>';
 
   var oggettoObiezioni = [
-    { t:'"Voglio prima provare a vendere da solo per risparmiare la provvigione."',
-      r:'Vendere autonomamente sembra conveniente, ma trattative impostate male, difetti non rilevati o sconti dell\'ultimo minuto comportano spesso una perdita superiore al compenso che si intendeva risparmiare. L\'attività svolta è orientata a tutelare il risultato finale del venditore, non semplicemente a "portare visite".' },
-    { t:'"Non voglio vincolarmi con un mandato lungo o con un\'agenzia che poi sparisce."',
-      r:'Si tratta di una preoccupazione legittima. Per questo motivo sono previsti aggiornamenti scritti periodici — visite effettuate, riscontri ricevuti, contatti in corso — e non un\'assenza di comunicazione per mesi.' },
-    { t:'"Un\'altra agenzia mi ha promesso una cifra più alta."',
-      r:'Sovrastimare l\'immobile per acquisire l\'incarico è una tecnica diffusa, che porta quasi sempre a ribassi ripetuti dopo mesi di immobilismo. Si preferisce illustrare i dati reali delle compravendite comparabili a '+dove+' e lavorare sul prezzo che il mercato è realmente disposto a riconoscere.' },
-    { t:'"Non voglio sconosciuti che girano per casa a tutte le ore."',
-      r:'Ogni visita viene organizzata e, dove possibile, le persone vengono identificate preventivamente: agli appuntamenti partecipano solo persone realmente interessate, non semplici curiosi.' },
-    { t:'"Preferisco dare l\'incarico a più agenzie contemporaneamente, così ho più possibilità di vendere."',
-      r:'Affidare l\'immobile a più agenzie contemporaneamente sembra aumentare le possibilità, ma produce spesso l\'effetto opposto: nessuna agenzia investe realmente in marketing su un immobile che potrebbe vendere la concorrenza, e il prezzo tende a scendere rapidamente per anticipare gli altri. Un incarico in esclusiva permette di investire con convinzione in una strategia mirata — come il metodo Open House — ottenendo risultati più rapidi e a condizioni migliori.' }
+    { t:'Posso provare a vendere da solo?',
+      r:'Certamente. Confrontiamo attività, costi, visite e trattative che dovresti gestire in autonomia.' },
+    { t:'Un\'altra agenzia mi promette un prezzo più alto.',
+      r:'Confrontiamo i dati e le vendite comparabili, non soltanto la cifra proposta.' },
+    { t:'Non voglio un incarico troppo lungo.',
+      r:'Durata, condizioni e modalità di collaborazione si concordano prima della firma.' },
+    { t:'Non voglio visite inutili.',
+      r:'Raccogliamo informazioni sugli interessati e concentriamo le visite con il metodo Open House.' },
+    { t:'Perché non affidare la casa a più agenzie?',
+      r:'Un coordinamento unico, con la rete MLS FRIMM, aiuta a mantenere coerenti prezzo e comunicazione.' },
+    { t:'La provvigione mi sembra troppo alta.',
+      r:'Valutiamo insieme attività, promozione, gestione delle offerte e assistenza comprese nel servizio.' },
+    { t:'Non ho fretta: posso partire da un prezzo alto?',
+      r:'Possiamo discuterne, considerando che un prezzo fuori mercato rischia di ridurre l\'interesse iniziale.' },
+    { t:'Perché organizzare un Open House?',
+      r:'Più acquirenti qualificati nello stesso arco di tempo possono favorire il confronto e offerte competitive.' },
+    { t:'Con più offerte devo per forza accettare?',
+      r:'No. Il proprietario valuta liberamente le proposte, nel rispetto di eventuali impegni già assunti.' }
   ];
   var obiezioniHtml = oggettoObiezioni.map(function(o,i){
     var n=i+1;
@@ -51987,11 +51995,16 @@ function kaApriKit(comune, zona, prospectNome, indirizzo){
           +'</div>'
           +'<div style="max-width:42rem;display:flex;flex-direction:column;align-items:center">'
             +'<div class="flex flex-wrap items-center justify-center gap-2 mt-6 mb-5">'
-              +'<span class="text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1.5 rounded-full whitespace-nowrap">Dossier Pre-Acquisizione</span>'
-              +'<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-gold-50 text-gold-700 border border-gold-200"><i class="fa-solid fa-lock"></i> Documentazione riservata</span>'
+              +'<span class="text-[11px] font-semibold bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1.5 rounded-full whitespace-nowrap">Dossier Riservato</span>'
+              +'<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-gold-50 text-gold-700 border border-gold-200"><i class="fa-solid fa-lock"></i> Pre-Appuntamento</span>'
             +'</div>'
-            +'<h1 class="text-3xl sm:text-5xl font-bold font-serif leading-[1.12] text-navy-900">Guida alla Valorizzazione <span class="text-gold-600">&amp; Vendita</span> dell\'Immobile</h1>'
-            +'<p class="text-slate-500 mt-5 text-sm sm:text-base">Analisi di mercato, metodo operativo e documentazione preliminare predisposta per la tutela del patrimonio immobiliare.</p>'
+            +'<h1 class="text-3xl sm:text-5xl font-bold font-serif leading-[1.12] text-navy-900">Vendere casa <span class="text-gold-600">con metodo, valore</span> e fiducia</h1>'
+            +'<p class="text-slate-500 mt-5 text-sm sm:text-base">Una guida per preparare la vendita del tuo immobile e conoscere il nostro modo di lavorare.</p>'
+            +'<div class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-6">'
+              +['Valutazione motivata','Strategia di vendita','Acquirenti qualificati','Assistenza fino al rogito'].map(function(v){
+                return '<span class="inline-flex items-center gap-1.5 text-xs font-semibold text-navy-900"><i class="fa-solid fa-circle-check text-gold-600"></i>'+v+'</span>';
+              }).join('')
+            +'</div>'
             +'<div class="bg-gold-500" style="width:60px;height:2px;margin:2rem auto"></div>'
             +'<div class="flex flex-wrap justify-center gap-x-10 gap-y-6">'
               +'<div><span class="text-[11px] text-slate-400 uppercase tracking-wider block mb-1">Preparato per</span><span class="font-bold text-navy-900 text-xl">'+(nomeCliente?('Gentile '+nomeCliente):'Gentile Proprietario')+'</span></div>'
@@ -52036,29 +52049,22 @@ function kaApriKit(comune, zona, prospectNome, indirizzo){
           +'<i class="fa-solid fa-star mr-1.5"></i>[Spazio riservato a una recensione cliente — da inserire quando disponibile.]'
         +'</div>'
         +'<div class="p-5 rounded-2xl bg-slate-50 border border-slate-200 flex flex-wrap items-center gap-5 mb-10">'
-          +'<div class="flex-1 min-w-0"><h4 class="font-bold text-navy-900 text-sm mb-1"><i class="fa-brands fa-google text-gold-600 mr-1.5"></i>Recensioni Google — FRIMM Capital Casa Paestum</h4><p class="text-xs text-slate-500">Inquadrando il codice con la fotocamera è possibile consultare le recensioni reali dei clienti dell\'agenzia.</p></div>'
+          +'<div class="flex-1 min-w-0"><h4 class="font-bold text-navy-900 text-sm mb-1"><i class="fa-brands fa-google text-gold-600 mr-1.5"></i>Recensioni Google — '+agenzia+'</h4><p class="text-xs text-slate-500">Inquadrando il codice con la fotocamera è possibile consultare le recensioni reali dei clienti dell\'agenzia.</p></div>'
           +(qrReviewDataUrl?'<img src="'+qrReviewDataUrl+'" width="90" height="90" alt="QR recensioni Google" class="flex-shrink-0 rounded-lg">':'')
         +'</div>'
         +'<div class="p-5 sm:p-6 rounded-2xl bg-white border border-gold-200" style="border-width:2px">'
-          +'<h4 class="font-bold text-navy-900 text-sm mb-1"><i class="fa-solid fa-clipboard-check text-gold-600 mr-1.5"></i>Check-up in 5 domande</h4>'
-          +'<p class="text-xs text-slate-500 mb-4">Prima dell\'appuntamento è utile rispondere con sincerità alle seguenti domande, per valutare la propria disponibilità a procedere.</p>'
+          +'<h4 class="font-bold text-navy-900 text-sm mb-1"><i class="fa-solid fa-clipboard-check text-gold-600 mr-1.5"></i>Cinque Domande Per Conoscerci</h4>'
+          +'<p class="text-xs text-slate-500 mb-4">Prima dell\'incontro è utile avere già in mente le risposte alle seguenti domande.</p>'
           +'<div class="space-y-3">'
-            +[ 'Il metodo di lavoro descritto in questo dossier risulta chiaro e concreto?',
-               'I dati di mercato riportati risultano attendibili, e non una stima sovrastimata per acquisire l\'incarico?',
-               'Le risposte fornite nella sezione "Dubbi e Risposte" hanno chiarito eventuali perplessità?',
-               'Il metodo Open House risulta una soluzione efficace per vendere al prezzo corretto, nei tempi adeguati?',
-               'Sussiste la disponibilità a un incontro conoscitivo, considerato che il modulo di incarico è già predisposto?'
+            +[ 'Per quale motivo desideri vendere?',
+               'Entro quando vorresti concludere la vendita?',
+               'Hai già un prezzo di vendita in mente?',
+               'Valuteresti un incarico in esclusiva?',
+               'Se concordassimo prezzo, strategia e condizioni, saresti disponibile a formalizzare l\'incarico?'
             ].map(function(q,i){
-              return '<div class="flex items-center justify-between gap-3">'
-                +'<span class="text-xs sm:text-sm text-slate-700 flex-1">'+(i+1)+'. '+q+'</span>'
-                +'<span class="flex items-center gap-3 flex-shrink-0 text-[11px] text-slate-400 font-semibold">'
-                  +'<span class="flex items-center gap-1.5"><span style="width:15px;height:15px;border:2px solid #CBD5E1;border-radius:4px;display:inline-block"></span>Sì</span>'
-                  +'<span class="flex items-center gap-1.5"><span style="width:15px;height:15px;border:2px solid #CBD5E1;border-radius:4px;display:inline-block"></span>No</span>'
-                +'</span>'
-              +'</div>';
+              return '<div class="flex items-start gap-3 pb-3 border-b border-slate-100 last:border-0 last:pb-0"><span class="w-6 h-6 rounded-full bg-gold-50 border border-gold-200 text-gold-700 font-bold text-[11px] flex items-center justify-center flex-shrink-0">'+(i+1)+'</span><span class="text-xs sm:text-sm text-slate-700 flex-1">'+q+'</span></div>';
             }).join('')
           +'</div>'
-          +'<p class="text-xs text-navy-900 font-semibold mt-5 bg-gold-50 p-3 rounded-xl border border-gold-200"><i class="fa-solid fa-circle-check text-gold-600 mr-1"></i>In presenza di almeno 3 risposte affermative su 5, si può procedere con l\'appuntamento concordato. In caso contrario, l\'argomento potrà essere approfondito in occasione dell\'incontro.</p>'
         +'</div>'
       +'</div>'
       +'<div>'
@@ -52445,7 +52451,7 @@ var kitCss = ''
             +'<span class="text-xs font-bold text-gold-600 bg-gold-50 px-2 py-0.5 rounded-full" id="progressIndicator">1 / 8</span>'
           +'</div>'
           +'<nav class="space-y-1" id="tabNav">'
-            +[['1','Copertina'],['2','Benvenuto'],['3','Chi Sono & Metodo'],['4','Metodo Open House'],['5','Mercato & Dati'],['6','Dubbi e Risposte'],['7','Dossier & Incarico'],['8','Retro Busta']].map(function(t){
+            +[['1','Copertina'],['2','Chi Siamo'],['3','Valutazione'],['4','Open House'],['5','Domande Frequenti'],['6','Documenti e Incarico'],['7','Dal Primo Accordo al Rogito'],['8','Prima dell\'Incontro']].map(function(t){
               return '<button onclick="switchTab('+t[0]+')" id="tabBtn-'+t[0]+'" class="tab-btn w-full flex items-center justify-between px-3 py-3 rounded-xl text-left text-sm font-medium transition text-slate-600 hover:bg-slate-100">'
                 +'<div class="flex items-center space-x-3"><span class="tab-icon w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold bg-slate-100 text-slate-500">'+t[0]+'</span><span>'+t[1]+'</span></div>'
                 +'<i class="fa-solid fa-chevron-right text-xs opacity-50"></i></button>';
@@ -52467,79 +52473,37 @@ var kitCss = ''
           // ═══ 2. BENVENUTO ═══
           +'<div id="page-2" class="tab-page p-6 sm:p-10 flex-1">'
           +'<div>'
-            +'<div class="flex flex-wrap justify-between items-start gap-4 pb-8 border-b border-slate-100">'
-              +'<div><span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gold-50 text-gold-700 border border-gold-200 mb-3"><i class="fa-solid fa-shield-halved"></i> Kit Riservato di Pre-Acquisizione</span>'
-              +'<h2 class="text-2xl sm:text-4xl font-bold font-serif text-navy-900 leading-tight">Guida alla Valorizzazione & Vendita dell\'Immobile</h2>'
-              +'<p class="text-slate-500 mt-2 text-sm sm:text-base">Elementi di chiarezza, dati operativi e trasparenza in vista dell\'incontro.</p></div>'
-              +'<div class="text-right"><span class="text-xs font-bold text-slate-400 tracking-wider uppercase block">Zona di riferimento</span><span class="text-sm font-bold text-navy-900 block">'+dove+'</span></div>'
-            +'</div>'
-            +'<div class="mt-8 space-y-6 text-slate-600 leading-relaxed text-sm sm:text-base">'
-              +'<div class="flex items-start gap-4 p-5 bg-slate-50 rounded-2xl border border-slate-100">'
-                +'<div class="w-12 h-12 rounded-full bg-navy-900 text-gold-400 flex items-center justify-center font-serif text-xl font-bold flex-shrink-0 shadow-md">'+iniziali+'</div>'
-                +'<div><h3 class="font-bold text-navy-900 text-lg">Gentile '+(prospectNome?nomeCliente:'Proprietario')+',</h3>'
-                +'<p class="text-xs text-slate-500">Si ringrazia per il tempo dedicato alla lettura del presente documento, predisposto in vista dell\'incontro.</p></div>'
-              +'</div>'
-              +'<p>Vendere un immobile a <strong>'+dove+'</strong> non significa semplicemente "mettere un cartello ed aspettare".</p>'
-              +'<p>Significa tutelare un valore economico e sentimentale costruito nel tempo. Il presente kit raccoglie l\'approccio professionale adottato: nessuna falsa promessa, nessuna valutazione gonfiata per acquisire rapidamente l\'incarico, ma dati reali, risposte alle richieste più frequenti e totale trasparenza.</p>'
-              +'<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 my-6">'
-                +'<div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60"><i class="fa-solid fa-calculator text-gold-600 text-xl mb-2"></i><h4 class="font-bold text-navy-900 text-sm">Valutazioni Oggettive</h4><p class="text-xs text-slate-500 mt-1">Stime basate su dati reali di zona, non su una cifra indicata solo per acquisire l\'incarico.</p></div>'
-                +'<div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60"><i class="fa-solid fa-user-shield text-gold-600 text-xl mb-2"></i><h4 class="font-bold text-navy-900 text-sm">Clienti Qualificati</h4><p class="text-xs text-slate-500 mt-1">Agli appuntamenti partecipano solo persone realmente interessate.</p></div>'
-                +'<div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60"><i class="fa-solid fa-file-contract text-gold-600 text-xl mb-2"></i><h4 class="font-bold text-navy-900 text-sm">Zero Sorprese</h4><p class="text-xs text-slate-500 mt-1">La busta contiene anche la bozza dell\'incarico, già compilata.</p></div>'
-              +'</div>'
-              +'<div class="flex items-start gap-3 p-4 rounded-xl bg-gold-50 border border-gold-200 my-6">'
-                +'<i class="fa-solid fa-heart text-gold-600 text-lg mt-0.5"></i>'
-                +'<div><h4 class="font-bold text-navy-900 text-sm">Un impegno aggiuntivo: l\'1% per il sociale</h4><p class="text-xs text-slate-600 mt-1">Una quota pari all\'1% di ogni provvigione incassata viene destinata a enti no profit: un impegno concreto che va oltre la singola trattativa.</p></div>'
-              +'</div>'
-              +'<p>Si consiglia una lettura attenta del presente documento, che costituirà la base per l\'incontro successivo.</p>'
-            +'</div>'
-          +'</div>'
-          +'<div class="pt-8 border-t border-slate-100 flex flex-wrap items-center justify-between gap-4 mt-8">'
-            +'<div><p class="text-xs text-slate-400 font-medium">Cordiali saluti,</p><p class="font-serif font-bold text-navy-900 text-lg">'+agente+'</p><p class="text-xs text-gold-700 font-medium">'+agenzia+'</p></div>'
-            +(tel?'<span class="font-bold text-navy-900 text-sm bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200"><i class="fa-solid fa-phone text-gold-600 mr-1.5"></i>'+esc(tel)+'</span>':'')
-          +'</div></div>'
-
-          // ═══ 3. CHI SONO & METODO ═══
-          +'<div id="page-3" class="tab-page p-6 sm:p-10 flex-1">'
-          +'<div>'
-            +'<div class="pb-6 border-b border-slate-100">'+secBadge('fa-user-tie','02')
-            +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900">Chi Sono & Il Mio Metodo di Lavoro</h2>'
-            +'<p class="text-slate-500 text-sm mt-1">Un approccio basato su etica, presenza sul territorio e trasparenza.</p></div>'
+            +'<div class="pb-6 border-b border-slate-100">'+secBadge('fa-user-tie','01')
+            +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900">Chi Siamo e Come Lavoriamo</h2>'
+            +'<p class="text-slate-500 text-sm mt-1">Un referente, un piano di vendita.</p></div>'
             +'<div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">'
               +'<div class="space-y-4 text-slate-600 text-sm leading-relaxed">'
                 +'<div class="flex items-center gap-4 p-4 rounded-2xl bg-white border border-slate-200/80 shadow-sm">'+fotoAgenteBlock
                   +'<div><h3 class="font-bold text-navy-900 text-base">'+agente+'</h3><p class="text-xs text-gold-700 font-semibold">'+agenzia+'</p><p class="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5"><i class="fa-solid fa-location-dot text-gold-600"></i>Operativo nel Cilento, con presenza diretta a '+esc(comune)+'</p></div>'
                 +'</div>'
                 +'<div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60">'
-                  +'Attività svolta all\'interno di FRIMM Capital Casa Paestum, che unisce la conoscenza capillare delle dinamiche immobiliari della provincia di Salerno alla piattaforma MLS FRIMM, condivisa con migliaia di agenzie partner sul territorio nazionale. La filosofia operativa non si basa sui grandi volumi indistinti, ma sulla cura sartoriale di ogni singola proprietà: un numero limitato di immobili viene seguito per volta, per garantire una presenza costante e risposte immediate.'
+                  +agenzia+' opera nel mercato residenziale del Cilento. Il lavoro parte dall\'ascolto delle esigenze del proprietario e da un\'analisi concreta dell\'immobile.'
                 +'</div>'
-                +'<div class="bg-navy-900 text-slate-200 p-5 rounded-2xl space-y-3 mt-6">'
-                  +'<h4 class="font-semibold text-gold-400 text-sm flex items-center gap-2"><i class="fa-solid fa-star"></i> Impegni Professionali</h4>'
-                  +'<ul class="space-y-2 text-xs">'
-                    +'<li class="flex items-start gap-2"><i class="fa-solid fa-check text-gold-400 mt-0.5"></i><span><strong>Protezione legale:</strong> verifica tecnica completa prima di accettare qualsiasi proposta.</span></li>'
-                    +'<li class="flex items-start gap-2"><i class="fa-solid fa-check text-gold-400 mt-0.5"></i><span><strong>Rete Listing+:</strong> l\'immobile viene condiviso con oltre 3.000 agenti FRIMM collegati in tempo reale su tutto il territorio nazionale.</span></li>'
-                    +'<li class="flex items-start gap-2"><i class="fa-solid fa-heart text-gold-400 mt-0.5"></i><span><strong>Impegno sociale:</strong> una quota dell\'1% di ogni provvigione incassata viene destinata a enti no profit.</span></li>'
-                  +'</ul>'
+                +'<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">'
+                  +'<div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60"><h4 class="font-bold text-navy-900 text-sm flex items-center gap-2"><i class="fa-solid fa-map-location-dot text-gold-600"></i>Conoscenza locale</h4><p class="text-xs text-slate-500 mt-1">Analizziamo posizione, tipologia, condizioni e domanda nella zona.</p></div>'
+                  +'<div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60"><h4 class="font-bold text-navy-900 text-sm flex items-center gap-2"><i class="fa-solid fa-share-nodes text-gold-600"></i>Collaborazione MLS</h4><p class="text-xs text-slate-500 mt-1">Condividiamo le opportunità con professionisti aderenti alla rete FRIMM.</p></div>'
                 +'</div>'
               +'</div>'
               +'<div class="bg-slate-50 p-6 rounded-2xl border border-slate-200/80 flex flex-col justify-between">'
-                +'<h3 class="font-bold text-navy-900 text-sm tracking-wider uppercase mb-4 flex items-center gap-2"><i class="fa-solid fa-list-check text-gold-600"></i>Le 4 fasi del mio metodo</h3>'
+                +'<h3 class="font-bold text-navy-900 text-sm tracking-wider uppercase mb-4 flex items-center gap-2"><i class="fa-solid fa-route text-gold-600"></i>Il percorso in sei passaggi</h3>'
                 +'<div class="space-y-4">'
-                  +[['1','gold-500 text-slate-950','Analisi Documentale & Stima Reale','Prezzo individuato tramite i dati ufficiali OMI e il calcolatore ValuCasa FRIMM, non su una stima a sensazione.'],
-                    ['2','navy-900 text-gold-400','Piano di Marketing Focalizzato','Portali immobiliari, social media, zona (volantini e segnalazione ai vicini), rete di contatti.'],
-                    ['3','navy-900 text-gold-400','Pre-Qualifica Acquirenti & Visite','Selezione delle persone realmente interessate prima dell\'accesso all\'immobile.'],
-                    ['4','navy-900 text-gold-400','Trattativa & Assistenza al Rogito','Gestisco io ogni passaggio, dalla proposta scritta fino alla firma dal notaio.']
+                  +[['1','gold-500 text-slate-950','Ascolto','Obiettivi, motivazioni e tempi.'],
+                    ['2','navy-900 text-gold-400','Verifiche','Documenti e caratteristiche della casa.'],
+                    ['3','navy-900 text-gold-400','Valutazione','Prezzo motivato e confronto col mercato.'],
+                    ['4','navy-900 text-gold-400','Promozione','Materiali, canali e strategia concordata.'],
+                    ['5','navy-900 text-gold-400','Visite e offerte','Contatti selezionati e trattativa.'],
+                    ['6','navy-900 text-gold-400','Rogito','Coordinamento fino all\'atto notarile.']
                   ].map(function(f){
                     return '<div class="flex items-start gap-3"><div class="w-7 h-7 rounded-full bg-'+f[1].split(' ')[0]+' '+f[1].split(' ').slice(1).join(' ')+' font-bold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">'+f[0]+'</div>'
                       +'<div><h4 class="font-bold text-navy-900 text-xs sm:text-sm">'+f[2]+'</h4><p class="text-xs text-slate-500">'+f[3]+'</p></div></div>';
                   }).join('')
                 +'</div>'
               +'</div>'
-            +'</div>'
-            +'<div class="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">'
-              +[['25','Anni di esperienza FRIMM'],['99','Giorni medi per vendere con FRIMM'],['3.000+','Agenti in rete su Listing+'],['300.000+','Acquirenti interessati ogni anno su Listing+']]
-              .map(function(s){
-                return '<div class="p-3 rounded-xl bg-gold-50 border border-gold-200"><div class="text-xl font-bold font-serif text-navy-900">'+s[0]+'</div><div class="text-[10px] text-slate-500 mt-1 leading-snug">'+s[1]+'</div></div>';
-              }).join('')
             +'</div>'
             +'<div class="mt-8 p-6 sm:p-8 rounded-2xl bg-navy-900 text-center">'
               +'<i class="fa-solid fa-quote-left text-gold-500 text-xl"></i>'
@@ -52548,58 +52512,27 @@ var kitCss = ''
             +'</div>'
           +'</div></div>'
 
-          // ═══ 4. IL METODO OPEN HOUSE ═══
-          +'<div id="page-4" class="tab-page p-6 sm:p-10 flex-1">'
+          // ═══ 3. VALUTAZIONE E MERCATO ═══
+          +'<div id="page-3" class="tab-page p-6 sm:p-10 flex-1">'
           +'<div>'
-            +'<div class="ka-photo-banner"><img src="'+openHouseImg+'" alt="" crossorigin="anonymous"><div class="ka-photo-banner-overlay"></div>'
-              +'<div class="ka-photo-banner-text"><span class="text-[11px] font-bold text-gold-400 tracking-wider uppercase">Sezione 03</span>'
-              +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-white mt-1">Il Metodo Open House</h2></div>'
+            +'<div class="pb-6 border-b border-slate-100">'+secBadge('fa-chart-line','02')
+            +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900">Valutazione e Mercato</h2>'
+            +'<p class="text-slate-500 text-sm mt-1">Il prezzo giusto parte dai dati.</p></div>'
+            +'<p class="mt-6 text-sm text-slate-600 leading-relaxed">Un prezzo di richiesta efficace considera le caratteristiche dell\'immobile, le alternative disponibili e i tempi desiderati. Non è una promessa sul prezzo finale.</p>'
+            +'<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">'
+              +'<div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60"><h4 class="font-bold text-navy-900 text-sm flex items-center gap-2"><i class="fa-solid fa-magnifying-glass-chart text-gold-600"></i>Cosa analizziamo</h4><p class="text-xs text-slate-500 mt-1">Zona, superficie, stato, pertinenze, documenti, immobili comparabili e richieste effettive.</p></div>'
+              +'<div class="p-4 rounded-xl bg-slate-50 border border-slate-200/60"><h4 class="font-bold text-navy-900 text-sm flex items-center gap-2"><i class="fa-solid fa-circle-exclamation text-gold-600"></i>Cosa evitiamo</h4><p class="text-xs text-slate-500 mt-1">Prezzi scelti solo per convincere il proprietario: possono allungare i tempi e ridurre l\'interesse.</p></div>'
             +'</div>'
-            +'<div class="pb-6 border-b border-slate-100">'
-            +'<p class="text-slate-500 text-sm">Come il lancio dell\'immobile si trasforma in un evento di vendita ad alto impatto.</p>'
-            +'<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gold-50 text-gold-700 border border-gold-200 mt-3"><i class="fa-solid fa-door-open"></i> Massima resa di prezzo</span></div>'
-            +'<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">'
-              +[['fa-house','Che cos\'è','Un evento di vendita concentrato: in una singola giornata, o mezza giornata, previo appuntamento, l\'immobile viene mostrato a più acquirenti selezionati e qualificati.'],
-                ['fa-arrow-trend-up','Perché si utilizza','Crea un effetto di scarsità e competizione positiva tra gli acquirenti: quando più persone mostrano interesse nello stesso momento, la tendenza a proporre ribassi diminuisce, a favore di proposte più vicine al prezzo richiesto.'],
-                ['fa-bullhorn','Come si organizza','Allestimento dell\'immobile, servizio fotografico professionale ed eventuale tour virtuale, lancio pubblicitario sui portali e sui social nei 14 giorni precedenti l\'evento.']
-              ].map(function(c){
-                return '<div class="p-5 rounded-2xl bg-white border border-slate-200"><i class="fa-solid '+c[0]+' text-gold-600 text-lg mb-3"></i><h4 class="font-bold text-navy-900 text-sm mb-1">'+c[1]+'</h4><p class="text-xs text-slate-500">'+c[2]+'</p></div>';
-              }).join('')
-            +'</div>'
-            +'<div class="flex items-start gap-2 mt-4"><i class="fa-solid fa-circle-check text-gold-600 text-sm mt-0.5"></i><p class="text-xs sm:text-sm text-slate-600"><strong>Zero stress:</strong> la casa viene preparata una sola volta per tutte le visite, evitando la ripetizione settimanale per mesi.</p></div>'
-            +'<div class="flex items-start gap-2 mt-2"><i class="fa-solid fa-circle-check text-gold-600 text-sm mt-0.5"></i><p class="text-xs sm:text-sm text-slate-600"><strong>Tempi ridotti:</strong> la concentrazione delle visite in un\'unica occasione riduce i tempi di vendita rispetto alla media di mercato.</p></div>'
-            +'<div class="mt-8 p-6 rounded-2xl bg-slate-50 border border-slate-200/80">'
-              +'<h3 class="font-bold text-navy-900 text-xs tracking-wider uppercase mb-4 flex items-center gap-2"><i class="fa-solid fa-route text-gold-600"></i>Il piano in 7 passaggi operativi</h3>'
-              +'<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">'
-                +[['1','Audit Tecnico'],['2','Stima Comparabile'],['3','Home Staging'],['4','Lancio MLS'],['5','Open House'],['6','Qualifica Offerte'],['7','Rogito Notarile']]
-                .map(function(s){
-                  return '<div class="flex items-center gap-2 bg-white rounded-xl p-3 border border-slate-200"><span class="w-7 h-7 rounded-full text-white font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-sm" style="background:linear-gradient(135deg,#1e293b,#0f172a)">'+s[0]+'</span><span class="text-xs text-navy-900 font-medium">'+s[1]+'</span></div>';
-                }).join('')
+            +'<div class="mt-8 pt-6 border-t border-slate-100">'
+              +'<h3 class="font-bold text-navy-900 text-sm tracking-wider uppercase mb-1">I numeri del mercato</h3>'
+              +'<p class="text-xs text-slate-500 mb-4">I numeri qui sotto provengono dal gestionale interno dell\'agenzia, aggiornati al '+nowStr+': vanno letti come punto di partenza per il ragionamento, non come promessa sul prezzo finale.</p>'
+              +'<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">'
+                +'<div class="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-navy-800 text-white shadow-md"><div class="text-gold-400 text-xs font-semibold uppercase tracking-wider mb-1">Immobili venduti</div><div class="text-3xl font-bold font-serif text-white">'+venduti.length+'</div><div class="text-xs text-slate-400 mt-2">Totale agenzia</div></div>'
+                +'<div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm"><div class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Seguiti ora</div><div class="text-3xl font-bold font-serif text-navy-900">'+attivi.length+'</div><div class="text-xs text-slate-500 mt-2">Immobili attivi, totale agenzia</div></div>'
+                +'<div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm"><div class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">A '+esc(comune)+'</div><div class="text-3xl font-bold font-serif text-navy-900">'+(attiviZona+vendutiZona)+'</div><div class="text-xs text-slate-500 mt-2">'+attiviZona+' attivi · '+vendutiZona+' venduti da noi</div></div>'
               +'</div>'
+              +'<div class="mt-4">'+omiCard+'</div>'
             +'</div>'
-          +'</div></div>'
-
-          // ═══ 5. MERCATO & DATI REALI ═══
-          +'<div id="page-5" class="tab-page p-6 sm:p-10 flex-1">'
-          +'<div>'
-            +'<div class="pb-6 border-b border-slate-100 flex justify-between items-end flex-wrap gap-2">'
-              +'<div>'+secBadge('fa-chart-line','04')
-              +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900">Mercato & Dati Reali</h2>'
-              +'<p class="text-slate-500 text-sm mt-1">I numeri veri del nostro gestionale, non stime di marketing.</p></div>'
-              +'<span class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-medium border border-slate-200"><i class="fa-solid fa-chart-line text-gold-600 mr-1"></i>Aggiornato al '+nowStr+'</span>'
-            +'</div>'
-            +'<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-8">'
-              +'<div class="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-navy-800 text-white shadow-md"><div class="text-gold-400 text-xs font-semibold uppercase tracking-wider mb-1">Immobili venduti</div><div class="text-3xl font-bold font-serif text-white">'+venduti.length+'</div><div class="text-xs text-slate-400 mt-2">Totale agenzia</div></div>'
-              +'<div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm"><div class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Seguiti ora</div><div class="text-3xl font-bold font-serif text-navy-900">'+attivi.length+'</div><div class="text-xs text-slate-500 mt-2">Immobili attivi, totale agenzia</div></div>'
-              +'<div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm"><div class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">A '+esc(comune)+'</div><div class="text-3xl font-bold font-serif text-navy-900">'+(attiviZona+vendutiZona)+'</div><div class="text-xs text-slate-500 mt-2">'+attiviZona+' attivi · '+vendutiZona+' venduti da noi</div></div>'
-            +'</div>'
-            +'<div class="mt-4">'+omiCard+'</div>'
-            +'<div class="mt-8 bg-slate-50 p-6 rounded-2xl border border-slate-200/80">'
-              +'<h3 class="font-bold text-navy-900 text-base mb-4 flex items-center gap-2"><i class="fa-solid fa-newspaper text-gold-600"></i>Perché la stima corretta previene la "svendita da stanchezza"</h3>'
-              +'<div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs sm:text-sm text-slate-600">'
-                +'<div class="bg-white p-4 rounded-xl border border-slate-200"><span class="font-bold text-red-600 block mb-1"><i class="fa-solid fa-circle-xmark mr-1"></i>Prezzo fuori mercato</span><p class="text-slate-500">Un prezzo troppo alto "per vedere come va" scoraggia proprio gli acquirenti più motivati nei primi, decisivi, mesi. Dopo, l\'immobile si svaluta.</p></div>'
-                +'<div class="bg-white p-4 rounded-xl border border-slate-200"><span class="font-bold text-emerald-600 block mb-1"><i class="fa-solid fa-circle-check mr-1"></i>Valore reale di mercato</span><p class="text-slate-500">Attiriamo subito i migliori acquirenti, pronti a trattare sull\'immobile. Si chiude al miglior prezzo, nei tempi giusti.</p></div>'
-              +'</div></div>'
             +'<div class="mt-8 p-6 sm:p-8 rounded-2xl bg-navy-900 text-center">'
               +'<i class="fa-solid fa-quote-left text-gold-500 text-xl"></i>'
               +'<p class="font-serif text-lg sm:text-xl text-white italic leading-snug mt-3">"Il prezzo è quello che paghi. Il valore è quello che ottieni."</p>'
@@ -52607,12 +52540,52 @@ var kitCss = ''
             +'</div>'
           +'</div></div>'
 
-          // ═══ 6. DUBBI E RISPOSTE ═══
-          +'<div id="page-6" class="tab-page p-6 sm:p-10 flex-1">'
+          // ═══ 4. IL METODO OPEN HOUSE ═══
+          +'<div id="page-4" class="tab-page p-6 sm:p-10 flex-1">'
           +'<div>'
-            +'<div class="pb-6 border-b border-slate-100">'+secBadge('fa-comments','05')
-            +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900">Risposte Chiare ai Tuoi Dubbi</h2>'
-            +'<p class="text-slate-500 text-sm mt-1">Le domande più comuni, e come ci lavoro io.</p></div>'
+            +'<div class="ka-photo-banner"><img src="'+openHouseImg+'" alt="" crossorigin="anonymous"><div class="ka-photo-banner-overlay"></div>'
+              +'<div class="ka-photo-banner-text"><span class="text-[11px] font-bold text-gold-400 tracking-wider uppercase">Sezione 03</span>'
+              +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-white mt-1">Open House</h2></div>'
+            +'</div>'
+            +'<div class="pb-6 border-b border-slate-100">'
+            +'<p class="text-slate-500 text-sm">Più acquirenti. Una giornata. Più forza nella trattativa.</p>'
+            +'<p class="text-xs sm:text-sm text-slate-600 mt-2">Concentriamo le visite in una finestra di tempo definita, dopo una promozione mirata e una selezione preliminare degli interessati.</p>'
+            +'<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gold-50 text-gold-700 border border-gold-200 mt-3"><i class="fa-solid fa-door-open"></i> La nostra strategia principale</span></div>'
+            +'<div class="mt-6 grid grid-cols-2 sm:grid-cols-3 gap-3">'
+              +[['1','Preparazione','Verifica della casa, materiali e presentazione.'],
+                ['2','Promozione','Campagna mirata e attivazione della rete MLS.'],
+                ['3','Prequalifica','Contatti raccolti e interesse verificato.'],
+                ['4','Open House','Visite concentrate nello stesso arco di tempo.'],
+                ['5','Offerte','Raccolta e confronto delle proposte ricevute.'],
+                ['6','Trattativa','Scelta delle condizioni più adatte al venditore.']
+              ].map(function(s){
+                return '<div class="bg-white rounded-xl p-3 border border-slate-200"><span class="w-7 h-7 rounded-full text-white font-bold text-xs flex items-center justify-center flex-shrink-0 shadow-sm mb-2" style="background:linear-gradient(135deg,#1e293b,#0f172a)">'+s[0]+'</span><h4 class="text-xs font-bold text-navy-900">'+s[1]+'</h4><p class="text-[11px] text-slate-500 mt-0.5">'+s[2]+'</p></div>';
+              }).join('')
+            +'</div>'
+            +'<div class="mt-8 p-6 rounded-2xl bg-slate-50 border border-slate-200/80">'
+              +'<h3 class="font-bold text-navy-900 text-xs tracking-wider uppercase mb-4">Perché può favorire il prezzo</h3>'
+              +'<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">'
+                +'<div class="p-4 rounded-xl bg-white border border-slate-200"><div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-3">Visite sparse</div>'
+                  +'<div class="flex items-center gap-3">'+[1,2,3,4].map(function(n){return '<span class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-500">'+n+'</span>';}).join('<span style="flex:1;height:1px;background:#E2E8F0"></span>')+'</div>'
+                  +'<p class="text-[11px] text-slate-500 mt-3">Interesse distribuito nel tempo</p></div>'
+                +'<div class="p-4 rounded-xl bg-white border border-gold-200" style="border-width:2px"><div class="text-[11px] font-bold text-gold-700 uppercase tracking-wider mb-3">Visite concentrate</div>'
+                  +'<div class="flex items-center gap-3">'+[1,2,3,4].map(function(){return '<span class="w-6 h-6 rounded-full bg-gold-500 flex items-center justify-center text-[10px] font-bold text-white">•</span>';}).join('<span style="flex:1;height:1px;background:#D97706"></span>')+'</div>'
+                  +'<p class="text-[11px] text-gold-700 font-semibold mt-3">Interesse visibile nello stesso periodo</p></div>'
+              +'</div>'
+            +'</div>'
+            +'<div class="mt-6 p-5 rounded-2xl bg-navy-900 text-slate-200">'
+              +'<h4 class="font-semibold text-gold-400 text-sm mb-1">Il vantaggio per il proprietario</h4>'
+              +'<p class="text-xs leading-relaxed">Se più persone sono realmente interessate, il confronto tra proposte può migliorare prezzo, tempi e condizioni della vendita. Ogni offerta viene valutata con il proprietario.</p>'
+            +'</div>'
+            +'<p class="text-[11px] text-slate-400 mt-3 italic">Risultati e tempi dipendono dall\'immobile, dal mercato e dalle offerte effettivamente ricevute.</p>'
+          +'</div></div>'
+
+          // ═══ 5. LE OBIEZIONI PIÙ FREQUENTI ═══
+          +'<div id="page-5" class="tab-page p-6 sm:p-10 flex-1">'
+          +'<div>'
+            +'<div class="pb-6 border-b border-slate-100">'+secBadge('fa-comments','04')
+            +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900">Le Domande Che Contano</h2>'
+            +'<p class="text-slate-500 text-sm mt-1">Risposte chiare, prima di scegliere come vendere.</p></div>'
             +'<div class="mt-6 space-y-4">'+obiezioniHtml+'</div>'
             +'<div class="mt-8 p-6 sm:p-8 rounded-2xl bg-navy-900 text-center">'
               +'<i class="fa-solid fa-quote-left text-gold-500 text-xl"></i>'
@@ -52621,44 +52594,65 @@ var kitCss = ''
             +'</div>'
           +'</div></div>'
 
-          // ═══ 7. DOSSIER & INCARICO ═══
-          +'<div id="page-7" class="tab-page p-6 sm:p-10 flex-1">'
+          // ═══ 6. DOCUMENTI E INCARICO ═══
+          +'<div id="page-6" class="tab-page p-6 sm:p-10 flex-1">'
           +'<div>'
-            +'<div class="pb-6 border-b border-slate-100 flex justify-between items-center flex-wrap gap-2">'
-              +'<div>'+secBadge('fa-folder-open','06')
-              +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900">Dossier & Incarico</h2>'
-              +'<p class="text-slate-500 text-sm mt-1">Verifiche preliminari, documentazione già predisposta e documenti necessari alla vendita.</p></div>'
+            +'<div class="pb-6 border-b border-slate-100">'+secBadge('fa-folder-open','05')
+            +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900">Prepariamo Tutto Senza Sorprese</h2>'
+            +'<p class="text-slate-500 text-sm mt-1">Non serve avere ogni documento pronto al primo appuntamento. È utile però sapere quali elementi possono essere necessari e chi può aiutare a recuperarli.</p></div>'
+            +'<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-6">'
+              +[['Titolo di provenienza','Atto, successione o altro titolo; archivio personale o notaio.'],
+                ['Visura e planimetria','Dati catastali; Agenzia delle Entrate o professionista incaricato.'],
+                ['Conformità urbanistica e catastale','Verifiche da affidare a un tecnico abilitato.'],
+                ['APE','Attestato energetico, quando richiesto; tecnico certificatore.'],
+                ['Impianti, agibilità e pratiche edilizie','Documentazione disponibile; verifiche con tecnici e uffici competenti.'],
+                ['Mutuo e condominio','Eventuale residuo mutuo, ipoteca, spese e delibere condominiali.']
+              ].map(function(d){
+                return '<div class="flex items-start gap-3 p-3 rounded-xl bg-white border border-slate-200"><div class="w-7 h-7 rounded-full bg-gold-50 border border-gold-200 text-gold-700 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-check text-xs"></i></div><div class="flex-1 min-w-0"><h4 class="font-bold text-navy-900 text-xs sm:text-sm">'+d[0]+'</h4><p class="text-xs text-slate-500 mt-0.5">'+d[1]+'</p></div></div>';
+              }).join('')
             +'</div>'
             +'<div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">'
-              +'<div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col justify-between">'
-                +'<div><div class="flex items-center justify-between mb-3"><h3 class="font-bold text-navy-900 text-sm flex items-center gap-2"><i class="fa-solid fa-file-lines text-gold-600"></i>Verifiche preliminari all\'incontro</h3></div>'
-                +'<p class="text-xs text-slate-500 mb-4">Prima di trattare i dati economici, vengono sempre controllati gli elementi di base: dati catastali, intestazione, eventuali ipoteche, conformità della planimetria. Eventuali criticità vengono comunicate tempestivamente, evitando sorprese a trattativa avanzata.</p></div>'
-                +'<div class="pt-3 border-t border-slate-200 text-xs text-slate-400">Argomento da approfondire nel corso dell\'incontro</div>'
+              +'<div class="bg-navy-900 text-slate-200 p-5 rounded-2xl flex flex-col justify-center">'
+                +'<h3 class="font-semibold text-gold-400 text-sm mb-1">L\'incarico di mediazione</h3>'
+                +'<p class="text-xs leading-relaxed">Prima della sottoscrizione chiariremo durata, prezzo richiesto, compenso, eventuale esclusiva, obblighi e condizioni. Il modulo contrattuale resta un documento separato.</p>'
               +'</div>'
               +'<div class="bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col justify-between">'
-                +'<div><div class="flex items-center justify-between mb-3"><h3 class="font-bold text-navy-900 text-sm flex items-center gap-2"><i class="fa-solid fa-signature text-gold-600"></i>Il modulo di incarico</h3></div>'
-                +'<p class="text-xs text-slate-500 mb-4">Il modulo di incarico di mediazione è già precompilato con zona e nominativo, predisposto per ottimizzare i tempi dell\'incontro e concentrare la discussione sulla strategia di vendita dell\'immobile. Le condizioni (durata, compenso) vengono definite congiuntamente, in forma scritta.</p></div>'
+                +'<div><h3 class="font-bold text-navy-900 text-sm flex items-center gap-2 mb-2"><i class="fa-solid fa-signature text-gold-600"></i>Il modulo di incarico</h3>'
+                +'<p class="text-xs text-slate-500 mb-4">Il modulo è già precompilato con zona e nominativo, predisposto per ottimizzare i tempi dell\'incontro.</p></div>'
                 +'<a href="'+incaricoUrl+'" target="_blank" class="no-print flex items-center justify-center gap-2 py-2 bg-navy-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition mb-3"><i class="fa-solid fa-file-signature"></i>Apri e completa il modulo</a>'
                 +'<div class="pt-3 border-t border-slate-200 text-xs text-emerald-700 font-semibold"><i class="fa-solid fa-check mr-1"></i>Incluso automaticamente nel PDF completo scaricabile dall\'intestazione</div>'
               +'</div>'
             +'</div>'
-            +'<div class="mt-6 bg-slate-50 p-5 sm:p-6 rounded-2xl border border-slate-200">'
-              +'<h3 class="font-bold text-navy-900 text-sm flex items-center gap-2 mb-1"><i class="fa-solid fa-folder-open text-gold-600"></i>Documenti da preparare per vendere casa</h3>'
-              +'<p class="text-xs text-slate-500 mb-5">L\'elenco completo di quanto necessario per arrivare pronti al rogito. L\'eventuale mancanza di alcuni documenti non costituisce un problema: la verifica viene effettuata congiuntamente, con assistenza nel reperimento di quanto necessario.</p>'
-              +'<div class="grid grid-cols-1 md:grid-cols-2 gap-3">'
-                +[['Atto di provenienza','Attesta il diritto di proprietà (compravendita, successione, donazione).','Archivio personale o notaio che ha rogato l\'atto'],
-                  ['Visura e planimetria catastale','Identificano l\'immobile e la sua distribuzione interna.','Agenzia delle Entrate, anche online'],
-                  ['Verifica di conformità catastale','Controlla che lo stato di fatto corrisponda alla planimetria depositata.','Tecnico abilitato (geometra, architetto, ingegnere)'],
-                  ['APE (Attestato di Prestazione Energetica)','Attesta la classe energetica, obbligatorio fin dall\'annuncio.','Tecnico certificatore abilitato'],
-                  ['Certificazione di conformità degli impianti','Attesta la regolarità degli impianti.','Tecnico specializzato / ditta installatrice'],
-                  ['Segnalazione certificata di agibilità','Attesta l\'idoneità abitativa dell\'immobile.','Archivio personale o Comune'],
-                  ['Titolo edificatorio abilitativo','Richiesto per nuove costruzioni o ristrutturazioni rilevanti.','Comune'],
-                  ['Documenti del mutuo residuo (se presente)','Conteggio estintivo e cancellazione dell\'ipoteca.','Banca mutuante'],
-                  ['Regolamento di condominio e spese','Obbligatorio con più di 11 condomini.','Amministratore di condominio'],
-                  ['Documenti personali del venditore','Identità e legittimazione a vendere.','Comune, documenti personali']
-                ].map(function(d){
-                  return '<div class="flex items-start gap-3 p-3 rounded-xl bg-white border border-slate-200"><div class="w-7 h-7 rounded-full bg-gold-50 border border-gold-200 text-gold-700 flex items-center justify-center flex-shrink-0 mt-0.5"><i class="fa-solid fa-check text-xs"></i></div><div class="flex-1 min-w-0"><h4 class="font-bold text-navy-900 text-xs sm:text-sm">'+d[0]+'</h4><p class="text-xs text-slate-500 mt-0.5">'+d[1]+'</p><p class="text-[11px] text-slate-400 mt-1"><span class="font-semibold text-slate-500">Dove si ottiene:</span> '+d[2]+'</p></div></div>';
-                }).join('')
+          +'</div></div>'
+
+          // ═══ 7. DAL PRIMO ACCORDO AL ROGITO ═══
+          +'<div id="page-7" class="tab-page p-6 sm:p-10 flex-1">'
+          +'<div>'
+            +'<div class="pb-6 border-b border-slate-100">'+secBadge('fa-stamp','06')
+            +'<h2 class="text-2xl sm:text-3xl font-bold font-serif text-navy-900">Cosa Succede Dopo Una Proposta</h2>'
+            +'<p class="text-slate-500 text-sm mt-1">Dal primo accordo al rogito.</p></div>'
+            +'<div class="mt-6 space-y-3">'
+              +[['1','Proposta d\'acquisto','Illustriamo prezzo, scadenze, condizioni e impegni previsti.'],
+                ['2','Decisione del proprietario','Accettazione, rifiuto o eventuale controproposta.'],
+                ['3','Verifiche e adempimenti','Coordinamento della documentazione e dei professionisti coinvolti.'],
+                ['4','Eventuale preliminare','Formalizzazione degli accordi, quando prevista.'],
+                ['5','Rogito notarile','Trasferimento della proprietà e conclusione della vendita.']
+              ].map(function(s){
+                return '<div class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200"><span class="w-7 h-7 rounded-full text-white font-bold text-xs flex items-center justify-center flex-shrink-0" style="background:linear-gradient(135deg,#1e293b,#0f172a)">'+s[0]+'</span><div><h4 class="font-bold text-navy-900 text-xs sm:text-sm">'+s[1]+'</h4><p class="text-xs text-slate-500">'+s[2]+'</p></div></div>';
+              }).join('')
+            +'</div>'
+            +'<div class="mt-6 p-4 rounded-xl bg-slate-50 border border-slate-200/60">'
+              +'<h4 class="font-bold text-navy-900 text-sm mb-1">Altre risposte utili</h4>'
+              +'<p class="text-xs text-slate-500">Provvigione, spese di promozione e possibilità di trovare autonomamente un acquirente dipendono dalle condizioni pattuite e dalle norme applicabili: ogni punto va chiarito nell\'incarico.</p>'
+            +'</div>'
+            +'<div class="mt-4 p-4 rounded-xl bg-slate-50 border border-slate-200/60">'
+              +'<h4 class="font-bold text-navy-900 text-sm mb-1">Un impegno di chiarezza</h4>'
+              +'<p class="text-xs text-slate-500">Nessuna promessa sui tempi o sul prezzo: informazioni motivate e aggiornamenti durante il percorso.</p>'
+            +'</div>'
+            +'<div class="mt-6 p-5 sm:p-6 rounded-2xl bg-gold-50 border border-gold-200 flex items-start gap-4" style="border-width:2px">'
+              +'<div class="w-10 h-10 rounded-full bg-gold-500 text-slate-950 font-bold text-xs flex items-center justify-center flex-shrink-0">1%</div>'
+              +'<div><h4 class="font-bold text-navy-900 text-sm">Un impegno che va oltre la vendita</h4>'
+                +'<p class="text-xs text-slate-600 mt-1">L\'1% di ogni provvigione incassata viene destinato a enti non profit. Un contributo concreto al sociale, parte del nostro modo di lavorare.</p>'
               +'</div>'
             +'</div>'
           +'</div></div>'
