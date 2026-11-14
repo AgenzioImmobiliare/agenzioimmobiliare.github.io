@@ -19503,7 +19503,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.14nov-KITPAGINEGRAFICA';
+var APP_VERSION = 'v.14nov-KITFEDELEPDF';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -51888,15 +51888,6 @@ function kaApriKit(comune, zona, prospectNome, indirizzo){
   var nowStr=new Date().toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'});
   var esc=function(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
 
-  var tutti=(Array.isArray(D.immobili)?D.immobili:[]);
-  var venduti=tutti.filter(function(im){ return im && String(im.stato||'').toLowerCase()==='venduto'; });
-  var attivi=tutti.filter(function(im){ return im && String(im.stato||'').toLowerCase()==='attivo'; });
-
-  var inComune=tutti.filter(function(im){ return im && String(im.comune||'').toLowerCase()===comune.toLowerCase(); });
-  var attiviZona=inComune.filter(function(im){ return String(im.stato||'').toLowerCase()==='attivo'; }).length;
-  var vendutiZona=inComune.filter(function(im){ return String(im.stato||'').toLowerCase()==='venduto'; }).length;
-
-  var omi=_kaOmiDiZona(comune, zona, '');
   var agenzia=esc(getNomeAgenzia()), agente=esc(getNomeAgente());
   var logo=(typeof getLogoAgenzia==='function')?getLogoAgenzia():'';
   var fotoAgente=(typeof getFotoAgente==='function')?getFotoAgente():'';
@@ -51942,7 +51933,7 @@ function kaApriKit(comune, zona, prospectNome, indirizzo){
   var pageHeader = function(eyebrow, title, subtitle){
     return pageTopBar
       +'<div class="text-xs font-bold text-maroon tracking-wider uppercase mb-2">'+eyebrow+'</div>'
-      +'<h2 class="text-2xl sm:text-3xl font-black text-navy-900">'+title+'</h2>'
+      +'<h2 class="text-2xl sm:text-3xl font-black font-headline text-navy-900">'+title+'</h2>'
       +(subtitle?'<p class="text-slate-500 text-sm mt-2">'+subtitle+'</p>':'');
   };
   var pageFooterBar = function(n){
@@ -51972,10 +51963,6 @@ function kaApriKit(comune, zona, prospectNome, indirizzo){
     ? '<a href="https://wa.me/'+telDigits+'" target="_blank" class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-emerald-500 hover:bg-emerald-50/50 transition"><div class="w-9 h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center"><i class="fa-brands fa-whatsapp text-lg"></i></div><div><span class="text-xs text-slate-400 block">Messaggio Istantaneo</span><span class="font-bold text-navy-900">Contatto WhatsApp</span></div></a>'
     : '';
 
-  var omiCard = omi
-    ? '<div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm"><div class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Valori OMI — '+esc(omi.dove)+'</div><div class="text-2xl font-bold font-serif text-navy-900">'+Math.round(omi.min)+' – '+Math.round(omi.max)+' €/m²</div><div class="text-xs text-slate-500 mt-2">'+(omi.semestre?esc(omi.semestre):'Agenzia delle Entrate')+'</div></div>'
-    : '<div class="p-5 rounded-2xl bg-amber-50 border border-dashed border-amber-300 text-amber-800 text-xs italic">Nessun valore OMI trovato per questo comune/zona nella tabella del gestionale.</div>';
-
   var oggettoObiezioni = [
     { t:'Posso provare a vendere da solo?',
       r:'Certamente. Confrontiamo attività, costi, visite e trattative che dovresti gestire in autonomia.' },
@@ -51998,12 +51985,11 @@ function kaApriKit(comune, zona, prospectNome, indirizzo){
   ];
   var obiezioniHtml = oggettoObiezioni.map(function(o,i){
     var n=i+1;
-    return '<div class="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-sm">'
-      +'<button onclick="toggleObj('+n+')" class="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-slate-50 transition">'
-      +'<div class="flex items-center gap-3"><span class="w-8 h-8 rounded-full bg-gold-100 text-gold-700 font-bold text-xs flex items-center justify-center flex-shrink-0">0'+n+'</span>'
-      +'<h3 class="font-bold text-navy-900 text-sm sm:text-base">'+esc(o.t)+'</h3></div>'
-      +'<i id="objIcon-'+n+'" class="fa-solid fa-chevron-down text-slate-400 transition-transform flex-shrink-0 ml-2"></i></button>'
-      +'<div id="objContent-'+n+'" class="ka-faq-a px-6 py-4 border-t border-slate-100 bg-slate-50/50 text-xs sm:text-sm text-slate-600'+(n>1?' hidden':'')+'"><strong class="text-gold-700">Risposta:</strong> '+esc(o.r)+'</div></div>';
+    var badgeColor = (n>=8) ? '#A01F35' : '#B99148';
+    return '<div class="p-5 rounded-xl bg-slate-100 flex items-start gap-4">'
+      +'<span class="rounded-lg text-white font-black text-sm flex items-center justify-center flex-shrink-0" style="width:34px;height:34px;background:'+badgeColor+'">0'+n+'</span>'
+      +'<div class="flex-1 min-w-0"><h3 class="font-bold text-navy-900 text-sm sm:text-base mb-1">'+esc(o.t)+'</h3>'
+      +'<p class="text-xs sm:text-sm text-slate-600">'+esc(o.r)+'</p></div></div>';
   }).join('');
 
   var coverQrBlock = qrContattiDataUrl
@@ -52261,6 +52247,7 @@ var kitCss = ''
     +'[class~="font-semibold"]{font-weight:600}'
     +'[class~="font-bold"]{font-weight:700}'
     +'[class~="font-black"]{font-weight:900}'
+    +'[class~="font-headline"]{font-family:\'Montserrat\',sans-serif}'
     +'[class~="leading-tight"]{line-height:1.25}'
     +'[class~="leading-snug"]{line-height:1.375}'
     +'[class~="leading-relaxed"]{line-height:1.625}'
@@ -52399,13 +52386,15 @@ var kitCss = ''
     +'<meta name="viewport" content="width=device-width, initial-scale=1.0">'
     +'<title>Kit Acquisizione — '+comune+'</title>'
     +'<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>'
-    +'<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet" crossorigin="anonymous">'
+    +'<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Montserrat:wght@800;900&display=swap" rel="stylesheet" crossorigin="anonymous">'
     +'<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">'
     +'<style>'
       +kitCss
       +'.page-shadow{box-shadow:0 20px 25px -5px rgba(15,23,42,.08),0 8px 10px -6px rgba(15,23,42,.04)}'
-      +'.tab-page{display:none;flex-direction:column;justify-content:space-between}'
+      +'.tab-page{display:none;flex-direction:column;justify-content:space-between;position:relative}'
       +'.tab-page.active{display:flex}'
+      +'.tab-page:not(#page-1)::before{content:"";position:absolute;left:0;bottom:0;width:5px;height:160px;background:#A01F35;pointer-events:none}'
+      +'.tab-page:not(#page-1)::after{content:"";position:absolute;right:0;bottom:0;width:130px;height:130px;background-image:repeating-linear-gradient(135deg,rgba(11,36,68,.15) 0,rgba(11,36,68,.15) 2px,transparent 2px,transparent 11px);pointer-events:none}'
       +'.ka-hero{position:relative;overflow:hidden;background:#0f172a}'
       +'.ka-hero-bg{position:absolute;inset:0;background-size:cover;background-position:center}'
       +'.ka-hero-overlay{position:absolute;inset:0}'
@@ -52446,8 +52435,6 @@ var kitCss = ''
         +'[class~="space-y-4"]>*+*{margin-top:.6rem!important}'
         +'[class~="py-4"]{padding-top:.5rem!important;padding-bottom:.5rem!important}'
         +'.ka-cover-photo{height:230px!important}'
-        +'.ka-faq-a{display:block!important}'
-        +'[id^="objIcon-"]{display:none!important}'
         +'[class~="sm:grid-cols-2"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}'
         +'[class~="sm:grid-cols-3"]{grid-template-columns:repeat(3,minmax(0,1fr))!important}'
         +'[class~="sm:grid-cols-4"]{grid-template-columns:repeat(4,minmax(0,1fr))!important}'
@@ -52548,13 +52535,9 @@ var kitCss = ''
             +'</div>'
             +'<div class="mt-8 pt-6 border-t border-slate-100">'
               +'<div class="text-xs font-bold text-maroon tracking-wider uppercase mb-1">I numeri del mercato</div>'
-              +'<p class="text-xs text-slate-500 mb-4">I numeri qui sotto provengono dal gestionale interno dell\'agenzia, aggiornati al '+nowStr+': vanno letti come punto di partenza per il ragionamento, non come promessa sul prezzo finale.</p>'
-              +'<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">'
-                +'<div class="p-5 rounded-2xl text-white shadow-md" style="background:#0B2444"><div style="color:#B99148" class="text-xs font-semibold uppercase tracking-wider mb-1">Immobili venduti</div><div class="text-3xl font-black text-white">'+venduti.length+'</div><div class="text-xs text-slate-400 mt-2">Totale agenzia</div></div>'
-                +'<div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm"><div class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">Seguiti ora</div><div class="text-3xl font-black text-navy-900">'+attivi.length+'</div><div class="text-xs text-slate-500 mt-2">Immobili attivi, totale agenzia</div></div>'
-                +'<div class="p-5 rounded-2xl bg-white border border-slate-200 shadow-sm"><div class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-1">A '+esc(comune)+'</div><div class="text-3xl font-black text-navy-900">'+(attiviZona+vendutiZona)+'</div><div class="text-xs text-slate-500 mt-2">'+attiviZona+' attivi · '+vendutiZona+' venduti da noi</div></div>'
-              +'</div>'
-              +'<div class="mt-4">'+omiCard+'</div>'
+              +'<p class="text-xs text-slate-500 mb-4">Nel dossier ricevuto sono riportati alcuni dati interni di agenzia e un intervallo OMI riferito a '+esc(comune)+'. Prima di inserirli in un documento destinato ai clienti, vanno verificati per data, fonte, periodo e perimetro.</p>'
+              +'<div class="p-4 rounded-xl bg-slate-100"><div class="flex items-center gap-2.5 mb-1"><span style="width:4px;height:16px;background:#B99148;border-radius:2px;display:inline-block"></span><h4 class="font-bold text-navy-900 text-sm">Dati da validare prima dell\'uso</h4></div><p class="text-xs text-slate-500" style="padding-left:14px">Immobili venduti, incarichi attivi, dati della rete MLS e quotazioni OMI: pubblicare solo informazioni aggiornate e verificabili.</p></div>'
+              +'<p class="text-xs text-slate-500 mt-4">Una valutazione è più utile quando spiega il ragionamento, i limiti dei confronti e gli eventuali interventi che possono influire sulla commerciabilità.</p>'
             +'</div>'
             +'<div class="mt-8 p-5 rounded-xl bg-slate-100" style="border-left:4px solid #A01F35">'
               +'<p class="text-base text-navy-900 italic leading-snug">"Il prezzo è quello che paghi. Il valore è quello che ottieni."</p>'
@@ -52715,12 +52698,6 @@ var kitCss = ''
         +'document.getElementById("prevBtn").disabled=(currentPage===1);'
         +'document.getElementById("nextBtn").disabled=(currentPage===totalPages);'
         +'window.scrollTo({top:0,behavior:"smooth"});'
-      +'}'
-      +'function toggleObj(n){'
-        +'var c=document.getElementById("objContent-"+n),ic=document.getElementById("objIcon-"+n);'
-        +'var open=!c.classList.contains("hidden");'
-        +'c.classList.toggle("hidden");'
-        +'ic.style.transform=open?"rotate(0deg)":"rotate(180deg)";'
       +'}'
       +'function toggleModal(){document.getElementById("modalInfo").classList.toggle("hidden");}'
       +'function _kaLoadScript(src){return new Promise(function(ok,ko){var s=document.createElement("script");s.src=src;s.onload=function(){ok();};s.onerror=function(){ko(new Error("non riesco a scaricare una libreria necessaria: controlla la connessione"));};document.head.appendChild(s);});}'
