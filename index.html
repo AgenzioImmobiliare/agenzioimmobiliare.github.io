@@ -19503,7 +19503,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.14nov-KITCOPERTINA';
+var APP_VERSION = 'v.14nov-KITNOREC';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -52166,9 +52166,6 @@ function kaApriKit(comune, zona, prospectNome, indirizzo){
           ].map(function(s){
             return '<div class="p-5 rounded-xl bg-slate-100"><div class="flex items-center gap-2.5 mb-2"><span style="width:4px;height:16px;background:'+s[0]+';border-radius:2px;display:inline-block"></span><h4 class="font-bold text-navy-900 text-sm">'+s[1]+' &nbsp;'+s[2]+'</h4></div><p class="text-xs text-slate-500" style="padding-left:14px">'+s[3]+'</p></div>';
           }).join('')
-        +'</div>'
-        +'<div class="p-5 rounded-xl bg-amber-50 border border-dashed border-amber-300 text-amber-800 text-xs italic mb-10 leading-relaxed">'
-          +'<i class="fa-solid fa-star mr-1.5"></i>[Spazio riservato a una recensione cliente — da inserire quando disponibile.]'
         +'</div>'
         +'<div class="p-5 rounded-xl bg-slate-100 flex flex-wrap items-center gap-5 mb-10">'
           +'<div class="flex-1 min-w-0"><h4 class="font-bold text-navy-900 text-sm mb-1"><i class="fa-brands fa-google text-maroon mr-1.5"></i>Recensioni Google — '+agenzia+'</h4><p class="text-xs text-slate-500">Inquadrando il codice con la fotocamera è possibile consultare le recensioni reali dei clienti dell\'agenzia.</p></div>'
