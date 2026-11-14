@@ -19503,7 +19503,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.14nov-KITFEDELEPDF';
+var APP_VERSION = 'v.14nov-KITA4';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -51929,7 +51929,7 @@ function kaApriKit(comune, zona, prospectNome, indirizzo){
   /* [14 nov 2026] Stile pagine interne come nel PDF CapitalCasa Frimm:
      barra bicolore bordeaux/navy in cima, etichetta bordeaux, titolo bold,
      footer con il nome agenzia e il numero di pagina. */
-  var pageTopBar = '<div style="display:flex;height:10px;margin:-1.5rem -1.5rem 1.75rem -1.5rem"><div class="bg-maroon" style="width:18%"></div><div style="flex:1;background:#0B2444"></div></div>';
+  var pageTopBar = '<div style="display:flex;height:10px;position:absolute;top:0;left:0;right:0"><div class="bg-maroon" style="width:18%"></div><div style="flex:1;background:#0B2444"></div></div>';
   var pageHeader = function(eyebrow, title, subtitle){
     return pageTopBar
       +'<div class="text-xs font-bold text-maroon tracking-wider uppercase mb-2">'+eyebrow+'</div>'
@@ -51937,11 +51937,116 @@ function kaApriKit(comune, zona, prospectNome, indirizzo){
       +(subtitle?'<p class="text-slate-500 text-sm mt-2">'+subtitle+'</p>':'');
   };
   var pageFooterBar = function(n){
-    return '<div class="mt-10 pt-4" style="border-top:1px solid #E2E8F0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">'
+    return '<div class="ka-foot pt-4" style="border-top:1px solid #E2E8F0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">'
       +'<span class="text-[11px] font-bold text-navy-900">'+agenzia+' &nbsp;·&nbsp; Dossier informativo riservato</span>'
       +'<span class="text-[11px] font-semibold text-slate-400">'+n+' / 8</span>'
     +'</div>';
   };
+  /* [14 nov 2026] Disegni che riempiono lo spazio libero dei fogli A4 del Kit:
+     si allargano o si stringono da soli secondo lo spazio che resta. */
+  var kaFill = function(titolo, svg, nota){
+    return '<div class="ka-fill">'
+      +(titolo?'<div class="text-xs font-bold text-maroon tracking-wider uppercase mb-2">'+titolo+'</div>':'')
+      +svg
+      +(nota?'<p class="text-[11px] text-slate-400 italic mt-2" style="text-align:center">'+nota+'</p>':'')
+    +'</div>';
+  };
+  var kaSvgApri = function(h){ return '<svg viewBox="0 0 700 '+h+'" xmlns="http://www.w3.org/2000/svg" font-family="Inter, Arial, sans-serif" aria-hidden="true">'; };
+  var kaOnde = function(y, col){ var d='M0 '+y+' q17.5 -8 35 0'; for(var i=1;i<20;i++){ d+=' t35 0'; } return '<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="1.5"/>'; };
+  var kaSvgPaesaggio = kaSvgApri(215)
+    +'<circle cx="565" cy="50" r="26" fill="none" stroke="#B99148" stroke-width="2.5"/>'
+    +'<path d="M0 150 C90 95 170 95 260 140 S430 80 520 125 S650 110 700 135" fill="none" stroke="#CBD5E1" stroke-width="2"/>'
+    +'<path d="M0 172 H700" stroke="#0B2444" stroke-width="2"/>'
+    +'<path d="M150 172 V142" stroke="#0B2444" stroke-width="3"/><circle cx="150" cy="127" r="18" fill="#fff" stroke="#B99148" stroke-width="2.5"/>'
+    +'<path d="M250 172 V112 L315 70 L380 112 V172" fill="#fff" stroke="#0B2444" stroke-width="3" stroke-linejoin="round"/>'
+    +'<path d="M238 118 L315 66 L392 118" fill="none" stroke="#A01F35" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'<rect x="303" y="134" width="24" height="38" fill="#A01F35"/>'
+    +'<rect x="265" y="124" width="22" height="20" fill="none" stroke="#0B2444" stroke-width="2.5"/>'
+    +'<rect x="343" y="124" width="22" height="20" fill="none" stroke="#0B2444" stroke-width="2.5"/>'
+    +'<path d="M410 172 V134 L450 108 L490 134 V172" fill="#fff" stroke="#0B2444" stroke-width="3" stroke-linejoin="round"/>'
+    +'<path d="M402 138 L450 105 L498 138" fill="none" stroke="#B99148" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'<rect x="440" y="146" width="20" height="26" fill="#0B2444"/>'
+    +'<path d="M600 172 V146" stroke="#0B2444" stroke-width="3"/><circle cx="600" cy="133" r="15" fill="#fff" stroke="#B99148" stroke-width="2.5"/>'
+    +kaOnde(190,'#94A3B8')+kaOnde(203,'#CBD5E1')
+    +'</svg>';
+  var kaSvgInteresse = kaSvgApri(300)
+    +'<rect x="95" y="36" width="210" height="234" fill="#B99148" opacity=".13"/>'
+    +'<text x="200" y="26" text-anchor="middle" font-size="11" font-weight="700" fill="#B99148">Periodo di massima attenzione</text>'
+    +'<path d="M60 255 C110 82 170 45 215 60 S330 168 430 205 S600 234 670 238 V270 H60 Z" fill="#A01F35" opacity=".08"/>'
+    +'<path d="M60 255 C110 82 170 45 215 60 S330 168 430 205 S600 234 670 238" fill="none" stroke="#A01F35" stroke-width="3" stroke-linecap="round"/>'
+    +'<path d="M60 261 C140 215 220 215 300 226 S520 247 670 253" fill="none" stroke="#64748B" stroke-width="2.5" stroke-dasharray="7 6" stroke-linecap="round"/>'
+    +'<path d="M60 30 V270 H670" fill="none" stroke="#0B2444" stroke-width="2"/>'
+    +'<text transform="rotate(-90 30 150)" x="30" y="150" text-anchor="middle" font-size="12" fill="#64748B">Interesse degli acquirenti</text>'
+    +'<text x="60" y="290" font-size="11" fill="#64748B">Messa in vendita</text>'
+    +'<text x="200" y="290" text-anchor="middle" font-size="11" fill="#64748B">Prime settimane</text>'
+    +'<text x="670" y="290" text-anchor="end" font-size="11" fill="#64748B">Mesi successivi</text>'
+    +'<path d="M430 62 H466" stroke="#A01F35" stroke-width="3" stroke-linecap="round"/><text x="476" y="66" font-size="12" font-weight="700" fill="#0B2444">Prezzo in linea col mercato</text>'
+    +'<path d="M430 88 H466" stroke="#64748B" stroke-width="2.5" stroke-dasharray="7 6" stroke-linecap="round"/><text x="476" y="92" font-size="12" font-weight="700" fill="#0B2444">Prezzo troppo alto</text>'
+    +'</svg>';
+  var kaSvgImbuto = (function(){
+    var w=[420,330,240,150,90], col=['#0B2444','#3B5578','#A01F35','#B99148'];
+    var voci=[['Promozione mirata','Annuncio, rete MLS e contatti raccolti'],['Prequalifica','Interesse e possibilità verificati'],['Open House','Visite nello stesso arco di tempo'],['Offerte','Proposte da confrontare insieme']];
+    var s=kaSvgApri(222), cx=225;
+    for(var i=0;i<4;i++){
+      var y=8+i*53, ym=y+22;
+      s+='<polygon points="'+(cx-w[i]/2)+','+y+' '+(cx+w[i]/2)+','+y+' '+(cx+w[i+1]/2)+','+(y+44)+' '+(cx-w[i+1]/2)+','+(y+44)+'" fill="'+col[i]+'"/>'
+        +'<text x="'+cx+'" y="'+(ym+5)+'" text-anchor="middle" font-size="14" font-weight="800" fill="#fff">'+(i+1)+'</text>'
+        +'<path d="M'+(cx+(w[i]+w[i+1])/4+8)+' '+ym+' H462" stroke="#CBD5E1" stroke-width="1.5" stroke-dasharray="3 4"/>'
+        +'<text x="472" y="'+(ym-2)+'" font-size="13" font-weight="700" fill="#0B2444">'+voci[i][0]+'</text>'
+        +'<text x="472" y="'+(ym+14)+'" font-size="11" fill="#64748B">'+voci[i][1]+'</text>';
+    }
+    return s+'</svg>';
+  })();
+  var kaSvgRuoli = (function(){
+    var s=kaSvgApri(300);
+    var nodi=[[30,14,'#A01F35','Proprietario','Titolo, mutuo, spese'],[470,14,'#B99148','Tecnico abilitato','Conformità e APE'],[30,226,'#B99148','Notaio','Verifiche e atto'],[470,226,'#A01F35','Acquirente','Proposta e finanziamento']];
+    nodi.forEach(function(n){
+      var bx=(n[0]<300)?(n[0]+200):n[0], by=n[1]+30;
+      s+='<path d="M350 150 L'+bx+' '+by+'" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="5 5"/>';
+    });
+    nodi.forEach(function(n){
+      s+='<rect x="'+n[0]+'" y="'+n[1]+'" width="200" height="60" rx="10" fill="#fff" stroke="'+n[2]+'" stroke-width="2"/>'
+        +'<text x="'+(n[0]+100)+'" y="'+(n[1]+26)+'" text-anchor="middle" font-size="13" font-weight="700" fill="#0B2444">'+n[3]+'</text>'
+        +'<text x="'+(n[0]+100)+'" y="'+(n[1]+44)+'" text-anchor="middle" font-size="11" fill="#64748B">'+n[4]+'</text>';
+    });
+    return s+'<circle cx="350" cy="150" r="50" fill="#0B2444"/>'
+      +'<circle cx="350" cy="150" r="56" fill="none" stroke="#B99148" stroke-width="1.5"/>'
+      +'<text x="350" y="147" text-anchor="middle" font-size="14" font-weight="800" fill="#fff">Agenzia</text>'
+      +'<text x="350" y="164" text-anchor="middle" font-size="10" fill="#E2E8F0">coordina i passaggi</text>'
+      +'</svg>';
+  })();
+  var kaSvgPercorso = (function(){
+    var s=kaSvgApri(235), nomi=['Proposta','Decisione','Verifiche','Preliminare','Rogito'], xs=[50,180,310,440,570], ys=[165,65,165,65,120];
+    s+='<path d="M50 165 C100 165 130 65 180 65 S260 165 310 165 S390 65 440 65 S520 120 570 120 L628 120" fill="none" stroke="#0B2444" stroke-width="2.5" stroke-dasharray="8 7" stroke-linecap="round"/>';
+    for(var i=0;i<5;i++){
+      s+='<circle cx="'+xs[i]+'" cy="'+ys[i]+'" r="18" fill="'+(i%2?'#B99148':'#A01F35')+'" stroke="#fff" stroke-width="3"/>'
+        +'<text x="'+xs[i]+'" y="'+(ys[i]+5)+'" text-anchor="middle" font-size="14" font-weight="800" fill="#fff">'+(i+1)+'</text>'
+        +'<text x="'+xs[i]+'" y="'+(ys[i]+44)+'" text-anchor="middle" font-size="13" font-weight="700" fill="#0B2444">'+nomi[i]+'</text>';
+    }
+    return s+'<path d="M632 142 V112 L660 92 L688 112 V142 Z" fill="#fff" stroke="#0B2444" stroke-width="3" stroke-linejoin="round"/>'
+      +'<path d="M624 116 L660 89 L696 116" fill="none" stroke="#A01F35" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>'
+      +'<rect x="652" y="120" width="16" height="22" fill="#A01F35"/>'
+      +'<text x="660" y="164" text-anchor="middle" font-size="13" font-weight="700" fill="#0B2444">Venduta</text>'
+      +'</svg>';
+  })();
+
+  var kaSvgIncontro = kaSvgApri(205)
+    +'<path d="M222 100 C290 55 350 145 418 100" fill="none" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="5 6"/>'
+    +'<path d="M538 100 H590" fill="none" stroke="#CBD5E1" stroke-width="2" stroke-dasharray="5 6"/>'
+    +'<rect x="90" y="38" width="130" height="124" rx="10" fill="#fff" stroke="#0B2444" stroke-width="3"/>'
+    +'<path d="M90 70 V48 a10 10 0 0 1 10 -10 H210 a10 10 0 0 1 10 10 V70 Z" fill="#A01F35"/>'
+    +'<path d="M122 28 V48 M188 28 V48" stroke="#0B2444" stroke-width="4" stroke-linecap="round"/>'
+    +[0,1,2].map(function(r){ return [0,1,2,3].map(function(c){ return (r===1&&c===2)?'':'<circle cx="'+(113+c*28)+'" cy="'+(92+r*24)+'" r="3.5" fill="#CBD5E1"/>'; }).join(''); }).join('')
+    +'<circle cx="169" cy="116" r="12" fill="#B99148"/><path d="M163 116 l4.5 4.5 l8 -9" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'<path d="M430 160 V104 L478 70 L526 104 V160 Z" fill="#fff" stroke="#0B2444" stroke-width="3" stroke-linejoin="round"/>'
+    +'<path d="M418 110 L478 66 L538 110" fill="none" stroke="#A01F35" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>'
+    +'<rect x="467" y="124" width="22" height="36" fill="#A01F35"/>'
+    +'<circle cx="612" cy="100" r="15" fill="#fff" stroke="#B99148" stroke-width="4"/>'
+    +'<path d="M627 100 H672 M654 100 V112 M666 100 V110" fill="none" stroke="#B99148" stroke-width="4" stroke-linecap="round"/>'
+    +'<text x="155" y="188" text-anchor="middle" font-size="13" font-weight="700" fill="#0B2444">Appuntamento</text>'
+    +'<text x="478" y="188" text-anchor="middle" font-size="13" font-weight="700" fill="#0B2444">Sopralluogo</text>'
+    +'<text x="638" y="188" text-anchor="middle" font-size="13" font-weight="700" fill="#0B2444">Decisione libera</text>'
+    +'</svg>';
   var badgeAgente=logo
     ? '<div class="h-12 rounded-lg bg-white shadow-lg flex items-center justify-center flex-shrink-0" style="min-width:48px;padding:4px"><img src="'+logo+'" class="h-full w-auto object-contain" style="max-width:130px"></div>'
     : '<div class="w-12 h-12 rounded-lg bg-gradient-to-br from-gold-500 to-gold-700 flex items-center justify-center font-bold text-white text-xl shadow-lg shadow-gold-500/20 flex-shrink-0">'+iniziali+'</div>';
@@ -52081,6 +52186,7 @@ function kaApriKit(comune, zona, prospectNome, indirizzo){
             }).join('')
           +'</div>'
         +'</div>'
+        +kaFill('', kaSvgIncontro, '')
       +'</div>'
       +'<div>'
         +'<div class="p-6 sm:p-8 rounded-xl bg-slate-100 flex flex-wrap items-center justify-between gap-6">'
@@ -52391,10 +52497,42 @@ var kitCss = ''
     +'<style>'
       +kitCss
       +'.page-shadow{box-shadow:0 20px 25px -5px rgba(15,23,42,.08),0 8px 10px -6px rgba(15,23,42,.04)}'
-      +'.tab-page{display:none;flex-direction:column;justify-content:space-between;position:relative}'
+      +'html{font-size:14px}'
+      +'.tab-page{display:none;flex-direction:column;position:relative;box-sizing:border-box;width:210mm;height:297mm;flex:none!important;overflow:hidden;margin:0 auto;background:#fff;padding:13mm 13mm 8mm!important}'
       +'.tab-page.active{display:flex}'
+      +'.ka-cap .tab-page{zoom:1!important}'
       +'.tab-page:not(#page-1)::before{content:"";position:absolute;left:0;bottom:0;width:5px;height:160px;background:#A01F35;pointer-events:none}'
-      +'.tab-page:not(#page-1)::after{content:"";position:absolute;right:0;bottom:0;width:130px;height:130px;background-image:repeating-linear-gradient(135deg,rgba(11,36,68,.15) 0,rgba(11,36,68,.15) 2px,transparent 2px,transparent 11px);pointer-events:none}'
+      +'.tab-page>div{position:relative}'
+      +'.tab-page:not(#page-1)>div:first-of-type{position:static;flex:1 1 auto;min-height:0;display:flex;flex-direction:column}'
+      +'#page-8>div:first-of-type>[class~="mb-10"]{margin-bottom:1rem!important}'
+      +'#page-8>div:last-of-type{margin-top:1.25rem}'
+      +'#page-1>div:nth-of-type(1){flex:1 1 auto;min-height:0;display:flex;flex-direction:column}'
+      +'#page-1 .ka-cover-photo{flex:1 1 0;min-height:150px;height:auto!important}'
+      +'#page-1 .ka-cover-photo img{position:absolute;inset:0}'
+      +'.ka-foot{margin-top:auto}'
+      +'.tab-page p+.ka-foot{margin-top:.75rem}'
+      +'.ka-quote+.ka-foot,.ka-fill+.ka-foot,#page-8 .ka-foot{margin-top:1rem}'
+      +'.ka-quote{margin-top:auto;padding:1.1rem 2rem 0;text-align:center}'
+      +'.ka-quote::before{content:"";display:block;width:44px;height:2px;background:#B99148;margin:0 auto .8rem}'
+      +'.ka-quote-t{font-family:"Playfair Display",Georgia,serif;font-style:italic;font-size:1.2rem;line-height:1.4;color:#0B2444}'
+      +'.ka-fill{flex:1 1 0;min-height:0;display:flex;flex-direction:column;justify-content:center;margin-top:1.25rem;overflow:hidden}'
+      +'.ka-fill svg{flex:1 1 0;min-height:0;width:100%;max-height:340px;display:block}'
+      +'.tab-page [class~="mt-8"]{margin-top:1rem!important}'
+      +'.tab-page [class~="mt-10"]{margin-top:1.25rem!important}'
+      +'.tab-page [class~="mb-8"]{margin-bottom:1rem!important}'
+      +'.tab-page [class~="mb-10"]{margin-bottom:1.25rem!important}'
+      +'.tab-page [class~="pb-8"]{padding-bottom:1rem!important}'
+      +'.tab-page [class~="pt-8"]{padding-top:1rem!important}'
+      +'.tab-page [class~="p-6"]{padding:1rem!important}'
+      +'.tab-page [class~="p-8"]{padding:1.1rem!important}'
+      +'.tab-page [class~="my-6"]{margin-top:.9rem!important;margin-bottom:.9rem!important}'
+      +'.tab-page [class~="mt-6"]{margin-top:.75rem!important}'
+      +'.tab-page [class~="space-y-4"]>*+*{margin-top:.6rem!important}'
+      +'.tab-page [class~="sm:grid-cols-2"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}'
+      +'.tab-page [class~="sm:grid-cols-3"]{grid-template-columns:repeat(3,minmax(0,1fr))!important}'
+      +'.tab-page [class~="sm:grid-cols-4"]{grid-template-columns:repeat(4,minmax(0,1fr))!important}'
+      +'.tab-page [class~="md:grid-cols-2"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}'
+      +'.tab-page [class~="md:grid-cols-3"]{grid-template-columns:repeat(3,minmax(0,1fr))!important}'
       +'.ka-hero{position:relative;overflow:hidden;background:#0f172a}'
       +'.ka-hero-bg{position:absolute;inset:0;background-size:cover;background-position:center}'
       +'.ka-hero-overlay{position:absolute;inset:0}'
@@ -52412,35 +52550,12 @@ var kitCss = ''
       +'@media print{'
         +'*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}'
         +'.no-print{display:none!important}'
-        +'body{background:white!important}'
-        +'main{width:100%!important}'
+        +'html,body{background:white!important;margin:0!important;padding:0!important}'
+        +'body,body>div,main,main>div{display:block!important;padding:0!important;margin:0!important;max-width:none!important;width:auto!important;border:0!important;border-radius:0!important;min-height:0!important}'
         +'.page-shadow{box-shadow:none!important;overflow:visible!important}'
-        +'.tab-page{display:flex!important;page-break-before:always;min-height:0}'
-        +'.tab-page:not(.ka-hero){padding:1.1rem!important}'
-        +'.tab-page:first-of-type{page-break-before:avoid}'
-        +'.ka-hero{min-height:calc(100vh - 4rem)}'
-        +'.ka-hero .ka-hero-inner{padding:1.1rem!important}'
-        +'html{font-size:14px}'
-        +'[class~="mt-8"]{margin-top:1rem!important}'
-        +'[class~="mt-10"]{margin-top:1.25rem!important}'
-        +'[class~="mb-8"]{margin-bottom:1rem!important}'
-        +'[class~="mb-10"]{margin-bottom:1.25rem!important}'
-        +'[class~="py-10"]{padding-top:1.1rem!important;padding-bottom:1.1rem!important}'
-        +'[class~="pb-8"]{padding-bottom:1rem!important}'
-        +'[class~="pt-8"]{padding-top:1rem!important}'
-        +'[class~="p-6"]{padding:1rem!important}'
-        +'[class~="p-8"]{padding:1.1rem!important}'
-        +'[class~="my-6"]{margin-top:.9rem!important;margin-bottom:.9rem!important}'
-        +'[class~="mt-6"]{margin-top:.75rem!important}'
-        +'[class~="space-y-4"]>*+*{margin-top:.6rem!important}'
-        +'[class~="py-4"]{padding-top:.5rem!important;padding-bottom:.5rem!important}'
-        +'.ka-cover-photo{height:230px!important}'
-        +'[class~="sm:grid-cols-2"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}'
-        +'[class~="sm:grid-cols-3"]{grid-template-columns:repeat(3,minmax(0,1fr))!important}'
-        +'[class~="sm:grid-cols-4"]{grid-template-columns:repeat(4,minmax(0,1fr))!important}'
-        +'[class~="md:grid-cols-2"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}'
-        +'[class~="md:grid-cols-3"]{grid-template-columns:repeat(3,minmax(0,1fr))!important}'
-        +'@page{margin:5mm}'
+        +'.tab-page{display:flex!important;zoom:1!important;margin:0!important;height:296.5mm;break-after:page;page-break-after:always}'
+        +'#page-8{break-after:auto;page-break-after:auto}'
+        +'@page{size:A4;margin:0}'
       +'}'
     +'</style></head>'
     +'<body class="bg-slateBg text-slate-800 font-sans antialiased min-h-screen flex flex-col">'
@@ -52514,8 +52629,9 @@ var kitCss = ''
                 return '<div class="p-4 rounded-xl bg-slate-100"><div class="flex items-center gap-2.5 mb-1"><span style="width:4px;height:16px;background:'+f[0]+';border-radius:2px;display:inline-block"></span><h4 class="font-bold text-navy-900 text-sm">'+f[1]+' &nbsp;'+f[2]+'</h4></div><p class="text-xs text-slate-500" style="padding-left:14px">'+f[3]+'</p></div>';
               }).join('')
             +'</div>'
-            +'<div class="mt-8 p-5 rounded-xl bg-slate-100" style="border-left:4px solid #A01F35">'
-              +'<p class="text-base text-navy-900 italic leading-snug">"La qualità conta più della quantità. Un fuoricampo vale molto più di due basi valide."</p>'
+            +kaFill('', kaSvgPaesaggio, '')
+            +'<div class="ka-quote">'
+              +'<p class="ka-quote-t">"La qualità conta più della quantità. Un fuoricampo vale molto più di due basi valide."</p>'
               +'<p class="text-xs text-gold-ink font-bold mt-2" style="color:#B99148">— Steve Jobs</p>'
             +'</div>'
             +pageFooterBar('2')
@@ -52539,8 +52655,9 @@ var kitCss = ''
               +'<div class="p-4 rounded-xl bg-slate-100"><div class="flex items-center gap-2.5 mb-1"><span style="width:4px;height:16px;background:#B99148;border-radius:2px;display:inline-block"></span><h4 class="font-bold text-navy-900 text-sm">Dati da validare prima dell\'uso</h4></div><p class="text-xs text-slate-500" style="padding-left:14px">Immobili venduti, incarichi attivi, dati della rete MLS e quotazioni OMI: pubblicare solo informazioni aggiornate e verificabili.</p></div>'
               +'<p class="text-xs text-slate-500 mt-4">Una valutazione è più utile quando spiega il ragionamento, i limiti dei confronti e gli eventuali interventi che possono influire sulla commerciabilità.</p>'
             +'</div>'
-            +'<div class="mt-8 p-5 rounded-xl bg-slate-100" style="border-left:4px solid #A01F35">'
-              +'<p class="text-base text-navy-900 italic leading-snug">"Il prezzo è quello che paghi. Il valore è quello che ottieni."</p>'
+            +kaFill('Perché il prezzo iniziale conta', kaSvgInteresse, 'Schema illustrativo: non rappresenta i dati di un immobile specifico.')
+            +'<div class="ka-quote">'
+              +'<p class="ka-quote-t">"Il prezzo è quello che paghi. Il valore è quello che ottieni."</p>'
               +'<p class="text-xs font-bold mt-2" style="color:#B99148">— Warren Buffett</p>'
             +'</div>'
             +pageFooterBar('3')
@@ -52577,6 +52694,7 @@ var kitCss = ''
               +'<h4 class="font-bold text-sm mb-1" style="color:#B99148">Il vantaggio per il proprietario</h4>'
               +'<p class="text-xs leading-relaxed">Se più persone sono realmente interessate, il confronto tra proposte può migliorare prezzo, tempi e condizioni della vendita. Ogni offerta viene valutata con il proprietario.</p>'
             +'</div>'
+            +kaFill('Dal primo contatto alle offerte', kaSvgImbuto, '')
             +'<p class="text-[11px] text-slate-400 mt-3 italic">Risultati e tempi dipendono dall\'immobile, dal mercato e dalle offerte effettivamente ricevute.</p>'
             +pageFooterBar('4')
           +'</div></div>'
@@ -52586,8 +52704,8 @@ var kitCss = ''
           +'<div>'
             +pageHeader('Domande Frequenti','Le Domande Che Contano','Risposte chiare, prima di scegliere come vendere.')
             +'<div class="mt-6 space-y-4">'+obiezioniHtml+'</div>'
-            +'<div class="mt-8 p-5 rounded-xl bg-slate-100" style="border-left:4px solid #A01F35">'
-              +'<p class="text-base text-navy-900 italic leading-snug">"Se piaci alle persone ti ascolteranno, ma se si fidano di te faranno affari con te."</p>'
+            +'<div class="ka-quote">'
+              +'<p class="ka-quote-t">"Se piaci alle persone ti ascolteranno, ma se si fidano di te faranno affari con te."</p>'
               +'<p class="text-xs font-bold mt-2" style="color:#B99148">— Zig Ziglar</p>'
             +'</div>'
             +pageFooterBar('5')
@@ -52620,6 +52738,7 @@ var kitCss = ''
                 +'<div class="pt-3 border-t border-slate-200 text-xs text-emerald-700 font-semibold"><i class="fa-solid fa-check mr-1"></i>Incluso automaticamente nel PDF completo scaricabile dall\'intestazione</div>'
               +'</div>'
             +'</div>'
+            +kaFill('Chi si occupa di cosa', kaSvgRuoli, '')
             +pageFooterBar('6')
           +'</div></div>'
 
@@ -52651,6 +52770,7 @@ var kitCss = ''
                 +'<p class="text-xs text-slate-300 mt-1">L\'1% di ogni provvigione incassata viene destinato a enti non profit. Un contributo concreto al sociale, parte del nostro modo di lavorare.</p>'
               +'</div>'
             +'</div>'
+            +kaFill('Il percorso in sintesi', kaSvgPercorso, '')
             +pageFooterBar('7')
           +'</div></div>'
 
@@ -52706,8 +52826,8 @@ var kitCss = ''
       +'function _kaCattura(el,html2canvas,etichetta){'
         +'var base={backgroundColor:"#ffffff",scale:2,useCORS:true,windowWidth:1280,logging:false};'
         +'var optsFO={backgroundColor:"#ffffff",scale:2,useCORS:true,windowWidth:1280,logging:false,foreignObjectRendering:true};'
-        +'return html2canvas(el,optsFO).catch(function(e1){'
-          +'return html2canvas(el,base).catch(function(e2){'
+        +'return html2canvas(el,base).catch(function(e1){'
+                  +'return html2canvas(el,optsFO).catch(function(e2){'
             +'var msg=(e2&&e2.message)||e2||(e1&&e1.message)||e1;'
             +'throw new Error((etichetta||"una pagina")+": "+msg);'
           +'});'
@@ -52717,10 +52837,10 @@ var kitCss = ''
         +'var btn=document.getElementById("btnPdfCompleto");'
         +'var btnHtml=btn?btn.innerHTML:"";'
         +'if(btn){btn.disabled=true;btn.innerHTML=\'<i class="fa-solid fa-spinner fa-spin"></i><span class="hidden sm:inline">Preparazione PDF…</span>\';}'
-        +'var paginaIniziale=currentPage;'
+        +'var paginaIniziale=currentPage;document.documentElement.classList.add("ka-cap");'
         +'var pagine=[];'
         +'var _jsPDF,_h2c;'
-        +'var ripristina=function(){ switchTab(paginaIniziale); if(btn){btn.disabled=false; btn.innerHTML=btnHtml;} };'
+        +'var ripristina=function(){ document.documentElement.classList.remove("ka-cap"); switchTab(paginaIniziale); if(btn){btn.disabled=false; btn.innerHTML=btnHtml;} };'
         +'Promise.all([_kaJsPdfReady(),_kaH2cReady()]).then(function(lib){'
           +'_jsPDF=lib[0]; _h2c=lib[1];'
           +'var catena=Promise.resolve();'
@@ -52774,6 +52894,8 @@ var kitCss = ''
           +'alert("Non sono riuscito a generare il PDF completo: "+((e&&e.message)||e));'
         +'});'
       +'}'
+      +'function kaFit(){var m=document.querySelector("main");if(!m)return;var z=Math.min(1,(m.clientWidth-2)/794);var ps=document.querySelectorAll(".tab-page");for(var i=0;i<ps.length;i++){ps[i].style.zoom=(z<1?z:"");}}'
+      +'window.addEventListener("resize",kaFit);kaFit();'
       +'updateUI();'
     +'<\/script>'
     +'</body></html>';
