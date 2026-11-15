@@ -5521,7 +5521,7 @@ hubTema();
     </div>
     <div>
       <div class="logo-text" id="hdr-agency">Le case dalla A allo Z.io</div>
-      <div class="logo-sub">IndexPlus · Marketing Hub <span style="background:#1A7A4A;color:#fff;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:800;margin-left:6px;letter-spacing:.5px">v.11nov-SOCIALHUB</span></div>
+      <div class="logo-sub">IndexPlus · Marketing Hub <span style="background:#1A7A4A;color:#fff;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:800;margin-left:6px;letter-spacing:.5px">v.15nov-ANIMAZIONI</span></div>
     </div>
   </div>
   <div class="hub-destra" style="display:flex;gap:10px;align-items:center">
@@ -32774,6 +32774,176 @@ function _vaiLogoPosDi(clip){
    col generatore (vedi "Come inserirla" nelle proprietà della clip) — serve solo per un
    messaggio più chiaro nell'editor, il disegno è identico a un PiP qualunque. */
 let _vaiPip = null;
+/* ─── PIÙ SOVRIMPRESSIONI + SFONDO TRASPARENTE [15 nov 2026] ───
+   Richiesta di Enzo: mettere le animazioni (mappa, planimetria, rete MLS...) SOPRA il filmato,
+   su una traccia loro, più d'una nello stesso video, togliendo o attenuando il loro sfondo.
+   - _vaiPips è l'elenco di TUTTE le sovrimpressioni; _vaiPip (qui sopra) resta «quella su cui
+     sto lavorando» (l'ultima toccata), così la finestra di modifica e il trascinamento non cambiano.
+   - Ogni sovrimpressione ha in più:
+       sfondo (0-1, default 1): quanto resta del suo sfondo. 1 = pieno (come sempre),
+                                0 = sparisce e resta solo il disegno;
+       alfa:  true se il video ha già la trasparenza dentro (le animazioni della Fabbrica
+              grafiche fatte «da mettere sopra»): lì lo sfondo è un velo scuro messo dietro;
+       fondo: [r,g,b] il colore di sfondo letto dagli angoli del video, quello da togliere. */
+let _vaiPips = [];
+const _VAI_PIP_VELO = [20,12,8];   // il bruno scuro del marchio, usato come velo dietro i video trasparenti
+function _vaiPipSfondo(s){ return (s && s.sfondo!=null) ? Math.max(0, Math.min(1, s.sfondo)) : 1; }
+function _vaiPipAggiungi(s){
+  if(s.sfondo==null) s.sfondo=1;
+  _vaiPips.push(s); _vaiPip=s;
+  try{ _vaiPipEsamina(s); }catch(e){}
+  return s;
+}
+/* Toglie una sovrimpressione dall'elenco (e dallo schermo); «quella attuale» diventa l'ultima rimasta. */
+function _vaiPipTogli(s, tieniUrl){
+  if(!s) return;
+  const i=_vaiPips.indexOf(s); if(i>=0) _vaiPips.splice(i,1);
+  if(s._el){ try{ s._el._vid.pause(); }catch(e){} try{ s._el.remove(); }catch(e){} s._el=null; }
+  if(!tieniUrl){ try{ URL.revokeObjectURL(s.url); }catch(e){} }
+  if(_vaiPip===s) _vaiPip=_vaiPips.length?_vaiPips[_vaiPips.length-1]:null;
+}
+/* Guarda un fotogramma del video: ha la trasparenza dentro? Di che colore è lo sfondo (dagli angoli)? */
+function _vaiPipEsamina(s){
+  const v=document.createElement('video');
+  v.muted=true; v.playsInline=true; v.preload='auto'; v.src=s.url;
+  const fine=()=>{ try{ v.remove(); }catch(e){} };
+  v.onerror=fine;
+  v.onloadedmetadata=async ()=>{
+    try{
+      await _vaiSeekAndWait(v, Math.min(0.3, (v.duration||1)/2));
+      const cw=64, ch=Math.max(8, Math.round(64*((v.videoHeight||16)/(v.videoWidth||9))));
+      const cv=document.createElement('canvas'); cv.width=cw; cv.height=ch;
+      const c=cv.getContext('2d'); c.drawImage(v,0,0,cw,ch);
+      const d=c.getImageData(0,0,cw,ch).data;
+      const px=(x,y)=>{ const i=(y*cw+x)*4; return [d[i],d[i+1],d[i+2],d[i+3]]; };
+      const ang=[px(1,1),px(cw-2,1),px(1,ch-2),px(cw-2,ch-2)];
+      if(ang.some(p=>p[3]<200)){ s.alfa=true; s.fondo=_VAI_PIP_VELO.slice(); }
+      else { s.alfa=false; s.fondo=[0,1,2].map(k=>Math.round((ang[0][k]+ang[1][k]+ang[2][k]+ang[3][k])/4)); }
+      delete s._frameCache;
+      try{ vaiOverlayUpdate(); }catch(e){}
+    }catch(e){}
+    fine();
+  };
+}
+/* Toglie (o attenua) lo sfondo da un fotogramma: i punti del colore «fondo» diventano trasparenti
+   quanto dice sf (0 = del tutto), quelli diversi restano; in mezzo sfuma, senza aloni scuri.
+   px = i byte RGBA di un ImageData, modificati sul posto. */
+function _vaiPipChiave(px, fondo, sf){
+  const br=fondo[0], bg=fondo[1], bb=fondo[2], T0=16, T1=72, k=1-sf;
+  for(let i=0;i<px.length;i+=4){
+    const r=px[i], g=px[i+1], b=px[i+2];
+    const d=Math.max(Math.abs(r-br), Math.abs(g-bg), Math.abs(b-bb));
+    if(d>=T1) continue;
+    const a=d<=T0?0:(d-T0)/(T1-T0);
+    const aOut=a+(1-a)*sf;
+    if(aOut<0.004){ px[i+3]=0; continue; }
+    const q=(1-a)*k;
+    px[i]  =Math.max(0, Math.min(255, (r-q*br)/aOut));
+    px[i+1]=Math.max(0, Math.min(255, (g-q*bg)/aOut));
+    px[i+2]=Math.max(0, Math.min(255, (b-q*bb)/aOut));
+    px[i+3]=Math.round(aOut*px[i+3]);
+  }
+}
+/* Anteprima: finché c'è a schermo una sovrimpressione con lo sfondo da togliere, ridisegno il suo
+   video su un canvas passando da _vaiPipChiave. Si ferma da solo quando non ce ne sono più. */
+function _vaiPipChiaveLoop(){
+  if(window._vaiPipChiaveOn) return;
+  window._vaiPipChiaveOn=true;
+  const giro=()=>{
+    let vivi=0;
+    for(const s of _vaiPips){
+      const el=s._el; if(!el || !el.isConnected) continue;
+      const sf=_vaiPipSfondo(s); if(s.alfa || sf>=1) continue;
+      vivi++;
+      const vid=el._vid, cv=el._cv;
+      if(!vid || vid.readyState<2 || !vid.videoWidth) continue;
+      const cw=Math.min(540, vid.videoWidth), ch=Math.round(cw*vid.videoHeight/vid.videoWidth);
+      if(cv.width!==cw || cv.height!==ch){ cv.width=cw; cv.height=ch; cv._firma=''; }
+      const firma=vid.currentTime.toFixed(3)+'|'+sf+'|'+(s.fondo||[]).join(',');
+      if(cv._firma===firma) continue;
+      cv._firma=firma;
+      try{
+        const c=cv.getContext('2d',{willReadFrequently:true});
+        c.clearRect(0,0,cw,ch); c.drawImage(vid,0,0,cw,ch);
+        const d=c.getImageData(0,0,cw,ch);
+        _vaiPipChiave(d.data, s.fondo||[0,0,0], sf);
+        c.putImageData(d,0,0);
+      }catch(e){}
+    }
+    if(vivi) requestAnimationFrame(giro); else window._vaiPipChiaveOn=false;
+  };
+  requestAnimationFrame(giro);
+}
+/* Esportazione: applica lo stesso taglio dello sfondo ai fotogrammi già catturati. */
+function _vaiPipPreparaChiave(s){
+  const sf=_vaiPipSfondo(s);
+  if(!s || s.alfa || sf>=1 || !s._frameCache || !s._frameCache.frames) return;
+  for(const fr of s._frameCache.frames){
+    try{
+      const cv=document.createElement('canvas'); cv.width=fr.w; cv.height=fr.h;
+      const c=cv.getContext('2d',{willReadFrequently:true});
+      c.drawImage(fr.img,0,0,fr.w,fr.h);
+      const d=c.getImageData(0,0,fr.w,fr.h);
+      _vaiPipChiave(d.data, s.fondo||[0,0,0], sf);
+      c.putImageData(d,0,0);
+      try{ if(fr.img && fr.img.close) fr.img.close(); }catch(e){}
+      fr.img=cv;
+    }catch(e){}
+  }
+}
+/* A tutto schermo: larga quanto il video (o alta quanto il video, se è più «stretta»), centrata, senza angoli. */
+function _vaiPipTuttoSchermo(s){
+  if(!s) return;
+  const fr=document.getElementById('vai-ov-frame');
+  const r=fr?fr.getBoundingClientRect():null;
+  const arF=(r && r.width>0 && r.height>0)?(r.height/r.width):(16/9);
+  const ar=(s.naturalH && s.naturalW)?(s.naturalH/s.naturalW):arF;
+  const w=ar>arF*1.01 ? arF/ar : 1;
+  s.w=w; s.x=(1-w)/2; s.y=Math.max(0,(1-w*ar/arF)/2); s.radius=0; delete s.cx;
+  delete s._frameCache;
+}
+/* Mette un video già in memoria (per esempio un'animazione appena arrivata dalla Fabbrica grafiche)
+   come nuova sovrimpressione, al punto in cui si trova il cursore.
+   opz: { pieno:true (a tutto schermo e per tutta la sua durata), sfondo:0-1 } */
+function vaiPipDaBlob(blob, nome, opz){
+  opz=opz||{};
+  return new Promise((resolve)=>{
+    const v=document.getElementById('vai-video');
+    if(!v || !_vaiClips || !_vaiClips.length){ toast('Carica prima un video sulla timeline principale','error'); resolve(null); return; }
+    const url=URL.createObjectURL(blob);
+    const tv=document.createElement('video');
+    tv.preload='metadata'; tv.muted=true; tv.src=url;
+    const pronto=(dur)=>{
+      vaiSnapshot('aggiungi video in sovrimpressione');
+      const naturalDur=(isFinite(dur)&&dur>0)?dur:5;
+      const ci=_vaiClipAttiva>=0?_vaiClipAttiva:0;
+      const c=_vaiClips[ci]||{};
+      const cIn=c.taglioInizio||0;
+      const offGlob=(typeof _vaiOffsetClip==='function')?_vaiOffsetClip(ci):0;
+      const localOut=(typeof _vaiRawToOutput==='function')?_vaiRawToOutput(c, Math.max(0,v.currentTime-cIn)):Math.max(0,v.currentTime-cIn);
+      const s=_vaiPipAggiungi({
+        url, fileName:nome||'Video',
+        naturalW:tv.videoWidth||9, naturalH:tv.videoHeight||16, naturalDur,
+        taglioInizio:0, t:Math.round((offGlob+localOut)*10)/10, durata:opz.pieno?naturalDur:Math.min(5, naturalDur),
+        x:0.62, y:0.58, w:0.33, radius:14, opacity:1, sfondo:(opz.sfondo!=null?opz.sfondo:1)
+      });
+      if(opz.pieno) _vaiPipTuttoSchermo(s);
+      _vaiDirty=true;
+      vaiTlRender(); vaiOverlayUpdate();
+      try{ tv.remove(); }catch(e){}
+      resolve(s);
+    };
+    /* i webm appena creati a volte non dichiarano la durata: la chiedo portandomi in fondo */
+    tv.onloadedmetadata=()=>{
+      if(isFinite(tv.duration) && tv.duration>0){ pronto(tv.duration); return; }
+      tv.onseeked=()=>{ tv.onseeked=null; pronto(tv.duration); };
+      try{ tv.currentTime=1e7; }catch(e){ pronto(5); }
+    };
+    tv.onerror=()=>{ toast('Non riesco a leggere questo video','error'); try{ tv.remove(); }catch(e){} resolve(null); };
+  });
+}
+window.vaiPipDaBlob=vaiPipDaBlob;
+window._vaiPipChiave=_vaiPipChiave;
 
 /* ─── PRIMA/DOPO ───
    Richiesto da Enzo per mostrare una ristrutturazione: un secondo video/immagine
@@ -32920,7 +33090,6 @@ function vaiLogoLoad(file){
 /* Apre il selettore file per il video in sovrimpressione, o la finestra di
    modifica se ce n'è già uno (un solo overlay PiP per progetto, come il logo). */
 function vaiPipApri(){
-  if(_vaiPip){ vaiPipModifica(); return; }
   const inp=document.createElement('input');
   inp.type='file'; inp.accept='video/*'; inp.style.display='none';
   document.body.appendChild(inp);
@@ -32945,13 +33114,12 @@ function vaiPipCarica(file){
     const offGlob=(typeof _vaiOffsetClip==='function')?_vaiOffsetClip(ci):0;
     const localOut=(typeof _vaiRawToOutput==='function')?_vaiRawToOutput(c, Math.max(0,v.currentTime-cIn)):Math.max(0,v.currentTime-cIn);
     const tGlob=offGlob+localOut;
-    if(_vaiPip && _vaiPip.url){ try{ URL.revokeObjectURL(_vaiPip.url); }catch(e){} }
-    _vaiPip = {
+    _vaiPipAggiungi({
       url, fileName:file.name,
       naturalW:tv.videoWidth||9, naturalH:tv.videoHeight||16, naturalDur,
       taglioInizio:0, t:Math.round(tGlob*10)/10, durata:Math.min(5, naturalDur),
       x:0.62, y:0.58, w:0.33, radius:14, opacity:1
-    };
+    });
     _vaiDirty=true;
     vaiTlRender(); vaiOverlayUpdate();
     vaiPipModifica();
@@ -32962,11 +33130,11 @@ function vaiPipCarica(file){
 }
 window.vaiPipCarica=vaiPipCarica;
 
-function vaiPipRimuovi(){
+function vaiPipRimuovi(i){
+  if(typeof i==='number' && _vaiPips[i]) _vaiPip=_vaiPips[i];
   if(!_vaiPip) return;
   vaiSnapshot('rimuovi video in sovrimpressione');
-  try{ URL.revokeObjectURL(_vaiPip.url); }catch(e){}
-  _vaiPip=null; _vaiDirty=true;
+  _vaiPipTogli(_vaiPip); _vaiDirty=true;
   vaiTlRender(); vaiOverlayUpdate();
   const m=document.getElementById('vai-pip-editor'); if(m) m.remove();
   toast('Video in sovrimpressione rimosso','');
@@ -32993,8 +33161,7 @@ async function vaiPipTornaClip(){
     logoPos:{x:0.05,y:0.04,scale:0.22}, thumb:null, parlata:false, parlataAuto:false, parlataManuale:false,
     daCard:!!s._daCard, taglioInizio:0, taglioDurata:durata };
   _vaiClips.push(nuova);
-  try{ URL.revokeObjectURL(s.url); }catch(e){}
-  _vaiPip=null; _vaiDirty=true;
+  _vaiPipTogli(s); _vaiDirty=true;
   _vaiProbaDurata(nuova);
   vaiClipsRender(); vaiTlRender(); vaiClipSelect(_vaiClips.length-1, true); vaiOverlayUpdate();
   toast('Rimessa nella timeline, in fondo al montaggio — trascinala per riordinarla','success');
@@ -33021,7 +33188,8 @@ window.vaiPipAngolo=vaiPipAngolo;
 
 /* Modifica il video in sovrimpressione: inizio/durata nel montaggio, ritaglio
    nel file sorgente, posizione (angoli), dimensione, angoli arrotondati. */
-function vaiPipModifica(){
+function vaiPipModifica(i){
+  if(typeof i==='number' && _vaiPips[i]) _vaiPip=_vaiPips[i];
   if(!_vaiPip){ toast('Nessun video in sovrimpressione','error'); return; }
   const s=_vaiPip;
   const old=document.getElementById('vai-pip-editor'); if(old) old.remove();
@@ -33033,13 +33201,16 @@ function vaiPipModifica(){
       [['tl','↖'],['tr','↗'],['bl','↙'],['br','↘']].map(p=>'<button class="vpp-ang" data-d="'+p[0]+'" style="flex:1;padding:9px 0;border-radius:8px;cursor:pointer;font-size:1rem;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14)">'+p[1]+'</button>').join('')+
     '</div>'+
     '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Dimensione: <span id="vpp-w-val">'+Math.round(s.w*100)+'</span>%</div>'+
-    '<input id="vpp-w" type="range" min="0.14" max="0.55" step="0.01" value="'+s.w+'" style="width:100%;margin-bottom:14px">'+
+    '<input id="vpp-w" type="range" min="0.14" max="1" step="0.01" value="'+s.w+'" style="width:100%;margin-bottom:8px">'+
+    '<button id="vpp-pieno" style="width:100%;padding:8px 0;border-radius:8px;cursor:pointer;font-size:.78rem;font-weight:700;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14);margin-bottom:14px">A tutto schermo</button>'+
     '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Inizio nel montaggio (secondi): <span id="vpp-t-val">'+s.t.toFixed(1)+'</span>s</div>'+
     '<input id="vpp-t" type="number" min="0" step="0.1" value="'+s.t+'" style="width:100%;box-sizing:border-box;background:#13263B;color:#fff;border:1px solid rgba(255,255,255,.14);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:.86rem;margin-bottom:14px">'+
     '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Durata (secondi): <span id="vpp-dur-val">'+s.durata.toFixed(1)+'</span>s</div>'+
     '<input id="vpp-dur" type="range" min="0.5" max="'+Math.max(0.5,(s.naturalDur-s.taglioInizio).toFixed(2))+'" step="0.1" value="'+s.durata+'" style="width:100%;margin-bottom:14px">'+
     '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Trasparenza: <span id="vpp-op-val">'+Math.round((s.opacity!=null?s.opacity:1)*100)+'</span>% <span style="opacity:.7">(più bassa = lascia vedere di più la clip sotto)</span></div>'+
     '<input id="vpp-op" type="range" min="15" max="100" step="1" value="'+Math.round((s.opacity!=null?s.opacity:1)*100)+'" style="width:100%;margin-bottom:14px">'+
+    '<div style="color:#8FA3B8;font-size:.74rem;margin-bottom:6px">Sfondo: <span id="vpp-sf-val">'+Math.round(_vaiPipSfondo(s)*100)+'</span>% <span style="opacity:.7">(0 = lo sfondo sparisce e resta solo il disegno, 100 = sfondo pieno)</span></div>'+
+    '<input id="vpp-sf" type="range" min="0" max="100" step="1" value="'+Math.round(_vaiPipSfondo(s)*100)+'" style="width:100%;margin-bottom:14px">'+
     '<label style="display:flex;align-items:center;gap:8px;color:#8FA3B8;font-size:.78rem;margin-bottom:14px;cursor:pointer">'+
       '<input id="vpp-round" type="checkbox" '+(s.radius>0?'checked':'')+'> Angoli arrotondati'+
     '</label>'+
@@ -33051,7 +33222,11 @@ function vaiPipModifica(){
   ov.id='vai-pip-editor';
   ov.querySelectorAll('.vpp-ang').forEach(b=>{ b.addEventListener('click', ()=>{ vaiPipAngolo(b.getAttribute('data-d')); }); });
   const wEl=ov.querySelector('#vpp-w'), wVal=ov.querySelector('#vpp-w-val');
-  if(wEl) wEl.addEventListener('input', function(){ s.w=parseFloat(this.value)||0.33; if(wVal) wVal.textContent=Math.round(s.w*100); _vaiDirty=true; vaiOverlayUpdate(); });
+  if(wEl) wEl.addEventListener('input', function(){ s.w=parseFloat(this.value)||0.33; if(wVal) wVal.textContent=Math.round(s.w*100); delete s._frameCache; _vaiDirty=true; vaiOverlayUpdate(); });
+  const pienoEl=ov.querySelector('#vpp-pieno');
+  if(pienoEl) pienoEl.addEventListener('click', function(){ _vaiPipTuttoSchermo(s); if(wEl) wEl.value=s.w; if(wVal) wVal.textContent=Math.round(s.w*100); const rd=ov.querySelector('#vpp-round'); if(rd) rd.checked=false; _vaiDirty=true; vaiOverlayUpdate(); });
+  const sfEl=ov.querySelector('#vpp-sf'), sfVal=ov.querySelector('#vpp-sf-val');
+  if(sfEl) sfEl.addEventListener('input', function(){ s.sfondo=Math.max(0, Math.min(1, (parseInt(this.value,10)||0)/100)); if(sfVal) sfVal.textContent=Math.round(s.sfondo*100); delete s._frameCache; _vaiDirty=true; vaiOverlayUpdate(); });
   const tEl=ov.querySelector('#vpp-t'), tVal=ov.querySelector('#vpp-t-val');
   if(tEl) tEl.addEventListener('input', function(){ s.t=Math.max(0, parseFloat(this.value)||0); if(tVal) tVal.textContent=s.t.toFixed(1); _vaiDirty=true; vaiTlRender(); vaiOverlayUpdate(); });
   const durEl=ov.querySelector('#vpp-dur'), durVal=ov.querySelector('#vpp-dur-val');
@@ -37277,12 +37452,14 @@ window._vaiCatturaFrameInvertiti=_vaiCatturaFrameInvertiti;
    durante l'esportazione vera il canvas registra in tempo reale, quindi un secondo
    video che si deve "seekare" fotogramma per fotogramma lo farei FUORI dalla
    registrazione, non durante. */
-function _vaiCatturaFramePip(url, inizio, durata){
+function _vaiCatturaFramePip(url, inizio, durata, s){
   return new Promise((resolve)=>{
     const v=document.createElement('video');
     v.muted=true; v.playsInline=true; v.preload='auto'; v.src=url;
-    const frames=[]; const FW=480; const FPS=12;
-    const killer=setTimeout(()=>{ try{ v.pause(); v.remove(); }catch(e){} resolve({frames, durata:0}); }, 30000);
+    /* [15 nov 2026] una sovrimpressione grande (un'animazione a tutto schermo) ha bisogno di più dettaglio e più fotogrammi */
+    const grande=!!(s && s.w>=0.6);
+    const frames=[]; const FW=grande?720:480; const FPS=grande?15:12;
+    const killer=setTimeout(()=>{ try{ v.pause(); v.remove(); }catch(e){} resolve({frames, durata:0}); }, grande?90000:30000);
     v.onloadedmetadata=async ()=>{
       try{
         const FH=Math.max(1, Math.round(FW*((v.videoHeight||16)/(v.videoWidth||9))));
@@ -37309,7 +37486,11 @@ window._vaiCatturaFramePip=_vaiCatturaFramePip;
    fotogrammi già catturati (_vaiPip._frameCache) — mai un seek dal vivo qui dentro,
    per lo stesso motivo delle clip invertite. tGlob è il tempo nel montaggio intero. */
 function _vaiDrawPip(ctx, W, H, tGlob){
+  for(const p of _vaiPips){ try{ _vaiDrawPipUno(ctx, W, H, tGlob, p); }catch(e){} }
+}
+function _vaiDrawPipUno(ctx, W, H, tGlob, _vaiPip){
   if(!_vaiPip || !_vaiPip._frameCache) return;
+  const _sf=_vaiPipSfondo(_vaiPip), _senzaFondo=!!_vaiPip.alfa || _sf<1;
   if(tGlob<_vaiPip.t || tGlob>_vaiPip.t+_vaiPip.durata) return;
   const frames=_vaiPip._frameCache.frames||[];
   if(!frames.length) return;
@@ -37324,15 +37505,19 @@ function _vaiDrawPip(ctx, W, H, tGlob){
   const rr=(x,y,w,h,r)=>{ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); };
   // l'ombra si disegna PRIMA del ritaglio: un ritaglio attivo tronca anche l'ombra
   // di ciò che disegno dentro, quindi qui sotto resterebbe invisibile.
+  if(!_senzaFondo){   // senza sfondo non c'è un riquadro: niente ombra
   ctx.save();
   ctx.shadowColor='rgba(0,0,0,.45)'; ctx.shadowBlur=W*0.012; ctx.shadowOffsetY=W*0.004;
   ctx.fillStyle='rgba(0,0,0,.001)';
   if(_vaiPip.radius>0) rr(bx,by,bw,bh,Math.min(_vaiPip.radius,bw/2,bh/2)); else ctx.rect(bx,by,bw,bh);
   ctx.fill();
   ctx.restore();
+  }
   ctx.save();
   if(_vaiPip.radius>0){ rr(bx,by,bw,bh,Math.min(_vaiPip.radius,bw/2,bh/2)); ctx.clip(); }
   ctx.globalAlpha=(_vaiPip.opacity!=null)?_vaiPip.opacity:1;
+  // video già trasparente: lo «sfondo» è un velo scuro messo dietro, forte quanto scelto
+  if(_vaiPip.alfa && _sf>0){ ctx.fillStyle='rgba('+(_vaiPip.fondo||_VAI_PIP_VELO).join(',')+','+_sf+')'; ctx.fillRect(bx,by,bw,bh); }
   try{ ctx.drawImage(fr.img, bx, by, bw, bh); }catch(e){}
   ctx.globalAlpha=1;
   ctx.restore();
@@ -42870,44 +43055,65 @@ function vaiOverlayUpdate(){
    ricrearlo (vedi il commento sopra la chiamata). Lo stesso nodo DOM viene
    riattaccato a frame a ogni ridisegno, dopo che frame.innerHTML lo stacca. */
 function _vaiPipSync(frame, v){
-  let el=window._vaiPipVideoEl;
-  if(!_vaiPip){
-    if(el){ try{ el.pause(); }catch(e){} try{ el.remove(); }catch(e){} window._vaiPipVideoEl=null; }
-    return;
+  for(let i=0;i<_vaiPips.length;i++){
+    try{ _vaiPipSyncUno(frame, v, _vaiPips[i], i); }catch(e){}
   }
+}
+/* [15 nov 2026] una sovrimpressione = un riquadro con dentro il suo <video> e un canvas:
+   il canvas si usa solo quando lo sfondo va tolto (vedi _vaiPipChiaveLoop). */
+function _vaiPipSyncUno(frame, v, s, i){
+  let el=s._el;
   const tGlob=(typeof _vaiTempoGlobale==='function')?_vaiTempoGlobale():null;
-  const show=(tGlob!=null) && (tGlob>=_vaiPip.t) && (tGlob<=_vaiPip.t+_vaiPip.durata);
+  const show=(tGlob!=null) && (tGlob>=s.t) && (tGlob<=s.t+s.durata);
   if(!show){
-    if(el){ try{ el.pause(); }catch(e){} try{ el.remove(); }catch(e){} }
+    if(el){ try{ el._vid.pause(); }catch(e){} try{ el.remove(); }catch(e){} }
     return;
   }
-  if(!el || el._pipUrl!==_vaiPip.url){
-    if(el){ try{ el.remove(); }catch(e){} }
-    el=document.createElement('video');
-    el.id='vai-ov-pip'; el.className='vai-ov-pip';
-    el.muted=true; el.playsInline=true; el.preload='auto'; el.src=_vaiPip.url;
-    el._pipUrl=_vaiPip.url;
-    el.onmousedown=function(e){ vaiPipDragStart(e); };
-    el.ontouchstart=function(e){ vaiPipDragStart(e); };
-    window._vaiPipVideoEl=el;
+  if(!el){
+    el=document.createElement('div');
+    el.className='vai-ov-pip';
+    const vid=document.createElement('video');
+    vid.muted=true; vid.playsInline=true; vid.preload='auto'; vid.src=s.url;
+    vid.style.cssText='display:block;width:100%;height:100%;object-fit:fill;pointer-events:none';
+    const cv=document.createElement('canvas');
+    cv.style.cssText='position:absolute;inset:0;width:100%;height:100%;display:none;pointer-events:none';
+    el.appendChild(vid); el.appendChild(cv);
+    el._vid=vid; el._cv=cv;
+    el.onmousedown=function(e){ _vaiPip=s; vaiPipDragStart(e); };
+    el.ontouchstart=function(e){ _vaiPip=s; vaiPipDragStart(e); };
+    el.ondblclick=function(){ _vaiPip=s; vaiPipModifica(); };
+    s._el=el;
   }
   if(el.parentNode!==frame) frame.appendChild(el);
+  const vid=el._vid, cv=el._cv;
+  const sf=_vaiPipSfondo(s);
+  const chiave=!s.alfa && sf<1;          // sfondo da togliere fotogramma per fotogramma
+  const senzaFondo=chiave || !!s.alfa;
+  const pieno=s.w>=0.98;
   el.style.position='absolute';
-  el.style.left=(_vaiPip.x*100)+'%';
-  el.style.top=(_vaiPip.y*100)+'%';
-  el.style.width=(_vaiPip.w*100)+'cqw';
-  el.style.borderRadius=(_vaiPip.radius||0)+'px';
-  el.style.opacity=(_vaiPip.opacity!=null)?_vaiPip.opacity:1;
-  el.style.boxShadow='0 6px 18px rgba(0,0,0,.45)';
-  el.style.zIndex='6';
+  el.style.left=(s.x*100)+'%';
+  el.style.top=(s.y*100)+'%';
+  el.style.width=(s.w*100)+'cqw';
+  el.style.aspectRatio=(s.naturalW||9)+' / '+(s.naturalH||16);
+  el.style.overflow='hidden';
+  el.style.borderRadius=(s.radius||0)+'px';
+  el.style.opacity=(s.opacity!=null)?s.opacity:1;
+  el.style.boxShadow=senzaFondo?'none':'0 6px 18px rgba(0,0,0,.45)';
+  el.style.background=s.alfa?('rgba('+(s.fondo||_VAI_PIP_VELO).join(',')+','+sf+')'):'transparent';
+  el.style.zIndex=String(6+i);
   el.style.cursor='grab';
   el.style.display='block';
-  const localElapsed=Math.max(0, tGlob-_vaiPip.t)+(_vaiPip.taglioInizio||0);
-  if(Math.abs((el.currentTime||0)-localElapsed)>0.25){
-    try{ el.currentTime=Math.min(localElapsed, Math.max(0,(_vaiPip.naturalDur||localElapsed)-0.05)); }catch(e){}
+  /* a tutto schermo non deve «rubare» i clic alle scritte che stanno sotto: si sposta dalla linea del tempo */
+  el.style.pointerEvents=pieno?'none':'auto';
+  cv.style.display=chiave?'block':'none';
+  vid.style.opacity=chiave?'0':'1';
+  const localElapsed=Math.max(0, tGlob-s.t)+(s.taglioInizio||0);
+  if(Math.abs((vid.currentTime||0)-localElapsed)>0.25){
+    try{ vid.currentTime=Math.min(localElapsed, Math.max(0,(s.naturalDur||localElapsed)-0.05)); }catch(e){}
   }
-  if(v.paused || v.ended){ try{ el.pause(); }catch(e){} }
-  else { el.play().catch(()=>{}); }
+  if(v.paused || v.ended){ try{ vid.pause(); }catch(e){} }
+  else { vid.play().catch(()=>{}); }
+  if(chiave) _vaiPipChiaveLoop();
 }
 window._vaiPipSync=_vaiPipSync;
 
@@ -43035,7 +43241,7 @@ function vaiPipDragStart(e){
     const r=frame.getBoundingClientRect();
     _vaiPip.x=Math.max(0, Math.min(0.9, ((p.x-r.left)/r.width)-_presaX));
     _vaiPip.y=Math.max(0, Math.min(0.9, ((p.y-r.top)/r.height)-_presaY));
-    const el=window._vaiPipVideoEl;
+    const el=_vaiPip._el;
     if(el){ el.style.left=(_vaiPip.x*100)+'%'; el.style.top=(_vaiPip.y*100)+'%'; }
   };
   const up=()=>{
@@ -44403,8 +44609,9 @@ window.vaiLogoBlockDrag=vaiLogoBlockDrag;
 /* Trascinamento del blocco "video in sovrimpressione" sulla timeline — stessa
    logica di vaiLogoBlockDrag, qui su _vaiPip.t/.durata (sempre un intervallo,
    mai "sempre visibile" come il logo: un secondo video deve avere una durata). */
-function vaiPipBlockDrag(e, modo){
+function vaiPipBlockDrag(e, modo, i){
   e.preventDefault(); e.stopPropagation();
+  if(typeof i==='number' && _vaiPips[i]) _vaiPip=_vaiPips[i];
   if(!_vaiPip) return;
   const timearea=document.getElementById('vai-tl-timearea'); if(!timearea) return;
   const durGlob=(_vaiClips && _vaiClips.length)?(_vaiDurataTot()||0):0;
@@ -44780,23 +44987,23 @@ function vaiTlRender(){
     //    corsia logo: appare solo se un video PiP è stato caricato, un blocco solo
     //    che si trascina e si accorcia come una scritta.
     let headPip='', lanePip='';
-    if(_vaiPip){
+    _vaiPips.forEach((_vaiPip, _pi)=>{   // [15 nov 2026] una riga per ogni sovrimpressione
       const left=(_vaiPip.t/durGlob)*100;
       const width=Math.max(2.5, (_vaiPip.durata/durGlob)*100);
-      headPip='<div class="vai-tl-hrow vai-tl-hrow-logo">'+
-        '<button class="vai-tl-hbtn vai-tl-hbtn-logo" onclick="event.stopPropagation();vaiPipModifica()" title="Modifica il video in sovrimpressione">'+
+      headPip+='<div class="vai-tl-hrow vai-tl-hrow-logo">'+
+        '<button class="vai-tl-hbtn vai-tl-hbtn-logo" onclick="event.stopPropagation();vaiPipModifica('+_pi+')" title="Modifica il video in sovrimpressione">'+
           '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="12" width="7" height="5" rx="1" fill="currentColor" stroke="none"/></svg></button>'+
-        '<button class="vai-tl-hbtn vai-tl-hbtn-del" onclick="event.stopPropagation();vaiPipRimuovi()" title="Rimuovi"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>'+
-        '<span class="vai-tl-hlbl">Video PiP</span></div>';
-      lanePip='<div class="vai-tl-lane vai-tl-lane-logo">'+
+        '<button class="vai-tl-hbtn vai-tl-hbtn-del" onclick="event.stopPropagation();vaiPipRimuovi('+_pi+')" title="Rimuovi"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg></button>'+
+        '<span class="vai-tl-hlbl">Sopra '+(_pi+1)+'</span></div>';
+      lanePip+='<div class="vai-tl-lane vai-tl-lane-logo">'+
         '<div class="vai-tl-block vai-tl-logoblock" style="left:'+left+'%;width:'+width+'%;background:linear-gradient(90deg,#2E9B8F,#3FBFAF)" '+
-          'onmousedown="vaiPipBlockDrag(event,\'move\')" ontouchstart="vaiPipBlockDrag(event,\'move\')" ondblclick="vaiPipModifica()" '+
+          'onmousedown="vaiPipBlockDrag(event,\'move\','+_pi+')" ontouchstart="vaiPipBlockDrag(event,\'move\','+_pi+')" ondblclick="vaiPipModifica('+_pi+')" '+
           'title="Video in sovrimpressione — trascina per spostarlo o tira i bordi per la durata">'+
-          '<span class="vai-tl-block-h vai-tl-block-hl" onmousedown="vaiPipBlockDrag(event,\'left\')" ontouchstart="vaiPipBlockDrag(event,\'left\')"></span>'+
+          '<span class="vai-tl-block-h vai-tl-block-hl" onmousedown="vaiPipBlockDrag(event,\'left\','+_pi+')" ontouchstart="vaiPipBlockDrag(event,\'left\','+_pi+')"></span>'+
           '<span class="vai-tl-block-txt">▣ '+_vaiEsc(_vaiPip.fileName||'Video PiP')+'</span>'+
-          '<span class="vai-tl-block-h vai-tl-block-hr" onmousedown="vaiPipBlockDrag(event,\'right\')" ontouchstart="vaiPipBlockDrag(event,\'right\')"></span>'+
+          '<span class="vai-tl-block-h vai-tl-block-hr" onmousedown="vaiPipBlockDrag(event,\'right\','+_pi+')" ontouchstart="vaiPipBlockDrag(event,\'right\','+_pi+')"></span>'+
         '</div></div>';
-    }
+    });
 
     // ── CORSIA PRIMA/DOPO — stessa idea delle due sopra.
     let headPrimaDopo='', lanePrimaDopo='';
@@ -45732,10 +45939,6 @@ function vaiInspClipFit(i,fit){
    mobile/ridimensionabile, gli ho solo aggiunto la trasparenza (s.opacity, vedi sopra). */
 async function vaiInspClipInSovrimpressione(i){
   const c=_vaiClips[i]; if(!c) return;
-  if(_vaiPip){
-    if(!confirm('C\'è già una sovraimpressione attiva ('+(_vaiPip.fileName||'video')+'). Per ora può essercene una sola: la metto in coda alla timeline e la sostituisco con questa. Continuare?')) return;
-    await vaiPipTornaClip();
-  }
   vaiSnapshot('sposta la scheda in sovraimpressione');
   const url=c.url;
   const tGlob=(typeof _vaiOffsetClip==='function')?_vaiOffsetClip(i):0;
@@ -45744,12 +45947,12 @@ async function vaiInspClipInSovrimpressione(i){
     // le scritte della clip attiva vivono in _vaiScritte finché non la si rilascia:
     // le rimetto al loro posto prima di toccare l'array, stessa cautela di vaiClipDel.
     if(_vaiClipAttiva>=0 && _vaiClipAttiva<_vaiClips.length){ _vaiClips[_vaiClipAttiva].scritte=_vaiScritte; }
-    _vaiPip={
+    _vaiPipAggiungi({
       url, fileName:(c.nome||'Scheda')+'.'+((c.file&&c.file.type&&c.file.type.indexOf('mp4')>=0)?'mp4':'webm'),
       naturalW:naturalW||9, naturalH:naturalH||16, naturalDur:naturalDur||durata||3,
       taglioInizio:c.taglioInizio||0, t:Math.round(tGlob*10)/10, durata:Math.max(0.5,durata||3),
       x:0.26, y:0.1, w:0.46, radius:14, opacity:0.95, _daCard:true
-    };
+    });
     _vaiClips.splice(i,1);
     if(_vaiClipAttiva>=_vaiClips.length) _vaiClipAttiva=_vaiClips.length-1;
     else if(i<_vaiClipAttiva) _vaiClipAttiva--;
@@ -50547,10 +50750,13 @@ async function vaiMontaTutto(fmtIdxOverride){
     // VIDEO IN SOVRIMPRESSIONE: stessa ragione delle clip invertite qui sopra — catturo
     // SOLO il tratto che serve (da taglioInizio per durata secondi) prima che la
     // registrazione parta, poi in _vaiDrawPip leggo solo dalla memoria.
-    if(_vaiPip && _vaiPip.url && !_vaiPip._frameCache){
-      setS('Preparo il video in sovrimpressione…');
-      try{ _vaiPip._frameCache = await _vaiCatturaFramePip(_vaiPip.url, _vaiPip.taglioInizio||0, _vaiPip.durata||3); }
+    for(let _pi=0; _pi<_vaiPips.length; _pi++){
+      const _vaiPip=_vaiPips[_pi];
+      if(!_vaiPip.url || _vaiPip._frameCache) continue;
+      setS('Preparo i video in sovrimpressione ('+(_pi+1)+'/'+_vaiPips.length+')…');
+      try{ _vaiPip._frameCache = await _vaiCatturaFramePip(_vaiPip.url, _vaiPip.taglioInizio||0, _vaiPip.durata||3, _vaiPip); }
       catch(e){ _vaiPip._frameCache = { frames:[], durata:0 }; }
+      try{ _vaiPipPreparaChiave(_vaiPip); }catch(e){}
     }
 
     // PRIMA/DOPO: stessa tecnica — video pre-catturato prima della registrazione,
@@ -56670,7 +56876,7 @@ async function pubConfrontaAI(){
       + tile('zona','Layout zona','città e punti di forza','vaiLayoutZonaPanel()',"Layout pronto: città, punti di forza della zona (mare, scuole, ospedale…) e chiusura fissa con effetti speciali")
       + tile('grafica','Grafiche','badge, inviti, contatti','vaiGraficaPanel()',"Badge, inviti all'azione, contatti e decorazioni")
       + tile('logo','Logo','posizione e durata','vaiLogoOpen()',"Carica e posiziona il logo dell'agenzia")
-      + tile('pip','Video sovrapposto','riquadro PiP','vaiPipApri()',"Un secondo video piccolo sopra il principale, come il tuo volto mentre parli — qui finisce anche una Scheda messa in sovraimpressione dalle sue proprietà")
+      + tile('pip','Video sovrapposto','anche senza sfondo','vaiPipApri()',"Un altro video sopra il principale, su una riga sua: il tuo volto mentre parli, oppure un'animazione a cui togli lo sfondo. Ne puoi mettere più d'uno; qui finisce anche una Scheda messa in sovraimpressione dalle sue proprietà")
       + tile('primadopo','Prima / Dopo','rivela una ristrutturazione','vaiPrimaDopoApri()',"Mostra un ambiente prima e dopo: a tendina o a schermo diviso")
       + tile('qrcode','QR code','link all\'annuncio','vaiQrCodeApri()',"Un QR che porta all'annuncio o al modulo contatti, utile anche fuori dai social")
       + '</div><div class="vcc-h">Inserisci</div>';
@@ -58105,6 +58311,505 @@ async function pubConfrontaAI(){
     window._vaiCapcutLayout._lib=_cl2._lib;
   }
   try{ aggancia(); }catch(e){}
+})();
+/* ═══════════ VIDEO SOCIAL: «Animazioni» con la Fabbrica grafiche (15 nov 2026) ═══════════
+   Un riquadro nella linguetta Elementi. Quattro animazioni «a linee» coi colori del marchio:
+   Territorio (dall'Italia alla regione al comune), Planimetria (la pianta vera che si disegna, con le
+   stanze che si accendono), Rete MLS, Ambiente (una stanza d'esempio che prende forma).
+   Il video lo prepara la Fabbrica grafiche sul PC di Enzo (porta 3100), come «Mappa zona».
+   Si sceglie se farla «da mettere sopra il filmato» (sfondo trasparente: entra come sovrimpressione
+   a tutto schermo, vedi _vaiPips) oppure «clip a sé» (sfondo pieno: entra nella linea del tempo). */
+(function(){
+  if(window._anAnimazioni) return;
+  window._anAnimazioni = true;
+
+  var TIPI = [
+    { id:'territorio',  nome:'Territorio',  sub:"dall'Italia al comune", ic:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/>' },
+    { id:'planimetria', nome:'Planimetria', sub:'la pianta si disegna',  ic:'<rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 12h8M11 3v13M15 21v-6h6"/>' },
+    { id:'retemls',     nome:'Rete MLS',    sub:'agenti collegati',      ic:'<circle cx="12" cy="12" r="3"/><circle cx="4.5" cy="5.5" r="2"/><circle cx="19.5" cy="5.5" r="2"/><circle cx="4.5" cy="18.5" r="2"/><circle cx="19.5" cy="18.5" r="2"/><path d="M9.8 9.9L6 7M14.2 9.9L18 7M9.8 14.1L6 17M14.2 14.1L18 17"/>' },
+    { id:'ambiente',    nome:'Ambiente',    sub:'una stanza prende forma', ic:'<path d="M3 4h18v16h-7v-3h-4v3H3z"/><rect x="6" y="7" width="4" height="7"/>' }
+  ];
+  var IC_ANIM = '<path d="M12 3l2.2 5.6L20 11l-5.8 2.4L12 19l-2.2-5.6L4 11l5.8-2.4z"/><path d="M19 3v4M17 5h4"/>';
+  var IC_X = '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>';
+  var IC_OK = '<polyline points="20 6 9 17 4 12"/>';
+  var IC_CEST = '<polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>';
+  var MAX_STANZE = 6;
+
+  var S = { tipo:'territorio', uso:'sopra', srv:null, vecchia:false, job:null, risultato:null, timer:null, ctrl:null,
+            comune:'', pos:null, ris:[], firma:'FRIMM Capital Casa Paestum',
+            pianta:null, stanze:[], ambiente:'soggiorno' };
+
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function $(id){ return document.getElementById(id); }
+  function ic(p,w){ return '<svg width="'+(w||16)+'" height="'+(w||16)+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>'; }
+  function avviso(m,t){ try{ toast(m,t||''); }catch(e){} }
+  function chiama(p,o){ return window._fgApi.chiama(p,o); }
+  function json(r){ return window._fgApi.json(r); }
+
+  function css(){
+    if($('an-css')) return;
+    var st=document.createElement('style'); st.id='an-css';
+    st.textContent =
+      '.an-dlg{position:fixed;inset:0;z-index:9500;background:rgba(6,10,16,.72);display:none;align-items:center;justify-content:center;padding:20px}'
+     +'.an-dlg.on{display:flex}'
+     +'.an-bx{background:#11161C;border:1px solid #2A3542;border-radius:14px;width:min(600px,100%);max-height:92vh;overflow:auto;color:#E8EDF2;font-family:inherit}'
+     +'.an-hd{display:flex;align-items:flex-start;gap:10px;padding:16px 16px 10px}'
+     +'.an-hd>div{flex:1;min-width:0}.an-hd b{display:block;font-size:1rem;color:#fff}'
+     +'.an-hd small{display:block;color:#8796A6;font-size:.76rem;margin-top:3px}'
+     +'.an-x{border:0;background:transparent;color:#8796A6;cursor:pointer;padding:4px;border-radius:6px}.an-x:hover{background:#1E2732;color:#fff}'
+     +'.an-srv{margin:0 16px 10px;padding:9px 11px;border-radius:8px;font-size:.78rem;line-height:1.4;border:1px solid #2A3542;background:#141A21;color:#C7D0DB}'
+     +'.an-srv.ok{border-color:#1F5C3F;background:#10231A;color:#9BE2BC}'
+     +'.an-srv.no{border-color:#6B2A1A;background:#251512;color:#F3B9A6}'
+     +'.an-srv button{margin-top:7px}'
+     +'.an-tipi{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 16px 12px}'
+     +'.an-tipo{display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 6px;border-radius:10px;border:1px solid #2A3542;background:#141A21;color:#C7D0DB;cursor:pointer;font:700 .78rem inherit;text-align:center}'
+     +'.an-tipo small{font-weight:500;font-size:.66rem;color:#8796A6;line-height:1.2}'
+     +'.an-tipo:hover{background:#1E2732;color:#fff}'
+     +'.an-tipo.on{border-color:var(--brand,#EA580C);background:rgba(234,88,12,.14);color:#fff}'
+     +'.an-form{padding:0 16px 6px}'
+     +'.an-c{margin-bottom:12px}'
+     +'.an-c>label,.an-et{display:block;font-size:.7rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#6B7785;margin-bottom:5px}'
+     +'.an-in{width:100%;box-sizing:border-box;height:34px;padding:0 10px;border-radius:7px;border:1px solid #2A3542;background:#0E1217;color:#E8EDF2;font:500 .84rem inherit}'
+     +'.an-in:focus{outline:none;border-color:var(--brand,#EA580C)}'
+     +'.an-cerca{display:flex;gap:6px}'
+     +'.an-b{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:34px;padding:0 14px;border-radius:7px;border:1px solid #2A3542;background:#141A21;color:#C7D0DB;font:700 .78rem inherit;cursor:pointer;white-space:nowrap}'
+     +'.an-b:hover{background:#1E2732;color:#fff}.an-b:disabled{opacity:.45;cursor:default}'
+     +'.an-b.pieno{background:var(--brand,#EA580C);border-color:var(--brand,#EA580C);color:#fff}'
+     +'.an-lista{margin-top:6px;display:grid;gap:4px}'
+     +'.an-opz{text-align:left;padding:7px 10px;border-radius:7px;border:1px solid #232D38;background:#1A212A;color:#DCE3EA;font:500 .76rem/1.35 inherit;cursor:pointer}'
+     +'.an-opz:hover{border-color:var(--brand,#EA580C)}'
+     +'.an-sc{margin-top:6px;display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;border:1px solid #1F5C3F;background:#10231A;color:#9BE2BC;font-size:.76rem;line-height:1.35}'
+     +'.an-sc span{flex:1;min-width:0}.an-sc button{border:0;background:transparent;color:#9BE2BC;text-decoration:underline;cursor:pointer;font:600 .74rem inherit}'
+     +'.an-nota{font-size:.72rem;color:#8796A6;line-height:1.4;margin-top:4px}'
+     +'.an-uso{display:grid;grid-template-columns:1fr 1fr;gap:8px}'
+     +'.an-uso button{text-align:left;padding:9px 11px;border-radius:9px;border:1px solid #2A3542;background:#141A21;color:#C7D0DB;cursor:pointer;font:700 .8rem inherit}'
+     +'.an-uso button small{display:block;font-weight:500;font-size:.7rem;color:#8796A6;margin-top:3px;line-height:1.3}'
+     +'.an-uso button.on{border-color:var(--brand,#EA580C);background:rgba(234,88,12,.14);color:#fff}'
+     +'.an-pianta{position:relative;border:1px solid #2A3542;border-radius:10px;background:#1A120D;overflow:hidden;margin-top:8px;text-align:center}'
+     +'.an-pianta canvas{display:block;max-width:100%;max-height:44vh;margin:0 auto;cursor:crosshair}'
+     +'.an-st{display:flex;align-items:center;gap:6px;margin-top:6px}'
+     +'.an-st i{width:14px;height:14px;border-radius:4px;background:#F97316;flex:none}'
+     +'.an-st .an-in{height:30px}'
+     +'.an-st button{border:0;background:transparent;color:#8796A6;cursor:pointer;padding:4px;border-radius:6px}.an-st button:hover{color:#F3B9A6;background:#251512}'
+     +'.an-pie{display:flex;gap:8px;align-items:center;padding:6px 16px 16px}'
+     +'.an-pie .an-nota{flex:1;margin:0}'
+     +'.an-prog{margin:0 16px 14px}.an-prog .t{display:flex;justify-content:space-between;font-size:.78rem;color:#C7D0DB;margin-bottom:6px}'
+     +'.an-barra{height:8px;border-radius:99px;background:#1E2732;overflow:hidden}.an-barra i{display:block;height:100%;background:var(--brand,#EA580C);border-radius:99px;transition:width .4s}'
+     +'.an-err{margin:0 16px 14px;padding:9px 11px;border-radius:8px;border:1px solid #6B2A1A;background:#251512;color:#F3B9A6;font-size:.78rem;line-height:1.4}'
+     +'.an-res{padding:0 16px 16px}'
+     +'.an-res video{width:100%;max-height:46vh;border-radius:10px;display:block;object-fit:contain;background:#2B3A4A linear-gradient(135deg,#5B7C99,#2B3A4A 55%,#8A6A4A)}'
+     +'.an-res .az{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}.an-res .az .an-b{flex:1}'
+     +'@media(max-width:560px){.an-tipi{grid-template-columns:1fr 1fr}.an-uso{grid-template-columns:1fr}}';
+    document.head.appendChild(st);
+  }
+
+  function scheletro(){
+    var d=$('an-dlg'); if(d) return d;
+    d=document.createElement('div'); d.id='an-dlg'; d.className='an-dlg';
+    d.innerHTML='<div class="an-bx" role="dialog" aria-label="Animazioni">'
+      +'<div class="an-hd"><div><b>Animazioni</b><small>Disegni animati coi colori del marchio, da mettere sopra il filmato o come clip a sé</small></div>'
+      +'<button type="button" class="an-x" data-an="chiudi" title="Chiudi">'+ic(IC_X,18)+'</button></div>'
+      +'<div class="an-srv" id="an-srv">Controllo la Fabbrica grafiche…</div>'
+      +'<div id="an-corpo">'
+        +'<div class="an-tipi" id="an-tipi"></div>'
+        +'<div class="an-form" id="an-form"></div>'
+        +'<div class="an-form"><div class="an-c"><span class="an-et">Come la usi</span><div class="an-uso" id="an-uso"></div></div></div>'
+      +'</div>'
+      +'<div id="an-stato"></div>'
+      +'<div class="an-pie" id="an-pie"><span class="an-nota" id="an-tempo"></span><button type="button" class="an-b pieno" id="an-genera" data-an="genera">'+ic(IC_ANIM,15)+'Crea l\'animazione</button></div>'
+      +'<div class="an-res" id="an-res" style="display:none"></div>'
+      +'</div>';
+    d.addEventListener('click',function(e){
+      if(e.target===d){ chiudi(); return; }
+      var b=e.target.closest('[data-an]'); if(!b) return;
+      var a=b.getAttribute('data-an');
+      if(a==='chiudi') chiudi();
+      else if(a==='tipo'){ S.tipo=b.getAttribute('data-id'); rendiForm(); }
+      else if(a==='uso'){ S.uso=b.getAttribute('data-id'); rendiUso(); aggiorna(); }
+      else if(a==='cerca') cerca();
+      else if(a==='scegli'){ var x=S.ris[+b.getAttribute('data-i')]; if(x){ S.pos={lat:x.lat,lng:x.lng,nome:x.nome}; rendiPos(); aggiorna(); } }
+      else if(a==='cambia'){ S.pos=null; S.ris=[]; rendiPos(); aggiorna(); }
+      else if(a==='carica'){ var f=$('an-file'); if(f){ f.value=''; f.click(); } }
+      else if(a==='via-stanza'){ S.stanze.splice(+b.getAttribute('data-i'),1); disegnaPianta(); rendiStanze(); }
+      else if(a==='genera') genera();
+      else if(a==='riprova') controllaServer();
+      else if(a==='ins') inserisci();
+      else if(a==='altra'){ S.risultato=null; S.job=null; mostraForm(); }
+    });
+    d.addEventListener('keydown',function(e){
+      if(e.key==='Enter' && e.target.id==='an-comune'){ e.preventDefault(); cerca(); }
+      else if(e.key==='Escape'){ e.stopPropagation(); chiudi(); }
+    });
+    d.addEventListener('input',function(e){
+      var t=e.target;
+      if(t.id==='an-firma') S.firma=t.value;
+      else if(t.id==='an-comune') S.comune=t.value;
+      else if(t.hasAttribute && t.hasAttribute('data-stanza')){ var s=S.stanze[+t.getAttribute('data-stanza')]; if(s) s.nome=t.value; }
+      aggiorna();
+    });
+    d.addEventListener('change',function(e){
+      if(e.target.id==='an-file'){ var f=e.target.files && e.target.files[0]; if(f) caricaPianta(f); }
+      if(e.target.id==='an-ambiente') S.ambiente=e.target.value;
+      aggiorna();
+    });
+    document.body.appendChild(d);
+    return d;
+  }
+
+  function comuneDelProgetto(){
+    try{ if(typeof vaiImmobileJSON==='function' && typeof _vaiImm!=='undefined' && _vaiImm){ var j=vaiImmobileJSON(_vaiImm); if(j && j.comune) return j.comune; } }catch(e){}
+    return '';
+  }
+
+  window.anApri = function(){
+    css(); var d=scheletro();
+    if(!S.comune) S.comune=comuneDelProgetto();
+    d.classList.add('on');
+    if(S.risultato) mostraRisultato();
+    else if(!(S.job && S.job.stato!=='errore' && S.job.stato!=='finito')){ mostraForm(); rendiForm(); }
+    rendiUso(); aggiorna(); controllaServer();
+  };
+  function chiudi(){ var d=$('an-dlg'); if(d) d.classList.remove('on'); clearTimeout(S.timer); }
+
+  function controllaServer(){
+    var el=$('an-srv'); if(!el) return;
+    clearTimeout(S.timer);
+    if(S.ctrl){ try{ S.ctrl.abort(); }catch(e){} }
+    var ctrl=S.ctrl=new AbortController(); var tm=setTimeout(function(){ ctrl.abort(); },2500);
+    el.className='an-srv'; el.textContent='Controllo la Fabbrica grafiche…';
+    chiama('/api/health',{signal:ctrl.signal}).then(json).then(function(j){
+      clearTimeout(tm);
+      if(!(j && j.ok)) throw new Error('risposta strana');
+      S.vecchia = !(j.grafiche && j.grafiche.indexOf('territorio')>=0);
+      S.srv = !S.vecchia;
+      if(S.vecchia){
+        el.className='an-srv no';
+        el.innerHTML='La <b>Fabbrica grafiche</b> è accesa, ma è partita prima dell\'aggiornamento e non conosce ancora le animazioni. Chiudi la finestra nera e riaprila con doppio clic su <b>«Avvia Fabbrica Grafiche»</b>.<br><button type="button" class="an-b" data-an="riprova">Riprova</button>';
+      } else {
+        el.className='an-srv ok'; el.innerHTML=ic(IC_OK,14)+' Fabbrica grafiche accesa: puoi creare.';
+      }
+      aggiorna();
+    }).catch(function(){
+      clearTimeout(tm); S.srv=false;
+      el.className='an-srv no';
+      el.innerHTML='La <b>Fabbrica grafiche</b> sul tuo PC non è accesa. Apri la cartella <b>Documenti › GraficheImmobili</b> e fai doppio clic su <b>«Avvia Fabbrica Grafiche»</b>. Lascia aperta la finestra nera che compare. '
+        +'Se il browser chiede il permesso di collegarsi al computer locale, premi <b>Consenti</b>.<br><button type="button" class="an-b" data-an="riprova">Riprova</button>';
+      aggiorna();
+      if($('an-dlg') && $('an-dlg').classList.contains('on')) S.timer=setTimeout(controllaServer,5000);
+    });
+  }
+
+  /* ───── il modulo, diverso per ogni animazione ───── */
+  function rendiForm(){
+    var t=$('an-tipi'); if(!t) return;
+    t.innerHTML=TIPI.map(function(x){ return '<button type="button" class="an-tipo'+(x.id===S.tipo?' on':'')+'" data-an="tipo" data-id="'+x.id+'">'+ic(x.ic,22)+x.nome+'<small>'+x.sub+'</small></button>'; }).join('');
+    var h='';
+    if(S.tipo==='territorio'){
+      h+='<div class="an-c"><label for="an-comune">Comune</label><div class="an-cerca"><input class="an-in" id="an-comune" placeholder="es. Agropoli" autocomplete="off" maxlength="60" spellcheck="false" value="'+esc(S.comune)+'"><button type="button" class="an-b" data-an="cerca">Cerca</button></div><div id="an-pos"></div>'
+        +'<div class="an-nota">La mappa parte dall\'Italia, stringe sulla regione e mette il segnaposto sul comune. Mostra il comune, non l\'indirizzo.</div></div>';
+    } else if(S.tipo==='planimetria'){
+      h+='<div class="an-c"><span class="an-et">Planimetria dell\'immobile</span>'
+        +'<input type="file" id="an-file" accept="image/png,image/jpeg,image/webp" style="display:none">'
+        +'<button type="button" class="an-b" data-an="carica">'+(S.pianta?'Cambia immagine':'Carica l\'immagine della planimetria')+'</button>'
+        +'<div class="an-nota">Un\'immagine (JPG o PNG) con le linee scure su fondo chiaro. Se hai solo il PDF, fai uno screenshot della pianta.</div>'
+        +'<div id="an-pianta-box"></div><div id="an-stanze"></div></div>'
+        +'<div class="an-c"><label for="an-sotto">Riga sotto il titolo (facoltativa)</label><input class="an-in" id="an-sotto" placeholder="es. Piano primo" maxlength="60" autocomplete="off"></div>';
+    } else if(S.tipo==='retemls'){
+      h+='<div class="an-c"><label for="an-mls1">Scritta grande</label><input class="an-in" id="an-mls1" maxlength="40" value="Collaborazione MLS" autocomplete="off"></div>'
+        +'<div class="an-c"><label for="an-mls2">Riga sotto</label><input class="an-in" id="an-mls2" maxlength="70" value="Agenti collegati. Opportunità condivise." autocomplete="off"></div>'
+        +'<div class="an-c"><label for="an-mls3">Riga finale</label><input class="an-in" id="an-mls3" maxlength="60" value="La forza della rete FRIMM" autocomplete="off"></div>';
+    } else {
+      h+='<div class="an-c" style="max-width:260px"><label for="an-ambiente">Ambiente</label><select class="an-in" id="an-ambiente">'
+        +[['soggiorno','Soggiorno'],['camera','Camera da letto'],['cucina','Cucina']].map(function(o){ return '<option value="'+o[0]+'"'+(S.ambiente===o[0]?' selected':'')+'>'+o[1]+'</option>'; }).join('')+'</select></div>'
+        +'<div class="an-nota" style="margin-bottom:12px">È un disegno d\'esempio, non la pianta vera: in basso c\'è scritto «Esempio illustrativo · ambiente inventato».</div>';
+    }
+    if(S.tipo!=='ambiente') h+='<div class="an-c"><label for="an-firma">Scritta piccola in alto</label><input class="an-in" id="an-firma" maxlength="60" autocomplete="off" value="'+esc(S.firma)+'"></div>';
+    $('an-form').innerHTML=h;
+    if(S.tipo==='territorio') rendiPos();
+    if(S.tipo==='planimetria'){ rendiPiantaBox(); rendiStanze(); }
+    var tm=$('an-tempo'); if(tm) tm.textContent = 'Ci vuole da mezzo minuto a due minuti.';
+    aggiorna();
+  }
+  function rendiUso(){
+    var u=$('an-uso'); if(!u) return;
+    u.innerHTML='<button type="button" data-an="uso" data-id="sopra" class="'+(S.uso==='sopra'?'on':'')+'">Sopra il filmato<small>sfondo trasparente: il video continua a vedersi sotto</small></button>'
+      +'<button type="button" data-an="uso" data-id="clip" class="'+(S.uso==='clip'?'on':'')+'">Clip a sé<small>sfondo pieno del marchio, entra nella linea del tempo</small></button>';
+  }
+
+  /* ───── Territorio: cerco il comune ───── */
+  function cerca(){
+    var q=(S.comune||'').trim(), box=$('an-pos'); if(!box) return;
+    if(q.length<3){ box.innerHTML='<div class="an-nota">Scrivi almeno 3 lettere.</div>'; return; }
+    if(!S.srv){ box.innerHTML='<div class="an-nota">Prima accendi la Fabbrica grafiche (vedi sopra): la ricerca passa da lì.</div>'; return; }
+    box.innerHTML='<div class="an-nota">Cerco…</div>';
+    chiama('/api/cerca?q='+encodeURIComponent(q)).then(json).then(function(l){
+      if(!Array.isArray(l)) throw new Error('ricerca');
+      S.ris=l;
+      if(!l.length){ box.innerHTML='<div class="an-nota">Non trovo niente: controlla il nome del comune.</div>'; return; }
+      box.innerHTML='<div class="an-lista">'+l.map(function(x,i){ return '<button type="button" class="an-opz" data-an="scegli" data-i="'+i+'" title="'+esc(x.nome)+'">'+esc(x.nome.split(',').slice(0,4).join(','))+'</button>'; }).join('')+'</div>'
+        +'<div class="an-nota">Scegli quello giusto.</div>';
+    }).catch(function(){ box.innerHTML='<div class="an-nota">La ricerca non ha risposto. Riprova fra un momento.</div>'; });
+  }
+  function rendiPos(){
+    var box=$('an-pos'); if(!box) return;
+    box.innerHTML = S.pos ? '<div class="an-sc">'+ic(IC_OK,14)+'<span>'+esc(S.pos.nome.split(',').slice(0,4).join(','))+'</span><button type="button" data-an="cambia">Cambia</button></div>' : '';
+  }
+
+  /* ───── Planimetria: dall'immagine alle linee bianche, e le stanze con un clic ─────
+     S.pianta = { w, h, lum (Uint8Array, 0 = linea scura … 255 = carta), soglia, muri (Uint8Array 0/1) }
+     S.stanze = [{ nome, zona (Uint8Array 0/1) }] */
+  function caricaPianta(file){
+    var img=new Image(), url=URL.createObjectURL(file);
+    img.onload=function(){
+      try{
+        var k=Math.min(1, 1100/Math.max(img.naturalWidth,img.naturalHeight));
+        var w=Math.max(1,Math.round(img.naturalWidth*k)), h=Math.max(1,Math.round(img.naturalHeight*k));
+        var cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+        var c=cv.getContext('2d'); c.fillStyle='#fff'; c.fillRect(0,0,w,h); c.drawImage(img,0,0,w,h);
+        var d=c.getImageData(0,0,w,h).data, lum=new Uint8Array(w*h), somma=0, i, n=w*h;
+        for(i=0;i<n;i++){ lum[i]=Math.round(d[i*4]*0.299+d[i*4+1]*0.587+d[i*4+2]*0.114); somma+=lum[i]; }
+        if(somma/n<110){ for(i=0;i<n;i++) lum[i]=255-lum[i]; }   /* disegno chiaro su fondo scuro: lo rovescio */
+        var soglia=sogliaOtsu(lum);
+        /* ritaglio attorno al disegno, con un po' di margine */
+        var x0=w,x1=-1,y0=h,y1=-1,x,y;
+        for(y=0;y<h;y++) for(x=0;x<w;x++) if(lum[y*w+x]<soglia){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+        if(x1<0) throw new Error('vuota');
+        var m=14; x0=Math.max(0,x0-m); y0=Math.max(0,y0-m); x1=Math.min(w-1,x1+m); y1=Math.min(h-1,y1+m);
+        var W=x1-x0+1, H=y1-y0+1, L=new Uint8Array(W*H), muri=new Uint8Array(W*H);
+        for(y=0;y<H;y++) for(x=0;x<W;x++){ var v=lum[(y+y0)*w+(x+x0)]; L[y*W+x]=v; muri[y*W+x]=v<soglia?1:0; }
+        S.pianta={ w:W, h:H, lum:L, soglia:soglia, muri:muri };
+        S.stanze=[];
+        rendiForm();
+      }catch(e){ S.pianta=null; avviso('Non riesco a leggere il disegno in questa immagine: serve una pianta con linee scure su fondo chiaro','error'); rendiForm(); }
+      URL.revokeObjectURL(url);
+    };
+    img.onerror=function(){ URL.revokeObjectURL(url); avviso('Non riesco ad aprire questa immagine','error'); };
+    img.src=url;
+  }
+  function sogliaOtsu(lum){
+    var ist=new Array(256).fill(0), i, n=lum.length;
+    for(i=0;i<n;i++) ist[lum[i]]++;
+    var tot=0; for(i=0;i<256;i++) tot+=i*ist[i];
+    var sB=0, wB=0, max=0, t=128;
+    for(i=0;i<256;i++){
+      wB+=ist[i]; if(!wB) continue;
+      var wF=n-wB; if(!wF) break;
+      sB+=i*ist[i];
+      var mB=sB/wB, mF=(tot-sB)/wF, tra=wB*wF*(mB-mF)*(mB-mF);
+      if(tra>max){ max=tra; t=i; }
+    }
+    return Math.max(60, Math.min(215, t+1));
+  }
+  /* allarga di r punti le zone a 1 (serve a chiudere le porte aperte prima di «riempire» una stanza) */
+  function allarga(src,W,H,r){
+    if(r<=0) return src;
+    var tmp=new Uint8Array(W*H), out=new Uint8Array(W*H), x,y,k;
+    for(y=0;y<H;y++) for(x=0;x<W;x++){ var v=0; for(k=Math.max(0,x-r);k<=Math.min(W-1,x+r);k++) if(src[y*W+k]){ v=1; break; } tmp[y*W+x]=v; }
+    for(y=0;y<H;y++) for(x=0;x<W;x++){ var u=0; for(k=Math.max(0,y-r);k<=Math.min(H-1,y+r);k++) if(tmp[k*W+x]){ u=1; break; } out[y*W+x]=u; }
+    return out;
+  }
+  /* la stanza attorno al punto cliccato: riempio finché trovo muri; se «esce» dalla casa provo a chiudere porte più larghe */
+  function trovaStanza(px,py){
+    var p=S.pianta, W=p.w, H=p.h, raggi=[1,3,5,8,12], q;
+    for(q=0;q<raggi.length;q++){
+      var r=raggi[q], muri=allarga(p.muri,W,H,r);
+      if(muri[py*W+px]) continue;
+      var zona=new Uint8Array(W*H), pila=[py*W+px], area=0, fuori=false;
+      zona[py*W+px]=1;
+      while(pila.length){
+        var i=pila.pop(), x=i%W, y=(i-x)/W; area++;
+        if(x===0||y===0||x===W-1||y===H-1){ fuori=true; break; }
+        if(!zona[i-1] && !muri[i-1]){ zona[i-1]=1; pila.push(i-1); }
+        if(!zona[i+1] && !muri[i+1]){ zona[i+1]=1; pila.push(i+1); }
+        if(!zona[i-W] && !muri[i-W]){ zona[i-W]=1; pila.push(i-W); }
+        if(!zona[i+W] && !muri[i+W]){ zona[i+W]=1; pila.push(i+W); }
+      }
+      if(fuori || area>W*H*0.6 || area<60) continue;
+      return allarga(zona,W,H,r);   /* la riporto fino ai muri veri */
+    }
+    return null;
+  }
+  function rendiPiantaBox(){
+    var box=$('an-pianta-box'); if(!box) return;
+    if(!S.pianta){ box.innerHTML=''; return; }
+    box.innerHTML='<div class="an-pianta"><canvas id="an-pianta-cv" width="'+S.pianta.w+'" height="'+S.pianta.h+'"></canvas></div>'
+      +'<div class="an-nota">Clicca <b>dentro</b> le stanze che vuoi far accendere (al massimo '+MAX_STANZE+'), nell\'ordine in cui devono comparire. Poi scrivi il nome di ognuna.</div>';
+    var cv=$('an-pianta-cv');
+    cv.addEventListener('click',function(e){
+      var r=cv.getBoundingClientRect();
+      var x=Math.floor((e.clientX-r.left)/r.width*S.pianta.w), y=Math.floor((e.clientY-r.top)/r.height*S.pianta.h);
+      if(x<0||y<0||x>=S.pianta.w||y>=S.pianta.h) return;
+      for(var i=0;i<S.stanze.length;i++){ if(S.stanze[i].zona[y*S.pianta.w+x]){ avviso('Questa stanza l\'hai già scelta',''); return; } }
+      if(S.stanze.length>=MAX_STANZE){ avviso('Al massimo '+MAX_STANZE+' stanze','error'); return; }
+      var zona=trovaStanza(x,y);
+      if(!zona){ avviso('Qui la stanza non è chiusa dalle pareti: prova a cliccare più al centro, o in un\'altra stanza','error'); return; }
+      S.stanze.push({ nome:'', zona:zona });
+      disegnaPianta(); rendiStanze();
+      var ult=document.querySelector('[data-stanza="'+(S.stanze.length-1)+'"]'); if(ult) ult.focus();
+    });
+    disegnaPianta();
+  }
+  function disegnaPianta(){
+    var cv=$('an-pianta-cv'), p=S.pianta; if(!cv||!p) return;
+    var c=cv.getContext('2d'), im=c.createImageData(p.w,p.h), d=im.data, n=p.w*p.h, i, j;
+    for(i=0;i<n;i++){
+      var a=alfaLinea(p.lum[i],p.soglia), su=false;
+      for(j=0;j<S.stanze.length;j++) if(S.stanze[j].zona[i]){ su=true; break; }
+      var r=su?150:26, g=su?70:18, b=su?16:13;
+      d[i*4]=r+(255-r)*a; d[i*4+1]=g+(255-g)*a; d[i*4+2]=b+(255-b)*a; d[i*4+3]=255;
+    }
+    c.putImageData(im,0,0);
+  }
+  function alfaLinea(l,soglia){ var a=(soglia-l)/36+0.5; return a<0?0:(a>1?1:a); }
+  function rendiStanze(){
+    var box=$('an-stanze'); if(!box) return;
+    box.innerHTML=S.stanze.map(function(s,i){
+      return '<div class="an-st"><i></i><input class="an-in" data-stanza="'+i+'" maxlength="30" placeholder="Nome della stanza '+(i+1)+' (es. Soggiorno)" autocomplete="off" value="'+esc(s.nome)+'"><button type="button" data-an="via-stanza" data-i="'+i+'" title="Togli questa stanza">'+ic(IC_CEST,15)+'</button></div>';
+    }).join('');
+    aggiorna();
+  }
+  /* le immagini da mandare alla Fabbrica: linee bianche su trasparente, una macchia arancio per stanza */
+  function immaginiPianta(){
+    var p=S.pianta, n=p.w*p.h, i;
+    var cv=document.createElement('canvas'); cv.width=p.w; cv.height=p.h;
+    var c=cv.getContext('2d'), im=c.createImageData(p.w,p.h), d=im.data;
+    for(i=0;i<n;i++){ d[i*4]=255; d[i*4+1]=255; d[i*4+2]=255; d[i*4+3]=Math.round(255*alfaLinea(p.lum[i],p.soglia)); }
+    c.putImageData(im,0,0);
+    var linee=cv.toDataURL('image/png');
+    var stanze=S.stanze.map(function(s){
+      var m=c.createImageData(p.w,p.h), e=m.data;
+      for(i=0;i<n;i++){ if(s.zona[i]){ e[i*4]=249; e[i*4+1]=115; e[i*4+2]=22; e[i*4+3]=255; } }
+      c.clearRect(0,0,p.w,p.h); c.putImageData(m,0,0);
+      return { nome:s.nome.trim(), maschera:cv.toDataURL('image/png') };
+    });
+    return { linee:linee, stanze:stanze, larghezza:p.w, altezza:p.h };
+  }
+
+  /* ───── i dati da mandare, o null se manca qualcosa ───── */
+  function val(id){ var e=$(id); return e ? (e.value||'').trim() : ''; }
+  function manca(){
+    if(S.tipo==='territorio'){ if(!S.pos) return 'Cerca il comune e scegli quello giusto.'; }
+    if(S.tipo==='planimetria'){
+      if(!S.pianta) return 'Carica l\'immagine della planimetria.';
+      for(var i=0;i<S.stanze.length;i++) if(!S.stanze[i].nome.trim()) return 'Scrivi il nome della stanza '+(i+1)+'.';
+    }
+    return '';
+  }
+  function dati(){
+    if(manca()) return null;
+    var x={ trasparente:S.uso==='sopra' };
+    if(S.tipo!=='ambiente' && S.firma.trim()) x.firma=S.firma.trim();
+    if(S.tipo==='territorio'){ x.comune=(S.comune||'').trim()||S.pos.nome.split(',')[0]; x.lat=S.pos.lat; x.lng=S.pos.lng; }
+    else if(S.tipo==='planimetria'){ var im=immaginiPianta(); x.linee=im.linee; x.stanze=im.stanze; x.larghezza=im.larghezza; x.altezza=im.altezza; x.comune=comuneDelProgetto(); if(val('an-sotto')) x.sottotitolo=val('an-sotto'); }
+    else if(S.tipo==='retemls'){ if(val('an-mls1')) x.didascalia=val('an-mls1'); if(val('an-mls2')) x.sotto=val('an-mls2'); if(val('an-mls3')) x.piede=val('an-mls3'); }
+    else { x.ambiente=S.ambiente; }
+    return x;
+  }
+  function inCorso(){ return !!(S.job && S.job.stato!=='finito' && S.job.stato!=='errore'); }
+  function aggiorna(){
+    var g=$('an-genera'); if(!g) return;
+    var m=manca();
+    g.disabled = !(S.srv && !m && !inCorso());
+    g.title = m || '';
+  }
+  function mostraForm(){
+    $('an-corpo').style.display='block'; $('an-pie').style.display='flex'; $('an-res').style.display='none'; $('an-stato').innerHTML='';
+  }
+
+  function genera(){
+    var x=dati(); if(!x) return;
+    S.risultato=null;
+    $('an-stato').innerHTML='<div class="an-prog"><div class="t"><span id="an-fase">Mando la richiesta…</span><span id="an-pc">0%</span></div><div class="an-barra"><i id="an-bar" style="width:2%"></i></div></div>';
+    S.job={stato:'attesa', tipo:S.tipo, uso:S.uso}; aggiorna();
+    var tipo=S.tipo, uso=S.uso;
+    chiama('/api/lavori',{method:'POST', body:JSON.stringify({grafica:tipo, dati:x})}).then(function(r){ return json(r).then(function(j){ return {r:r,j:j}; }); }).then(function(o){
+      if(!o.r.ok) throw new Error(o.j.errore||'Richiesta rifiutata');
+      S.job=o.j; segui(o.j.id, tipo, uso);
+    }).catch(function(e){ fallito(e && e.message ? e.message : 'Non riesco a parlare con la Fabbrica grafiche'); });
+  }
+  function fallito(msg){
+    S.job={stato:'errore'};
+    var st=$('an-stato'); if(st) st.innerHTML='<div class="an-err"><b>L\'animazione non è riuscita.</b><br>'+esc(msg)+'</div>';
+    aggiorna();
+  }
+  function segui(id, tipo, uso){
+    var passo=function(){
+      chiama('/api/lavori/'+id).then(json).then(function(j){
+        S.job=j;
+        var f=$('an-fase'), p=$('an-pc'), b=$('an-bar');
+        if(f) f.textContent=j.fase||''; if(p) p.textContent=(j.percento||0)+'%'; if(b) b.style.width=Math.max(2,j.percento||0)+'%';
+        if(j.stato==='finito') return scarica(id, j.nomeFile, tipo, uso);
+        if(j.stato==='errore') return fallito(j.errore||'Errore sconosciuto');
+        setTimeout(passo,1200);
+      }).catch(function(){ fallito('Ho perso il collegamento con la Fabbrica grafiche. Controlla che la finestra nera sia ancora aperta.'); });
+    };
+    passo();
+  }
+  function scarica(id, nome, tipo, uso){
+    chiama('/api/lavori/'+id+'/file').then(function(r){ if(!r.ok) throw new Error('file'); return r.blob(); }).then(function(blob){
+      if(S.risultato && S.risultato.url){ try{ URL.revokeObjectURL(S.risultato.url); }catch(e){} }
+      var t=TIPI.filter(function(z){ return z.id===tipo; })[0];
+      S.risultato={ blob:blob, url:URL.createObjectURL(blob), nome:nome||'animazione', sopra:uso==='sopra', titolo:(t?t.nome:'Animazione') };
+      S.job={stato:'finito'};
+      if($('an-dlg') && $('an-dlg').classList.contains('on')) mostraRisultato();
+      else avviso('Animazione pronta: apri «Animazioni» per metterla nel video','success');
+    }).catch(function(){ fallito('Il video è pronto ma non riesco a scaricarlo. Riprova.'); });
+  }
+  function mostraRisultato(){
+    var r=S.risultato; if(!r) return;
+    $('an-corpo').style.display='none'; $('an-pie').style.display='none'; $('an-stato').innerHTML='';
+    var res=$('an-res'); res.style.display='block';
+    res.innerHTML='<video src="'+r.url+'" autoplay muted loop playsinline controls></video>'
+      +'<div class="an-nota" style="margin-top:6px">'+(r.sopra?'Lo sfondo colorato che vedi qui dietro è solo per mostrarti la trasparenza: nel montaggio ci sarà il tuo filmato. ':'')
+      +'Salvata anche in <b>Documenti › GraficheImmobili › export</b> come '+esc(r.nome)+'.</div>'
+      +'<div class="az"><button type="button" class="an-b pieno" data-an="ins">'+(r.sopra?'Metti sopra il video, dove sono ora':'Inserisci come clip, dove sono ora')+'</button>'
+      +'<button type="button" class="an-b" data-an="altra">Un\'altra animazione</button></div>';
+  }
+
+  function inserisci(){
+    var r=S.risultato; if(!r) return;
+    if(typeof _vaiClips==='undefined' || !_vaiClips || !_vaiClips.length){
+      if(r.sopra){ avviso('Carica prima il filmato su cui metterla: l\'animazione resta pronta qui','error'); return; }
+      chiudi(); vaiLoadFile(new File([r.blob], r.nome, {type:r.blob.type||'video/mp4'})); return;
+    }
+    if(r.sopra){
+      vaiPipDaBlob(r.blob, r.titolo+' (animazione)', { pieno:true, sfondo:0 }).then(function(s){
+        if(!s) return;
+        chiudi();
+        avviso('Animazione messa sopra il video: dalla sua riga sulla linea del tempo la sposti, la accorci e regoli lo sfondo','success');
+      });
+      return;
+    }
+    var tv=document.createElement('video'); tv.preload='metadata'; tv.muted=true; tv.src=r.url;
+    var fatto=false, metti=function(dur){
+      if(fatto) return; fatto=true;
+      try{ _vaiInserisciClipAlCursore(r.blob, r.blob.type||'video/mp4', r.titolo, (isFinite(dur)&&dur>0)?dur:6, null); }
+      catch(e){ console.error('[Animazioni] inserimento',e); avviso('Non riesco a inserire la clip','error'); return; }
+      chiudi(); avviso('Animazione inserita nel montaggio','success');
+    };
+    tv.onloadedmetadata=function(){ metti(tv.duration); };
+    tv.onerror=function(){ metti(6); };
+  }
+
+  /* il riquadro nella linguetta Elementi */
+  function aggancia(){
+    var gr=document.querySelector('.vcc-pane[data-p=elementi] .vcc-griglia');
+    if(!gr || gr.querySelector('[data-an-tile]')) return;
+    var b=document.createElement('button'); b.type='button'; b.className='vcc-tile'; b.setAttribute('data-an-tile','1');
+    b.title='Disegni animati da mettere sopra il filmato: il territorio, la planimetria che si disegna, la rete MLS, un ambiente che prende forma';
+    b.onclick=function(){ window.anApri(); };
+    b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+IC_ANIM+'</svg><span>Animazioni<small>mappa, planimetria, rete</small></span>';
+    gr.appendChild(b);
+  }
+  var _clA=window._vaiCapcutLayout;
+  if(typeof _clA==='function' && !_clA._an){
+    var nuovo=function(){ var r=_clA.apply(this,arguments); try{ aggancia(); }catch(e){ console.warn('[Animazioni] aggancio KO',e); } return r; };
+    for(var kk in _clA){ try{ nuovo[kk]=_clA[kk]; }catch(e){} }
+    nuovo._an=true;
+    window._vaiCapcutLayout=nuovo;
+  }
+  try{ aggancia(); }catch(e){}
+  window._anStato=S;   /* per le prove in Console */
 })();
 /* ═══════════ VIDEO SOCIAL: barra delle icone di montaggio sulla linea del tempo (24 ott 2026) ═══════════
    Con la disposizione CapCut gli strumenti per tagliare e trasformare le clip erano finiti dentro
