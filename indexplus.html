@@ -7204,7 +7204,21 @@ Un caro saluto,
         <div style="font-size:.78rem;margin-top:6px">Se all'immobile manca una foto con link, potrai comunque caricarla direttamente qui sotto.</div>
       </div>
       <div id="car-frame-wrap" style="display:none">
+        <!-- [16 nov 2026] Scelta foto: di norma si usano le prime due dell'immobile,
+             ma non sempre sono le più adatte come copertina/caratteristiche. -->
+        <div id="car-foto-picker" style="display:none;margin-bottom:14px;padding:12px 14px;background:var(--bg2,#F8F9FB);border:1px solid var(--border);border-radius:12px">
+          <div style="font-weight:700;font-size:.82rem;color:var(--text2);margin-bottom:10px">Scegli le foto</div>
+          <div style="margin-bottom:10px">
+            <div style="font-size:.74rem;color:var(--text3);margin-bottom:5px">Copertina (slide 1)</div>
+            <div id="car-foto-row-0" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px"></div>
+          </div>
+          <div>
+            <div style="font-size:.74rem;color:var(--text3);margin-bottom:5px">Caratteristiche (slide 2)</div>
+            <div id="car-foto-row-1" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px"></div>
+          </div>
+        </div>
         <div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <button type="button" class="btn btn-outline btn-sm" id="car-punti-ai-btn" onclick="carGeneraPunti()">✨ Genera punti di forza con AI</button>
           <a id="car-open-tab" href="#" target="_blank" rel="noopener" onclick="carOpenTabClick()" class="btn btn-outline btn-sm">Apri a schermo intero in una scheda</a>
         </div>
         <iframe id="car-iframe" style="width:100%;height:1080px;border:1px solid var(--border);border-radius:12px;background:#fff" title="Caroselli Immobile"></iframe>
@@ -17108,8 +17122,12 @@ function _mktFotoUrls(im){
   const arr = Array.isArray(im.foto) ? im.foto : (im.foto ? [im.foto] : []);
   return arr.filter(f => typeof f === 'string' && /^https?:\/\//.test(f));
 }
+/* [16 nov 2026] Foto scelte a mano per l'immobile corrente (copertina, caratteristiche):
+   null = usa di default la 1ª/2ª foto dell'immobile, come sempre fatto finora. */
+let _carFotoScelte = [null, null];
 function carBuildUrl(im){
   const foto = _mktFotoUrls(im);
+  const f0 = _carFotoScelte[0] || foto[0], f1 = _carFotoScelte[1] || foto[1];
   const p = new URLSearchParams();
   if(im.indirizzo) p.set('indirizzo', im.indirizzo);
   const zona = [im.comune, im.zona].filter(Boolean).join(' — ');
@@ -17119,9 +17137,40 @@ function carBuildUrl(im){
   const locali = [im.locali, im.camere].filter(Boolean).join('/');
   if(locali) p.set('locali', locali);
   if(im.piano) p.set('piano', im.piano);
-  if(foto[0]) p.set('foto1', foto[0]);
-  if(foto[1]) p.set('foto2', foto[1]);
+  if(f0) p.set('foto1', f0);
+  if(f1) p.set('foto2', f1);
   return 'https://agenzioimmobiliare.github.io/hyperframe/?' + p.toString();
+}
+/* Griglia di scelta: mostrata solo se l'immobile ha più di 2 foto, perché con
+   0-2 foto non c'è nulla tra cui scegliere (si usano quelle, come prima). */
+function carRenderFotoPicker(im){
+  const box = document.getElementById('car-foto-picker');
+  const foto = _mktFotoUrls(im);
+  if(!box) return;
+  if(foto.length <= 2){ box.style.display = 'none'; return; }
+  box.style.display = '';
+  [0,1].forEach(slot=>{
+    const row = document.getElementById('car-foto-row-'+slot);
+    if(!row) return;
+    const scelta = _carFotoScelte[slot] || foto[slot] || foto[0];
+    row.innerHTML = foto.map(url=>{
+      const on = url === scelta;
+      return '<img src="'+url+'" onclick="carChoosePhoto('+slot+',\''+url.replace(/'/g,"%27")+'\')" '+
+        'style="width:64px;height:64px;object-fit:cover;border-radius:8px;cursor:pointer;flex-shrink:0;'+
+        'border:3px solid '+(on?'var(--accent,#7C3AED)':'transparent')+';opacity:'+(on?'1':'.75')+'">';
+    }).join('');
+  });
+}
+function carChoosePhoto(slot, url){
+  _carFotoScelte[slot] = url;
+  const sel = document.getElementById('car-imm-select');
+  const idx = sel ? sel.value : '';
+  const im = (idx!=='' && (D.immobili||[])[idx]) ? (D.immobili||[])[idx] : null;
+  if(im) carRenderFotoPicker(im);
+  // aggiorna subito l'anteprima dal vivo, senza ricaricare l'iframe (stessa origine)
+  const iframe = document.getElementById('car-iframe');
+  let win = null; try{ win = iframe && iframe.contentWindow; }catch(e){}
+  if(win && typeof win.hfSetPhoto === 'function') win.hfSetPhoto(slot, url);
 }
 function carPickImmobile(){
   const sel = document.getElementById('car-imm-select');
@@ -17129,10 +17178,12 @@ function carPickImmobile(){
   const im = (idx!=='' && (D.immobili||[])[idx]) ? (D.immobili||[])[idx] : null;
   const wrap = document.getElementById('car-frame-wrap'), empty = document.getElementById('car-empty');
   if(!im){ if(wrap) wrap.style.display='none'; if(empty) empty.style.display=''; return; }
+  _carFotoScelte = [null, null]; // nuovo immobile: niente scelte precedenti da portarsi dietro
   const url = carBuildUrl(im);
   const iframe = document.getElementById('car-iframe'), openTab = document.getElementById('car-open-tab');
   if(iframe) iframe.src = url;
   if(openTab) openTab.href = url;
+  carRenderFotoPicker(im);
   if(wrap) wrap.style.display=''; if(empty) empty.style.display='none';
 }
 function carSelImm(idx){
@@ -17140,6 +17191,53 @@ function carSelImm(idx){
   if(sel){ sel.value = String(idx); carPickImmobile(); }
 }
 function carInit(){ carFillImmSelect(); }
+
+/* [16 nov 2026] "Punti di forza" non ha un campo equivalente nel gestionale:
+   parte sempre dal segnaposto scritto in hyperframe, va riscritto a mano per
+   ogni immobile. Qui si genera dai dati reali con lo stesso proxy AI già
+   usato da "Descrizioni AI", e si scrive nel riquadro vivo. */
+async function carGeneraPunti(){
+  const sel = document.getElementById('car-imm-select');
+  const idx = sel ? sel.value : '';
+  const im = (idx!=='' && (D.immobili||[])[idx]) ? (D.immobili||[])[idx] : null;
+  if(!im){ toast('Scegli prima un immobile','warn'); return; }
+  const proxyUrl = aiGetProxy();
+  if(!proxyUrl){ toast('Configura prima il proxy AI in "Genera con AI"','error'); if(typeof vaiAvvisaProxy==='function') vaiAvvisaProxy(); return; }
+
+  const btn = document.getElementById('car-punti-ai-btn');
+  const orig = btn ? btn.innerHTML : '';
+  if(btn){ btn.disabled = true; btn.innerHTML = '✨ Sto scrivendo…'; }
+
+  try{
+    const dati = (typeof vaiImmobileJSON==='function') ? vaiImmobileJSON(im) : im;
+    const sys = 'Sei il copywriter immobiliare dell\'agenzia Frimm Capital Casa Paestum (Agropoli, Cilento). '+
+      'Scrivi in italiano. Usa SOLO i dati forniti, non inventare caratteristiche assenti. '+
+      'Genera da 3 a 5 punti di forza brevi per un carosello Instagram/Facebook, uno per riga, '+
+      'ciascuno di 3-7 parole, frase nominale senza punto finale, niente emoji, niente numerazione né trattini. '+
+      'Rispondi SOLO con i punti, uno per riga, nessun altro testo.';
+    const user = 'Dati immobile (JSON):\n'+JSON.stringify(dati)+'\n\nGenera i punti di forza.';
+    const resp = await aiFetch(proxyUrl,{ method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:(typeof aiModel==='function'?aiModel():'claude-sonnet-4-6'), max_tokens:300,
+        system:sys, messages:[{role:'user',content:user}] }) }, 30000);
+    const data = await resp.json();
+    if(data.error||data.type==='error'){ throw new Error((data.error&&(data.error.message||data.error))||'Errore API'); }
+    const txt = (data.content||[]).map(b=>b.text||'').join('').trim();
+    const righe = txt.split('\n').map(s=>s.replace(/^[-•*\d.\)]+\s*/,'').trim()).filter(Boolean);
+    if(!righe.length) throw new Error('risposta vuota');
+
+    const iframe = document.getElementById('car-iframe');
+    let doc = null; try{ doc = iframe && iframe.contentDocument; }catch(e){}
+    const ta = doc && doc.getElementById('hf-punti');
+    if(!ta) throw new Error('riquadro non pronto, riprova tra un attimo');
+    ta.value = righe.join('\n');
+    if(typeof iframe.contentWindow.renderPreview === 'function') iframe.contentWindow.renderPreview();
+    if(typeof logAdd==='function') logAdd('✨','Caroselli Immobile','Punti di forza generati · '+(im.comune||''));
+  }catch(e){
+    toast('Errore generazione: '+e.message,'error');
+  }finally{
+    if(btn){ btn.disabled = false; btn.innerHTML = orig; }
+  }
+}
 
 /* [16 nov 2026] "Apri a schermo intero" apriva sempre l'URL costruito al
    momento della scelta dell'immobile: se poi si modificava qualcosa a mano
