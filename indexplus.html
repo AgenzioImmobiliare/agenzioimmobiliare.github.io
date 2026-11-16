@@ -5521,7 +5521,7 @@ hubTema();
     </div>
     <div>
       <div class="logo-text" id="hdr-agency">Le case dalla A allo Z.io</div>
-      <div class="logo-sub">IndexPlus · Marketing Hub <span style="background:#1A7A4A;color:#fff;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:800;margin-left:6px;letter-spacing:.5px">v.16nov-REEL-PERSONALIZZA</span></div>
+      <div class="logo-sub">IndexPlus · Marketing Hub <span style="background:#1A7A4A;color:#fff;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:800;margin-left:6px;letter-spacing:.5px">v.16nov-REEL-CLIP</span></div>
     </div>
   </div>
   <div class="hub-destra" style="display:flex;gap:10px;align-items:center">
@@ -7258,8 +7258,13 @@ Un caro saluto,
           <div class="card-header"><span class="card-title">Personalizza il Reel</span></div>
           <div class="card-body">
             <div style="margin-bottom:18px">
-              <label class="flabel" style="margin-bottom:6px;display:block">Foto — spunta quelle da includere, con le frecce scegli l'ordine (la prima è la copertina)</label>
-              <div id="reel-foto-list" style="display:flex;flex-direction:column;gap:6px"></div>
+              <label class="flabel" style="margin-bottom:6px;display:block">Foto e clip — spunta quelle da includere, con le frecce scegli l'ordine (la prima inclusa è la copertina, sempre una foto)</label>
+              <div id="reel-foto-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button type="button" class="btn btn-outline btn-sm" onclick="reelAggiungiClipPronta()"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg> Aggiungi clip già pronta (link)</span></button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="reelAggiungiClipDaPreparare()"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Aggiungi clip da preparare</span></button>
+              </div>
+              <div style="font-size:.7rem;color:var(--text3);margin-top:6px">Una clip "da preparare" entra nel messaggio solo con la descrizione: te la aiuto a produrre io, o la giri tu e me la alleghi in chat prima di generare il Reel.</div>
             </div>
 
             <div class="frow" style="margin-bottom:14px">
@@ -17383,25 +17388,45 @@ const REEL_LOGO_POS_LABEL = {
 };
 const REEL_LOGO_SIZE_LABEL = { '48':'Piccolo', '64':'Medio', '88':'Grande' };
 
-/* Foto scelte per il Reel corrente: ordine e inclusione, modificabili a
-   mano (la prima inclusa è sempre la copertina). Ricreato a ogni cambio
-   immobile da _mktFotoUrls(im), nell'ordine già presente sulla scheda. */
+/* [16 nov 2026] Foto E clip scelte per il Reel corrente, in un'unica lista
+   ordinabile: { type:'foto', url } | { type:'clip', pronta:true, url } |
+   { type:'clip', pronta:false, desc }. Ricreata a ogni cambio immobile con
+   le sole foto da _mktFotoUrls(im); le clip si aggiungono a mano con i
+   pulsanti qui sotto. La copertina (prima inclusa) deve restare una foto:
+   il Reel non sa far partire con un video. */
 let _reelFoto = [];
 
 function reelRenderFotoList(){
   const box = document.getElementById('reel-foto-list');
   if(!box) return;
-  if(!_reelFoto.length){ box.innerHTML = '<div style="font-size:.78rem;color:var(--text3)">Nessuna foto con link trovata sulla scheda.</div>'; return; }
+  if(!_reelFoto.length){ box.innerHTML = '<div style="font-size:.78rem;color:var(--text3)">Nessuna foto con link trovata sulla scheda: aggiungila a mano o allegala in chat.</div>'; return; }
   let copertinaVista = false;
   box.innerHTML = _reelFoto.map((f,i)=>{
-    const isCopertina = f.included && !copertinaVista;
+    const isCopertina = f.included && !copertinaVista && f.type==='foto';
+    const isCopertinaRotta = f.included && !copertinaVista && f.type==='clip';
     if(f.included) copertinaVista = true;
-    return '<div style="display:flex;align-items:center;gap:10px;padding:6px 8px;border:1px solid var(--border);border-radius:10px;'+(f.included?'':'opacity:.5')+'">'+
-      '<input type="checkbox" '+(f.included?'checked':'')+' onchange="reelFotoToggle('+i+')">'+
-      '<img src="'+f.url+'" style="width:48px;height:48px;object-fit:cover;border-radius:6px;flex-shrink:0">'+
-      '<div style="flex:1;font-size:.76rem;color:var(--text2)">'+(isCopertina?'<b style="color:var(--gold)">★ Copertina</b>':'Foto '+(i+1))+'</div>'+
-      '<button type="button" class="soc-mini-btn" '+(i===0?'disabled':'')+' onclick="reelFotoMove('+i+',-1)" title="Sposta su">↑</button>'+
-      '<button type="button" class="soc-mini-btn" '+(i===_reelFoto.length-1?'disabled':'')+' onclick="reelFotoMove('+i+',1)" title="Sposta giù">↓</button>'+
+    let thumb, label, extra = '';
+    if(f.type==='foto'){
+      thumb = '<img src="'+f.url+'" style="width:48px;height:48px;object-fit:cover;border-radius:6px;flex-shrink:0">';
+      label = isCopertina ? '<b style="color:var(--gold)">★ Copertina</b>' : 'Foto '+(i+1);
+    } else if(f.pronta){
+      thumb = '<div style="width:48px;height:48px;border-radius:6px;flex-shrink:0;background:var(--navy,#0D1B2A);display:flex;align-items:center;justify-content:center;color:#fff"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div>';
+      label = '<div>Clip pronta</div><div style="font-size:.68rem;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px" title="'+f.url.replace(/"/g,'&quot;')+'">'+f.url+'</div>';
+    } else {
+      thumb = '<div style="width:48px;height:48px;border-radius:6px;flex-shrink:0;background:var(--cream2);display:flex;align-items:center;justify-content:center;color:var(--text2)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>';
+      label = '<div style="font-size:.7rem;color:var(--text3);margin-bottom:3px">Clip da preparare</div>'+
+        '<input class="finput" style="font-size:.78rem;padding:5px 8px" placeholder="Cosa deve mostrare? Es. drone frontale della casa" value="'+(f.desc||'').replace(/"/g,'&quot;')+'" oninput="reelClipDescEdit('+i+',this.value)">';
+    }
+    if(isCopertinaRotta) extra = '<div style="font-size:.68rem;color:#C0392B;margin-top:3px">⚠ la copertina deve essere una foto: sposta una foto in cima</div>';
+    return '<div style="display:flex;align-items:flex-start;gap:10px;padding:6px 8px;border:1px solid var(--border);border-radius:10px;'+(f.included?'':'opacity:.5')+'">'+
+      '<input type="checkbox" style="margin-top:14px" '+(f.included?'checked':'')+' onchange="reelFotoToggle('+i+')">'+
+      thumb+
+      '<div style="flex:1;font-size:.76rem;color:var(--text2);padding-top:3px">'+label+extra+'</div>'+
+      '<div style="display:flex;flex-direction:column;gap:3px">'+
+        '<button type="button" class="soc-mini-btn" '+(i===0?'disabled':'')+' onclick="reelFotoMove('+i+',-1)" title="Sposta su">↑</button>'+
+        '<button type="button" class="soc-mini-btn" '+(i===_reelFoto.length-1?'disabled':'')+' onclick="reelFotoMove('+i+',1)" title="Sposta giù">↓</button>'+
+      '</div>'+
+      (f.type==='clip' ? '<button type="button" class="soc-mini-btn" onclick="reelClipRimuovi('+i+')" title="Rimuovi">✕</button>' : '')+
     '</div>';
   }).join('');
 }
@@ -17418,19 +17443,43 @@ function reelFotoMove(i, dir){
   reelRenderFotoList();
   reelRigenera();
 }
+async function reelAggiungiClipPronta(){
+  const r = await hubChiedi({ titolo:'Aggiungi clip già pronta', testo:'Incolla il link diretto al file video (es. un .mp4 caricato da qualche parte).', campi:[{ k:'url', etichetta:'Link alla clip', valore:'https://' }], ok:'Aggiungi' });
+  if(!r || !r.url || !r.url.trim()) return;
+  _reelFoto.push({ type:'clip', pronta:true, url:r.url.trim(), included:true });
+  reelRenderFotoList();
+  reelRigenera();
+}
+function reelAggiungiClipDaPreparare(){
+  _reelFoto.push({ type:'clip', pronta:false, desc:'', included:true });
+  reelRenderFotoList();
+  reelRigenera();
+}
+function reelClipDescEdit(i, val){
+  if(!_reelFoto[i]) return;
+  _reelFoto[i].desc = val;
+  reelRigenera();
+}
+function reelClipRimuovi(i){
+  if(!_reelFoto[i]) return;
+  _reelFoto.splice(i,1);
+  reelRenderFotoList();
+  reelRigenera();
+}
 
 function reelBuildMessaggio(im, opts){
   const zona = [im.comune, im.zona].filter(Boolean).join(' — ');
   const prezzo = im.prezzo ? Number(im.prezzo).toLocaleString('it-IT',{style:'currency',currency:'EUR',maximumFractionDigits:0}) : '';
   const locali = im.locali || im.camere ? [im.locali, im.camere].filter(Boolean).join('/') : '';
-  const foto = opts.foto || [];
+  const media = opts.media || [];
   const link = (opts.link || '').trim() || im.linkPortale || '';
   const musica = REEL_MUSICHE[opts.musica] || REEL_MUSICHE.elegante;
   const logoPos = REEL_LOGO_POS_LABEL[opts.logoPos] || REEL_LOGO_POS_LABEL['top-left'];
   const logoSize = REEL_LOGO_SIZE_LABEL[String(opts.logoSize)] || 'Medio';
+  const haClip = media.some(m=>m.type==='clip');
 
   let msg = 'Genera il Reel verticale (RealEstateReelMulti, progetto Remotion) per questo immobile. '+
-    'Struttura: copertina con la prima foto → Scheda dati a schermo intero (SchedaImmobile) → le altre foto in ordine → finale con agenzia/agente/telefono. '+
+    'Struttura: copertina con la prima foto → Scheda dati a schermo intero (SchedaImmobile) → le altre foto/clip in ordine → finale con agenzia/agente/telefono. '+
     'Nella Scheda metti solo le card per i dati che ti do qui sotto: se manca qualcosa (es. classe energetica), ometti quella card, non inventarla.\n\n';
 
   msg += '=== DATI IMMOBILE ===\n';
@@ -17449,12 +17498,22 @@ function reelBuildMessaggio(im, opts){
   if(link) msg += '- Annuncio online (per altri dettagli/verifiche): '+link+'\n';
   if(im.descrizione) msg += '- Descrizione dal gestionale (usala solo per dati verificati, non come testo pronto): '+String(im.descrizione).replace(/\s+/g,' ').trim().slice(0,600)+'\n';
 
-  msg += '\n=== FOTO (nell\'ordine scelto: copertina, poi le altre) ===\n';
-  if(foto.length){
-    foto.forEach((f,i)=>{ msg += (i+1)+'. '+f+'\n'; });
+  msg += '\n=== FOTO E CLIP (nell\'ordine scelto: copertina, poi le altre) ===\n';
+  if(media.length){
+    if(media[0].type !== 'foto') msg += '⚠ ATTENZIONE: il primo elemento è una clip, ma la copertina deve essere sempre una foto — chiedi conferma o usa la prima foto disponibile come copertina.\n';
+    media.forEach((m,i)=>{
+      if(m.type==='foto'){
+        msg += (i+1)+'. FOTO: '+m.url+'\n';
+      } else if(m.pronta){
+        msg += (i+1)+'. CLIP (pronta): '+m.url+'\n';
+      } else {
+        msg += (i+1)+'. CLIP DA PREPARARE: '+(m.desc||'(nessuna descrizione data)')+' — fammi sapere se mi aiuti a produrla (es. generazione AI) o la preparo io e te la allego in chat prima di generare il Reel.\n';
+      }
+    });
   } else {
     msg += 'Nessuna foto con link trovata sulla scheda — le allego qui in chat.\n';
   }
+  if(haClip) msg += '(Le clip vanno riprodotte mute, senza Ken Burns: il video scorre così com\'è per la sua durata.)\n';
 
   msg += '\n=== MUSICA ===\n'+
     '- Traccia: '+musica.label+' ('+musica.file+', dalla libreria in remotion/public/ — '+musica.desc+')\n';
@@ -17464,7 +17523,8 @@ function reelBuildMessaggio(im, opts){
     '- Dimensione: '+logoSize+' ('+opts.logoSize+'px)\n';
 
   msg += '\n=== RITMO ===\n'+
-    '- Durata per foto: '+opts.durFoto+'s\n';
+    '- Durata per foto: '+opts.durFoto+'s\n'+
+    (haClip ? '- Durata per clip: 3.5s (valore di base: se una clip è più corta o più lunga, adattala tu)\n' : '');
 
   msg += '\n=== AGENZIA ===\n'+
     '- Agenzia: Capital Casa Immobiliare\n'+
@@ -17476,7 +17536,7 @@ function reelBuildMessaggio(im, opts){
 }
 function reelLeggiOpts(){
   return {
-    foto: _reelFoto.filter(f=>f.included).map(f=>f.url),
+    media: _reelFoto.filter(f=>f.included && (f.type==='foto' ? !!f.url : (f.pronta ? !!f.url : true))),
     link: (document.getElementById('reel-link')||{}).value || '',
     musica: (document.getElementById('reel-musica')||{}).value || 'elegante',
     logoPos: (document.getElementById('reel-logo-pos')||{}).value || 'top-left',
@@ -17499,7 +17559,7 @@ function reelPickImmobile(){
   const result = document.getElementById('reel-result'), empty = document.getElementById('reel-empty');
   if(!im){ if(result) result.style.display='none'; if(empty) empty.style.display=''; return; }
 
-  _reelFoto = _mktFotoUrls(im).map(url=>({url, included:true}));
+  _reelFoto = _mktFotoUrls(im).map(url=>({type:'foto', url, included:true}));
   const linkEl = document.getElementById('reel-link'); if(linkEl) linkEl.value = im.linkPortale || '';
   const musicaEl = document.getElementById('reel-musica'); if(musicaEl) musicaEl.value = 'elegante';
   const logoPosEl = document.getElementById('reel-logo-pos'); if(logoPosEl) logoPosEl.value = 'top-left';
