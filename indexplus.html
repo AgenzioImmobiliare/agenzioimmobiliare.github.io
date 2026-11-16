@@ -17278,7 +17278,9 @@ function reelFillImmSelect(){
   if(!sel) return;
   const cur = sel.value;
   const opts = ['<option value="">— Scegli un immobile —</option>'];
-  (D.immobili||[]).forEach((im,idx)=>{
+  const lista = (D.immobili||[]).map((im,idx)=>({im,idx}));
+  lista.sort((a,b)=> (a.im.comune||'').localeCompare(b.im.comune||'', 'it', {sensitivity:'base'}));
+  lista.forEach(({im,idx})=>{
     const label = [(im.tipo||'Immobile'), im.comune, im.indirizzo, im.prezzo?fmtE(im.prezzo):''].filter(Boolean).join(' · ');
     opts.push('<option value="'+idx+'">'+_descEsc(label)+'</option>');
   });
