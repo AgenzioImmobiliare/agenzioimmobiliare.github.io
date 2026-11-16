@@ -5521,7 +5521,7 @@ hubTema();
     </div>
     <div>
       <div class="logo-text" id="hdr-agency">Le case dalla A allo Z.io</div>
-      <div class="logo-sub">IndexPlus · Marketing Hub <span style="background:#1A7A4A;color:#fff;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:800;margin-left:6px;letter-spacing:.5px">v.15nov-ANIMAZIONI</span></div>
+      <div class="logo-sub">IndexPlus · Marketing Hub <span style="background:#1A7A4A;color:#fff;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:800;margin-left:6px;letter-spacing:.5px">v.16nov-REEL-PROMPT</span></div>
     </div>
   </div>
   <div class="hub-destra" style="display:flex;gap:10px;align-items:center">
@@ -17291,13 +17291,42 @@ function reelBuildMessaggio(im){
   const foto = _mktFotoUrls(im);
   const zona = [im.comune, im.zona].filter(Boolean).join(' — ');
   const prezzo = im.prezzo ? Number(im.prezzo).toLocaleString('it-IT',{style:'currency',currency:'EUR',maximumFractionDigits:0}) : '';
-  let msg = 'Genera il Reel (foto + prezzo) per questo immobile:\n';
+  const locali = im.locali || im.camere ? [im.locali, im.camere].filter(Boolean).join('/') : '';
+
+  let msg = 'Genera il Reel verticale (RealEstateReelMulti, progetto Remotion) per questo immobile. '+
+    'Struttura: copertina con la prima foto → Scheda dati a schermo intero (SchedaImmobile) → le altre foto in ordine → finale con agenzia/agente/telefono. '+
+    'Nella Scheda metti solo le card per i dati che ti do qui sotto: se manca qualcosa (es. classe energetica), ometti quella card, non inventarla.\n\n';
+
+  msg += '=== DATI IMMOBILE ===\n';
+  if(im.ref) msg += '- Rif.: '+im.ref+'\n';
+  if(im.tipo) msg += '- Tipo: '+im.tipo+'\n';
+  if(im.stato) msg += '- Stato: '+im.stato+'\n';
   if(im.indirizzo) msg += '- Indirizzo: '+im.indirizzo+'\n';
   if(zona) msg += '- Comune/zona: '+zona+'\n';
   if(prezzo) msg += '- Prezzo: '+prezzo+'\n';
   if(im.mq) msg += '- Superficie: '+im.mq+' m²\n';
-  msg += '- Agenzia: Frimm Capital Casa Paestum\n- Agente: Enzo Carnicelli\n';
-  msg += foto[0] ? ('- Foto: '+foto[0]+'\n') : '- Foto: nessuna con link trovata — la allego qui in chat\n';
+  if(locali) msg += '- Locali: '+locali+'\n';
+  if(im.bagni) msg += '- Bagni: '+im.bagni+'\n';
+  if(im.piano) msg += '- Piano: '+im.piano+'\n';
+  if(im.anno) msg += '- Anno di costruzione: '+im.anno+'\n';
+  if(im.energia) msg += '- Classe energetica: '+im.energia+'\n';
+  if(im.linkPortale) msg += '- Annuncio online (per altri dettagli/verifiche): '+im.linkPortale+'\n';
+  if(im.descrizione) msg += '- Descrizione dal gestionale (usala solo per dati verificati, non come testo pronto): '+String(im.descrizione).replace(/\s+/g,' ').trim().slice(0,600)+'\n';
+
+  msg += '\n=== FOTO (nell\'ordine: copertina, poi le altre) ===\n';
+  if(foto.length){
+    foto.forEach((f,i)=>{ msg += (i+1)+'. '+f+'\n'; });
+  } else {
+    msg += 'Nessuna foto con link trovata sulla scheda — le allego qui in chat.\n';
+  }
+  msg += '(Se vuoi un ordine diverso dalle foto, o solo alcune, dimmelo prima di generare.)\n';
+
+  msg += '\n=== AGENZIA ===\n'+
+    '- Agenzia: Capital Casa Immobiliare\n'+
+    '- Agente: Vincenzo Carnicelli\n'+
+    '- Telefono/WhatsApp: 393 297 0082\n'+
+    '- Logo: quello già salvato in remotion/public/logo-capitalcasa.png (PNG trasparente)\n';
+
   return msg;
 }
 function reelPickImmobile(){
