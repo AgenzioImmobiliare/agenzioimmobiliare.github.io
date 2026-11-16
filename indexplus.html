@@ -5521,7 +5521,7 @@ hubTema();
     </div>
     <div>
       <div class="logo-text" id="hdr-agency">Le case dalla A allo Z.io</div>
-      <div class="logo-sub">IndexPlus · Marketing Hub <span style="background:#1A7A4A;color:#fff;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:800;margin-left:6px;letter-spacing:.5px">v.16nov-REEL-PROMPT</span></div>
+      <div class="logo-sub">IndexPlus · Marketing Hub <span style="background:#1A7A4A;color:#fff;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:800;margin-left:6px;letter-spacing:.5px">v.16nov-REEL-PERSONALIZZA</span></div>
     </div>
   </div>
   <div class="hub-destra" style="display:flex;gap:10px;align-items:center">
@@ -7250,6 +7250,87 @@ Un caro saluto,
         <div style="font-weight:700;font-size:.9rem;color:var(--text2)">Scegli un immobile per preparare la richiesta del Reel</div>
       </div>
       <div id="reel-result" style="display:none">
+        <!-- [16 nov 2026] Personalizzazione completa: copertina/foto/ordine,
+             link con tutti i dettagli, musica (libreria scaricabile), logo
+             e ritmo — tutto finisce nel messaggio qui sotto, così chi lo
+             riceve ha già tutte le scelte fatte e genera il Reel in pochi minuti. -->
+        <div class="card" style="margin-bottom:18px">
+          <div class="card-header"><span class="card-title">Personalizza il Reel</span></div>
+          <div class="card-body">
+            <div style="margin-bottom:18px">
+              <label class="flabel" style="margin-bottom:6px;display:block">Foto — spunta quelle da includere, con le frecce scegli l'ordine (la prima è la copertina)</label>
+              <div id="reel-foto-list" style="display:flex;flex-direction:column;gap:6px"></div>
+            </div>
+
+            <div class="frow" style="margin-bottom:14px">
+              <label class="flabel">Link con tutti i dettagli (annuncio online)</label>
+              <input class="finput" id="reel-link" placeholder="https://..." oninput="reelRigenera()">
+            </div>
+
+            <div class="frow" style="margin-bottom:4px">
+              <label class="flabel">Musica di sottofondo</label>
+              <select class="fselect" id="reel-musica" onchange="reelRigenera()">
+                <option value="elegante">Elegante — pad caldo, il giro classico</option>
+                <option value="vivace">Vivace — con un leggero arpeggio sopra</option>
+                <option value="calda">Calda — più lenta e morbida</option>
+                <option value="minimale">Minimale — quasi impercettibile</option>
+              </select>
+            </div>
+            <details class="fai-music-libs">
+              <summary>🎵 Libreria musiche — ascolta e scarica (anche tutte insieme, da tenere sul desktop)</summary>
+              <div class="fai-lib-list">
+                <div><a href="musica-reel/libreria-musica-reel.zip" download class="fai-lib-link">⬇ Scarica tutta la libreria (ZIP, 4 tracce)</a></div>
+                <div class="fai-lib">
+                  <div class="fai-lib-head"><b>Elegante</b></div>
+                  <div class="fai-lib-desc">Pad caldo, il giro armonico classico usato finora.</div>
+                  <audio controls preload="none" src="musica-reel/elegante.mp3" style="width:100%;height:32px;margin:3px 0"></audio>
+                  <a href="musica-reel/elegante.mp3" download class="fai-lib-link">⬇ Scarica</a>
+                </div>
+                <div class="fai-lib">
+                  <div class="fai-lib-head"><b>Vivace</b></div>
+                  <div class="fai-lib-desc">Stesso spirito ma con un leggero arpeggio sopra, più movimento.</div>
+                  <audio controls preload="none" src="musica-reel/vivace.mp3" style="width:100%;height:32px;margin:3px 0"></audio>
+                  <a href="musica-reel/vivace.mp3" download class="fai-lib-link">⬇ Scarica</a>
+                </div>
+                <div class="fai-lib">
+                  <div class="fai-lib-head"><b>Calda</b></div>
+                  <div class="fai-lib-desc">Accordi più lenti e morbidi, tono più caldo.</div>
+                  <audio controls preload="none" src="musica-reel/calda.mp3" style="width:100%;height:32px;margin:3px 0"></audio>
+                  <a href="musica-reel/calda.mp3" download class="fai-lib-link">⬇ Scarica</a>
+                </div>
+                <div class="fai-lib">
+                  <div class="fai-lib-head"><b>Minimale</b></div>
+                  <div class="fai-lib-desc">Solo un drone di sottofondo, quasi impercettibile.</div>
+                  <audio controls preload="none" src="musica-reel/minimale.mp3" style="width:100%;height:32px;margin:3px 0"></audio>
+                  <a href="musica-reel/minimale.mp3" download class="fai-lib-link">⬇ Scarica</a>
+                </div>
+              </div>
+            </details>
+
+            <div class="frow" style="margin-top:16px">
+              <label class="flabel">Posizione logo (su copertina e foto)</label>
+              <select class="fselect" id="reel-logo-pos" onchange="reelRigenera()">
+                <option value="top-left">In alto a sinistra</option>
+                <option value="top-right">In alto a destra</option>
+                <option value="bottom-left">In basso a sinistra</option>
+                <option value="bottom-right">In basso a destra</option>
+              </select>
+            </div>
+            <div class="frow">
+              <label class="flabel">Dimensione logo</label>
+              <select class="fselect" id="reel-logo-size" onchange="reelRigenera()">
+                <option value="48">Piccolo</option>
+                <option value="64" selected>Medio</option>
+                <option value="88">Grande</option>
+              </select>
+            </div>
+
+            <div class="frow">
+              <label class="flabel">Secondi per foto: <span id="reel-durfoto-lbl">2.2</span>s</label>
+              <input type="range" id="reel-durfoto" min="1.5" max="4" step="0.1" value="2.2" style="width:100%;accent-color:var(--gold)" oninput="document.getElementById('reel-durfoto-lbl').textContent=this.value; reelRigenera()">
+            </div>
+          </div>
+        </div>
         <div class="card">
           <div class="card-header"><span class="card-title">Messaggio pronto per Claude</span>
             <button class="btn btn-primary btn-sm" onclick="reelCopia()"><span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copia messaggio</span></button>
@@ -17287,11 +17368,66 @@ function reelFillImmSelect(){
   sel.innerHTML = opts.join('');
   if(cur) sel.value = cur;
 }
-function reelBuildMessaggio(im){
-  const foto = _mktFotoUrls(im);
+/* [16 nov 2026] Libreria musiche per il Reel: stessi file già pronti in
+   remotion/public/, scaricabili anche in blocco qui sotto in musica-reel/
+   così Enzo può tenerli sul desktop e scegliere a occhio/orecchio. */
+const REEL_MUSICHE = {
+  elegante: { file:'music-ambient.mp3',  label:'Elegante',  desc:'pad caldo, il giro armonico classico' },
+  vivace:   { file:'music-ambient2.mp3', label:'Vivace',    desc:'con un leggero arpeggio sopra, più movimento' },
+  calda:    { file:'music-ambient3.mp3', label:'Calda',     desc:'accordi più lenti e morbidi' },
+  minimale: { file:'music-ambient4.mp3', label:'Minimale',  desc:'solo un drone di sottofondo, quasi impercettibile' },
+};
+const REEL_LOGO_POS_LABEL = {
+  'top-left':'in alto a sinistra', 'top-right':'in alto a destra',
+  'bottom-left':'in basso a sinistra', 'bottom-right':'in basso a destra',
+};
+const REEL_LOGO_SIZE_LABEL = { '48':'Piccolo', '64':'Medio', '88':'Grande' };
+
+/* Foto scelte per il Reel corrente: ordine e inclusione, modificabili a
+   mano (la prima inclusa è sempre la copertina). Ricreato a ogni cambio
+   immobile da _mktFotoUrls(im), nell'ordine già presente sulla scheda. */
+let _reelFoto = [];
+
+function reelRenderFotoList(){
+  const box = document.getElementById('reel-foto-list');
+  if(!box) return;
+  if(!_reelFoto.length){ box.innerHTML = '<div style="font-size:.78rem;color:var(--text3)">Nessuna foto con link trovata sulla scheda.</div>'; return; }
+  let copertinaVista = false;
+  box.innerHTML = _reelFoto.map((f,i)=>{
+    const isCopertina = f.included && !copertinaVista;
+    if(f.included) copertinaVista = true;
+    return '<div style="display:flex;align-items:center;gap:10px;padding:6px 8px;border:1px solid var(--border);border-radius:10px;'+(f.included?'':'opacity:.5')+'">'+
+      '<input type="checkbox" '+(f.included?'checked':'')+' onchange="reelFotoToggle('+i+')">'+
+      '<img src="'+f.url+'" style="width:48px;height:48px;object-fit:cover;border-radius:6px;flex-shrink:0">'+
+      '<div style="flex:1;font-size:.76rem;color:var(--text2)">'+(isCopertina?'<b style="color:var(--gold)">★ Copertina</b>':'Foto '+(i+1))+'</div>'+
+      '<button type="button" class="soc-mini-btn" '+(i===0?'disabled':'')+' onclick="reelFotoMove('+i+',-1)" title="Sposta su">↑</button>'+
+      '<button type="button" class="soc-mini-btn" '+(i===_reelFoto.length-1?'disabled':'')+' onclick="reelFotoMove('+i+',1)" title="Sposta giù">↓</button>'+
+    '</div>';
+  }).join('');
+}
+function reelFotoToggle(i){
+  if(!_reelFoto[i]) return;
+  _reelFoto[i].included = !_reelFoto[i].included;
+  reelRenderFotoList();
+  reelRigenera();
+}
+function reelFotoMove(i, dir){
+  const j = i + dir;
+  if(j < 0 || j >= _reelFoto.length) return;
+  const tmp = _reelFoto[i]; _reelFoto[i] = _reelFoto[j]; _reelFoto[j] = tmp;
+  reelRenderFotoList();
+  reelRigenera();
+}
+
+function reelBuildMessaggio(im, opts){
   const zona = [im.comune, im.zona].filter(Boolean).join(' — ');
   const prezzo = im.prezzo ? Number(im.prezzo).toLocaleString('it-IT',{style:'currency',currency:'EUR',maximumFractionDigits:0}) : '';
   const locali = im.locali || im.camere ? [im.locali, im.camere].filter(Boolean).join('/') : '';
+  const foto = opts.foto || [];
+  const link = (opts.link || '').trim() || im.linkPortale || '';
+  const musica = REEL_MUSICHE[opts.musica] || REEL_MUSICHE.elegante;
+  const logoPos = REEL_LOGO_POS_LABEL[opts.logoPos] || REEL_LOGO_POS_LABEL['top-left'];
+  const logoSize = REEL_LOGO_SIZE_LABEL[String(opts.logoSize)] || 'Medio';
 
   let msg = 'Genera il Reel verticale (RealEstateReelMulti, progetto Remotion) per questo immobile. '+
     'Struttura: copertina con la prima foto → Scheda dati a schermo intero (SchedaImmobile) → le altre foto in ordine → finale con agenzia/agente/telefono. '+
@@ -17310,16 +17446,25 @@ function reelBuildMessaggio(im){
   if(im.piano) msg += '- Piano: '+im.piano+'\n';
   if(im.anno) msg += '- Anno di costruzione: '+im.anno+'\n';
   if(im.energia) msg += '- Classe energetica: '+im.energia+'\n';
-  if(im.linkPortale) msg += '- Annuncio online (per altri dettagli/verifiche): '+im.linkPortale+'\n';
+  if(link) msg += '- Annuncio online (per altri dettagli/verifiche): '+link+'\n';
   if(im.descrizione) msg += '- Descrizione dal gestionale (usala solo per dati verificati, non come testo pronto): '+String(im.descrizione).replace(/\s+/g,' ').trim().slice(0,600)+'\n';
 
-  msg += '\n=== FOTO (nell\'ordine: copertina, poi le altre) ===\n';
+  msg += '\n=== FOTO (nell\'ordine scelto: copertina, poi le altre) ===\n';
   if(foto.length){
     foto.forEach((f,i)=>{ msg += (i+1)+'. '+f+'\n'; });
   } else {
     msg += 'Nessuna foto con link trovata sulla scheda — le allego qui in chat.\n';
   }
-  msg += '(Se vuoi un ordine diverso dalle foto, o solo alcune, dimmelo prima di generare.)\n';
+
+  msg += '\n=== MUSICA ===\n'+
+    '- Traccia: '+musica.label+' ('+musica.file+', dalla libreria in remotion/public/ — '+musica.desc+')\n';
+
+  msg += '\n=== LOGO ===\n'+
+    '- Posizione: '+logoPos+' (su copertina e foto)\n'+
+    '- Dimensione: '+logoSize+' ('+opts.logoSize+'px)\n';
+
+  msg += '\n=== RITMO ===\n'+
+    '- Durata per foto: '+opts.durFoto+'s\n';
 
   msg += '\n=== AGENZIA ===\n'+
     '- Agenzia: Capital Casa Immobiliare\n'+
@@ -17329,14 +17474,42 @@ function reelBuildMessaggio(im){
 
   return msg;
 }
+function reelLeggiOpts(){
+  return {
+    foto: _reelFoto.filter(f=>f.included).map(f=>f.url),
+    link: (document.getElementById('reel-link')||{}).value || '',
+    musica: (document.getElementById('reel-musica')||{}).value || 'elegante',
+    logoPos: (document.getElementById('reel-logo-pos')||{}).value || 'top-left',
+    logoSize: (document.getElementById('reel-logo-size')||{}).value || '64',
+    durFoto: (document.getElementById('reel-durfoto')||{}).value || '2.2',
+  };
+}
+function reelRigenera(){
+  const sel = document.getElementById('reel-imm-select');
+  const idx = sel ? sel.value : '';
+  const im = (idx!=='' && (D.immobili||[])[idx]) ? (D.immobili||[])[idx] : null;
+  if(!im) return;
+  const ta = document.getElementById('reel-testo');
+  if(ta) ta.value = reelBuildMessaggio(im, reelLeggiOpts());
+}
 function reelPickImmobile(){
   const sel = document.getElementById('reel-imm-select');
   const idx = sel ? sel.value : '';
   const im = (idx!=='' && (D.immobili||[])[idx]) ? (D.immobili||[])[idx] : null;
   const result = document.getElementById('reel-result'), empty = document.getElementById('reel-empty');
   if(!im){ if(result) result.style.display='none'; if(empty) empty.style.display=''; return; }
-  const ta = document.getElementById('reel-testo');
-  if(ta) ta.value = reelBuildMessaggio(im);
+
+  _reelFoto = _mktFotoUrls(im).map(url=>({url, included:true}));
+  const linkEl = document.getElementById('reel-link'); if(linkEl) linkEl.value = im.linkPortale || '';
+  const musicaEl = document.getElementById('reel-musica'); if(musicaEl) musicaEl.value = 'elegante';
+  const logoPosEl = document.getElementById('reel-logo-pos'); if(logoPosEl) logoPosEl.value = 'top-left';
+  const logoSizeEl = document.getElementById('reel-logo-size'); if(logoSizeEl) logoSizeEl.value = '64';
+  const durEl = document.getElementById('reel-durfoto'); if(durEl) durEl.value = '2.2';
+  const durLbl = document.getElementById('reel-durfoto-lbl'); if(durLbl) durLbl.textContent = '2.2';
+
+  reelRenderFotoList();
+  reelRigenera();
+
   const foto = Array.isArray(im.foto) ? im.foto : (im.foto ? [im.foto] : []);
   const hint = document.getElementById('reel-foto-hint');
   if(hint) hint.textContent = foto.length ? 'Foto trovata automaticamente dalla scheda immobile.' : 'Nessuna foto trovata sulla scheda: allegala direttamente nel messaggio a Claude.';

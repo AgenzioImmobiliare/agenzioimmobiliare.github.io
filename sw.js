@@ -3,7 +3,7 @@
    IMPORTANTE: quando esce un aggiornamento, bumpa CACHE='lecase-vN'
    per invalidare la cache HTML/JS e forzare il telefono a scaricare il nuovo codice. */
 
-var CACHE = 'lecase-v203';            /* Reel Foto+Prezzo: prompt dettagliato con tutti i dati immobile (16/11/2026) */
+var CACHE = 'lecase-v204';            /* Reel Foto+Prezzo: scelta foto/copertina, link, musica, logo e ritmo (16/11/2026) */
 var FOTO_CACHE = 'lecase-foto-v1';
 
 self.addEventListener('install', function (e) { self.skipWaiting(); });
