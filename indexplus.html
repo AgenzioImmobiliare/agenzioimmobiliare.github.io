@@ -7205,7 +7205,7 @@ Un caro saluto,
       </div>
       <div id="car-frame-wrap" style="display:none">
         <div style="margin-bottom:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <a id="car-open-tab" href="#" target="_blank" rel="noopener" class="btn btn-outline btn-sm">Apri a schermo intero in una scheda</a>
+          <a id="car-open-tab" href="#" target="_blank" rel="noopener" onclick="carOpenTabClick()" class="btn btn-outline btn-sm">Apri a schermo intero in una scheda</a>
         </div>
         <iframe id="car-iframe" style="width:100%;height:1080px;border:1px solid var(--border);border-radius:12px;background:#fff" title="Caroselli Immobile"></iframe>
       </div>
@@ -17140,6 +17140,37 @@ function carSelImm(idx){
   if(sel){ sel.value = String(idx); carPickImmobile(); }
 }
 function carInit(){ carFillImmSelect(); }
+
+/* [16 nov 2026] "Apri a schermo intero" apriva sempre l'URL costruito al
+   momento della scelta dell'immobile: se poi si modificava qualcosa a mano
+   dentro il riquadro (es. Punti di forza, che il gestionale non ha come
+   campo e parte sempre col segnaposto), la modifica restava visibile solo
+   lì — nella scheda a schermo intero tornava il contenuto originale.
+   Ora, appena prima di aprire la scheda, l'URL si ricostruisce leggendo lo
+   stato attuale del riquadro (stessa origine, quindi leggibile), non i
+   dati di partenza del gestionale. */
+function carOpenTabClick(){
+  const iframe = document.getElementById('car-iframe');
+  let doc = null;
+  try{ doc = iframe && iframe.contentDocument; }catch(e){}
+  if(!doc) return true; // niente da leggere: resta l'href già impostato da carPickImmobile
+  const val = id => { const el = doc.getElementById(id); return el ? el.value.trim() : ''; };
+  const p = new URLSearchParams();
+  const campi = { indirizzo:'hf-indirizzo', comune:'hf-comune', prezzo:'hf-prezzo', mq:'hf-mq',
+    locali:'hf-locali', piano:'hf-piano', tag:'hf-tag', punti:'hf-punti',
+    agenzia:'hf-agenzia', agente:'hf-agente', contatto:'hf-contatto' };
+  Object.keys(campi).forEach(k=>{ const v = val(campi[k]); if(v) p.set(k, v); });
+  [0,1].forEach(slot=>{
+    const img = doc.getElementById('hf-ph-thumb-'+slot);
+    const src = img && img.getAttribute('src');
+    /* un file caricato a mano nel riquadro è un blob: valido solo lì dentro:
+       non si può passare a una scheda nuova, quindi si tiene solo se è un
+       link vero (precompilato dal gestionale o incollato). */
+    if(src && /^https?:\/\//.test(src)) p.set('foto'+(slot+1), src);
+  });
+  document.getElementById('car-open-tab').href = 'https://agenzioimmobiliare.github.io/hyperframe/?' + p.toString();
+  return true;
+}
 
 /* ══════════ REEL FOTO+PREZZO [11 nov 2026] ══════════
    Non un'app self-service: prepara solo il messaggio pronto da incollare
