@@ -3,7 +3,7 @@
    IMPORTANTE: quando esce un aggiornamento, bumpa CACHE='lecase-vN'
    per invalidare la cache HTML/JS e forzare il telefono a scaricare il nuovo codice. */
 
-var CACHE = 'lecase-v207';            /* Fix: "Valutazione aperta" non si apriva più ("m is not defined" in sezione 12) (17/11/2026) */
+var CACHE = 'lecase-v208';            /* Valutazioni: Genera con AI (Servizi/Popolazione) e foto del comune (18/11/2026) */
 var FOTO_CACHE = 'lecase-foto-v1';
 
 self.addEventListener('install', function (e) { self.skipWaiting(); });

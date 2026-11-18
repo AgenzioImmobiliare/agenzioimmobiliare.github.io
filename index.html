@@ -19503,7 +19503,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.17nov-REPORTVAL';
+var APP_VERSION = 'v.18nov-VALAIFOTOCOMUNE';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -72110,7 +72110,7 @@ try{
       /* [17 nov 2026] sezioni del Report di Valutazione CapitalCasa Frimm:
          compilate a mano dall'agente, come nel PDF di riferimento — mai dati
          inventati, solo quello che l'agente scrive davvero. */
-      contestoZona:{scuole:'', trasporti:'', negozi:'', sanita:'', mare:'', accessi:'', fonte:''},
+      contestoZona:{scuole:'', trasporti:'', negozi:'', sanita:'', mare:'', accessi:'', fonte:'', fotoComune:''},
       popolazione:{residenti:'', famiglie:'', componenti:'', periodo:'', evoluzione:'', implicazioni:'', fonte:''},
       stockZona:'',
       ape:{classe:'', epgl:'', validita:'', impianti:'', incidenza:'', fonte:''},
@@ -72130,7 +72130,8 @@ try{
      passare dall'editor), così è sempre sicuro leggerle. */
   function normReport(v){
     if(!v) return v;
-    if(!v.contestoZona || typeof v.contestoZona !== 'object') v.contestoZona = {scuole:'', trasporti:'', negozi:'', sanita:'', mare:'', accessi:'', fonte:''};
+    if(!v.contestoZona || typeof v.contestoZona !== 'object') v.contestoZona = {scuole:'', trasporti:'', negozi:'', sanita:'', mare:'', accessi:'', fonte:'', fotoComune:''};
+    if(v.contestoZona && typeof v.contestoZona.fotoComune !== 'string') v.contestoZona.fotoComune = '';
     if(!v.popolazione || typeof v.popolazione !== 'object') v.popolazione = {residenti:'', famiglie:'', componenti:'', periodo:'', evoluzione:'', implicazioni:'', fonte:''};
     if(typeof v.stockZona !== 'string') v.stockZona = '';
     if(!v.ape || typeof v.ape !== 'object') v.ape = {classe:'', epgl:'', validita:'', impianti:'', incidenza:'', fonte:''};
@@ -72910,8 +72911,16 @@ try{
 
     /* [17 nov 2026] sezioni del Report di Valutazione CapitalCasa Frimm:
        facoltative, nessuna obbliga a compilare — una pagina vuota nel report
-       è meglio di un dato inventato. */
-    var g9 = '<div class="vl-g">'
+       è meglio di un dato inventato. Una "Genera con AI" per entrambe (come
+       "Genera punti di forza" in Caroselli): scrive una bozza, mai dati
+       presentati come certi — da rileggere e correggere prima di salvare. */
+    var fotoAnteprima = v.contestoZona.fotoComune
+      ? '<img src="' + E(v.contestoZona.fotoComune) + '" style="width:100%;max-width:260px;height:140px;object-fit:cover;border-radius:10px;margin-top:6px;display:block">' : '';
+    var g9 = '<div style="padding:0 16px 10px"><button class="gx-btn" id="vl-serv-ai-btn" onclick="vlGeneraServizi()" style="color:' + C.ambra + ';border-color:' + C.ambra + '">' + ICO.ai + ' Genera con AI</button>'
+      + ' <span class="vl-k">scrive una bozza dal comune/indirizzo della scheda: leggila e correggila, non è verificata</span></div>'
+      + '<div class="vl-g">'
+      + campo('Foto del comune/zona (link)', inp('contestoZona.fotoComune', v.contestoZona.fotoComune, 'placeholder="https://..."') + fotoAnteprima, 'l2')
+      + '</div><div class="vl-g">'
       + campo('Scuole', '<textarea oninput="vlCampo(\'contestoZona.scuole\',this.value)" placeholder="distanza, tempo, fonte">' + E(v.contestoZona.scuole) + '</textarea>')
       + campo('Trasporti', '<textarea oninput="vlCampo(\'contestoZona.trasporti\',this.value)" placeholder="distanza, tempo, fonte">' + E(v.contestoZona.trasporti) + '</textarea>')
       + campo('Negozi e spesa', '<textarea oninput="vlCampo(\'contestoZona.negozi\',this.value)" placeholder="distanza, tempo, fonte">' + E(v.contestoZona.negozi) + '</textarea>')
@@ -72924,7 +72933,9 @@ try{
       + '</div>';
     h += gxCol('9 · Servizi di zona', 'scuole, trasporti, negozi: compila solo quello che hai verificato, il resto resta fuori dal report', C.ambra, g9);
 
-    var g10 = '<div class="vl-g">'
+    var g10 = '<div style="padding:0 16px 10px"><button class="gx-btn" id="vl-pop-ai-btn" onclick="vlGeneraPopolazione()" style="color:' + C.ardesia + ';border-color:' + C.ardesia + '">' + ICO.ai + ' Genera con AI</button>'
+      + ' <span class="vl-k">bozza indicativa: verifica sempre residenti/famiglie su ISTAT prima di consegnare</span></div>'
+      + '<div class="vl-g">'
       + campo('Residenti', nInp('popolazione.residenti', v.popolazione.residenti), 'st')
       + campo('Famiglie', nInp('popolazione.famiglie', v.popolazione.famiglie), 'st')
       + campo('Componenti medi', '<input value="' + E(v.popolazione.componenti) + '" oninput="vlCampo(\'popolazione.componenti\',this.value)">', 'st')
@@ -74438,6 +74449,7 @@ try{
       + '.vside .r .e{font-size:7.3pt;font-weight:700;letter-spacing:.07em;text-transform:uppercase;opacity:.7}'
       + '.vside .r .v{font-size:10.5pt;font-weight:700;margin-top:1mm}'
       + '.vmap{border:1px solid ' + RP.chiaro + ';border-radius:3mm;padding:8px;margin:0 0 6mm}.vmap svg{width:100%;display:block}'
+      + '.vcomune-foto{height:52mm;border-radius:3mm;background-size:cover;background-position:center;background-color:' + RP.chiaro + ';margin:0 0 6mm}'
       /* griglia a card con icona (Servizi di zona) */
       + '.sv-griglia{display:grid;grid-template-columns:1fr 1fr;gap:3.5mm 6mm}'
       + '.sv-c{display:flex;gap:3.5mm;align-items:flex-start;border:1px solid ' + RP.chiaro + ';border-radius:3mm;padding:3mm 3.5mm;break-inside:avoid}'
@@ -74590,6 +74602,7 @@ try{
     var ctxCompilate = ctxCards.filter(function(x){ return x[1]; });
     var p3 = '<section class="pag">' + vHead(m) + vTitle(m, 'Servizi', 3)
       + '<p class="piccolo" style="margin-top:-2mm">Il contesto e i collegamenti dell\'immobile.</p>'
+      + (ctx.fotoComune ? '<div class="vcomune-foto" style="background-image:url(\'' + E(ctx.fotoComune) + '\')"></div>' : '')
       + (ctxCompilate.length
           ? '<div class="sv-griglia">' + ctxCards.map(function(x){ return x[1] ? '<div class="sv-c"><div class="ic">' + icoServ('stella') + '</div><div><b>' + sx(x[0]) + '</b><p>' + sx(x[1]) + '</p></div></div>' : ''; }).join('') + '</div>'
           : muto('Servizi e collegamenti di zona non ancora compilati per questa valutazione.'))
@@ -74623,6 +74636,7 @@ try{
     var pop = r.popolazione || {};
     var popCompilata = pop.residenti || pop.famiglie || pop.componenti;
     var p5 = '<section class="pag">' + vHead(m) + vTitle(m, 'Popolazione e famiglie', 5)
+      + (ctx.fotoComune ? '<div class="vcomune-foto" style="background-image:url(\'' + E(ctx.fotoComune) + '\')"></div>' : '')
       + (popCompilata ? '<div class="vstat3" style="grid-template-columns:repeat(3,1fr)">'
           + '<div><div class="e">Residenti</div><div class="v">' + sx(pop.residenti ? nf(num(pop.residenti)) : '—') + '</div></div>'
           + '<div><div class="e">Famiglie</div><div class="v">' + sx(pop.famiglie ? nf(num(pop.famiglie)) : '—') + '</div></div>'
@@ -74943,6 +74957,78 @@ try{
     else { v.commento = v.ai.commento; }
     disegna();
     avvisa(cosa === 'valore' ? 'Valore dell\'AI messo come valore finale: puoi ancora cambiarlo' : 'Commento messo nel campo: rileggilo e correggilo prima del report');
+  };
+
+  /* [17 nov 2026] "Genera con AI" per le sezioni 9 e 10 del Report: l'AI non
+     ha accesso a internet (callClaude è un passthrough verso Claude, niente
+     ricerca), quindi scrive solo quello che sa già e lascia vuoto il resto —
+     mai un numero preciso spacciato per certo. La bozza va sempre riletta:
+     stessa logica di "Genera punti di forza" e "Chiedi all'AI" qui sopra. */
+  function _aiEstraiJson(txt){
+    var a = txt.indexOf('{'), b = txt.lastIndexOf('}');
+    if(a < 0 || b < a) return null;
+    try{ return JSON.parse(txt.slice(a, b + 1)); }catch(e){ return null; }
+  }
+  window.vlGeneraServizi = function(){
+    var v = VL.cur; if(!v) return;
+    if(!aiConfigurato()){ avvisa('AI non configurata: apri Impostazioni AI', 'warning'); return; }
+    var dest = [v.indirizzo, v.comune].filter(Boolean).join(', ');
+    if(!dest){ avvisa('Scrivi prima comune e indirizzo dell\'immobile (sezione 1)', 'warning'); return; }
+    var btn = document.getElementById('vl-serv-ai-btn'), orig = btn ? btn.innerHTML : '';
+    if(btn){ btn.disabled = true; btn.innerHTML = '✨ Sto scrivendo…'; }
+    var prompt = 'Aiuti un\'agenzia immobiliare a scrivere la pagina "Servizi" di un report di valutazione: il contesto e i collegamenti intorno a un immobile. '
+      + 'Non hai accesso a internet: usa SOLO quello che sai già, con ragionevole sicurezza, su questo luogo. Se non sei sicuro di una voce, lasciala vuota ("") '
+      + 'invece di indovinare — mai una distanza precisa, un nome di scuola/negozio o un tempo di percorrenza che non conosci davvero. '
+      + 'Dove scrivi qualcosa, resta descrittivo e generico (es. "nel centro storico, vicino ai principali servizi"), senza numeri non verificabili. Scrivi in italiano.\n\n'
+      + 'Immobile: ' + dest + (v.tipo ? ' (' + v.tipo + ')' : '') + '.\n\n'
+      + 'Rispondi SOLO con JSON valido, senza altro testo: {"scuole":"","trasporti":"","negozi":"","sanita":"","mare":"","accessi":""}';
+    callClaude({ model:'claude-sonnet-4-6', max_tokens:500, messages:[{role:'user', content:prompt}] })
+      .then(function(data){
+        var txt = ''; try{ txt = (data.content || []).map(function(b){ return b.text || ''; }).join('').trim(); }catch(e){}
+        var j = _aiEstraiJson(txt);
+        if(!j) throw new Error('risposta non leggibile');
+        var scritto = 0;
+        ['scuole', 'trasporti', 'negozi', 'sanita', 'mare', 'accessi'].forEach(function(k){
+          if(j[k] && String(j[k]).trim()){ v.contestoZona[k] = String(j[k]).trim(); scritto++; }
+        });
+        if(scritto && !v.contestoZona.fonte) v.contestoZona.fonte = 'Bozza AI (Claude), non verificata — controllare prima di consegnare il report';
+        disegna();
+        avvisa(scritto ? 'Bozza scritta dall\'AI (' + scritto + ' voci): rileggila, l\'AI non ha cercato nulla online' : 'L\'AI non è sicura di nulla su questo luogo: compila a mano', scritto ? 'success' : 'warning');
+      })
+      .catch(function(e){ avvisa('Errore AI: ' + (e && e.message || 'errore'), 'error'); })
+      .then(function(){ if(btn){ btn.disabled = false; btn.innerHTML = orig; } });
+  };
+  window.vlGeneraPopolazione = function(){
+    var v = VL.cur; if(!v) return;
+    if(!aiConfigurato()){ avvisa('AI non configurata: apri Impostazioni AI', 'warning'); return; }
+    var com = v.comune || '';
+    if(!com){ avvisa('Scrivi prima il comune dell\'immobile (sezione 1)', 'warning'); return; }
+    var btn = document.getElementById('vl-pop-ai-btn'), orig = btn ? btn.innerHTML : '';
+    if(btn){ btn.disabled = true; btn.innerHTML = '✨ Sto scrivendo…'; }
+    var prompt = 'Aiuti un\'agenzia immobiliare a scrivere la pagina "Popolazione e famiglie" di un report di valutazione immobiliare, sul comune indicato. '
+      + 'Non hai accesso a internet: usa SOLO quello che sai già, con ragionevole sicurezza. Se non sei sicuro di un dato (residenti, famiglie, componenti), lascialo vuoto ("") '
+      + 'invece di indovinare un numero: un numero sbagliato spacciato per censimento è peggio di un campo vuoto. Per periodo/evoluzione/implicazioni puoi essere più descrittivo, sempre senza inventare cifre precise non verificabili. Scrivi in italiano.\n\n'
+      + 'Comune: ' + com + '.\n\n'
+      + 'Rispondi SOLO con JSON valido, senza altro testo: {"residenti":"","famiglie":"","componenti":"","periodo":"","evoluzione":"","implicazioni":""} '
+      + '(residenti e famiglie solo come numero intero in stringa, es. "12000"; componenti es. "2,4"; se non sei sicuro, stringa vuota).';
+    callClaude({ model:'claude-sonnet-4-6', max_tokens:500, messages:[{role:'user', content:prompt}] })
+      .then(function(data){
+        var txt = ''; try{ txt = (data.content || []).map(function(b){ return b.text || ''; }).join('').trim(); }catch(e){}
+        var j = _aiEstraiJson(txt);
+        if(!j) throw new Error('risposta non leggibile');
+        var scritto = 0;
+        ['residenti', 'famiglie'].forEach(function(k){
+          var n = num(j[k]); if(n > 0){ v.popolazione[k] = n; scritto++; }
+        });
+        ['componenti', 'periodo', 'evoluzione', 'implicazioni'].forEach(function(k){
+          if(j[k] && String(j[k]).trim()){ v.popolazione[k] = String(j[k]).trim(); scritto++; }
+        });
+        if(scritto && !v.popolazione.fonte) v.popolazione.fonte = 'Bozza AI (Claude), non verificata — controllare su ISTAT prima di consegnare il report';
+        disegna();
+        avvisa(scritto ? 'Bozza scritta dall\'AI: rileggila, specialmente i numeri — verificali su ISTAT prima di salvare' : 'L\'AI non è sicura di nulla su questo comune: compila a mano', scritto ? 'success' : 'warning');
+      })
+      .catch(function(e){ avvisa('Errore AI: ' + (e && e.message || 'errore'), 'error'); })
+      .then(function(){ if(btn){ btn.disabled = false; btn.innerHTML = orig; } });
   };
 
 })();
