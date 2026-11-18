@@ -19503,7 +19503,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.18nov-VALAIFOTOCOMUNE';
+var APP_VERSION = 'v.18nov-ISTATPOPOLAZIONE';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -71762,6 +71762,11 @@ try{
   'use strict';
   var C = window.GX_COL || {verde:'#0F5132', blu:'#1E3A8A', ambra:'#B45309', ardesia:'#334155', rosso:'#7F1D1D', viola:'#5B21B6'};
   var OMI_URL = 'omi/omi-salerno.json';
+  /* [18 nov 2026] Dati demografici reali ISTAT (bilancio demografico comunale,
+     demo.istat.it), stessi 158 comuni della provincia di Salerno dell'archivio
+     OMI, con cui condivide il codice comune: vedi build_popolazione.py e il
+     commento dentro il file stesso per come e quando è stato scaricato. */
+  var POP_URL = 'omi/popolazione-salerno.json';
   var VL = { tab:'elenco', omi:null, omiErr:'', omiPromise:null, cur:null, altriComuni:false, annEdit:null, omiComune:'A091' };
 
   /* ───────────── utilità ───────────── */
@@ -71959,9 +71964,26 @@ try{
         VL.omiErr = 'Non riesco a leggere ' + OMI_URL + ' (' + (e && e.message || e) + '). '
           + 'Controlla che il file sia sul sito nella cartella omi/. Intanto puoi scrivere il €/m² a mano.';
         VL.omiPromise = null; return null;
+      })
+      /* [18 nov 2026] la popolazione si carica insieme all'OMI (stesso file system,
+         stesso momento di utilizzo): così tutti i punti che già aspettano
+         caricaOmi() hanno anche questa pronta, senza doverli toccare uno per uno. */
+      .then(function(omiRes){
+        return caricaPopolazione().catch(function(){ return null; }).then(function(){ return omiRes; });
       });
     return VL.omiPromise;
   }
+  function caricaPopolazione(){
+    if(VL.pop) return Promise.resolve(VL.pop);
+    if(VL.popPromise) return VL.popPromise;
+    VL.popPromise = fetch(POP_URL, {cache:'no-cache'})
+      .then(function(r){ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(function(j){ VL.pop = j; return j; })
+      .catch(function(e){ VL.popPromise = null; return null; });
+    return VL.popPromise;
+  }
+  /* popolazione reale ISTAT per un comune, dallo stesso codice catastale usato da comuneOmi() */
+  function popolazioneDi(codCom){ return (VL.pop && VL.pop.comuni && VL.pop.comuni[codCom]) || null; }
   function semUltimo(){ var s = VL.omi && VL.omi.semestri; return s && s.length ? s[s.length - 1] : ''; }
   function semPrima(){ var s = VL.omi && VL.omi.semestri; return s && s.length > 1 ? s[s.length - 2] : ''; }
   function comuneOmi(cod){ return (VL.omi && VL.omi.comuni && VL.omi.comuni[cod]) || null; }
@@ -72180,6 +72202,23 @@ try{
     }
     if(v.omi.codCom && !v.codCom) v.codCom = v.omi.codCom;
     scegliTipologia(v);
+    autoPopolazione(v);
+  }
+  /* [18 nov 2026] popolazione ISTAT reale, auto-compilata quando si sceglie il
+     comune — mai sopra dati che l'agente ha già scritto o corretto a mano
+     (anche solo una voce): a quel punto il comune resta quello scelto da lui. */
+  function autoPopolazione(v){
+    if(!v.omi.codCom) return;
+    var p = popolazioneDi(v.omi.codCom);
+    if(!p) return;
+    if(!v.popolazione || typeof v.popolazione !== 'object') v.popolazione = {residenti:'', famiglie:'', componenti:'', periodo:'', evoluzione:'', implicazioni:'', fonte:''};
+    var pop = v.popolazione;
+    if(pop.residenti || pop.famiglie || pop.componenti || pop.fonte) return;
+    if(p.residenti_rif) pop.residenti = p.residenti_rif;
+    if(p.famiglie_rif) pop.famiglie = p.famiglie_rif;
+    if(p.componenti_medi_rif) pop.componenti = p.componenti_medi_rif;
+    pop.periodo = 'ISTAT, bilancio demografico ' + ((VL.pop && VL.pop.anno_riferimento) || '');
+    pop.fonte = 'ISTAT — Bilancio demografico comunale (dato reale, non stimato)';
   }
   function scegliTipologia(v){
     var disp = tipologieZona(v.omi.codCom, v.omi.zona, v.omi.sem);
@@ -72933,8 +72972,11 @@ try{
       + '</div>';
     h += gxCol('9 · Servizi di zona', 'scuole, trasporti, negozi: compila solo quello che hai verificato, il resto resta fuori dal report', C.ambra, g9);
 
-    var g10 = '<div style="padding:0 16px 10px"><button class="gx-btn" id="vl-pop-ai-btn" onclick="vlGeneraPopolazione()" style="color:' + C.ardesia + ';border-color:' + C.ardesia + '">' + ICO.ai + ' Genera con AI</button>'
-      + ' <span class="vl-k">bozza indicativa: verifica sempre residenti/famiglie su ISTAT prima di consegnare</span></div>'
+    var popReale = v.omi.codCom ? popolazioneDi(v.omi.codCom) : null;
+    var g10 = (popReale
+        ? '<div class="vl-stato" style="padding:0 16px 10px"><span style="color:' + C.verde + '">' + ICO.ok + ' Dati ISTAT reali per questo comune</span> <span class="vl-k">compilati da soli scegliendo il comune (bilancio demografico ' + ((VL.pop && VL.pop.anno_riferimento) || '') + '); puoi correggerli se hai un dato più recente</span></div>'
+        : '<div style="padding:0 16px 10px"><button class="gx-btn" id="vl-pop-ai-btn" onclick="vlGeneraPopolazione()" style="color:' + C.ardesia + ';border-color:' + C.ardesia + '">' + ICO.ai + ' Genera con AI</button>'
+          + ' <span class="vl-k">comune fuori dall\'archivio ISTAT (provincia di Salerno): bozza indicativa, verifica sempre residenti/famiglie prima di consegnare</span></div>')
       + '<div class="vl-g">'
       + campo('Residenti', nInp('popolazione.residenti', v.popolazione.residenti), 'st')
       + campo('Famiglie', nInp('popolazione.famiglie', v.popolazione.famiglie), 'st')
@@ -73380,7 +73422,7 @@ try{
     var v = VL.cur; if(!v) return;
     v.omi.codCom = cod; v.omi.zona = ''; v.omi.auto = 'mano'; v.omi.sem = semUltimo();
     var c = comuneOmi(cod); if(c){ var zs = Object.keys(c.z); if(zs.length === 1) v.omi.zona = zs[0]; }
-    scegliTipologia(v); aggiornaComps(v); disegna();
+    scegliTipologia(v); autoPopolazione(v); aggiornaComps(v); disegna();
   };
   window.vlOmiZona = function(z){ var v = VL.cur; if(!v) return; v.omi.zona = z; v.omi.auto = 'mano'; scegliTipologia(v); aggiornaComps(v); disegna(); };
   window.vlOmiTip = function(val){ var v = VL.cur; if(!v) return; var p = String(val).split('|'); v.omi.tip = p[0] || ''; v.omi.stato = p[1] || 'NORMALE'; ricalcola(); };
@@ -74130,6 +74172,11 @@ try{
        default dalla scheda immobile (im.energia); l'agente può correggerla
        nella sezione 12 · Efficienza energetica se il dato cambia (nuovo APE). */
     m.apeClasseDaImm = (im && im.energia) || '';
+    /* [18 nov 2026] serie storica reale ISTAT (residenti per anno), per il
+       grafico "evoluzione demografica": solo se il comune è nell'archivio. */
+    var popArch = popolazioneDi(rec.omi && rec.omi.codCom);
+    m.popSerie = popArch ? popArch.residenti : null;
+    m.popAnnoRif = (VL.pop && VL.pop.anno_riferimento) || '';
     var c = comuneOmi(rec.omi && rec.omi.codCom);
     m.comune = c; m.zona = c && rec.omi ? c.z[rec.omi.zona] : null;
     m.sem = rec.omi && rec.omi.sem || semUltimo(); m.semPrima = semPrima();
@@ -74375,6 +74422,28 @@ try{
     }
     s += '<rect x="' + (W - 150) + '" y="4" width="10" height="10" rx="2" fill="#B8C4D3"/><text x="' + (W - 136) + '" y="13" font-size="9.5" fill="' + RP.ardesia + '">2024</text>'
       + '<rect x="' + (W - 96) + '" y="4" width="10" height="10" rx="2" fill="' + RP.navy + '"/><text x="' + (W - 82) + '" y="13" font-size="9.5" fill="' + RP.ardesia + '">2025</text>';
+    return s + '</svg>';
+  }
+
+  /* ── grafico 7: l'evoluzione demografica, residenti reali ISTAT per anno ── */
+  function svgPopolazione(m){
+    var serie = m.popSerie; if(!serie) return '';
+    var anni = Object.keys(serie).sort();
+    if(anni.length < 2) return '';
+    var vals = anni.map(function(a){ return serie[a]; });
+    var W = 660, H = 190, P = 36, bw = Math.min(60, (W - 2 * P) / anni.length - 14);
+    var lo = Math.min.apply(null, vals) * 0.97, hi = Math.max.apply(null, vals) * 1.04;
+    var y = function(v){ return 16 + (1 - (v - lo) / (hi - lo)) * (H - 56); };
+    var passo = (W - 2 * P) / anni.length;
+    var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" xmlns="http://www.w3.org/2000/svg" font-family="Inter,Arial,sans-serif">';
+    s += '<line x1="' + P + '" y1="' + y(lo) + '" x2="' + (W - 10) + '" y2="' + y(lo) + '" stroke="' + RP.chiaro + '"/>';
+    anni.forEach(function(anno, i){
+      var cx = P + passo * i + passo / 2, X = cx - bw / 2, v = serie[anno], ultimo = i === anni.length - 1;
+      s += '<rect x="' + X + '" y="' + y(v) + '" width="' + bw + '" height="' + (y(lo) - y(v)) + '" rx="3" fill="' + (ultimo ? RP.navy : '#B8C4D3') + '"/>'
+        + '<text x="' + cx + '" y="' + (y(v) - 6) + '" font-size="10" font-weight="700" fill="' + (ultimo ? RP.navy : RP.ardesia) + '" text-anchor="middle">' + nf(v) + '</text>'
+        + '<text x="' + cx + '" y="' + (H - 6) + '" font-size="9.5" fill="' + RP.ardesia + '" text-anchor="middle">' + anno + '</text>';
+    });
+    s += '<text x="' + P + '" y="12" font-size="9" fill="' + RP.grigio + '">Residenti al 31 dicembre, Istat — bilancio demografico comunale</text>';
     return s + '</svg>';
   }
 
@@ -74642,9 +74711,10 @@ try{
           + '<div><div class="e">Famiglie</div><div class="v">' + sx(pop.famiglie ? nf(num(pop.famiglie)) : '—') + '</div></div>'
           + '<div><div class="e">Componenti medi</div><div class="v">' + sx(pop.componenti || '—') + '</div></div>'
           + '</div>' : muto('Dati di popolazione e famiglie non ancora compilati per questa valutazione.'))
+      + (m.popSerie ? '<h3>Evoluzione demografica</h3><div class="riq">' + svgPopolazione(m) + '</div>' : '')
       + (pop.periodo || pop.evoluzione ? '<div class="due">'
           + '<div class="riq"><div class="occhiello">Periodo / territorio</div><p style="margin:4px 0 0">' + sx(pop.periodo || '—') + '</p></div>'
-          + '<div class="riq"><div class="occhiello">Evoluzione demografica</div><p style="margin:4px 0 0">' + sx(pop.evoluzione || '—') + '</p></div>'
+          + '<div class="riq"><div class="occhiello">' + (m.popSerie ? 'Nota dell\'agente' : 'Evoluzione demografica') + '</div><p style="margin:4px 0 0">' + sx(pop.evoluzione || '—') + '</p></div>'
           + '</div>' : '')
       + (pop.implicazioni ? '<h3>Implicazioni per l\'immobile</h3><p>' + sx(pop.implicazioni) + '</p>' : '')
       + (pop.fonte ? '<h3>Fonte e data</h3><p class="piccolo">' + sx(pop.fonte) + '</p>' : '')
