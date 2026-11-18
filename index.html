@@ -72942,8 +72942,12 @@ try{
       + '</div><div class="gx-nota" style="margin:0 16px 10px">Prezzi e domanda di questa pagina del report usano già i dati OMI e l\'archivio (sezioni 3, 5 e 7 qui sopra): qui aggiungi solo l\'analisi dello stock, se la fai.</div>';
     h += gxCol('11 · Mercato di zona — stock', 'facoltativo: una nota su quanto e cosa c\'è in vendita in zona', C.viola, g11);
 
+    /* [17 nov 2026] classe energetica già sulla scheda immobile collegata (se
+       c'è): proposta come default nel report finché l'agente non la cambia qui. */
+    var imLink = v.immUuid ? immDaUuid(v.immUuid) : null;
+    var apeClasseDaImm = (imLink && imLink.energia) || '';
     var g12 = '<div class="vl-g">'
-      + campo('Classe APE', '<select onchange="vlCampo(\'ape.classe\',this.value)">' + opt('', (m.apeClasseDaImm ? 'usa quella della scheda (' + m.apeClasseDaImm + ')' : '— non indicata —'), v.ape.classe)
+      + campo('Classe APE', '<select onchange="vlCampo(\'ape.classe\',this.value)">' + opt('', (apeClasseDaImm ? 'usa quella della scheda (' + apeClasseDaImm + ')' : '— non indicata —'), v.ape.classe)
           + ['A4','A3','A2','A1','B','C','D','E','F','G'].map(function(k){ return opt(k, k, v.ape.classe); }).join('') + '</select>', 'st')
       + campo('EPgl,nren', inp('ape.epgl', v.ape.epgl, 'placeholder="kWh/m² anno"'), 'st')
       + campo('Validità APE', inp('ape.validita', v.ape.validita, 'placeholder="es. scadenza o 10 anni dal rilascio"'), 'st')
@@ -72953,7 +72957,7 @@ try{
       + '</div><div class="vl-g">'
       + campo('Fonte / documento / data', inp('ape.fonte', v.ape.fonte, 'placeholder="estremi APE, data e verifiche"'), 'l2')
       + '</div>';
-    h += gxCol('12 · Efficienza energetica', (m.apeClasseDaImm ? 'classe ' + m.apeClasseDaImm + ' sulla scheda immobile: lascia vuoto per usarla, o correggila se hai un APE più recente' : 'facoltativo: classe APE, se la conosci'), C.verde, g12);
+    h += gxCol('12 · Efficienza energetica', (apeClasseDaImm ? 'classe ' + apeClasseDaImm + ' sulla scheda immobile: lascia vuoto per usarla, o correggila se hai un APE più recente' : 'facoltativo: classe APE, se la conosci'), C.verde, g12);
 
     var ALLEG_STATI = [['', '— stato —'], ['disponibile', 'Disponibile'], ['da_acquisire', 'Da acquisire']];
     var g13 = (Array.isArray(v.allegati) ? v.allegati : []).map(function(a, i){
