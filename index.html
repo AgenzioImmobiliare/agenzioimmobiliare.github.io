@@ -19503,7 +19503,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.14nov-KITNOREC';
+var APP_VERSION = 'v.17nov-REPORTVAL';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -72106,8 +72106,37 @@ try{
       omi:{sem:'', codCom:'', zona:'', tip:'', stato:'NORMALE', pos:50, auto:'', manuale:'', motivo:''},
       fattori:f, altro:0, altroNota:'', vicinato:{}, vicinatoNota:'',
       comps:[], pesoOmi:null, valFinale:null, partenza:null, minimo:null, note:'', commento:'', ai:null,
-      corpo:[]   /* [17 ott 2026] valori a corpo: corte, terreno, posto auto… */
+      corpo:[],   /* [17 ott 2026] valori a corpo: corte, terreno, posto auto… */
+      /* [17 nov 2026] sezioni del Report di Valutazione CapitalCasa Frimm:
+         compilate a mano dall'agente, come nel PDF di riferimento — mai dati
+         inventati, solo quello che l'agente scrive davvero. */
+      contestoZona:{scuole:'', trasporti:'', negozi:'', sanita:'', mare:'', accessi:'', fonte:''},
+      popolazione:{residenti:'', famiglie:'', componenti:'', periodo:'', evoluzione:'', implicazioni:'', fonte:''},
+      stockZona:'',
+      ape:{classe:'', epgl:'', validita:'', impianti:'', incidenza:'', fonte:''},
+      allegati:ALLEGATI_DEF(),
+      noteReport:''
     };
+  }
+  /* elenco fisso dei documenti del Report (pagina Allegati): nuova lista a
+     ogni chiamata, mai condivisa fra valutazioni */
+  function ALLEGATI_DEF(){
+    return ['Visura catastale', 'Planimetria catastale', 'Titolo di provenienza', 'APE', 'Documentazione edilizia', 'Pertinenze e garage']
+      .map(function(voce){ return {voce:voce, stato:'', rif:''}; });
+  }
+  /* valutazioni salvate prima del 17 nov 2026: mancano le sezioni nuove del
+     Report. Le aggiunge senza toccare quelle che ci sono già. Chiamata sia
+     dall'editor sia da modelloReport (il report si può aprire anche senza
+     passare dall'editor), così è sempre sicuro leggerle. */
+  function normReport(v){
+    if(!v) return v;
+    if(!v.contestoZona || typeof v.contestoZona !== 'object') v.contestoZona = {scuole:'', trasporti:'', negozi:'', sanita:'', mare:'', accessi:'', fonte:''};
+    if(!v.popolazione || typeof v.popolazione !== 'object') v.popolazione = {residenti:'', famiglie:'', componenti:'', periodo:'', evoluzione:'', implicazioni:'', fonte:''};
+    if(typeof v.stockZona !== 'string') v.stockZona = '';
+    if(!v.ape || typeof v.ape !== 'object') v.ape = {classe:'', epgl:'', validita:'', impianti:'', incidenza:'', fonte:''};
+    if(!Array.isArray(v.allegati) || !v.allegati.length) v.allegati = ALLEGATI_DEF();
+    if(typeof v.noteReport !== 'string') v.noteReport = '';
+    return v;
   }
   /* riempie la valutazione dall'immobile; tocca solo i dati dell'immobile */
   function applicaImmobile(v, im){
@@ -72803,7 +72832,7 @@ try{
   function nInp(path, val, extra){ return inp(path, val === '' || val == null ? '' : String(val).replace('.', ','), 'inputmode="decimal" ' + (extra || '')); }
 
   function vistaScheda(){
-    var v = VL.cur || (VL.cur = nuovaVuota()), R = regole(), r = calcola(v);
+    var v = normReport(VL.cur || (VL.cur = nuovaVuota())), R = regole(), r = calcola(v);
     var h = '';
     if(v.id) h += '<div class="gx-info">Stai modificando la valutazione del <b>' + E(dataIt(v.data)) + '</b>. "Salva" la aggiorna; per farne una nuova premi "Nuova valutazione".</div>';
     h += avvisoSito(v);
@@ -72879,6 +72908,67 @@ try{
     h += '<div id="vl-dom-col">' + colDomanda(v, r) + '</div>';
     h += '<div id="vl-serv-col">' + colServizi(v) + '</div>';
 
+    /* [17 nov 2026] sezioni del Report di Valutazione CapitalCasa Frimm:
+       facoltative, nessuna obbliga a compilare — una pagina vuota nel report
+       è meglio di un dato inventato. */
+    var g9 = '<div class="vl-g">'
+      + campo('Scuole', '<textarea oninput="vlCampo(\'contestoZona.scuole\',this.value)" placeholder="distanza, tempo, fonte">' + E(v.contestoZona.scuole) + '</textarea>')
+      + campo('Trasporti', '<textarea oninput="vlCampo(\'contestoZona.trasporti\',this.value)" placeholder="distanza, tempo, fonte">' + E(v.contestoZona.trasporti) + '</textarea>')
+      + campo('Negozi e spesa', '<textarea oninput="vlCampo(\'contestoZona.negozi\',this.value)" placeholder="distanza, tempo, fonte">' + E(v.contestoZona.negozi) + '</textarea>')
+      + '</div><div class="vl-g">'
+      + campo('Sanità e farmacia', '<textarea oninput="vlCampo(\'contestoZona.sanita\',this.value)" placeholder="distanza, tempo, fonte">' + E(v.contestoZona.sanita) + '</textarea>')
+      + campo('Mare e tempo libero', '<textarea oninput="vlCampo(\'contestoZona.mare\',this.value)" placeholder="distanza, tempo, fonte">' + E(v.contestoZona.mare) + '</textarea>')
+      + campo('Accessi e parcheggi', '<textarea oninput="vlCampo(\'contestoZona.accessi\',this.value)" placeholder="distanza, tempo, fonte">' + E(v.contestoZona.accessi) + '</textarea>')
+      + '</div><div class="vl-g">'
+      + campo('Fonte e data di verifica', inp('contestoZona.fonte', v.contestoZona.fonte, 'placeholder="es. Google Maps, 17/11/2026"'), 'l2')
+      + '</div>';
+    h += gxCol('9 · Servizi di zona', 'scuole, trasporti, negozi: compila solo quello che hai verificato, il resto resta fuori dal report', C.ambra, g9);
+
+    var g10 = '<div class="vl-g">'
+      + campo('Residenti', nInp('popolazione.residenti', v.popolazione.residenti), 'st')
+      + campo('Famiglie', nInp('popolazione.famiglie', v.popolazione.famiglie), 'st')
+      + campo('Componenti medi', '<input value="' + E(v.popolazione.componenti) + '" oninput="vlCampo(\'popolazione.componenti\',this.value)">', 'st')
+      + campo('Periodo / territorio', inp('popolazione.periodo', v.popolazione.periodo, 'placeholder="es. ISTAT 2024, comune"'))
+      + '</div><div class="vl-g">'
+      + campo('Evoluzione demografica', '<textarea oninput="vlCampo(\'popolazione.evoluzione\',this.value)">' + E(v.popolazione.evoluzione) + '</textarea>', 'l2')
+      + campo('Implicazioni per l\'immobile', '<textarea oninput="vlCampo(\'popolazione.implicazioni\',this.value)" placeholder="collega il dato demografico alla domanda abitativa, senza inferenze non documentate">' + E(v.popolazione.implicazioni) + '</textarea>', 'l2')
+      + '</div><div class="vl-g">'
+      + campo('Fonte e data', inp('popolazione.fonte', v.popolazione.fonte, 'placeholder="fonte statistica, ambito territoriale e anno"'), 'l2')
+      + '</div>';
+    h += gxCol('10 · Popolazione e famiglie', 'dati demografici del comune, se li hai: facoltativi', C.ardesia, g10);
+
+    var g11 = '<div class="vl-g">'
+      + campo('Analisi dello stock', '<textarea oninput="vlCampo(\'stockZona\',this.value)" placeholder="consistenza e tipologie del patrimonio immobiliare in zona">' + E(v.stockZona) + '</textarea>', 'l2')
+      + '</div><div class="gx-nota" style="margin:0 16px 10px">Prezzi e domanda di questa pagina del report usano già i dati OMI e l\'archivio (sezioni 3, 5 e 7 qui sopra): qui aggiungi solo l\'analisi dello stock, se la fai.</div>';
+    h += gxCol('11 · Mercato di zona — stock', 'facoltativo: una nota su quanto e cosa c\'è in vendita in zona', C.viola, g11);
+
+    var g12 = '<div class="vl-g">'
+      + campo('Classe APE', '<select onchange="vlCampo(\'ape.classe\',this.value)">' + opt('', (m.apeClasseDaImm ? 'usa quella della scheda (' + m.apeClasseDaImm + ')' : '— non indicata —'), v.ape.classe)
+          + ['A4','A3','A2','A1','B','C','D','E','F','G'].map(function(k){ return opt(k, k, v.ape.classe); }).join('') + '</select>', 'st')
+      + campo('EPgl,nren', inp('ape.epgl', v.ape.epgl, 'placeholder="kWh/m² anno"'), 'st')
+      + campo('Validità APE', inp('ape.validita', v.ape.validita, 'placeholder="es. scadenza o 10 anni dal rilascio"'), 'st')
+      + '</div><div class="vl-g">'
+      + campo('Impianti e dotazioni', '<textarea oninput="vlCampo(\'ape.impianti\',this.value)" placeholder="riscaldamento, climatizzazione, acqua calda, serramenti">' + E(v.ape.impianti) + '</textarea>', 'l2')
+      + campo('Incidenza sulla valutazione', '<textarea oninput="vlCampo(\'ape.incidenza\',this.value)" placeholder="eventuali correttivi; distingui lavori ipotizzati da lavori eseguiti">' + E(v.ape.incidenza) + '</textarea>', 'l2')
+      + '</div><div class="vl-g">'
+      + campo('Fonte / documento / data', inp('ape.fonte', v.ape.fonte, 'placeholder="estremi APE, data e verifiche"'), 'l2')
+      + '</div>';
+    h += gxCol('12 · Efficienza energetica', (m.apeClasseDaImm ? 'classe ' + m.apeClasseDaImm + ' sulla scheda immobile: lascia vuoto per usarla, o correggila se hai un APE più recente' : 'facoltativo: classe APE, se la conosci'), C.verde, g12);
+
+    var ALLEG_STATI = [['', '— stato —'], ['disponibile', 'Disponibile'], ['da_acquisire', 'Da acquisire']];
+    var g13 = (Array.isArray(v.allegati) ? v.allegati : []).map(function(a, i){
+      return '<div class="vl-g">'
+        + campo(a.voce, '<select onchange="vlAllegato(' + i + ',\'stato\',this.value)">' + ALLEG_STATI.map(function(s){ return opt(s[0], s[1], a.stato); }).join('') + '</select>', 'st')
+        + campo('Riferimento', '<input value="' + E(a.rif || '') + '" placeholder="nome file, data o pagina" oninput="vlAllegato(' + i + ',\'rif\',this.value)">', 'l2')
+        + '</div>';
+    }).join('');
+    h += gxCol('13 · Allegati', 'i documenti a supporto della valutazione: segna cosa c\'è già', C.blu, g13 + '<div class="gx-nota" style="margin:0 16px 10px">La lista è fissa (gli stessi 6 documenti del modello CapitalCasa Frimm). Se un documento non serve per questo immobile, lascialo semplicemente "— stato —": non compare come mancante nel report.</div>');
+
+    var g14 = '<div class="vl-g">'
+      + campo('Note per il report (ultima pagina, facoltativo)', '<textarea oninput="vlCampo(\'noteReport\',this.value)" placeholder="facoltativo: qualunque cosa vuoi scrivere sull\'ultima pagina del report">' + E(v.noteReport) + '</textarea>', 'l2')
+      + '</div><div class="gx-nota" style="margin:0 16px 10px">Diverso dalle "Note interne" della Sintesi (6), che non vanno mai nel report: queste, se le scrivi, il proprietario le legge.</div>';
+    h += gxCol('14 · Note', 'facoltativo: resta vuota se non hai nulla da aggiungere', C.ambra, g14);
+
     h += '<div class="vl-azioni">'
       + '<button class="btn btn-outline vl-big" onclick="vlNuova()">Nuova valutazione</button>'
       + '<button class="btn btn-outline vl-big" onclick="vlReport()" style="display:inline-flex;gap:7px;align-items:center">' + ICO.doc + ' Salva e apri il report</button>'
@@ -72928,6 +73018,11 @@ try{
     disegna();
   };
   window.vlCorpoVia = function(i){ var v = VL.cur; if(!v || !Array.isArray(v.corpo)) return; v.corpo.splice(i, 1); disegna(); };
+  /* [17 nov 2026] riga della checklist Allegati (sezione 13): stato o riferimento */
+  window.vlAllegato = function(i, campo, val){
+    var v = VL.cur; if(!v || !Array.isArray(v.allegati) || !v.allegati[i]) return;
+    v.allegati[i][campo] = val;
+  };
 
   function vicTotTxt(r){
     var t = r.vic || {tot:0, voci:[]};
@@ -73975,6 +74070,7 @@ try{
 
   /* il modello del report: tutto quello che serve, calcolato una volta */
   function modelloReport(rec){
+    normReport(rec);
     var R = regoleDi(rec);
     var m = {rec:rec, R:R};
     m.agenzia = (typeof getNomeAgenzia === 'function' ? getNomeAgenzia() : '') || '';
@@ -73998,6 +74094,27 @@ try{
       if(typeof f === 'string' && f && f.indexOf('data:') !== 0) m.foto = new URL(f, location.href).href;
       else if(typeof f === 'string' && f.indexOf('data:') === 0 && f.length < 3000000) m.foto = f;
     }catch(e){}
+    /* [17 nov 2026] pagina Foto: fino a 4 immagini reali dell'immobile (mai
+       segnaposto). Stesse regole della copertina per i data: URI pesanti. */
+    m.fotoList = [];
+    try{
+      var fl = im && im.foto; if(!Array.isArray(fl)) fl = fl ? [fl] : [];
+      m.fotoList = fl.map(function(x){
+        var u = x && typeof x === 'object' ? (x.url || x.src || '') : x;
+        if(typeof u !== 'string' || !u) return '';
+        if(u.indexOf('data:') === 0) return u.length < 3000000 ? u : '';
+        try{ return new URL(u, location.href).href; }catch(e2){ return ''; }
+      }).filter(Boolean).slice(0, 4);
+    }catch(e){}
+    /* [17 nov 2026] Caratteristiche dell'immobile: solo i dati che esistono
+       davvero sulla scheda immobile collegata, mai inventati. */
+    m.locali = (im && (im.locali || im.camere)) || '';
+    m.bagni = (im && im.bagni) || '';
+    m.piano = (im && im.piano) || '';
+    /* [17 nov 2026] Efficienza energetica: la classe APE, se nota, arriva di
+       default dalla scheda immobile (im.energia); l'agente può correggerla
+       nella sezione 12 · Efficienza energetica se il dato cambia (nuovo APE). */
+    m.apeClasseDaImm = (im && im.energia) || '';
     var c = comuneOmi(rec.omi && rec.omi.codCom);
     m.comune = c; m.zona = c && rec.omi ? c.z[rec.omi.zona] : null;
     m.sem = rec.omi && rec.omi.sem || semUltimo(); m.semPrima = semPrima();
@@ -74275,23 +74392,53 @@ try{
       + '@page{size:A4;margin:0}*{box-sizing:border-box}'
       + 'html,body{margin:0;padding:0;background:#E5E7EB;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
       + 'body{font-family:Inter,Arial,sans-serif;color:' + RP.navy + ';font-size:10.5pt;line-height:1.5}'
-      + '.pag{width:210mm;height:297mm;margin:10mm auto;background:' + RP.carta + ';position:relative;overflow:hidden;padding:18mm 17mm 20mm;page-break-after:always;box-shadow:0 4px 24px rgba(0,0,0,.18)}'
+      + '.pag{width:210mm;height:297mm;margin:10mm auto;background:' + RP.carta + ';position:relative;overflow:hidden;padding:16mm 17mm 20mm;page-break-after:always;box-shadow:0 4px 24px rgba(0,0,0,.18)}'
       + '.pag:last-child{page-break-after:auto}'
       + '@media print{html,body{background:#fff}.pag{margin:0;box-shadow:none}.barra{display:none!important}}'
       + '.serif{font-family:"Playfair Display",Georgia,serif}'
       + '.occhiello{font-size:8pt;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:' + RP.oro + '}'
       + 'h1{font-family:"Playfair Display",Georgia,serif;font-weight:700;font-size:26pt;line-height:1.1;margin:4px 0 6px}'
-      + 'h2{font-family:"Playfair Display",Georgia,serif;font-weight:700;font-size:17pt;margin:2px 0 10px;padding-bottom:8px;border-bottom:1.5px solid ' + RP.navy + '}'
+      + 'h2{font-weight:800;font-size:12pt;margin:14px 0 6px;color:' + RP.navy + '}'
       + 'h3{font-size:9pt;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:' + RP.ardesia + ';margin:16px 0 6px}'
       + 'p{margin:0 0 8px}.piccolo{font-size:8.5pt;color:' + RP.grigio + '}'
-      + '.testa{display:flex;justify-content:space-between;align-items:center;font-size:8pt;color:' + RP.grigio + ';margin-bottom:10mm;letter-spacing:.04em}'
-      + '.testa b{color:' + RP.navy + ';letter-spacing:.12em;text-transform:uppercase;font-size:7.5pt}'
-      + '.piede{position:absolute;left:17mm;right:17mm;bottom:9mm;display:flex;justify-content:space-between;font-size:7.5pt;color:' + RP.grigio + ';border-top:1px solid ' + RP.chiaro + ';padding-top:6px}'
+      + '.vmuto{font-size:9.5pt;color:' + RP.grigio + ';font-style:italic}'
+      /* [17 nov 2026] intestazione comune a tutte le pagine interne: loghi a
+         sinistra, piccolo riquadro navy con comune/indirizzo a destra —
+         lo stesso su ogni pagina, come nel PDF di riferimento */
+      + '.vhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10mm;margin-bottom:6mm}'
+      + '.vhead .logos{display:flex;align-items:center;gap:6mm;flex-wrap:wrap}'
+      + '.vhead .logos img{height:8mm;max-width:34mm;object-fit:contain}'
+      + '.vhead .logos b{font-size:9pt;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:' + RP.navy + '}'
+      + '.vhead .info{background:' + RP.navy + ';color:#fff;border-radius:3mm;padding:3mm 5mm;min-width:46mm;text-align:right;flex-shrink:0}'
+      + '.vhead .info b{display:block;font-size:9.5pt;font-weight:800}'
+      + '.vhead .info span{display:block;font-size:8pt;opacity:.85;margin-top:1mm}'
+      + '.vtitle{font-weight:800;font-size:22pt;color:' + RP.navy + ';line-height:1.1;margin:0 0 1mm}'
+      + '.vnum{font-size:8pt;color:' + RP.grigio + ';font-weight:700;letter-spacing:.06em;margin-bottom:5mm}'
+      + '.vfoot{position:absolute;left:17mm;right:17mm;bottom:9mm;display:flex;justify-content:space-between;font-size:7.5pt;color:' + RP.grigio + ';border-top:1px solid ' + RP.chiaro + ';padding-top:6px;letter-spacing:.04em}'
+      + '.vfoot b{color:' + RP.navy + '}'
+      /* riga di 3-4 statistiche grandi su fondo navy (Quotazioni OMI, Popolazione, Valutazione) */
+      + '.vstat3{display:grid;gap:1px;background:' + RP.chiaro + ';border-radius:3mm;overflow:hidden;margin:4mm 0 6mm}'
+      + '.vstat3>div{background:' + RP.navy + ';color:#fff;padding:5mm 6mm}'
+      + '.vstat3 .e{font-size:7.5pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.75}'
+      + '.vstat3 .v{font-size:17pt;font-weight:800;margin-top:2mm;font-family:"Plus Jakarta Sans",Inter,sans-serif}'
+      /* riga di statistiche chiare, su sfondo bianco (Efficienza energetica) */
       + '.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}'
       + '.kpi>div{background:#fff;border:1px solid ' + RP.chiaro + ';border-radius:10px;padding:9px 11px}'
       + '.kpi .e{font-size:7pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:' + RP.grigio + '}'
       + '.kpi .v{font-size:14pt;font-weight:800;margin-top:2px}'
       + '.kpi .s{font-size:7.5pt;color:' + RP.grigio + '}'
+      /* due colonne: contenuto a sinistra, riquadro navy di dati a destra (Caratteristiche, Quotazioni OMI) */
+      + '.vside-wrap{display:grid;grid-template-columns:1fr 62mm;gap:8mm;align-items:start}'
+      + '.vside{background:' + RP.navy + ';color:#fff;border-radius:3mm;padding:5mm 6mm}'
+      + '.vside .r{padding:2.5mm 0;border-bottom:1px solid rgba(255,255,255,.18)}.vside .r:last-child{border-bottom:none}'
+      + '.vside .r .e{font-size:7.3pt;font-weight:700;letter-spacing:.07em;text-transform:uppercase;opacity:.7}'
+      + '.vside .r .v{font-size:10.5pt;font-weight:700;margin-top:1mm}'
+      + '.vmap{border:1px solid ' + RP.chiaro + ';border-radius:3mm;padding:8px;margin:0 0 6mm}.vmap svg{width:100%;display:block}'
+      /* griglia a card con icona (Servizi di zona) */
+      + '.sv-griglia{display:grid;grid-template-columns:1fr 1fr;gap:3.5mm 6mm}'
+      + '.sv-c{display:flex;gap:3.5mm;align-items:flex-start;border:1px solid ' + RP.chiaro + ';border-radius:3mm;padding:3mm 3.5mm;break-inside:avoid}'
+      + '.sv-c .ic{width:9mm;height:9mm;border-radius:50%;background:' + RP.oro + ';display:flex;align-items:center;justify-content:center;flex-shrink:0}'
+      + '.sv-c b{font-size:9.5pt;display:block;line-height:1.25}.sv-c p{margin:1mm 0 0;font-size:8.3pt;line-height:1.35;color:' + RP.ardesia + '}'
       + 'table{width:100%;border-collapse:collapse;font-size:9pt}'
       + 'th{font-size:7pt;text-transform:uppercase;letter-spacing:.07em;color:' + RP.grigio + ';text-align:left;padding:5px 6px;border-bottom:1.5px solid ' + RP.navy + '}'
       + 'td{padding:5px 6px;border-bottom:1px solid ' + RP.chiaro + '}'
@@ -74299,72 +74446,60 @@ try{
       + 'tr.tot td{border-top:1.5px solid ' + RP.navy + ';border-bottom:none;font-weight:800}'
       + '.riq{background:#fff;border:1px solid ' + RP.chiaro + ';border-radius:12px;padding:12px 14px;margin:8px 0}'
       + '.riq.dom{display:flex;gap:14px;align-items:center;border-left:4px solid ' + RP.oro + '}'
-      /* [18 ott 2026] logo nelle intestazioni, foto a pagina 3, pagina dei servizi */
-      + '.testa .tl{display:flex;align-items:center;gap:7px}.testa .tl img{height:7mm;max-width:38mm;object-fit:contain}'
-      + '.p3h{display:flex;gap:6mm;align-items:flex-start}.p3h .tx{flex:1;min-width:0}.p3h .fi{width:48mm;height:33mm;object-fit:cover;border-radius:3mm;flex-shrink:0;margin-top:1mm}'
-      + '.sv-top{display:flex;gap:7mm;align-items:center;margin-bottom:6mm}.sv-top .tx{flex:1;min-width:0}.sv-top h2{margin-bottom:2mm}'
-      + '.sv-foto{width:30mm;height:38mm;object-fit:cover;border-radius:4mm;flex-shrink:0;box-shadow:0 2px 10px rgba(19,35,58,.15)}'
-      + '.sv-chi{margin:0;font-size:10pt}.sv-sot{margin:2mm 0 0;color:' + RP.ardesia + ';font-size:9.5pt}'
-      + '.sv-griglia{display:grid;grid-template-columns:1fr 1fr;gap:3.5mm 6mm}'
-      + '.sv-c{display:flex;gap:3.5mm;align-items:flex-start;border:1px solid ' + RP.chiaro + ';border-radius:3mm;padding:3mm 3.5mm;break-inside:avoid}'
-      + '.sv-c .ic{width:9mm;height:9mm;border-radius:50%;background:' + RP.oro + ';display:flex;align-items:center;justify-content:center;flex-shrink:0}'
-      + '.sv-c b{font-size:9.5pt;display:block;line-height:1.25}.sv-c p{margin:1mm 0 0;font-size:8.3pt;line-height:1.35;color:' + RP.ardesia + '}'
-      + '.sv{display:flex;flex-direction:column}.sv>*{flex-shrink:0}.sv-fondo{margin-top:auto;padding-top:5mm}'
-      + '.sv-cta{background:' + RP.navy + ';color:#fff;border-radius:4mm;padding:5mm 6mm}.sv-cta .t{font-family:"Playfair Display",Georgia,serif;font-size:15pt;font-weight:700;margin-top:1mm}'
-      + '.sv-cta .ct{display:flex;gap:8mm;flex-wrap:wrap;margin-top:2mm;font-size:10pt;font-weight:600}.sv-cta .ct span{display:inline-flex;gap:5px;align-items:center}'
-      + '.sv-loghi{display:flex;gap:9mm;justify-content:center;align-items:center;margin-top:5mm}.sv-loghi img{max-height:13mm;max-width:42mm;object-fit:contain}'
       + '.riq.dom .n{font-family:"Playfair Display",Georgia,serif;font-size:30pt;font-weight:700;line-height:1;color:' + RP.oro + ';min-width:14mm;text-align:center}'
       + '.due{display:grid;grid-template-columns:1fr 1fr;gap:12px}'
       + '.pos{color:' + RP.verde + '}.neg{color:' + RP.rosso + '}'
       + '.barra{position:fixed;top:0;left:0;right:0;z-index:5;background:' + RP.navy + ';color:#fff;padding:10px 16px;display:flex;gap:12px;align-items:center;font-size:13px}'
       + '.barra button{background:' + RP.oro + ';color:#fff;border:none;border-radius:8px;padding:8px 18px;font-weight:700;font-size:13px;cursor:pointer}'
       + '.barra .sp{flex:1}'
-      /* copertina */
-      + '.cop{padding:0;background:' + RP.navy + ';color:#fff}'
-      + '.cop .foto{position:absolute;left:0;right:0;top:0;height:150mm;background-size:cover;background-position:center}'
-      + '.cop .velo{position:absolute;left:0;right:0;top:0;height:150mm;background:linear-gradient(180deg,rgba(19,35,58,.15) 0%,rgba(19,35,58,.35) 55%,' + RP.navy + ' 100%)}'
-      + '.cop .dentro{position:absolute;left:18mm;right:18mm;bottom:22mm}'
-      + '.cop .marchio{position:absolute;left:18mm;right:18mm;top:16mm;display:flex;justify-content:space-between;align-items:center;font-size:8.5pt;letter-spacing:.2em;text-transform:uppercase}'
-      + '.cop .marchio img{max-height:16mm;max-width:60mm;background:#fff;border-radius:6px;padding:3px 6px}'
-      + '.cop h1{font-size:38pt;color:#fff;margin:6mm 0 4mm}'
-      + '.cop .indir{font-size:15pt;font-weight:300;opacity:.95}'
-      + '.cop .riga{height:2px;width:28mm;background:' + RP.oro + ';margin:8mm 0}'
-      + '.cop .meta{display:grid;grid-template-columns:repeat(3,1fr);gap:10mm;font-size:9pt;opacity:.92}'
-      + '.cop .meta b{display:block;font-size:7pt;letter-spacing:.16em;text-transform:uppercase;color:' + RP.oro + ';margin-bottom:2px}'
-      /* [17 ott 2026] pagina 3: la mappa prende lo spazio che resta, cosi' con
-         la tabella dei valori a corpo non finisce sopra il pie' di pagina */
-      + '.p3{display:flex;flex-direction:column}.p3>*{flex-shrink:0}'
-      + '.p3 .mappa{flex:1 1 auto;min-height:35mm;max-height:105mm;display:flex;align-items:center;justify-content:center}.p3 .mappa svg{width:100%;height:100%}'
-      /* [17 ott 2026] copertina "casette" su azzurro */
-      + '.ck{padding:0;background:#BFD8EE;text-align:center;color:' + RP.navy + '}'
-      + '.ck .testa-c{position:absolute;left:0;right:0;top:20mm}.ck .testa-c svg,.ck .testa-c img{display:block;margin:0 auto}.ck .testa-c img{max-height:16mm;max-width:60mm}'
-      + '.ck .ag{margin-top:3mm;font-size:9pt;font-weight:800;letter-spacing:.24em;text-transform:uppercase}'
-      + '.ck .tg{margin-top:1mm;font-family:"Playfair Display",Georgia,serif;font-style:italic;font-size:10pt}'
-      + '.ck .mezzo{position:absolute;left:20mm;right:20mm;top:70mm}'
-      + '.ck .occhiello{font-size:8.5pt;font-weight:800;letter-spacing:.26em;color:#C2410C}'
-      + '.ck .cors{font-family:"Playfair Display",Georgia,serif;font-style:italic;font-size:22pt;margin-top:6mm;opacity:.85}'
-      + '.ck h1{font-size:40pt;line-height:1.05;margin:1mm 0 4mm}'
-      + '.ck .indir{font-size:12pt;font-weight:300;color:#1E3A5F}'
-      + '.ck .sep{width:16mm;height:1.4mm;border-radius:1mm;background:#EA580C;margin:8mm auto}'
-      + '.ck .meta{display:grid;grid-template-columns:repeat(3,1fr);gap:6mm;font-size:9.5pt}'
-      + '.ck .meta b{display:block;font-size:6.8pt;letter-spacing:.18em;text-transform:uppercase;margin-bottom:2px;opacity:.7}'
-      + '.ck .case{position:absolute;left:0;right:0;bottom:0;height:108.4mm}.ck .case svg{display:block;width:100%;height:100%}'
-      /* valore grande */
+      /* copertina, stile PDF: bianca, titolo navy, foto reale se c'è */
+      + '.vcop{padding:0}'
+      + '.vcop .intesta{display:flex;justify-content:space-between;align-items:center;padding:16mm 18mm 0}'
+      + '.vcop .intesta img{height:12mm;max-width:50mm;object-fit:contain}'
+      + '.vcop .occhiello{padding:0 18mm;margin-top:10mm}'
+      + '.vcop h1{padding:0 18mm;color:' + RP.navy + ';font-size:34pt;margin:3mm 0 5mm}'
+      + '.vcop .riga-ind{margin:0 18mm 8mm;background:' + RP.chiaro + ';border-radius:2mm;padding:3mm 5mm;font-size:12pt;color:' + RP.ardesia + '}'
+      + '.vcop .foto{margin:0 18mm;height:85mm;border-radius:3mm;background-size:cover;background-position:center;background-color:' + RP.chiaro + '}'
+      + '.vcop .tip{padding:7mm 18mm 0}.vcop .tip .occhiello{padding:0;margin:0}.vcop .tip .v{font-size:19pt;font-weight:800;color:' + RP.navy + ';margin-top:1mm}'
+      + '.vcop .meta{display:grid;grid-template-columns:1fr 1fr;gap:8mm;padding:7mm 18mm 0}'
+      + '.vcop .meta b{display:block;font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:' + RP.grigio + ';margin-bottom:1mm}'
+      + '.vcop .meta div>span{font-size:11pt;color:' + RP.navy + '}'
+      + '.vcop .tag{position:absolute;left:18mm;bottom:16mm;font-size:9pt;color:' + RP.grigio + ';font-style:italic}'
+      /* retrocopertina, navy pieno */
+      + '.vback{padding:0;background:' + RP.navy + ';color:#fff}'
+      + '.vback .box{position:absolute;left:18mm;right:18mm;top:22mm;bottom:22mm;display:flex;flex-direction:column}'
+      + '.vback h1{color:#fff;font-size:26pt;line-height:1.25;margin:0 0 8mm;max-width:130mm}'
+      + '.vback .sep{width:24mm;height:1.4mm;border-radius:1mm;background:' + RP.oro + ';margin-bottom:8mm}'
+      + '.vback .passi{display:flex;flex-direction:column;gap:5mm}'
+      + '.vback .passi div{display:flex;gap:5mm;align-items:baseline}'
+      + '.vback .passi b.n{font-size:17pt;color:' + RP.oro + ';font-family:"Plus Jakarta Sans",Inter,sans-serif;min-width:11mm}'
+      + '.vback .passi b.t{font-size:11.5pt;font-weight:700}'
+      + '.vback .contatti{margin-top:auto;font-size:9.5pt;opacity:.9;line-height:1.7}'
+      /* valore grande (pagina Valutazione) */
       + '.valore{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin:6mm 0 2mm}'
       + '.valore .n{font-family:"Playfair Display",Georgia,serif;font-size:40pt;font-weight:700;line-height:1}'
       + '.valore .f{font-size:10pt;color:' + RP.ardesia + ';padding-bottom:6px}'
-      /* [20 ott 2026] Scelta di Enzo "C · Moderno rotondo": i prezzi grandi (valore in
-         Sintesi, partenza e minimo in Conclusioni, il numero di "Chi cerca") in Plus
-         Jakarta Sans. Il Playfair dei titoli scrive le cifre "all'antica" (alcune
-         scendono sotto la riga) e i prezzi sembravano saltellare. */
+      /* [20 ott 2026] Scelta di Enzo "C · Moderno rotondo": i prezzi grandi in Plus
+         Jakarta Sans. Il Playfair scrive le cifre "all'antica" e saltellavano. */
       + ".valore .n,.pag .serif,.riq.dom .n{font-family:'Plus Jakarta Sans',Inter,sans-serif!important;font-weight:800!important;letter-spacing:-.015em;font-variant-numeric:lining-nums proportional-nums}.valore .n{font-size:38pt!important}"
-      /* [20 ott 2026] riquadri dei metodi in Sintesi; cifre proporzionali qui sopra:
-         con quelle "a colonna" il punto delle migliaia era largo come una cifra */
       + '.metodi{display:grid;gap:8px;margin:0 0 8px}'
       + '.metodi>div{background:#fff;border:1px solid ' + RP.chiaro + ';border-top:3px solid;border-radius:10px;padding:8px 11px}'
       + '.metodi .e{font-size:7pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:' + RP.grigio + '}'
       + '.metodi .v{font-size:14pt;font-weight:800;margin-top:2px}'
-      + '.metodi .s{font-size:7.5pt;color:' + RP.grigio + ';line-height:1.35}';
+      + '.metodi .s{font-size:7.5pt;color:' + RP.grigio + ';line-height:1.35}'
+      /* scala classi APE (pagina Efficienza energetica) */
+      + '.vscala{display:flex;gap:3px;margin:4mm 0 3mm}'
+      + '.vscala div{flex:1;text-align:center;padding:4mm 0;border-radius:2mm;color:#fff;font-weight:800;font-size:10.5pt;opacity:.3}'
+      + '.vscala div.on{opacity:1;box-shadow:0 2px 8px rgba(0,0,0,.25)}'
+      /* allegati */
+      + '.valleg td:first-child{width:8mm;color:' + RP.grigio + ';font-weight:700}'
+      + '.vok{color:' + RP.verde + ';font-weight:700}.vda{color:' + RP.oro + ';font-weight:700}'
+      /* foto */
+      + '.vfoto2{display:grid;grid-template-columns:1fr 1fr;gap:6mm}'
+      + '.vfoto2 figure{margin:0}.vfoto2 img{width:100%;height:62mm;object-fit:cover;border-radius:3mm;display:block}'
+      + '.vfoto2 figcaption{font-size:8.5pt;color:' + RP.grigio + ';margin-top:2mm}'
+      /* nota: riquadro vuoto o con testo */
+      + '.vnota{min-height:70mm;border:1px solid ' + RP.chiaro + ';border-radius:3mm;background:#FAFBFC;padding:6mm;white-space:pre-wrap;font-size:10pt}';
   }
   /* [20 ott 2026] scelta di Enzo: in Sintesi gli stessi riquadri della scheda
      (Valore OMI, Valore comparabili, Valori a corpo, Valore calcolato), con i
@@ -74379,207 +74514,250 @@ try{
       return '<div style="border-top-color:' + x.c + '"><div class="e">' + sx(x.t) + '</div><div class="v">' + (x.pre || '') + eur(x.v) + '</div><div class="s">' + sx(x.s) + '</div></div>';
     }).join('') + '</div>';
   }
-  function testaPag(m, titolo){
-    /* [18 ott 2026] logo piccolo prima del nome (solo il logo, se nell'Hub e' "solo immagine") */
-    return '<div class="testa"><b class="tl">' + (m.logo ? '<img src="' + E(m.logo) + '" alt="">' : '') + (m.soloImg ? '' : sx(m.agenzia)) + '</b><span>' + sx(titolo) + '</span></div>';
+  /* [17 nov 2026] un coefficiente della sezione 4 (es. "Stato di manutenzione",
+     "Piano e ascensore"): la voce scelta dall'agente, non un dato nuovo da
+     inventare. re è una RegExp sul nome del coefficiente. */
+  function fattoreVoce(m, re){
+    var f = (m.fattori || []).find(function(x){ return re.test(x.nome); });
+    return f ? f.voce : '';
+  }
+  /* testo neutro per una sezione facoltativa non compilata: mai inventare un dato */
+  function muto(testo){ return '<p class="vmuto">' + sx(testo || 'Non ancora compilato per questa valutazione.') + '</p>'; }
+  /* intestazione comune a ogni pagina interna: loghi + riquadro comune/indirizzo */
+  function vHead(m){
+    var secondo = m.loghi && m.loghi[0] ? m.loghi[0].url : '';
+    return '<div class="vhead"><div class="logos">'
+      + (m.logo ? '<img src="' + E(m.logo) + '" alt="">' : (m.soloImg ? '' : '<b>' + sx(m.agenzia) + '</b>'))
+      + (secondo ? '<img src="' + E(secondo) + '" alt="">' : '') + '</div>'
+      + '<div class="info"><b>' + sx(m.rec.comune || '—') + '</b><span>' + sx(m.rec.indirizzo || '') + '</span></div></div>';
+  }
+  function vTitle(m, titolo, n){
+    return '<div class="vnum">' + sx(n) + ' / Report di valutazione</div><div class="vtitle">' + sx(titolo) + '</div>';
   }
   function piedePag(m, n, tot){
-    return '<div class="piede"><span>Valutazione di mercato · ' + sx(m.titolo) + (m.rec.comune ? ', ' + sx(m.rec.comune) : '') + '</span><span>' + n + ' / ' + tot + '</span></div>';
+    return '<div class="vfoot"><span><b>' + sx((m.agenzia || 'CAPITALCASA').toUpperCase()) + '</b> · Report di valutazione</span><span>' + n + ' / ' + tot + '</span></div>';
   }
 
   function htmlReport(m){
     var r = m.rec, R = m.R, pagine = [], z = m.zona, c = m.comune;
     var dataTxt = new Date(r.data + 'T12:00:00').toLocaleDateString('it-IT', {day:'numeric', month:'long', year:'numeric'});
-    /* 1. copertina — [17 ott 2026] seconda scelta di Enzo: fondo azzurro,
-       fila di casette con la casa arancio protagonista (disegno generico,
-       niente foto); il valore NON va in copertina */
-    pagine.push('<section class="pag ck">'
-      + '<div class="testa-c">' + (m.logo ? '<img src="' + E(m.logo) + '" alt="">'
-          : '<svg width="46" height="46" viewBox="0 0 24 24" fill="#13233A"><path d="M12 3 2 11h3v9h5v-6h4v6h5v-9h3z"/></svg>')
-      + (m.soloImg ? '' : '<div class="ag">' + sx(m.agenzia) + '</div>') + (m.tagline ? '<div class="tg">' + sx(m.tagline) + '</div>' : '') + '</div>'
-      + '<div class="mezzo"><div class="occhiello">Valutazione di mercato</div><div class="cors">la sua casa</div>'
-      + '<h1>' + sx(r.tipo || 'Immobile') + '</h1>'
-      + '<div class="indir">' + sx([r.indirizzo, r.comune].filter(Boolean).join(' · ')) + '</div><div class="sep"></div>'
-      + '<div class="meta">'
-      + '<div><b>Preparata per</b>' + sx(r.proprietario || '—') + '</div>'
-      + '<div><b>Data</b>' + sx(dataTxt) + '</div>'
-      + '<div><b>A cura di</b>' + sx(m.agente) + '</div>'
-      + '</div></div>'
-      + '<div class="case">' + COP_CASE + '</div></section>');
+    var comuneCap = c ? c.n.charAt(0) + c.n.slice(1).toLowerCase() : (r.comune || '');
+    var FOOT = function(n){ return piedePag(m, n, 0); };   /* il totale si sistema alla fine */
 
-    /* 2. sintesi */
-    var dPart = r.valFinale ? (r.partenza / r.valFinale - 1) * 100 : 0, dMin = r.valFinale ? (1 - r.minimo / r.valFinale) * 100 : 0;
-    var p2 = '<section class="pag">' + testaPag(m, 'Sintesi')
-      + '<div class="occhiello">Il valore del suo immobile</div><h2>Sintesi della valutazione</h2>'
-      + '<div class="valore"><div class="n">' + eur(r.valFinale) + '</div><div class="f">valore di mercato stimato<br>forchetta ' + eur(r.forchetta[0]) + ' – ' + eur(r.forchetta[1]) + '</div></div>'
-      + '<div class="kpi">'
-      + '<div><div class="e">Superficie commerciale</div><div class="v">' + nf(r.supComm, 1) + ' m²</div><div class="s">calcolata sulle superfici</div></div>'
-      + '<div><div class="e">Valore al m²</div><div class="v">€ ' + nf(m.eurMqFinale) + '</div><div class="s">' + (m.corpoTot ? 'sulla casa, senza i valori a corpo' : 'sul valore stimato') + '</div></div>'
-      + '<div><div class="e">Prezzo di partenza</div><div class="v" style="color:' + RP.verde + '">' + eur(r.partenza) + '</div><div class="s">' + (dPart ? '+' + nf(dPart, 1) + '% sul valore' : '') + '</div></div>'
-      + '<div><div class="e">Minimo di trattativa</div><div class="v" style="color:' + RP.rosso + '">' + eur(r.minimo) + '</div><div class="s">' + (dMin ? '−' + nf(dMin, 1) + '% sul valore' : '') + '</div></div>'
+    /* 1 · COPERTINA — stile del modello CapitalCasa Frimm: bianca, foto reale se c'è */
+    var secondoLogo = m.loghi && m.loghi[0] ? m.loghi[0].url : '';
+    pagine.push('<section class="pag vcop">'
+      + '<div class="intesta">' + (m.logo ? '<img src="' + E(m.logo) + '" alt="">' : (m.soloImg ? '' : '<b style="font-size:10pt;font-weight:800;letter-spacing:.1em;color:' + RP.navy + '">' + sx(m.agenzia) + '</b>'))
+      + (secondoLogo ? '<img src="' + E(secondoLogo) + '" alt="">' : '') + '</div>'
+      + '<div class="occhiello">Report di valutazione</div>'
+      + '<h1>Valutazione immobiliare</h1>'
+      + '<div class="riga-ind">' + sx([r.indirizzo, r.comune].filter(Boolean).join(' · ') || 'Indirizzo e comune') + '</div>'
+      + '<div class="foto"' + (m.foto ? ' style="background-image:url(\'' + E(m.foto) + '\')"' : '') + '></div>'
+      + '<div class="tip"><div class="occhiello">La proprietà</div><div class="v">' + sx(r.tipo || 'Immobile') + '</div></div>'
+      + '<div class="meta">'
+      + '<div><b>Predisposto per</b><span>' + sx(r.proprietario || '—') + '</span></div>'
+      + '<div><b>Data del report</b><span>' + sx(dataTxt) + '</span></div>'
       + '</div>'
-      + '<h3>Dove si colloca il prezzo</h3><div class="riq">' + svgForchetta(m) + '</div>'
-      + '<h3>Come abbiamo stimato il valore</h3>' + riqMetodi(m)
-      + '<div class="riq"><p><b>Quotazioni ufficiali OMI.</b> Agenzia delle Entrate, semestre ' + sx(m.sem) + ': '
-      + (z ? 'zona ' + sx(r.omi.zona) + ' di ' + sx(c.n.charAt(0) + c.n.slice(1).toLowerCase()) + ', ' + sx(String(r.omi.tip).toLowerCase()) + ' da € ' + nf(r.omi.min) + ' a € ' + nf(r.omi.max) + ' al m². ' : '')
-      + 'Applicati € ' + nf(r.eurMqOmi) + ' al m²' + (m.mano ? ', ' + sx(m.mano.txt) : '') + '. '
-      + (function(n){ return n ? n + (n === 1 ? ' correzione' : ' correzioni') : 'Nessuna correzione'; })(m.fattori.filter(function(f){ return f.p; }).length)
-      + ' per le caratteristiche dell\'immobile: <b>' + eur(r.valOmi) + '</b>.</p>'
-      + (r.valComp ? '<p><b>Immobili simili.</b> ' + m.comps.length + (m.comps.length === 1 ? ' immobile' : ' immobili') + ' di confronto ('
-          + [m.comps.filter(function(x){ return x.fonte === 'venduto'; }).length + ' venduti', m.comps.filter(function(x){ return x.fonte === 'annuncio'; }).length + ' in vendita',
-             m.comps.filter(function(x){ return x.fonte === 'atto'; }).length + ' compravendite registrate in zona'].filter(function(t){ return t.charAt(0) !== '0'; }).join(', ')
-          + '), media € ' + nf(r.eurMqComp) + ' al m²: <b>' + eur(r.valComp) + '</b>.</p>' : '')
-      + (m.corpoTot ? '<p><b>Valori a corpo.</b> ' + sx(m.corpo.map(function(x){ return (x.nome || 'voce a corpo') + ' ' + eur(num(x.val)); }).join('; '))
-          + ': in tutto <b>' + eur(m.corpoTot) + '</b>, sommati al valore della casa senza passare dai metri quadri.</p>' : '')
-      + '<p style="margin:0"><b>Risultato.</b> ' + (r.valComp ? 'Media pesata ' + r.pesoOmiUsato + '% OMI e ' + (100 - r.pesoOmiUsato) + '% immobili simili' : 'Solo metodo OMI') + (m.corpoTot ? ', più i valori a corpo: ' : ': ') + eur(r.valCalc)
-      + (Math.round(r.valFinale) !== Math.round(r.valCalc) ? '; valore finale indicato dall\'agente: <b>' + eur(r.valFinale) + '</b>.' : '.') + '</p></div>'
-      + (r.commento ? '<h3>Il commento dell\'agente</h3><div class="riq" style="white-space:pre-wrap">' + sx(r.commento) + '</div>' : '')
-      + piedePag(m, 2, 6) + '</section>';
+      + '<div class="tag">Analisi commerciale preliminare · a cura di ' + sx(m.agente) + '</div>'
+      + FOOT(1) + '</section>');
+
+    /* 2 · CARATTERISTICHE DELL'IMMOBILE */
+    var stato = fattoreVoce(m, /stato di manutenzione/i);
+    var righeCar = [
+      ['Tipologia', r.tipo], ['Stato', stato], ['Locali / camere', m.locali], ['Bagni', m.bagni],
+      ['Piano', m.piano], ['Superficie principale', num(r.sup && r.sup.principale) ? nf(num(r.sup.principale), num(r.sup.principale) % 1 ? 1 : 0) + ' m²' : ''],
+      ['Superficie commerciale', r.supComm ? nf(r.supComm, 1) + ' m²' : '']
+    ].filter(function(x){ return x[1]; });
+    var descr = ((m.vic.voci.length ? 'Intorno all\'immobile: ' + m.vic.voci.map(function(x){ return x.nome.charAt(0).toLowerCase() + x.nome.slice(1); }).join('; ') + '. ' : '') + (m.vicNota || '')).trim();
+    var p2 = '<section class="pag">' + vHead(m) + vTitle(m, 'Caratteristiche dell\'immobile', 2)
+      + '<div class="vside-wrap"><div>'
+      + (c && c.bb ? '<div class="vmap">' + svgMappa(m) + '</div>' : '')
+      + '<h3>Dati catastali</h3>' + (r.supComm ? '<p>Superficie commerciale ' + nf(r.supComm, 1) + ' m², calcolata su ' + nf(num(r.sup && r.sup.principale), num(r.sup && r.sup.principale) % 1 ? 1 : 0) + ' m² principali' + (m.corpoTot ? ' più i valori a corpo' : '') + '.</p>' : muto())
+      + '<h3>Descrizione sintetica</h3>' + (descr ? '<p>' + sx(descr) + '</p>' : muto('Nessuna nota di contesto o vicinato per questa valutazione.'))
+      + '</div>'
+      + (righeCar.length ? '<div class="vside">' + righeCar.map(function(x){ return '<div class="r"><div class="e">' + sx(x[0]) + '</div><div class="v">' + sx(x[1]) + '</div></div>'; }).join('') + '</div>' : '')
+      + '</div>'
+      + FOOT(2) + '</section>';
     pagine.push(p2);
 
-    /* 3. l'immobile e la zona */
-    var supRighe = [['principale', 'Superficie principale', 1]].concat(Object.keys(R.sup).map(function(k){ return [k, supNome(k), R.sup[k]]; }))
-      .filter(function(x){ return num(r.sup && r.sup[x[0]]); })
-      .map(function(x){ var mq = num(r.sup[x[0]]); return '<tr><td>' + sx(x[1]) + '</td><td class="n">' + nf(mq, mq % 1 ? 1 : 0) + ' m²</td><td class="n">× ' + nf(x[2], 2) + '</td><td class="n">' + nf(mq * x[2], 1) + ' m²</td></tr>'; }).join('');
-    /* [18 ott 2026] foto dell'immobile (la prima della scheda) accanto al titolo */
-    var p3 = '<section class="pag p3">' + testaPag(m, 'L\'immobile')
-      + '<div class="p3h"><div class="tx"><div class="occhiello">L\'immobile</div><h2>' + sx(m.titolo || 'Immobile') + '</h2>'
-      + '<p>' + sx(m.luogo) + '</p></div>' + (m.foto ? '<img class="fi" src="' + E(m.foto) + '" alt="">' : '') + '</div>'
-      + '<h3>Superficie commerciale</h3><table><thead><tr><th>Superficie</th><th class="n">m²</th><th class="n">Coefficiente</th><th class="n">Commerciale</th></tr></thead><tbody>' + supRighe
-      + '<tr class="tot"><td colspan="3">Superficie commerciale</td><td class="n">' + nf(r.supComm, 1) + ' m²</td></tr></tbody></table>'
-      /* [17 ott 2026] valori a corpo */
-      + (m.corpo.length ? '<h3>Valori a corpo</h3><table><thead><tr><th>Voce</th><th class="n">m²</th><th class="n">Come</th><th class="n">Valore</th></tr></thead><tbody>'
-          + m.corpo.map(function(x){ return '<tr><td>' + sx(x.nome || 'Voce a corpo') + '</td><td class="n">' + (num(x.mq) ? nf(num(x.mq)) + ' m²' : '—') + '</td><td class="n">'
-              + (x.modo === 'mq' ? '€ ' + nf(num(x.eurMq), num(x.eurMq) % 1 ? 2 : 0) + ' al m²' : 'a corpo') + '</td><td class="n">' + eur(num(x.val)) + '</td></tr>'; }).join('')
-          + '<tr class="tot"><td colspan="3">Totale, sommato al valore della casa</td><td class="n">' + eur(m.corpoTot) + '</td></tr></tbody></table>' : '')
-      + '<h3>Caratteristiche considerate</h3><table><tbody>'
-      + m.fattori.map(function(f){ return '<tr><td style="width:38%;color:' + RP.ardesia + '">' + sx(f.nome) + '</td><td>' + sx(f.voce) + '</td><td class="n ' + (f.p > 0 ? 'pos' : f.p < 0 ? 'neg' : '') + '">' + (f.p ? pct(f.p) : '—') + '</td></tr>'; }).join('')
-      + '</tbody></table>'
-      + ((m.vic.voci.length || m.vicNota) ? '<h3>Contesto e vicinato</h3><div class="riq"><p style="margin:0">'
-          + (m.vic.voci.length ? 'Intorno all\'immobile: ' + sx(m.vic.voci.map(function(x){ return x.nome.charAt(0).toLowerCase() + x.nome.slice(1); }).join('; ')) + '. Effetto sul valore: <b>' + pct(m.vic.tot) + '</b>'
-              + (m.vic.taglio ? ' (la somma delle voci, ' + pct(m.vic.somma) + ', è stata contenuta entro ' + m.vic.tetto + '%)' : '') + '.' : '')
-          + (m.vicNota ? (m.vic.voci.length ? ' ' : '') + sx(m.vicNota) : '') + '</p></div>' : '')
-      + (c && c.bb ? '<h3>La zona OMI sulla mappa' + (r.lat && r.lng ? ' · il punto arancio è l\'immobile' : '') + '</h3><div class="riq mappa" style="padding:8px">' + svgMappa(m) + '</div>'
-          + (z ? '<p class="piccolo">Zona ' + sx(r.omi.zona) + ' (' + sx(fasciaNome(z.f).toLowerCase()) + '): ' + sx(z.d.toLowerCase()) + '. Confini ufficiali OMI, semestre ' + sx(m.sem) + '.</p>' : '') : '')
-      + piedePag(m, 3, 6) + '</section>';
+    /* 3 · SERVIZI (contesto e collegamenti di zona) */
+    var ctx = r.contestoZona || {};
+    var ctxCards = [['Scuole', ctx.scuole], ['Trasporti', ctx.trasporti], ['Negozi e spesa', ctx.negozi], ['Sanità e farmacia', ctx.sanita], ['Mare e tempo libero', ctx.mare], ['Accessi e parcheggi', ctx.accessi]];
+    var ctxCompilate = ctxCards.filter(function(x){ return x[1]; });
+    var p3 = '<section class="pag">' + vHead(m) + vTitle(m, 'Servizi', 3)
+      + '<p class="piccolo" style="margin-top:-2mm">Il contesto e i collegamenti dell\'immobile.</p>'
+      + (ctxCompilate.length
+          ? '<div class="sv-griglia">' + ctxCards.map(function(x){ return x[1] ? '<div class="sv-c"><div class="ic">' + icoServ('stella') + '</div><div><b>' + sx(x[0]) + '</b><p>' + sx(x[1]) + '</p></div></div>' : ''; }).join('') + '</div>'
+          : muto('Servizi e collegamenti di zona non ancora compilati per questa valutazione.'))
+      + (ctx.fonte ? '<h3>Fonte e data di verifica</h3><p class="piccolo">' + sx(ctx.fonte) + '</p>' : '')
+      + FOOT(3) + '</section>';
     pagine.push(p3);
 
-    /* 4. il mercato */
-    var tipRighe = '';
-    if(z){
-      Object.keys(z.q).sort().forEach(function(k){
-        var q = z.q[k][m.sem]; if(!q) return;
-        var qp = m.semPrima && z.q[k][m.semPrima], vr = (qp && qp[0] + qp[1]) ? ((q[0] + q[1]) / (qp[0] + qp[1]) - 1) * 100 : null;
-        var pp = k.split('|');
-        tipRighe += '<tr' + (pp[0] === r.omi.tip && pp[1] === r.omi.stato ? ' style="font-weight:700"' : '') + '><td>' + sx(pp[0]) + (pp[1] !== 'NORMALE' ? ' (' + sx(pp[1].toLowerCase()) + ')' : '') + '</td>'
-          + '<td class="n">€ ' + nf(q[0]) + ' – ' + nf(q[1]) + '</td><td class="n ' + (vr > 0 ? 'pos' : vr < 0 ? 'neg' : '') + '">' + (vr == null ? '—' : pct(Math.round(vr * 10) / 10)) + '</td>'
-          + '<td class="n">' + (q[2] ? '€ ' + nf(q[2], 1) + ' – ' + nf(q[3], 1) : '—') + '</td></tr>';
-      });
-    }
-    var nt = m.ntn, ntTxt = '';
-    if(nt && nt['2025']){
-      var t24 = nt['2024'] ? nt['2024'].tot : 0, t25 = nt['2025'].tot, vN = t24 ? (t25 / t24 - 1) * 100 : null;
-      ntTxt = '<p>Nel 2025 a ' + sx(c.n.charAt(0) + c.n.slice(1).toLowerCase()) + ' si sono registrate <b>' + nf(t25) + ' compravendite di abitazioni</b>'
-        + (vN != null ? ' (' + (vN >= 0 ? '+' : '−') + nf(Math.abs(vN)) + '% rispetto alle ' + nf(t24) + ' del 2024)' : '') + '. '
-        + 'Numeri dell\'Osservatorio del Mercato Immobiliare: le quote di immobile vendute in parte contano in proporzione, per questo non sono interi.</p>';
-    }
-    var p4 = '<section class="pag">' + testaPag(m, 'Il mercato')
-      + '<div class="occhiello">Il mercato</div><h2>Le quotazioni e le vendite in zona</h2>'
-      + (z && r.omi.variazione != null ? '<p>Nella zona ' + sx(r.omi.zona) + ' la quotazione OMI per ' + sx(String(r.omi.tip).toLowerCase()) + ' è <b>€ ' + nf(r.omi.min) + ' – ' + nf(r.omi.max) + ' al m²</b>, '
-          + (Math.abs(r.omi.variazione) < 0.05 ? 'invariata' : (r.omi.variazione > 0 ? 'in aumento del ' : 'in calo del ') + nf(Math.abs(r.omi.variazione), 1) + '%') + ' rispetto al semestre ' + sx(m.semPrima) + '.</p>' : '')
-      + (c ? '<h3>Le zone di ' + sx(c.n.charAt(0) + c.n.slice(1).toLowerCase()) + ' a confronto</h3><div class="riq">' + svgZone(m) + '</div>' : '')
-      + (!c && r.omiAI ? '<p>Per ' + sx(r.omiAI.comune) + ', zona OMI <b>' + sx(r.omiAI.zona) + '</b>' + (r.omiAI.descr ? ' (' + sx(r.omiAI.descr) + ')' : '') + ', la quotazione per ' + sx(String(r.omiAI.tip).toLowerCase())
-          + ' è <b>€ ' + nf(r.omiAI.min) + ' – ' + nf(r.omiAI.max) + ' al m²</b>' + (r.omiAI.semestre ? ', semestre ' + sx(r.omiAI.semestre) : '') + '.</p>'
-          + (r.omiAI.fonti && r.omiAI.fonti.length ? '<h3>Fonti consultate</h3><table><tbody>' + r.omiAI.fonti.slice(0, 5).map(function(f){ return '<tr><td>' + sx(f.titolo || '') + '<div class="piccolo">' + sx(f.url) + '</div></td></tr>'; }).join('') + '</tbody></table>' : '') : '')
-      + (tipRighe ? '<h3>Tutte le quotazioni della zona ' + sx(r.omi.zona) + ' · semestre ' + sx(m.sem) + '</h3><table><thead><tr><th>Tipologia</th><th class="n">Vendita €/m²</th><th class="n">Var. semestre</th><th class="n">Affitto €/m² mese</th></tr></thead><tbody>' + tipRighe + '</tbody></table>' : '')
-      + (ntTxt ? '<h3>Compravendite di abitazioni per metratura</h3>' + ntTxt + '<div class="riq">' + svgNtn(m) + '</div>' : '')
-      + piedePag(m, 4, 6) + '</section>';
+    /* 4 · QUOTAZIONI OMI */
+    var qRiga = z && r.omi && z.q[r.omi.tip + '|' + r.omi.stato] && z.q[r.omi.tip + '|' + r.omi.stato][m.sem];
+    var p4 = '<section class="pag">' + vHead(m) + vTitle(m, 'Quotazioni OMI', 4)
+      + '<div class="vside-wrap"><div>'
+      + (c ? '<h3>Le zone di ' + sx(comuneCap) + ' a confronto</h3><div class="riq">' + svgZone(m) + '</div>' : '')
+      + '<h3>Lettura del dato OMI</h3><p>' + (z
+          ? 'Agenzia delle Entrate, semestre ' + sx(m.sem) + ': zona ' + sx(r.omi.zona) + ' di ' + sx(comuneCap) + ', ' + sx(String(r.omi.tip).toLowerCase()) + ' da € ' + nf(r.omi.min) + ' a € ' + nf(r.omi.max) + ' al m².'
+            + (r.omi.variazione != null ? ' ' + (Math.abs(r.omi.variazione) < 0.05 ? 'Quotazione invariata' : 'Quotazione ' + (r.omi.variazione > 0 ? 'in aumento del ' : 'in calo del ') + nf(Math.abs(r.omi.variazione), 1) + '%') + ' rispetto al semestre ' + sx(m.semPrima) + '.' : '')
+          : (r.omiAI ? 'Per ' + sx(r.omiAI.comune) + ', zona OMI ' + sx(r.omiAI.zona) + (r.omiAI.descr ? ' (' + sx(r.omiAI.descr) + ')' : '') + ', quotazione ' + sx(String(r.omiAI.tip).toLowerCase()) + ' € ' + nf(r.omiAI.min) + ' – ' + nf(r.omiAI.max) + ' al m²' + (r.omiAI.semestre ? ', semestre ' + sx(r.omiAI.semestre) : '') + '.' : 'Comune non presente nell\'archivio OMI.')) + '</p>'
+      + '</div><div class="vside">'
+      + '<div class="r"><div class="e">Comune / zona</div><div class="v">' + sx((r.comune || '—') + (r.omi && r.omi.zona ? ' · zona ' + r.omi.zona : '')) + '</div></div>'
+      + '<div class="r"><div class="e">Semestre</div><div class="v">' + sx(m.sem || '—') + '</div></div>'
+      + '<div class="r"><div class="e">Tipologia / stato</div><div class="v">' + sx([r.omi && r.omi.tip, r.omi && r.omi.stato].filter(Boolean).join(' · ') || '—') + '</div></div>'
+      + '</div></div>'
+      + '<div class="vstat3" style="grid-template-columns:repeat(3,1fr)">'
+      + '<div><div class="e">Vendita minima</div><div class="v">' + (z && r.omi.min ? '€ ' + nf(r.omi.min) + '/m²' : '—') + '</div></div>'
+      + '<div><div class="e">Vendita massima</div><div class="v">' + (z && r.omi.max ? '€ ' + nf(r.omi.max) + '/m²' : '—') + '</div></div>'
+      + '<div><div class="e">Locazione</div><div class="v">' + (qRiga && qRiga[2] ? '€ ' + nf(qRiga[2], 1) + '–' + nf(qRiga[3], 1) + '/m²' : '—') + '</div></div>'
+      + '</div>'
+      + FOOT(4) + '</section>';
     pagine.push(p4);
 
-    /* 5. il calcolo */
-    var conAtti = m.comps.some(function(x){ return x.fonte === 'atto'; });
-    var compRighe = m.comps.map(function(x){
-      var at = x.fonte === 'atto';
-      return '<tr><td>' + (x.fonte === 'venduto' ? '<b style="color:' + RP.verde + '">Venduto</b>' : at ? '<b style="color:' + RP.ardesia + '">Atto AdE</b>' : '<b style="color:' + RP.oro + '">Annuncio</b>') + '</td>'
-        + '<td>' + sx(x.descr) + '<div class="piccolo">' + sx(at
-            ? [x.comune, x.zona ? 'zona ' + x.zona : '', x.mese ? 'atto ' + x.mese : '', 'prezzo dichiarato'].filter(Boolean).join(' · ')
-            : [x.comune, x.data ? (x.fonte === 'venduto' ? 'rogito ' : '') + dataIt(x.data) : ''].filter(Boolean).join(' · ')) + '</div></td>'
-        + '<td class="n">' + nf(x.mq) + '</td><td class="n">' + eur(x.prezzo)
-        + (at && num(x.pert) ? '<div class="piccolo">atto ' + eur(x.prezzoAtto) + ' meno box e cantine</div>' : '') + '</td>'
-        + '<td class="n">' + (num(x.sconto) ? '−' + nf(x.sconto) + '%' : '—') + '</td>'
-        + '<td class="n">' + (num(x.adj) ? pct(x.adj) : '—') + '</td><td class="n"><b>€ ' + nf(x.eurMqCorr) + '</b></td></tr>';
-    }).join('');
-    /* [17 ott 2026] senza comparabili la pagina 5 restava mezza vuota: il
-       calcolo passa in testa alle conclusioni e il report ha una pagina in meno */
-    var senzaComp = !m.comps.length;
-    var eurMqBase = r.supComm ? m.base / r.supComm : num(r.eurMqOmi);
-    var parCalc = '<p>Partiamo da ' + nf(r.supComm, 1) + ' m² commerciali × € ' + nf(eurMqBase, Math.abs(eurMqBase - Math.round(eurMqBase)) >= 0.005 ? 2 : 0) + ' al m²' + (m.mano ? ' (' + sx(m.mano.breve) + ')' : '')
-      + ' = <b>' + eur(m.base) + '</b>, poi correggiamo per le caratteristiche dell\'immobile (coefficiente complessivo × ' + nf(r.coeff, 3) + ')'
-      + (senzaComp && m.corpoTot ? ' e aggiungiamo i valori a corpo' : '') + '.</p>';
-    var testoCalc = parCalc + '<div class="riq">' + svgCascata(m) + '</div>';
-    var p5 = '<section class="pag">' + testaPag(m, 'Il calcolo')
-      + '<div class="occhiello">Il calcolo</div><h2>Dalla quotazione al valore</h2>'
-      + testoCalc
-      + (m.comps.length
-          ? '<h3>Gli immobili di confronto</h3><table><thead><tr><th>Fonte</th><th>Immobile</th><th class="n">m²</th><th class="n">Prezzo</th><th class="n">Trattativa</th><th class="n">Correz.</th><th class="n">€/m²</th></tr></thead><tbody>' + compRighe
-            + '<tr class="tot"><td colspan="6">Media dei comparabili</td><td class="n">€ ' + nf(r.eurMqComp) + '</td></tr></tbody></table>'
-            + '<div class="riq">' + svgComparabili(m) + '</div>'
-            + '<p class="piccolo">Venduti: prezzo di rogito. Annunci: prezzo richiesto meno lo sconto trattativa. '
-            + (conAtti ? 'Atti AdE: prezzi dichiarati negli atti, fonte Agenzia delle Entrate (servizio Consultazione valori immobiliari dichiarati), al netto del valore stimato di box e cantine; superficie catastale. ' : '')
-            + 'La correzione tiene conto delle differenze con il suo immobile.</p>'
-          : '<div class="riq"><p style="margin:0">Per questa valutazione non sono stati usati immobili di confronto: il valore si basa sulle quotazioni ufficiali OMI.</p></div>')
-      + piedePag(m, 5, 6) + '</section>';
-    if(!senzaComp) pagine.push(p5);
+    /* 5 · POPOLAZIONE E FAMIGLIE */
+    var pop = r.popolazione || {};
+    var popCompilata = pop.residenti || pop.famiglie || pop.componenti;
+    var p5 = '<section class="pag">' + vHead(m) + vTitle(m, 'Popolazione e famiglie', 5)
+      + (popCompilata ? '<div class="vstat3" style="grid-template-columns:repeat(3,1fr)">'
+          + '<div><div class="e">Residenti</div><div class="v">' + sx(pop.residenti ? nf(num(pop.residenti)) : '—') + '</div></div>'
+          + '<div><div class="e">Famiglie</div><div class="v">' + sx(pop.famiglie ? nf(num(pop.famiglie)) : '—') + '</div></div>'
+          + '<div><div class="e">Componenti medi</div><div class="v">' + sx(pop.componenti || '—') + '</div></div>'
+          + '</div>' : muto('Dati di popolazione e famiglie non ancora compilati per questa valutazione.'))
+      + (pop.periodo || pop.evoluzione ? '<div class="due">'
+          + '<div class="riq"><div class="occhiello">Periodo / territorio</div><p style="margin:4px 0 0">' + sx(pop.periodo || '—') + '</p></div>'
+          + '<div class="riq"><div class="occhiello">Evoluzione demografica</div><p style="margin:4px 0 0">' + sx(pop.evoluzione || '—') + '</p></div>'
+          + '</div>' : '')
+      + (pop.implicazioni ? '<h3>Implicazioni per l\'immobile</h3><p>' + sx(pop.implicazioni) + '</p>' : '')
+      + (pop.fonte ? '<h3>Fonte e data</h3><p class="piccolo">' + sx(pop.fonte) + '</p>' : '')
+      + FOOT(5) + '</section>';
+    pagine.push(p5);
 
-    /* [18 ott 2026] la domanda in archivio: solo il numero, mai i nomi. Sta nelle
-       conclusioni, accanto al prezzo di partenza (in sintesi sforava col commento) */
-    var domHtml = (r.domanda && r.domanda.n > 0)
-      ? '<h3>Chi cerca una casa così</h3><div class="riq dom"><div class="n">' + r.domanda.n + '</div><p style="margin:0"><b>'
+    /* 6 · MERCATO DI ZONA (stock, prezzi, domanda) */
+    var ntTxt6 = '';
+    if(m.ntn && m.ntn['2025']){
+      var t24_6 = m.ntn['2024'] ? m.ntn['2024'].tot : 0, t25_6 = m.ntn['2025'].tot, vN6 = t24_6 ? (t25_6 / t24_6 - 1) * 100 : null;
+      ntTxt6 = 'Nel 2025 a ' + sx(comuneCap) + ' si sono registrate ' + nf(t25_6) + ' compravendite di abitazioni' + (vN6 != null ? ' (' + (vN6 >= 0 ? '+' : '−') + nf(Math.abs(vN6)) + '% sul 2024)' : '') + '.';
+    }
+    var domHtml6 = (r.domanda && r.domanda.n > 0)
+      ? '<div class="riq dom"><div class="n">' + r.domanda.n + '</div><p style="margin:0"><b>'
         + (r.domanda.n === 1 ? 'acquirente nel nostro archivio cerca' : 'acquirenti nel nostro archivio cercano') + '</b> oggi un immobile come il suo ('
-        + sx((r.tipo || 'immobile').toLowerCase()) + (r.comune ? ' a ' + sx(r.comune) : '') + ') con un budget che arriva al prezzo di partenza. '
-        + 'Sono persone già in contatto con l\'agenzia, a cui proporre la sua casa dal primo giorno.'
-        + '<span class="piccolo" style="display:block;margin-top:3px">Richieste di acquisto registrate in agenzia al ' + sx(dataIt(r.domanda.data)) + ', con tipo, zona e budget compatibili.</span></p></div>'
-      : '';
-    /* 6. conclusione */
-    var p6 = '<section class="pag' + (senzaComp ? ' unita' : '') + '">' + testaPag(m, senzaComp ? 'Calcolo e conclusioni' : 'Conclusioni')
-      + '<div class="occhiello">' + (senzaComp ? 'Calcolo e conclusioni' : 'Conclusioni') + '</div><h2>Il prezzo giusto per vendere</h2>'
-      + (senzaComp
-          ? '<h3>Dalla quotazione al valore finale</h3>' + parCalc + '<div class="riq casc"><div class="g">' + svgCascata(m, true) + '</div>'
-            + '<p class="piccolo" style="margin:6px 0 0">Non sono stati usati immobili di confronto: il valore si basa sulle quotazioni ufficiali OMI.</p></div>'
-          : '<h3>' + (r.valComp ? 'Come si combinano i due metodi' : 'Dal valore OMI al valore finale') + '</h3><div class="riq">' + svgPeso(m) + '</div>')
-      + '<div class="due">'
-      + '<div class="riq"><div class="occhiello" style="color:' + RP.verde + '">Prezzo di partenza consigliato</div><div class="serif" style="font-size:22pt;font-weight:700;color:' + RP.verde + '">' + eur(r.partenza) + '</div>'
-      + '<p class="piccolo" style="margin:0">Il prezzo con cui proporre l\'immobile sul mercato: lascia il margine per la trattativa.</p></div>'
-      + '<div class="riq"><div class="occhiello" style="color:' + RP.rosso + '">Minimo di trattativa</div><div class="serif" style="font-size:22pt;font-weight:700;color:' + RP.rosso + '">' + eur(r.minimo) + '</div>'
-      + '<p class="piccolo" style="margin:0">La soglia sotto la quale è consigliabile non scendere.</p></div>'
-      + '</div>'
-      + domHtml
-      + '<h3>Metodo e fonti</h3><p class="piccolo">'
-      + (m.comps.length ? 'Stima del valore di mercato con il metodo comparativo. ' : 'Stima del valore di mercato sulle quotazioni ufficiali OMI, corrette per le caratteristiche dell\'immobile. ')
-      + (m.mano ? 'Prezzo al m² di € ' + nf(m.mano.eurMq) + ' indicato dall\'agente al posto della quotazione OMI. ' : '')
-      + ((!m.comune && r.omiAI)
-          ? 'Quotazioni: valori dell\'Osservatorio del Mercato Immobiliare dell\'Agenzia delle Entrate' + (r.omiAI.semestre ? ', semestre ' + sx(r.omiAI.semestre) : '') + ', rilevati da fonti online e verificati dall\'agente. '
-          : 'Quotazioni: Osservatorio del Mercato Immobiliare dell\'Agenzia delle Entrate, semestre ' + sx(m.sem) + (m.semPrima ? ' (confronto con il ' + sx(m.semPrima) + ')' : '') + '. Compravendite: numero di transazioni normalizzate OMI 2024–2025. ')
-      /* [18 ott 2026] solo i coefficienti degli accessori che ci sono davvero */
-      + (function(){
-          var usati = Object.keys(R.sup).filter(function(k){ return num(r.sup && r.sup[k]) > 0; });
-          return usati.length
-            ? 'Superficie commerciale: principale più accessori pesati (' + usati.map(function(k){ return supNome(k).toLowerCase() + ' ' + nf(R.sup[k], 2); }).join(', ') + '). '
-            : 'Superficie commerciale: superficie principale al lordo dei muri. ';
-        })()
-      + (m.corpoTot ? 'Valori a corpo (corte, terreni, pertinenze) stimati a parte e sommati dopo le correzioni. ' : '')
-      + (m.comps.length ? 'Immobili di confronto: compravendite concluse dall\'agenzia (prezzo di rogito) e annunci in vendita (prezzo richiesto meno ' + nf(R.scontoAnnunci) + '% di trattativa)'
-          + (m.comps.some(function(x){ return x.fonte === 'atto'; }) ? '; prezzi dichiarati negli atti, fonte Agenzia delle Entrate' : '') + '. ' : '')
-      + 'Forchetta: ± ' + nf(R.forchetta) + '% sul valore finale.</p>'
-      + '<p class="piccolo">Questa valutazione è una stima professionale del valore di mercato basata sui dati indicati e sulle caratteristiche dichiarate dell\'immobile. Non è una perizia giurata né una stima ai fini fiscali o bancari.</p>'
-      + '<div style="margin-top:' + (senzaComp ? (domHtml ? 4 : 8) : 16) + 'mm;display:flex;justify-content:space-between;align-items:flex-end">'
-      + '<div><div class="piccolo">' + sx(dataTxt) + '</div><div class="piccolo">Rif. ' + sx(String(r.id || '').slice(-6).toUpperCase()) + '</div></div>'
-      + '<div style="text-align:center;min-width:70mm"><div style="border-top:1px solid ' + RP.navy + ';padding-top:6px;font-weight:700">' + sx(m.agente) + '</div>'
-      + '<div class="piccolo">' + sx(m.agenzia) + (m.tagline ? ' · ' + sx(m.tagline) : '') + '</div></div></div>'
-      + piedePag(m, 6, 6) + '</section>';
+        + sx((r.tipo || 'immobile').toLowerCase()) + (r.comune ? ' a ' + sx(r.comune) : '') + ') con un budget che arriva al prezzo di partenza.'
+        + '<span class="piccolo" style="display:block;margin-top:3px">Richieste registrate in agenzia al ' + sx(dataIt(r.domanda.data)) + '.</span></p></div>'
+      : muto('Nessuna richiesta compatibile registrata in archivio al momento della valutazione.');
+    var p6 = '<section class="pag">' + vHead(m) + vTitle(m, 'Mercato di zona', 6)
+      + '<div class="vnum" style="margin-top:-3mm">01</div><h3 style="margin-top:0">Analisi dello stock</h3>'
+      + (r.stockZona ? '<p>' + sx(r.stockZona) + '</p>' : muto())
+      + '<div class="vnum">02</div><h3 style="margin-top:0">Analisi dei prezzi</h3>'
+      + (c ? '<div class="riq">' + svgZone(m) + '</div>' : muto('Comune non presente nell\'archivio OMI.'))
+      + '<div class="vnum">03</div><h3 style="margin-top:0">Analisi della domanda</h3>'
+      + domHtml6 + (ntTxt6 ? '<p class="piccolo" style="margin-top:4px">' + ntTxt6 + '</p>' : '')
+      + FOOT(6) + '</section>';
     pagine.push(p6);
 
-    /* 7. solo per chi arriva dal test del sito: i documenti da preparare (promessi sul sito) */
+    /* 7 · COMPARABILI (solo se ce ne sono: niente pagina vuota) */
+    if(m.comps.length){
+      var conAtti = m.comps.some(function(x){ return x.fonte === 'atto'; });
+      var compRighe = m.comps.map(function(x){
+        var at = x.fonte === 'atto';
+        return '<tr><td>' + (x.fonte === 'venduto' ? '<b style="color:' + RP.verde + '">Venduto</b>' : at ? '<b style="color:' + RP.ardesia + '">Atto AdE</b>' : '<b style="color:' + RP.oro + '">Annuncio</b>') + '</td>'
+          + '<td>' + sx(x.descr) + '<div class="piccolo">' + sx(at
+              ? [x.comune, x.zona ? 'zona ' + x.zona : '', x.mese ? 'atto ' + x.mese : '', 'prezzo dichiarato'].filter(Boolean).join(' · ')
+              : [x.comune, x.data ? (x.fonte === 'venduto' ? 'rogito ' : '') + dataIt(x.data) : ''].filter(Boolean).join(' · ')) + '</div></td>'
+          + '<td class="n">' + nf(x.mq) + '</td><td class="n">' + eur(x.prezzo)
+          + (at && num(x.pert) ? '<div class="piccolo">atto ' + eur(x.prezzoAtto) + ' meno box e cantine</div>' : '') + '</td>'
+          + '<td class="n">' + (num(x.sconto) ? '−' + nf(x.sconto) + '%' : '—') + '</td>'
+          + '<td class="n">' + (num(x.adj) ? pct(x.adj) : '—') + '</td><td class="n"><b>€ ' + nf(x.eurMqCorr) + '</b></td></tr>';
+      }).join('');
+      var p7 = '<section class="pag">' + vHead(m) + vTitle(m, 'Comparabili', 7)
+        + '<div class="riq">' + svgComparabili(m) + '</div>'
+        + '<table><thead><tr><th>Fonte</th><th>Immobile</th><th class="n">m²</th><th class="n">Prezzo</th><th class="n">Trattativa</th><th class="n">Correz.</th><th class="n">€/m²</th></tr></thead><tbody>' + compRighe
+        + '<tr class="tot"><td colspan="6">Media dei comparabili</td><td class="n">€ ' + nf(r.eurMqComp) + '</td></tr></tbody></table>'
+        + '<p class="piccolo">Venduti: prezzo di rogito. Annunci: prezzo richiesto meno lo sconto trattativa. '
+        + (conAtti ? 'Atti AdE: prezzi dichiarati, fonte Agenzia delle Entrate, al netto del valore stimato di box e cantine. ' : '') + 'La correzione tiene conto delle differenze con il suo immobile.</p>'
+        + FOOT(7) + '</section>';
+      pagine.push(p7);
+    }
+
+    /* 8 · COMPRAVENDITE */
+    var nt8 = m.ntn;
+    var clRighe8 = '';
+    if(nt8 && nt8['2025']){
+      var cl8 = ['fino a 50 m²', '50–85', '85–115', '115–145', 'oltre 145'];
+      var a8 = nt8['2024'] ? nt8['2024'].cl : [0, 0, 0, 0, 0], b8 = nt8['2025'].cl;
+      clRighe8 = cl8.map(function(lab, i){
+        var va = a8[i], vb = b8[i], vr = va ? (vb / va - 1) * 100 : null;
+        return '<tr><td>' + sx(lab) + '</td><td class="n">' + nf(va) + '</td><td class="n">' + nf(vb) + '</td><td class="n ' + (vr > 0 ? 'pos' : vr < 0 ? 'neg' : '') + '">' + (vr == null ? '—' : pct(Math.round(vr * 10) / 10)) + '</td></tr>';
+      }).join('');
+    }
+    var p8 = '<section class="pag">' + vHead(m) + vTitle(m, 'Compravendite', 8)
+      + '<h3>Riscontri delle operazioni di zona</h3>'
+      + (nt8 && nt8['2025'] ? '<div class="riq">' + svgNtn(m) + '</div>'
+          + '<table><thead><tr><th>Cat. / m²</th><th class="n">2024</th><th class="n">2025</th><th class="n">Variazione</th></tr></thead><tbody>' + clRighe8 + '</tbody></table>'
+          + '<p class="piccolo" style="margin-top:6px">Numero di transazioni normalizzate, Osservatorio del Mercato Immobiliare — Agenzia delle Entrate. Le quote di immobile vendute in parte contano in proporzione, per questo non sono interi.</p>'
+          : muto('Nessun dato di compravendite disponibile per questo comune.'))
+      + FOOT(8) + '</section>';
+    pagine.push(p8);
+
+    /* 9 · EFFICIENZA ENERGETICA */
+    var ape = r.ape || {};
+    var apeClasse = (ape.classe || m.apeClasseDaImm || '').toUpperCase();
+    var SCALA9 = ['A4', 'A3', 'A2', 'A1', 'B', 'C', 'D', 'E', 'F', 'G'];
+    var COL9 = ['#15803D', '#16A34A', '#22C55E', '#4ADE80', '#A3D95B', '#EAB308', '#F59E0B', '#F97316', '#EF4444', '#B91C1C'];
+    var p9 = '<section class="pag">' + vHead(m) + vTitle(m, 'Efficienza energetica', 9)
+      + '<h3 style="margin-top:0">Prestazione e impianti</h3>'
+      + '<div class="vscala">' + SCALA9.map(function(k, i){ return '<div class="' + (k === apeClasse ? 'on' : '') + '" style="background:' + COL9[i] + '">' + k + '</div>'; }).join('') + '</div>'
+      + '<p class="piccolo">Scala illustrativa delle classi' + (apeClasse ? ': evidenziata la ' + sx(apeClasse) + (ape.classe ? '' : ' (dalla scheda immobile)') + '.' : ': nessuna classe nota per questa valutazione.') + '</p>'
+      + '<div class="kpi" style="grid-template-columns:repeat(3,1fr)">'
+      + '<div><div class="e">Classe APE</div><div class="v">' + sx(apeClasse || '—') + '</div></div>'
+      + '<div><div class="e">EPgl,nren</div><div class="v">' + sx(ape.epgl || '—') + '</div></div>'
+      + '<div><div class="e">Validità APE</div><div class="v">' + sx(ape.validita || '—') + '</div></div>'
+      + '</div>'
+      + (ape.impianti ? '<h3>Impianti e dotazioni</h3><p>' + sx(ape.impianti) + '</p>' : '')
+      + (ape.incidenza ? '<h3>Incidenza sulla valutazione</h3><p>' + sx(ape.incidenza) + '</p>' : '')
+      + (ape.fonte ? '<h3>Fonte / documento / data</h3><p class="piccolo">' + sx(ape.fonte) + '</p>' : '')
+      + (!ape.impianti && !ape.incidenza && !ape.fonte ? muto('Impianti, incidenza e fonte dell\'APE non ancora compilati.') : '')
+      + FOOT(9) + '</section>';
+    pagine.push(p9);
+
+    /* 10 · VALUTAZIONE */
+    var eurMqBase10 = r.supComm ? m.base / r.supComm : num(r.eurMqOmi);
+    var parCalc10 = 'Partiamo da ' + nf(r.supComm, 1) + ' m² commerciali × € ' + nf(eurMqBase10, Math.abs(eurMqBase10 - Math.round(eurMqBase10)) >= 0.005 ? 2 : 0) + ' al m²' + (m.mano ? ' (' + sx(m.mano.breve) + ')' : '')
+      + ' = ' + eur(m.base) + ', poi correggiamo per le caratteristiche dell\'immobile (coefficiente × ' + nf(r.coeff, 3) + ')' + (m.corpoTot ? ', e sommiamo i valori a corpo' : '') + '.';
+    var p10 = '<section class="pag">' + vHead(m) + vTitle(m, 'Valutazione', 10)
+      + '<div class="vstat3" style="grid-template-columns:repeat(3,1fr)">'
+      + '<div><div class="e">Fascia di valore</div><div class="v" style="font-size:13pt">' + eur(r.forchetta[0]) + ' – ' + eur(r.forchetta[1]) + '</div></div>'
+      + '<div><div class="e">Valore centrale</div><div class="v">' + eur(r.valFinale) + '</div></div>'
+      + '<div><div class="e">Prezzo di proposta</div><div class="v">' + eur(r.partenza) + '</div></div>'
+      + '</div>'
+      + '<h2 style="margin-top:0">Come si arriva al valore</h2>'
+      + '<h3 style="margin-top:0">Criterio e superficie di riferimento</h3><p>' + sx(parCalc10) + '</p>'
+      + '<div class="riq">' + svgCascata(m, true) + '</div>'
+      + riqMetodi(m)
+      + '<h3>Motivazione del prezzo proposto</h3><p>' + (r.commento ? sx(r.commento) : 'Il prezzo di proposta aggiunge un margine di trattativa al valore centrale; il minimo di trattativa (' + eur(r.minimo) + ') è la soglia sotto la quale è consigliabile non scendere.') + '</p>'
+      + '<h3>Presupposti e limiti</h3><p class="piccolo">Questa valutazione è una stima professionale del valore di mercato, basata sui dati indicati e sulle caratteristiche dichiarate dell\'immobile. Non è una perizia giurata né una stima ai fini fiscali o bancari. Dati al ' + sx(dataTxt) + '.</p>'
+      + FOOT(10) + '</section>';
+    pagine.push(p10);
+
+    /* 11 · FOTO */
+    var p11 = '<section class="pag">' + vHead(m) + vTitle(m, 'Foto', 11)
+      + (m.fotoList.length ? '<div class="vfoto2">' + m.fotoList.map(function(u, i){ return '<figure><img src="' + E(u) + '" alt=""><figcaption>Foto ' + (i + 1) + '</figcaption></figure>'; }).join('') + '</div>'
+          : muto('Nessuna foto disponibile sulla scheda immobile collegata.'))
+      + FOOT(11) + '</section>';
+    pagine.push(p11);
+
+    /* 12 · ALLEGATI */
+    var allRighe = (Array.isArray(r.allegati) ? r.allegati : []).map(function(a, i){
+      var statoHtml = a.stato === 'disponibile' ? '<span class="vok">Disponibile</span>' : a.stato === 'da_acquisire' ? '<span class="vda">Da acquisire</span>' : '<span class="piccolo">—</span>';
+      return '<tr><td>' + (i + 1) + '</td><td><b>' + sx(a.voce) + '</b></td><td>' + statoHtml + '</td><td>' + sx(a.rif || '—') + '</td></tr>';
+    }).join('');
+    var p12 = '<section class="pag">' + vHead(m) + vTitle(m, 'Allegati', 12)
+      + '<h3 style="margin-top:0">Documenti a supporto della valutazione</h3>'
+      + '<table class="valleg"><thead><tr><th></th><th>Documento</th><th>Stato</th><th>Riferimento</th></tr></thead><tbody>' + allRighe + '</tbody></table>'
+      + FOOT(12) + '</section>';
+    pagine.push(p12);
+
+    /* 12b · solo per chi arriva dal test del sito: i documenti da preparare */
     if(r.origine === 'sito'){
       var DOC = [
         ['Atto di provenienza', 'Il rogito con cui è stato comprato l\'immobile, oppure la dichiarazione di successione o l\'atto di donazione.'],
@@ -74592,51 +74770,74 @@ try{
         ['Mutuo', 'Se c\'è ancora un mutuo: il conteggio di estinzione della banca.'],
         ['Proprietari', 'Documento d\'identità e codice fiscale di tutti i proprietari; regime patrimoniale se sposati.']
       ];
-      pagine.push('<section class="pag">' + testaPag(m, 'Prima di vendere')
-        + '<div class="occhiello">Prima di vendere</div><h2>I documenti da preparare</h2>'
-        + '<p>Avere i documenti in ordine prima di mettere in vendita evita sorprese al momento della proposta e del rogito, e permette di vendere più in fretta. '
-        + 'Molti problemi (difformità catastali o urbanistiche) si risolvono facilmente se si scoprono subito.</p>'
+      pagine.push('<section class="pag">' + vHead(m) + vTitle(m, 'Prima di vendere', '12b')
+        + '<p>Avere i documenti in ordine prima di mettere in vendita evita sorprese al momento della proposta e del rogito, e permette di vendere più in fretta.</p>'
         + '<table><thead><tr><th style="width:8mm"></th><th style="width:58mm">Documento</th><th>A cosa serve</th></tr></thead><tbody>'
         + DOC.map(function(d){ return '<tr><td><span style="display:inline-block;width:11px;height:11px;border:1.5px solid ' + RP.navy + ';border-radius:3px"></span></td><td><b>' + sx(d[0]) + '</b></td><td>' + sx(d[1]) + '</td></tr>'; }).join('')
         + '</tbody></table>'
-        + '<div class="riq" style="margin-top:10mm"><div class="occhiello">Il prossimo passo</div>'
-        + '<p style="margin:4px 0 0">Questa valutazione si basa sui dati che ha indicato. Con un sopralluogo gratuito vedo l\'immobile e i documenti insieme a lei, '
-        + 'e le preparo il prezzo definitivo e il piano di vendita.</p></div>'
-        + piedePag(m, 7, 7) + '</section>');
+        + FOOT(0) + '</section>');
     }
 
-    /* 8. [18 ott 2026] ULTIMA PAGINA: i servizi scelti per questa valutazione,
-       con foto, logo, contatti e loghi extra. Se non ne e' spuntato nessuno, niente pagina. */
+    /* 13 · NOTE */
+    var p13 = '<section class="pag">' + vHead(m) + vTitle(m, 'Note', 13)
+      + (r.noteReport ? '<div class="vnota">' + sx(r.noteReport) + '</div>' : '<div class="vnota"></div>')
+      + '<p class="piccolo" style="margin-top:10mm">Valutazione commerciale: non costituisce perizia asseverata né verifica di conformità. La conclusione dipende dai dati disponibili e dai presupposti dichiarati.</p>'
+      + FOOT(13) + '</section>';
+    pagine.push(p13);
+
+    /* 14 · CONTATTI */
+    var indirAg = (typeof getIndirizzoAgenzia === 'function' ? getIndirizzoAgenzia() : '') || '';
+    var telAg = (typeof getTelefonoAgenzia === 'function' ? getTelefonoAgenzia() : '') || '';
+    var emailAg = (typeof getEmailAgenzia === 'function' ? getEmailAgenzia() : '') || '';
+    var p14 = '<section class="pag">' + vHead(m) + vTitle(m, 'Contatti', 14)
+      + '<div class="riq">' + (m.logo ? '<img src="' + E(m.logo) + '" alt="" style="height:12mm;max-width:50mm;object-fit:contain;margin-bottom:4mm">' : '')
+      + '<h2 style="margin:0 0 4mm">' + sx(m.agenzia) + '</h2>'
+      + (indirAg ? '<p style="margin:0">' + sx(indirAg) + '</p>' : '')
+      + (telAg ? '<p style="margin:2mm 0 0">Tel. ' + sx(telAg) + '</p>' : '')
+      + (emailAg ? '<p style="margin:0">' + sx(emailAg) + '</p>' : '') + '</div>'
+      + '<div class="riq"><div class="occhiello">Il tuo referente</div>'
+      + '<h2 style="margin:2mm 0 0">' + sx(m.agente || '—') + '</h2>'
+      + '<p style="margin:2mm 0 0">Agente immobiliare' + (telAg ? ' · ' + sx(telAg) : '') + (emailAg ? ' · ' + sx(emailAg) : '') + '</p></div>'
+      + '<p style="margin-top:10mm;font-weight:700">Una valutazione chiara è il primo passo per scegliere prezzo, tempi e percorso di vendita.</p>'
+      + FOOT(14) + '</section>';
+    pagine.push(p14);
+
+    /* 14b · ULTIMA PAGINA FACOLTATIVA: i servizi scelti per questa valutazione */
     if(m.serv.length){
       var P = m.pres || {}, H = m.hub || {};
       var chi = H.agente || m.agente || '';
       var icoC = function(d){ return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#FDBA74" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>'; };
-      var contatti = [P.tel ? '<span>' + icoC('<path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 1.9.7 2.8a2 2 0 01-.5 2.1L8 9.9a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.8.6 2.8.7a2 2 0 011.7 2z"/>') + ' ' + sx(P.tel) + '</span>' : '',
-                      (!P.tel && H.wa) ? '<span>' + icoC('<path d="M21 11.5a8.4 8.4 0 01-12.2 7.5L3 21l2-5.6A8.4 8.4 0 1121 11.5z"/>') + ' WhatsApp ' + sx(H.wa) + '</span>' : '',
-                      P.email ? '<span>' + icoC('<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>') + ' ' + sx(P.email) + '</span>' : ''].filter(Boolean).join('');
-      pagine.push('<section class="pag sv">' + testaPag(m, 'I nostri servizi')
-        + '<div class="sv-top">' + (H.foto ? '<img class="sv-foto" src="' + E(H.foto) + '" alt="">' : '')
-        + '<div class="tx"><div class="occhiello">I nostri servizi</div><h2>Come vendo la sua casa</h2>'
-        + '<p class="sv-chi"><b>' + sx(chi) + '</b>' + (m.agenzia ? ' · ' + sx(m.agenzia) : '') + '</p>'
-        + (P.sot ? '<p class="sv-sot">' + sx(P.sot) + '</p>' : '') + '</div></div>'
-        + '<div class="sv-griglia">' + m.serv.map(function(x){
-            return '<div class="sv-c"><div class="ic">' + icoServ(x.k) + '</div><div><b>' + sx(x.t) + '</b>' + (x.s ? '<p>' + sx(x.s) + '</p>' : '') + '</div></div>';
-          }).join('') + '</div>'
-        + '<div class="sv-fondo">'
-        + '<div class="sv-cta"><div class="occhiello" style="color:#fff">Il prossimo passo</div><div class="t">Ne parliamo insieme, senza impegno</div>'
-        + (contatti ? '<div class="ct">' + contatti + '</div>' : '') + '</div>'
-        + (m.loghi.length ? '<div class="sv-loghi">' + m.loghi.map(function(l){ return '<img src="' + E(l.url) + '" alt="">'; }).join('') + '</div>' : '')
-        + '</div>'
-        + piedePag(m, pagine.length + 1, pagine.length + 1) + '</section>');
+      var contatti14 = [P.tel ? '<span>' + icoC('<path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 1.9.7 2.8a2 2 0 01-.5 2.1L8 9.9a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.8.6 2.8.7a2 2 0 011.7 2z"/>') + ' ' + sx(P.tel) + '</span>' : '',
+                        (!P.tel && H.wa) ? '<span>' + icoC('<path d="M21 11.5a8.4 8.4 0 01-12.2 7.5L3 21l2-5.6A8.4 8.4 0 1121 11.5z"/>') + ' WhatsApp ' + sx(H.wa) + '</span>' : '',
+                        P.email ? '<span>' + icoC('<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>') + ' ' + sx(P.email) + '</span>' : ''].filter(Boolean).join('');
+      pagine.push('<section class="pag">' + vHead(m) + vTitle(m, 'I nostri servizi', '14c')
+        + '<p class="sv-chi" style="margin:0 0 4mm"><b>' + sx(chi) + '</b>' + (m.agenzia ? ' · ' + sx(m.agenzia) : '') + '</p>'
+        + (P.sot ? '<p class="piccolo" style="margin:0 0 4mm">' + sx(P.sot) + '</p>' : '')
+        + '<div class="sv-griglia">' + m.serv.map(function(x){ return '<div class="sv-c"><div class="ic">' + icoServ(x.k) + '</div><div><b>' + sx(x.t) + '</b>' + (x.s ? '<p>' + sx(x.s) + '</p>' : '') + '</div></div>'; }).join('') + '</div>'
+        + (contatti14 ? '<div class="riq" style="margin-top:6mm;display:flex;gap:8mm;flex-wrap:wrap">' + contatti14 + '</div>' : '')
+        + (m.loghi.length ? '<div style="display:flex;gap:9mm;align-items:center;margin-top:5mm">' + m.loghi.map(function(l){ return '<img src="' + E(l.url) + '" alt="" style="max-height:13mm;max-width:42mm;object-fit:contain">'; }).join('') + '</div>' : '')
+        + FOOT(0) + '</section>');
     }
+
+    /* 15 · RETROCOPERTINA */
+    pagine.push('<section class="pag vback"><div class="box">'
+      + '<h1>Il valore della casa.<br>Un percorso chiaro<br>per venderla.</h1><div class="sep"></div>'
+      + '<div class="passi">'
+      + '<div><b class="n">01</b><b class="t">Dati e documenti</b></div>'
+      + '<div><b class="n">02</b><b class="t">Confronto con il mercato</b></div>'
+      + '<div><b class="n">03</b><b class="t">Prezzo e strategia</b></div>'
+      + '</div>'
+      + '<div class="contatti">' + sx(m.agenzia) + (indirAg ? '<br>' + sx(indirAg) : '') + (telAg || emailAg ? '<br>' + sx([telAg, emailAg].filter(Boolean).join(' · ')) : '') + '</div>'
+      + '</div></section>');
 
     return '<!DOCTYPE html><html lang="it"><head><meta charset="utf-8"><title>Valutazione · ' + sx(m.titolo) + '</title>'
       + '<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@800&display=swap" rel="stylesheet">'
       + '<style>' + cssReport() + '</style></head><body>'
       + '<div class="barra"><span>Valutazione · ' + sx(m.titolo) + '</span><span class="sp"></span><span style="opacity:.75;font-size:12px">Nella finestra di stampa scegli "Salva come PDF", formato A4, margini Nessuno</span>'
       + '<button onclick="window.print()">Stampa / Salva PDF</button></div><div class="barra" style="position:static;height:46px;background:none"></div>'
-      /* [17 ott 2026] numeri di pagina rifatti alla fine: le pagine possono essere 5, 6 o 7 */
-      + pagine.map(function(p, i){ return p.replace(/(<div class="piede"><span>[\s\S]*?<\/span><span>)\d+ \/ \d+(<\/span><\/div>)/, '$1' + (i + 1) + ' / ' + pagine.length + '$2'); }).join('') + '</body></html>';
+      /* il numero totale di pagine dipende da cosa c'è (comparabili, "prima di
+         vendere", servizi): si sistema qui, una volta sola, alla fine */
+      + pagine.map(function(p, i){ return p.replace(/(<div class="vfoot"><span>[\s\S]*?<\/span><span>)\d*(?: \/ \d+)?(<\/span><\/div>)/, '$1' + (i + 1) + ' / ' + pagine.length + '$2'); }).join('') + '</body></html>';
   }
 
   function apriReport(rec, finestra){
