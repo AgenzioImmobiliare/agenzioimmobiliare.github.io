@@ -19503,7 +19503,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.18nov-ISTATPOPOLAZIONE';
+var APP_VERSION = 'v.18nov-FIXNUMPAGINA';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -74616,8 +74616,13 @@ try{
       + (secondo ? '<img src="' + E(secondo) + '" alt="">' : '') + '</div>'
       + '<div class="info"><b>' + sx(m.rec.comune || '—') + '</b><span>' + sx(m.rec.indirizzo || '') + '</span></div></div>';
   }
-  function vTitle(m, titolo, n){
-    return '<div class="vnum">' + sx(n) + ' / Report di valutazione</div><div class="vtitle">' + sx(titolo) + '</div>';
+  /* [18 nov 2026] il numero qui NON è quello passato dal chiamante (fisso,
+     pensato per un report con tutte le pagine): alcune pagine sono facoltative
+     (Comparabili, Prima di vendere, I nostri servizi) e il numero vero dipende
+     da quali ci sono DAVVERO in questo report — lo stesso problema già
+     risolto per il piè di pagina. Stesso segnaposto, stessa sostituzione finale. */
+  function vTitle(m, titolo){
+    return '<div class="vnum">__PAGENUM__ / Report di valutazione</div><div class="vtitle">' + sx(titolo) + '</div>';
   }
   function piedePag(m, n, tot){
     return '<div class="vfoot"><span><b>' + sx((m.agenzia || 'CAPITALCASA').toUpperCase()) + '</b> · Report di valutazione</span><span>' + n + ' / ' + tot + '</span></div>';
@@ -74925,7 +74930,11 @@ try{
       + '<button onclick="window.print()">Stampa / Salva PDF</button></div><div class="barra" style="position:static;height:46px;background:none"></div>'
       /* il numero totale di pagine dipende da cosa c'è (comparabili, "prima di
          vendere", servizi): si sistema qui, una volta sola, alla fine */
-      + pagine.map(function(p, i){ return p.replace(/(<div class="vfoot"><span>[\s\S]*?<\/span><span>)\d*(?: \/ \d+)?(<\/span><\/div>)/, '$1' + (i + 1) + ' / ' + pagine.length + '$2'); }).join('') + '</body></html>';
+      + pagine.map(function(p, i){
+          return p
+            .replace(/__PAGENUM__/, String(i + 1))
+            .replace(/(<div class="vfoot"><span>[\s\S]*?<\/span><span>)\d*(?: \/ \d+)?(<\/span><\/div>)/, '$1' + (i + 1) + ' / ' + pagine.length + '$2');
+        }).join('') + '</body></html>';
   }
 
   function apriReport(rec, finestra){
