@@ -1,0 +1,158 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mappe del manuale</title>
+<style>
+:root{--bg:#f7f6f2;--card:#fff;--fg:#1d2320;--muted:#5d6861;--line:#c9d1ca;--acc:#0f6b52;--acc2:#e3f1ec;--n1:#1d4f91;--n1b:#e1ebf8;--n2:#7a4a00;--n2b:#fbeedd;}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#121614;--card:#1b211e;--fg:#e6ebe7;--muted:#9aa69f;--line:#3a4640;--acc:#5fcfa9;--acc2:#17392e;--n1:#8db8f2;--n1b:#182a44;--n2:#f0b070;--n2b:#3a2a14;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121614;--card:#1b211e;--fg:#e6ebe7;--muted:#9aa69f;--line:#3a4640;--acc:#5fcfa9;--acc2:#17392e;--n1:#8db8f2;--n1b:#182a44;--n2:#f0b070;--n2b:#3a2a14;color-scheme:dark}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding-block:24px 60px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
+h1{font:700 26px "Space Grotesk",system-ui,sans-serif;margin:0}
+h2{font:600 19px "Space Grotesk",system-ui,sans-serif;margin:0 0 10px}
+.muted{color:var(--muted);font-size:14px}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;min-width:0}
+/* mappa ad albero: radice -> rami -> foglie */
+.root{display:inline-block;background:var(--acc);color:#fff;font-weight:700;padding:8px 14px;border-radius:8px}
+.branches{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-top:12px}
+.branch{border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-width:0}
+.branch h3{margin:0 0 6px;font-size:14px;color:var(--n1)}
+.branch ul{margin:0;padding-left:18px}
+.branch li{margin:2px 0}
+.rel{font-size:13px;color:var(--muted);margin-top:6px}
+.kw{font-weight:600;color:var(--n1)}
+.warn{background:var(--n2b);border-radius:6px;padding:6px 8px;color:var(--fg);margin-top:8px;font-size:13px}
+.warn b{color:var(--n2)}
+nav{display:flex;flex-wrap:wrap;gap:6px}nav a{font-size:13px;color:var(--acc);text-decoration:none;border:1px solid var(--line);background:var(--card);padding:4px 10px;border-radius:999px}
+/* flusso: passaggi in sequenza */
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:10px}
+.node{border:1px solid var(--acc);background:var(--acc2);border-radius:8px;padding:8px 10px;font-size:14px;min-width:0}
+.arrow{color:var(--muted);font-weight:700}
+.legend{font-size:13px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}
+.lg{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:middle}
+</style></head><body><div class="wrap"><p><a href="index.html">← Torna al simulatore</a></p>
+
+<header>
+<h1>Mappe concettuali del manuale</h1>
+<p class="muted">Ogni mappa parte dal concetto centrale e collega i rami. Leggila dall'alto in basso; le frecce (→) indicano un passaggio o una conseguenza.</p>
+<nav><a href="#m1">Mediatore</a><a href="#m2">Provvigione</a><a href="#m3">Iscrizione</a><a href="#m4">Obbligazioni</a><a href="#m5">Contratto</a><a href="#m6">Nullità e annullabilità</a><a href="#m7">Diritti reali</a><a href="#m8">Ipoteca</a><a href="#m9">Locazioni</a><a href="#m10">Mutuo e leasing</a></nav>
+<div class="legend"><span><i class="lg" style="background:var(--acc)"></i>concetto centrale</span><span><i class="lg" style="background:var(--n1b);border:1px solid var(--n1)"></i>rami</span><span><i class="lg" style="background:var(--n2b);border:1px solid var(--n2)"></i>attenzione all'esame</span></div>
+</header>
+
+<section id="m1"><h2>1. Il mediatore</h2>
+<span class="root">Mediatore</span>
+<div class="branches">
+<div class="branch"><h3>Chi è</h3><ul><li>Mette in relazione le parti</li><li>Autonomo: nessun rapporto di dipendenza</li><li>Imparziale → elemento essenziale</li></ul></div>
+<div class="branch"><h3>Cosa deve fare</h3><ul><li>Comunicare circostanze note su sicurezza e valutazione dell'affare</li><li>Risponde dell'autenticità delle firme</li><li>Registra i preliminari entro 20 giorni</li></ul></div>
+<div class="branch"><h3>Cosa non può fare</h3><ul><li>Lavorare come dipendente (salvo eccezioni)</li><li>Esercitare attività imprenditoriali o professionali</li><li>Comprare immobili per rivenderli</li></ul></div>
+<div class="branch"><h3>Responsabilità</h3><ul><li>Contrattuale (art. 1218): danno diretto</li><li>Anche in buona fede, se dà informazioni non verificate</li></ul></div>
+</div>
+</section>
+
+<section id="m2"><h2>2. La provvigione</h2>
+<span class="root">Provvigione</span>
+<div class="flow">
+<div class="node">Affare concluso per l'intervento del mediatore</div><span class="arrow">+</span>
+<div class="node">Mediatore iscritto al Registro Imprese</div><span class="arrow">→</span>
+<div class="node"><b>Diritto alla provvigione</b></div>
+</div>
+<div class="branches">
+<div class="branch"><h3>Come si determina</h3><ul><li>1. Accordo tra le parti</li><li>2. Tariffa/usi della Camera</li><li>3. Il giudice (equità)</li></ul></div>
+<div class="branch"><h3>Quando matura</h3><ul><li>Sospensiva: al verificarsi della condizione</li><li>Risolutiva: subito</li><li>Annullabile: se il mediatore non lo sapeva</li></ul></div>
+<div class="branch"><h3>Chi la paga</h3><ul><li>Di norma entrambe le parti</li><li>Clausola «franco provvigione»: una sola parte</li><li>Più mediatori: una quota ciascuno</li></ul></div>
+</div>
+<div class="warn"><b>Niente provvigione</b> a chi non è iscritto, né se il contratto è nullo per oggetto illecito.</div>
+</section>
+
+<section id="m3"><h2>3. Iscrizione e abilitazione</h2>
+<span class="root">Iscrizione</span>
+<div class="branches">
+<div class="branch"><h3>Requisiti generali</h3><ul><li>Maggiore età</li><li>UE o permesso di soggiorno</li><li>Residenza o domicilio nella circoscrizione</li><li>Diploma di secondo grado</li></ul></div>
+<div class="branch"><h3>Requisiti morali</h3><ul><li>Non fallito (o fallimento chiuso)</li><li>Niente condanne per reati ostativi</li><li>Riabilitazione: superato l'ostacolo</li></ul></div>
+<div class="branch"><h3>Requisito professionale</h3><ul><li>Corso di formazione</li><li>Esame in Camera di commercio</li></ul></div>
+<div class="branch"><h3>Dove</h3><ul><li>Registro Imprese / REA</li><li>Ruolo soppresso (D.Lgs. 59/2010)</li><li>Cessazione: REA "a regime" entro 90 giorni</li></ul></div>
+</div>
+<div class="warn"><b>Attenzione:</b> il Ruolo non esiste più. L'iscrizione al Registro Imprese è oggi il requisito che abilita all'attività.</div>
+</section>
+
+<section id="m4"><h2>4. Obbligazioni</h2>
+<span class="root">Obbligazione</span>
+<div class="branches">
+<div class="branch"><h3>Più debitori</h3><ul><li>Parziaria: ciascuno la sua parte</li><li>Solidale: ciascuno l'intero</li></ul></div>
+<div class="branch"><h3>Adempimento e mora</h3><ul><li>Mora del debitore: ritardo + richiesta scritta</li><li>Mora del creditore: offerta regolare rifiutata</li></ul></div>
+<div class="branch"><h3>Estinzione</h3><ul><li>Adempimento, novazione</li><li>Compensazione, confusione, remissione</li><li>Impossibilità sopravvenuta</li></ul></div>
+<div class="branch"><h3>Cambiano le parti</h3><ul><li>Cessione del credito</li><li>Espromissione e accollo</li><li>Surrogazione e regresso</li></ul></div>
+</div>
+</section>
+
+<section id="m5"><h2>5. Il contratto</h2>
+<span class="root">Contratto</span>
+<div class="branches">
+<div class="branch"><h3>Elementi essenziali (art. 1325)</h3><ul><li>Accordo</li><li>Causa (funzione economica)</li><li>Oggetto</li><li>Forma, se prescritta</li></ul></div>
+<div class="branch"><h3>Elementi accidentali</h3><ul><li>Condizione</li><li>Termine</li><li>Modo</li></ul></div>
+<div class="branch"><h3>Conclusione</h3><ul><li>Quando chi propone conosce l'accettazione</li><li>Consensuali: col consenso</li><li>Reali: con la consegna</li></ul></div>
+<div class="branch"><h3>Preliminare</h3><ul><li>Stessa forma del definitivo</li><li>Trascrivibile (art. 2645-bis)</li><li>Registrazione entro 20 giorni</li></ul></div>
+</div>
+</section>
+
+<section id="m6"><h2>6. Nullità, annullabilità, rescissione, risoluzione</h2>
+<div class="flow">
+<div class="node"><b>Nullità</b>: manca un elemento essenziale; causa illecita; rilevabile d'ufficio</div>
+</div>
+<div class="flow">
+<div class="node"><b>Annullabilità</b>: errore essenziale e riconoscibile, dolo, violenza, incapacità. Si convalida</div>
+</div>
+<div class="flow">
+<div class="node"><b>Rescissione</b>: stato di bisogno con lesione, o stato di pericolo</div>
+</div>
+<div class="flow">
+<div class="node"><b>Risoluzione</b>: fatti successivi: inadempimento, impossibilità, eccessiva onerosità</div>
+</div>
+<div class="warn"><b>Trappola:</b> il dolo e la violenza producono annullabilità, non nullità. Lo sfruttamento dello stato di bisogno produce rescissione, non risoluzione.</div>
+</section>
+
+<section id="m7"><h2>7. Diritti reali di godimento su cosa altrui</h2>
+<span class="root">Cosa altrui</span>
+<div class="branches">
+<div class="branch"><h3>Usufrutto</h3><ul><li>Godere della cosa rispettandone la destinazione</li><li>Persone fisiche: a vita</li><li>Giuridiche: max 30 anni</li><li>Cedibile e ipotecabile</li></ul></div>
+<div class="branch"><h3>Uso e abitazione</h3><ul><li>Strettamente personali</li><li>Non cedibili né locabili</li></ul></div>
+<div class="branch"><h3>Superficie</h3><ul><li>Costruire o mantenere sopra il suolo altrui</li><li>Si estingue e il suolo torna al proprietario</li></ul></div>
+<div class="branch"><h3>Servitù</h3><ul><li>Peso su un fondo a utilità di un altro</li><li>Coattive o volontarie</li><li>Non uso ventennale: estinzione</li></ul></div>
+</div>
+<div class="branch" style="margin-top:12px"><h3>Possesso</h3><ul><li>Potere di fatto corrispondente a un diritto</li><li>Locatario: detentore, non possessore</li><li>Azioni: rivendicazione (proprietario); reintegrazione e manutenzione (possessore)</li></ul></div>
+</section>
+
+<section id="m8"><h2>8. Ipoteca</h2>
+<span class="root">Ipoteca</span>
+<div class="branches">
+<div class="branch"><h3>Tipi</h3><ul><li>Volontaria: da contratto</li><li>Giudiziale: da sentenza o decreto</li><li>Legale: dalla legge</li></ul></div>
+<div class="branch"><h3>Oggetto</h3><ul><li>Immobili con pertinenze</li><li>Mobili registrati</li><li>Quota indivisa</li></ul></div>
+<div class="branch"><h3>Ordine</h3><ul><li>Grado dalla data di iscrizione</li><li>Non dalla data del titolo</li></ul></div>
+<div class="branch"><h3>Durata ed estinzione</h3><ul><li>Iscrizione valida 20 anni, poi rinnovo</li><li>Estinta con il credito o il bene</li></ul></div>
+</div>
+<div class="flow" style="margin-top:12px">
+<div class="node">Terzo acquirente</div><span class="arrow">→</span>
+<div class="node">Può pagare i crediti, rilasciare il bene, o purgare l'ipoteca</div>
+</div>
+<div class="warn"><b>Trappola:</b> il terzo datore d'ipoteca risponde solo col bene, il fideiussore con tutto il patrimonio.</div>
+</section>
+
+<section id="m9"><h2>9. Locazioni</h2>
+<span class="root">Locazione</span>
+<div class="branches">
+<div class="branch"><h3>Abitativa</h3><ul><li>L. 431/1998 (+ 392/78 per il resto)</li><li>Libera 4+4; concordata 3+2</li><li>Forma scritta a pena di nullità</li><li>Recesso del conduttore: gravi motivi, 6 mesi</li></ul></div>
+<div class="branch"><h3>Commerciale</h3><ul><li>L. 392/1978</li><li>Durata 6+6</li><li>Prelazione del conduttore: 60 giorni</li><li>Avviamento: 18 mensilità</li></ul></div>
+<div class="branch"><h3>Sublocazione</h3><ul><li>Totale: solo con consenso</li><li>Parziale: con comunicazione</li></ul></div>
+<div class="branch"><h3>Adempimenti</h3><ul><li>Registrazione entro 30 giorni</li><li>Cedolare secca: niente bollo e registro</li></ul></div>
+</div>
+</section>
+
+<section id="m10"><h2>10. Mutuo e leasing</h2>
+<span class="root">Finanziamento</span>
+<div class="branches">
+<div class="branch"><h3>Mutuo</h3><ul><li>Si perfeziona con atto pubblico</li><li>Casa: sempre con ipoteca</li><li>Fino all'80% (100% con garanzie)</li><li>Rimborso: capitale + interessi</li></ul></div>
+<div class="branch"><h3>Costi e limiti</h3><ul><li>TAEG: costo complessivo</li><li>Tasso d'usura: oltre la soglia, niente interessi</li><li>Detrazione IRPEF: 19%</li></ul></div>
+<div class="branch"><h3>Leasing</h3><ul><li>Locazione finanziaria con riscatto</li><li>Assimilato alla vendita con riserva di proprietà</li><li>Non recedibile con canoni pagati</li></ul></div>
+</div>
+</section>
+
+<p class="muted" style="font-size:13px">Mappe di sintesi per il ripasso: si legge dalla radice ai rami. Per i dettagli e le norme vedi il riassunto e il simulatore con le spiegazioni.</p>
+
+</div></body></html>
