@@ -1,7 +1,7 @@
 /* Simulatore Esame Mediatore: funziona anche senza internet.
    Quando si aggiornano i file della cartella, alzare il numero di versione qui sotto. */
-var CACHE = 'esame-mediatore-v5';
-var FILES = ['./', 'index.html', 'mappe.html', 'riassunto.html', 'mappe-manuale.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-maskable.png'];
+var CACHE = 'esame-mediatore-v6';
+var FILES = ['./', 'index.html', 'mappe.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-maskable.png'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(FILES); }).then(function () { return self.skipWaiting(); }));
 });
