@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IndexPlus — Marketing Hub</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Montserrat:wght@600;800;900&family=Playfair+Display:wght@600;800&family=Bebas+Neue&family=Pacifico&family=Oswald:wght@500;700&family=Anton&family=Poppins:wght@500;700;800&family=Archivo+Black&family=Cormorant+Garamond:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600;700&family=Manrope:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&family=Montserrat:wght@600;800;900&family=Playfair+Display:wght@600;800&family=Bebas+Neue&family=Pacifico&family=Oswald:wght@500;700&family=Anton&family=Poppins:wght@500;700;800&family=Archivo+Black&family=Cormorant+Garamond:wght@600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   /* PALETTE PRO a 3 colori — governata da qui */
@@ -42,12 +42,16 @@
   --shadow:  0 4px 24px rgba(13,27,42,.12);
   --radius:  14px;
   --radius2: 20px;
+  /* [22 nov 2026] carattere dell'interfaccia dell'Hub (non il canvas dei
+     contenuti: quello resta su VX_FONT, i font scelti per i post/grafiche).
+     Manrope al posto di DM Sans/DM Serif Display, stile più da portale. */
+  --font-ui: 'Manrope';
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  font-family: 'DM Sans', sans-serif;
+  font-family:var(--font-ui), sans-serif;
   background: var(--cream);
   color: var(--text);
   min-height: 100vh;
@@ -92,7 +96,7 @@ body {
 .logo-icon svg { width: 20px; height: 20px; }
 
 .logo-text {
-  font-family: 'DM Serif Display', serif;
+  font-family:var(--font-ui), serif;
   font-size: 1.05rem;
   color: white;
   line-height: 1.2;
@@ -101,7 +105,7 @@ body {
 .logo-sub {
   font-size: 0.6rem;
   color: var(--gold2);
-  font-family: 'DM Sans', sans-serif;
+  font-family:var(--font-ui), sans-serif;
   font-weight: 500;
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -257,7 +261,7 @@ body {
   font-weight: 800;
   color: var(--gold2);
   line-height: 1;
-  font-family: 'DM Serif Display', serif;
+  font-family:var(--font-ui), serif;
 }
 
 .kpi-mini-lbl {
@@ -286,7 +290,7 @@ body {
 }
 
 .page-title {
-  font-family: 'DM Serif Display', serif;
+  font-family:var(--font-ui), serif;
   font-size: 2rem;
   color: var(--navy);
   line-height: 1.1;
@@ -322,7 +326,7 @@ body {
 }
 
 .card-title {
-  font-family: 'DM Serif Display', serif;
+  font-family:var(--font-ui), serif;
   font-size: 1.1rem;
   color: var(--navy);
   display: flex;
@@ -364,7 +368,7 @@ body {
   border: 1.5px solid var(--cream2);
   border-radius: 10px;
   font-size: 0.85rem;
-  font-family: 'DM Sans', sans-serif;
+  font-family:var(--font-ui), sans-serif;
   color: var(--text);
   background: var(--cream);
   transition: border-color .18s, box-shadow .18s;
@@ -389,7 +393,7 @@ body {
   border-radius: 10px;
   font-size: 0.83rem;
   font-weight: 700;
-  font-family: 'DM Sans', sans-serif;
+  font-family:var(--font-ui), sans-serif;
   cursor: pointer;
   border: none;
   transition: all .18s;
@@ -462,7 +466,7 @@ body {
 .kpi-card.rose::before { background: #F43F5E; }
 
 .kpi-num {
-  font-family: 'DM Serif Display', serif;
+  font-family:var(--font-ui), serif;
   font-size: 2.2rem;
   font-weight: 400;
   color: var(--navy);
@@ -495,7 +499,7 @@ body {
   line-height: 1.65;
   white-space: pre-wrap;
   border: 1px solid #B7E4C7;
-  font-family: 'DM Sans', sans-serif;
+  font-family:var(--font-ui), sans-serif;
   max-height: 200px;
   overflow-y: auto;
   position: relative;
@@ -603,7 +607,7 @@ body {
   background: var(--navy);
   color: var(--gold2);
   display: flex; align-items: center; justify-content: center;
-  font-family: 'DM Serif Display', serif;
+  font-family:var(--font-ui), serif;
   font-size: 1rem;
   flex-shrink: 0;
 }
@@ -671,7 +675,7 @@ body {
   width: 46px; height: 46px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  font-family: 'DM Serif Display', serif;
+  font-family:var(--font-ui), serif;
   font-size: 1.1rem;
   flex-shrink: 0;
 }
@@ -855,7 +859,7 @@ body {
 }
 
 .modal-title {
-  font-family: 'DM Serif Display', serif;
+  font-family:var(--font-ui), serif;
   font-size: 1.3rem;
   color: var(--navy);
 }
@@ -932,7 +936,7 @@ body {
   background:white;border:1px solid var(--cream2);border-radius:var(--radius);
   padding:14px 16px;box-shadow:var(--shadow);
 }
-.pipe-kpi-val{font-family:'DM Serif Display',serif;font-size:1.7rem;color:var(--navy);line-height:1}
+.pipe-kpi-val{font-family:var(--font-ui),serif;font-size:1.7rem;color:var(--navy);line-height:1}
 .pipe-kpi-lbl{font-size:.68rem;color:var(--text3);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
 
 /* ─── Board a binari orizzontali (griglia) ─── */
@@ -970,7 +974,7 @@ body {
   padding:8px 4px;border-right:1px solid var(--cream2);cursor:grab;background:var(--cream2)
 }
 .pipe-rank:active{cursor:grabbing}
-.pipe-rank-num{font-family:'DM Serif Display',serif;font-size:1.25rem;color:var(--navy);line-height:1}
+.pipe-rank-num{font-family:var(--font-ui),serif;font-size:1.25rem;color:var(--navy);line-height:1}
 .pipe-rank-grip{color:var(--text3);font-size:.8rem;line-height:.6}
 
 /* celle fase (drop target orizzontale) */
@@ -1195,7 +1199,7 @@ body:not(.soc-fs) .soc-toolbar{flex-wrap:wrap;overflow-x:visible;row-gap:2px}   
 .soc-pub-sub{font-size:.74rem;color:var(--text3);margin:4px 0 10px;line-height:1.45}
 .soc-tone-row{display:flex;gap:8px;align-items:center}
 .soc-tone-row .soc-select{flex:1}
-.soc-textarea{width:100%;padding:10px 12px;border:1px solid var(--cream2);border-radius:9px;font-family:'DM Sans',sans-serif;font-size:.82rem;color:var(--text);background:#fff;resize:vertical;line-height:1.5}
+.soc-textarea{width:100%;padding:10px 12px;border:1px solid var(--cream2);border-radius:9px;font-family:var(--font-ui),sans-serif;font-size:.82rem;color:var(--text);background:#fff;resize:vertical;line-height:1.5}
 .soc-textarea:focus{outline:none;border-color:var(--gold)}
 .soc-pub-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
 .soc-pub-grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -3742,7 +3746,7 @@ input[type=range].vai-ms-rng-mini{max-width:78px}
   padding: 12px 14px;
   border: 1.5px solid var(--cream2);
   border-radius: 12px;
-  font-family: 'DM Sans', sans-serif;
+  font-family:var(--font-ui), sans-serif;
   font-size: 0.85rem;
   color: var(--text);
   background: var(--cream);
@@ -3812,7 +3816,7 @@ input[type=range].vai-ms-rng-mini{max-width:78px}
 /* ═══ RICERCA RAPIDA ═══ */
 /* ═══ HIGHLIGHT NUMERICI ═══ */
 strong.num {
-  font-family: 'DM Serif Display', serif;
+  font-family:var(--font-ui), serif;
   color: var(--navy);
   font-size: 1.05em;
 }
@@ -3841,7 +3845,7 @@ strong.num {
 .vx-vuoto{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;border:1.5px dashed #94A3B8;color:#64748B;font:600 11px/1.3 'DM Sans',sans-serif;background:rgba(148,163,184,.12);overflow:hidden}
 /* editor a tutto schermo */
 body.vx-aperto{overflow:hidden}
-.vx-ed{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9500;background:#E9ECEF;display:flex;flex-direction:column;font-family:'DM Sans',sans-serif;color:var(--navy)}
+.vx-ed{position:fixed;top:0;left:0;right:0;bottom:0;z-index:9500;background:#E9ECEF;display:flex;flex-direction:column;font-family:var(--font-ui),sans-serif;color:var(--navy)}
 .vx-ed[hidden]{display:none}
 .vx-top{height:54px;flex:none;background:#fff;border-bottom:1px solid rgba(13,27,42,.1);display:flex;align-items:center;gap:8px;padding:0 12px}
 .vx-b{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:32px;padding:0 10px;border:1px solid rgba(13,27,42,.14);background:#fff;border-radius:8px;font:600 .78rem 'DM Sans',sans-serif;color:var(--navy);cursor:pointer;white-space:nowrap}
@@ -3902,7 +3906,7 @@ body.vx-aperto{overflow:hidden}
 .vx-rot-asta{position:absolute;background:#2563EB}
 .vx-guida{position:absolute;background:#E11D8F}
 .vx-marg{position:absolute;border-style:dashed;border-color:rgba(37,99,235,.45);box-sizing:border-box}
-.vx-etich{position:absolute;transform:translate(-50%,-50%);background:#0D1B2A;color:#fff;font-weight:700;font-family:'DM Sans',sans-serif;white-space:nowrap}
+.vx-etich{position:absolute;transform:translate(-50%,-50%);background:#0D1B2A;color:#fff;font-weight:700;font-family:var(--font-ui),sans-serif;white-space:nowrap}
 /* pannello proprietà */
 .vx-dx-testa{display:flex;align-items:center;gap:6px;margin-bottom:12px;padding-bottom:8px;border-bottom:1.5px solid var(--navy)}
 .vx-sez{margin-bottom:18px}
@@ -3942,7 +3946,7 @@ body.vx-aperto{overflow:hidden}
 .vx-dlg-box{background:#fff;border-radius:14px;padding:22px;max-width:440px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:8px}
 .vx-dlg-t{font:800 1rem 'DM Sans',sans-serif;color:var(--navy)}
 .vx-dlg-s{font-size:.82rem;color:var(--text2);margin-bottom:6px}
-.vx-dlg-b{text-align:left;border:1px solid rgba(13,27,42,.14);border-radius:10px;padding:10px 14px;background:#fff;cursor:pointer;display:flex;flex-direction:column;gap:2px;font-family:'DM Sans',sans-serif;color:var(--navy)}
+.vx-dlg-b{text-align:left;border:1px solid rgba(13,27,42,.14);border-radius:10px;padding:10px 14px;background:#fff;cursor:pointer;display:flex;flex-direction:column;gap:2px;font-family:var(--font-ui),sans-serif;color:var(--navy)}
 .vx-dlg-b:hover{border-color:var(--navy);background:#F8FAFC}
 .vx-dlg-b b{font-size:.86rem}
 .vx-dlg-b span{font-size:.74rem;color:var(--text3)}
@@ -3958,7 +3962,7 @@ body.vx-aperto{overflow:hidden}
 .vx-box-g{outline-color:#7C3AED}
 .vx-box-g .vx-h{border-color:#7C3AED}
 .vx-orfano{position:absolute;box-sizing:border-box;outline-style:dashed;outline-color:#DC2626}
-.vx-orfano span{position:absolute;left:0;top:0;background:#DC2626;color:#fff;font-weight:700;font-family:'DM Sans',sans-serif;white-space:nowrap}
+.vx-orfano span{position:absolute;left:0;top:0;background:#DC2626;color:#fff;font-weight:700;font-family:var(--font-ui),sans-serif;white-space:nowrap}
 .vx-imm-info{background:#F8FAFC;border:1px solid rgba(13,27,42,.08);border-radius:10px;padding:10px;margin-bottom:12px;display:flex;flex-direction:column;gap:2px}
 .vx-imm-info b{font-size:.82rem}.vx-imm-info small{font-size:.72rem;color:var(--text3)}
 .vx-avv{font-size:.72rem;font-weight:700;color:#B91C1C;margin-top:4px}
@@ -4002,7 +4006,7 @@ body.vx-aperto{overflow:hidden}
 
 /* [29 set 2026] stile delle schede */
 .vx-stili{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.vx-stile{display:flex;flex-direction:column;align-items:center;gap:5px;border:1px solid rgba(13,27,42,.12);background:#fff;border-radius:10px;padding:8px 4px 6px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.vx-stile{display:flex;flex-direction:column;align-items:center;gap:5px;border:1px solid rgba(13,27,42,.12);background:#fff;border-radius:10px;padding:8px 4px 6px;cursor:pointer;font-family:var(--font-ui),sans-serif}
 .vx-stile:hover{border-color:rgba(13,27,42,.35)}
 .vx-stile.on{border-color:var(--navy);box-shadow:0 0 0 1px var(--navy)}
 .vx-stile b{font-size:.66rem;font-weight:700;color:var(--navy);text-align:center;line-height:1.2}
@@ -4012,7 +4016,7 @@ body.vx-aperto{overflow:hidden}
 .vx-stile-c em{display:block;height:2px;background:#475569;border-radius:1px;width:80%}
 .vx-stile-c em+em{width:55%}
 /* [29 set 2026] ponte dal cloud: finestra di accesso dell'app */
-#ponte-acc{position:fixed;inset:0;z-index:100000;background:rgba(13,27,42,.45);display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif}
+#ponte-acc{position:fixed;inset:0;z-index:100000;background:rgba(13,27,42,.45);display:flex;align-items:center;justify-content:center;font-family:var(--font-ui),sans-serif}
 .ponte-acc-box{background:#fff;border-radius:14px;padding:22px 24px;width:min(420px,92vw);box-shadow:0 20px 50px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:12px;color:#0D1B2A}
 .ponte-acc-t{font-size:1.05rem;font-weight:800}
 .ponte-acc-s{font-size:.8rem;line-height:1.5;color:#475569}
@@ -4026,7 +4030,7 @@ body.vx-aperto{overflow:hidden}
 /* [29 set 2026] tappa 5 — l'AI nel volantino */
 .vx-ai-n{min-width:17px;height:17px;border-radius:9px;background:#D97706;color:#fff;font-size:.66rem;display:inline-flex;align-items:center;justify-content:center;padding:0 4px;box-sizing:border-box}
 .vx-aida{position:absolute;box-sizing:border-box;outline-style:dashed;outline-color:#D97706;transform-origin:50% 50%}
-.vx-aida span{position:absolute;right:0;bottom:100%;background:#D97706;color:#fff;font-weight:700;font-family:'DM Sans',sans-serif;white-space:nowrap}
+.vx-aida span{position:absolute;right:0;bottom:100%;background:#D97706;color:#fff;font-weight:700;font-family:var(--font-ui),sans-serif;white-space:nowrap}
 .vx-ai-pn{font-size:.64rem;font-weight:700;color:#B45309}
 .vx-ai-stato{font-size:.74rem;font-weight:700;border-radius:8px;padding:7px 10px;margin-bottom:8px;display:flex;align-items:center;gap:6px;background:#F1F5F9;color:var(--text2)}
 .vx-ai-stato.da{background:#FFFBEB;color:#92400E}
@@ -4068,7 +4072,7 @@ body.vx-aperto{overflow:hidden}
 .sched-nav-btn:hover { background:var(--navy); color:white; border-color:var(--navy); }
 .sched-month-label { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:700; color:var(--navy); min-width:200px; text-align:center; text-transform:capitalize; letter-spacing:-.5px; }
 .sched-filters { display:flex; gap:5px; background:white; padding:4px; border-radius:9px; border:1px solid var(--cream2); }
-.sched-filter-btn { display:flex; align-items:center; gap:6px; padding:6px 12px; border:none; background:transparent; border-radius:6px; cursor:pointer; font-size:.76rem; font-weight:700; color:var(--text3); font-family:'DM Sans',sans-serif; transition:all .15s; }
+.sched-filter-btn { display:flex; align-items:center; gap:6px; padding:6px 12px; border:none; background:transparent; border-radius:6px; cursor:pointer; font-size:.76rem; font-weight:700; color:var(--text3); font-family:var(--font-ui),sans-serif; transition:all .15s; }
 .sched-filter-btn:hover { color:var(--navy); }
 .sched-filter-btn.active { background:var(--navy); color:white; box-shadow:0 1px 3px rgba(15,23,42,.15); }
 .sched-filter-btn .sched-dot { width:8px; height:8px; border-radius:50%; }
@@ -4136,7 +4140,7 @@ body.vx-aperto{overflow:hidden}
 .oggi-actions{display:flex;gap:6px;flex-shrink:0}
 @media(max-width:560px){.oggi-row{flex-wrap:wrap}.oggi-actions{width:100%}}
 
-.sched-event-btn { padding:7px 12px; border-radius:7px; border:none; cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:700; font-size:.74rem; display:flex; align-items:center; gap:5px; transition:all .15s; }
+.sched-event-btn { padding:7px 12px; border-radius:7px; border:none; cursor:pointer; font-family:var(--font-ui),sans-serif; font-weight:700; font-size:.74rem; display:flex; align-items:center; gap:5px; transition:all .15s; }
 .sched-event-btn.wa { background:#25D366; color:white; }
 .sched-event-btn.wa:hover { background:#1FA855; }
 .sched-event-btn.tel { background:var(--cream); color:var(--navy); }
@@ -5330,12 +5334,12 @@ body.hub-tema{background:var(--cream)}
 /* ── cornice: testata ── */
 body.hub-tema .app-header{background:var(--hb-card);border-bottom:1px solid var(--hb-bordo);box-shadow:none}
 body.hub-tema .logo-icon{background:var(--brand);color:#fff}
-body.hub-tema .logo-text{color:var(--text);font-family:'DM Sans',sans-serif;font-weight:800;letter-spacing:-.2px}
+body.hub-tema .logo-text{color:var(--text);font-family:var(--font-ui),sans-serif;font-weight:800;letter-spacing:-.2px}
 body.hub-tema .logo-sub{color:var(--text3)}
 body.hub-tema .header-badge{background:var(--hb-sub);border:1px solid var(--hb-bordo);color:var(--text2)}
 .hub-sync{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(201,168,76,.3);color:#F5E6B8;padding:6px 12px;border-radius:8px;font-size:.74rem;font-weight:600;cursor:pointer;transition:all .15s}
 .hub-sync-r{opacity:.7;display:flex;align-items:center;border-left:1px solid rgba(255,255,255,.18);padding-left:8px;margin-left:2px}
-.hub-gest{display:flex;align-items:center;gap:7px;background:var(--gold);color:var(--navy);border:none;padding:7px 14px;border-radius:9px;font-weight:700;font-size:.83rem;cursor:pointer;font-family:'DM Sans',sans-serif}
+.hub-gest{display:flex;align-items:center;gap:7px;background:var(--gold);color:var(--navy);border:none;padding:7px 14px;border-radius:9px;font-weight:700;font-size:.83rem;cursor:pointer;font-family:var(--font-ui),sans-serif}
 /* [14 ott 2026] telefono: a destra della testata solo le icone, così la pagina non scorre di lato */
 @media(max-width:700px){.hub-destra{gap:6px!important;flex-shrink:1;min-width:0}.hub-destra .header-badge,.hub-destra #sync-text,.hub-destra .hub-sync-r{display:none}.hub-gest-t{display:none}.hub-gest{padding:8px 10px}}
 .hub-buio-btn{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid rgba(255,255,255,.2);color:#F5E6B8;cursor:pointer}
@@ -5362,7 +5366,7 @@ body.hub-tema .nav-item.active .ni-icon{background:transparent}
 body.hub-tema .nav-badge{background:var(--hb-sub);color:var(--text2)}
 body.hub-tema .nav-item.active .nav-badge{background:var(--brand);color:#fff}
 body.hub-tema .kpi-strip{background:var(--hb-sub);border-color:var(--hb-bordo)}
-body.hub-tema .kpi-mini-val{color:var(--brand);font-family:'DM Sans',sans-serif}
+body.hub-tema .kpi-mini-val{color:var(--brand);font-family:var(--font-ui),sans-serif}
 body.hub-tema .kpi-mini-lbl{color:var(--text3)}
 body.hub-tema.hub-buio .nav-item.active{background:var(--brand-pale);color:var(--brand-l)}
 body.hub-tema.hub-buio .nav-head.has-active,body.hub-tema.hub-buio .kpi-mini-val{color:var(--brand-l)}
@@ -5521,7 +5525,7 @@ hubTema();
     </div>
     <div>
       <div class="logo-text" id="hdr-agency">Le case dalla A allo Z.io</div>
-      <div class="logo-sub">IndexPlus · Marketing Hub <span style="background:#1A7A4A;color:#fff;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:800;margin-left:6px;letter-spacing:.5px">v.16nov-REEL-CLIP</span></div>
+      <div class="logo-sub">IndexPlus · Marketing Hub <span style="background:#1A7A4A;color:#fff;padding:1px 7px;border-radius:10px;font-size:.62rem;font-weight:800;margin-left:6px;letter-spacing:.5px">v.22nov-FONTMANROPE</span></div>
     </div>
   </div>
   <div class="hub-destra" style="display:flex;gap:10px;align-items:center">
