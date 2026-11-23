@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
 <meta charset="UTF-8">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Le case dalla A allo Z.io — Gestionale</title><!-- [7 ott 2026] tolto id="page-title": era lo stesso della scritta in alto, che così restava sempre "Dashboard" -->
 
@@ -218,6 +218,7 @@ svg.leaflet-zoom-animated{will-change:transform}
   --shadow-md:0 4px 6px rgba(0,0,0,0.07),0 2px 4px rgba(0,0,0,0.04);
   --shadow-lg:0 10px 15px rgba(0,0,0,0.08),0 4px 6px rgba(0,0,0,0.04);
   --radius:10px;--radius-sm:7px;--radius-lg:14px;
+  --font-ui:'Inter';
 }
 
 /* ══════════ DARK MODE ══════════ */
@@ -593,7 +594,7 @@ body.dark-mode ::-webkit-scrollbar-thumb { background:#334155 !important; }
 body.dark-mode ::-webkit-scrollbar-thumb:hover { background:#475569 !important; }
 
 *{margin:0;padding:0;box-sizing:border-box;}
-.pn-pill{padding:4px 12px;border-radius:20px;border:1.5px solid #DDD6FE;background:white;color:#7C3AED;font-size:0.76rem;font-weight:700;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;}
+.pn-pill{padding:4px 12px;border-radius:20px;border:1.5px solid #DDD6FE;background:white;color:#7C3AED;font-size:0.76rem;font-weight:700;cursor:pointer;transition:all .15s;font-family:var(--font-ui),sans-serif;}
 .pn-pill:hover{border-color:#7C3AED;background:#EDE9FE;}
 .pn-pill.pn-pill-active{background:#7C3AED;border-color:#7C3AED;color:white;}
 /* Animazione badge NUOVO annunci */
@@ -601,12 +602,12 @@ body.dark-mode ::-webkit-scrollbar-thumb:hover { background:#475569 !important; 
 @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
 /* privacy-mode CSS rimosso: il Ctrl+X nasconde solo le voci NF, non maschera importi */
-body{font-family:'Inter',sans-serif;background:var(--bg,#F5F7FA);color:var(--text);font-size:14px;line-height:1.55;overflow-x:hidden;font-weight:400;}
+body{font-family:var(--font-ui),sans-serif;background:var(--bg,#F5F7FA);color:var(--text);font-size:14px;line-height:1.55;overflow-x:hidden;font-weight:400;}
 
 /* SIDEBAR */
 .sidebar{width:255px;background:#ffffff;border-right:1px solid #E8ECF4;display:flex;flex-direction:column;position:fixed;height:100vh;z-index:100;overflow-y:auto;box-shadow:2px 0 10px rgba(0,0,0,.05);transform:translateX(-255px);transition:transform .25s cubic-bezier(.4,0,.2,1);}
 .logo{padding:22px 18px 18px;border-bottom:1px solid #EEF1F8;}
-.logo-agency{font-family:'Inter',sans-serif;font-size:0.82rem;font-weight:700;color:#1A2035;line-height:1.3;letter-spacing:-.1px;}
+.logo-agency{font-family:var(--font-ui),sans-serif;font-size:0.82rem;font-weight:700;color:#1A2035;line-height:1.3;letter-spacing:-.1px;}
 .logo-agent{font-size:0.72rem;color:#8896AB;margin-top:3px;display:flex;align-items:center;gap:5px;}
 .online-dot{width:7px;height:7px;background:#22C55E;border-radius:50%;flex-shrink:0;}
 .nav{padding:12px 10px;flex:1;}
@@ -669,7 +670,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg,#F5F7FA);color:var(--tex
 /* Badge numerico sul tile */
 .ng-badge{position:absolute;top:6px;right:6px;min-width:16px;height:16px;border-radius:8px;font-size:0.6rem;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 4px;line-height:1;}
 
-.page-title{font-family:'Inter',sans-serif;font-size:1.05rem;color:#1A2035;font-weight:600;letter-spacing:-.3px;}
+.page-title{font-family:var(--font-ui),sans-serif;font-size:1.05rem;color:#1A2035;font-weight:600;letter-spacing:-.3px;}
 .topbar-right{display:flex;gap:8px;align-items:center;}
 /* Pulsanti provvigione in gestione pratica */
 #pim-prov-btn-proposta{transition:all .2s;background:linear-gradient(135deg,#EA580C,#C2410C);}
@@ -679,7 +680,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg,#F5F7FA);color:var(--tex
 #pim-prov-btn-vendita:not(:disabled):hover{background:linear-gradient(135deg,#3B82F6,#A855F7)!important;transform:translateY(-2px);box-shadow:0 6px 20px rgba(124,58,237,.5)!important;color:white!important;}
 #pim-prov-btn-vendita:not(:disabled):active{transform:translateY(0);}
 #pim-prov-btn-proposta:disabled,#pim-prov-btn-vendita:disabled{cursor:not-allowed!important;transform:none!important;}
-.wa-fab{position:fixed;bottom:92px;right:28px;z-index:310;background:#25D366;color:white;border:none;border-radius:50px;padding:13px 20px;font-family:'Inter',sans-serif;font-size:0.9rem;font-weight:800;cursor:pointer;box-shadow:0 4px 18px rgba(37,211,102,0.5);display:flex;align-items:center;gap:9px;transition:all 0.2s;text-decoration:none;}
+.wa-fab{position:fixed;bottom:92px;right:28px;z-index:310;background:#25D366;color:white;border:none;border-radius:50px;padding:13px 20px;font-family:var(--font-ui),sans-serif;font-size:0.9rem;font-weight:800;cursor:pointer;box-shadow:0 4px 18px rgba(37,211,102,0.5);display:flex;align-items:center;gap:9px;transition:all 0.2s;text-decoration:none;}
 .wa-fab:hover{background:#1ebe5d;transform:translateY(-2px);box-shadow:0 6px 22px rgba(37,211,102,0.55);}
 .wa-fab:active{transform:translateY(0);}
 @media print{.wa-fab{display:none!important;}}
@@ -690,20 +691,20 @@ body{font-family:'Inter',sans-serif;background:var(--bg,#F5F7FA);color:var(--tex
    finestra normale (.overlay, livello 3000) torna sotto, come prima. */
 #float-btns-group{z-index:9050!important}
 body:has(.overlay.open) #float-btns-group{z-index:330!important}
-.fab{position:fixed;bottom:28px;right:28px;z-index:320;background:linear-gradient(135deg,#2563EB 0%,#1D4ED8 100%);color:white;border:none;border-radius:50px;padding:14px 24px;font-family:'Inter',sans-serif;font-size:0.95rem;font-weight:800;cursor:pointer;box-shadow:0 4px 20px rgba(37,99,235,0.55),0 1px 3px rgba(0,0,0,.15);display:flex;align-items:center;gap:9px;transition:all 0.2s;outline:3px solid rgba(255,255,255,.25);letter-spacing:.2px;}
+.fab{position:fixed;bottom:28px;right:28px;z-index:320;background:linear-gradient(135deg,#2563EB 0%,#1D4ED8 100%);color:white;border:none;border-radius:50px;padding:14px 24px;font-family:var(--font-ui),sans-serif;font-size:0.95rem;font-weight:800;cursor:pointer;box-shadow:0 4px 20px rgba(37,99,235,0.55),0 1px 3px rgba(0,0,0,.15);display:flex;align-items:center;gap:9px;transition:all 0.2s;outline:3px solid rgba(255,255,255,.25);letter-spacing:.2px;}
 .fab:hover{background:linear-gradient(135deg,#1D4ED8 0%,#1e40af 100%);transform:translateY(-2px);box-shadow:0 8px 28px rgba(37,99,235,0.65),0 2px 6px rgba(0,0,0,.18);}
 .fab:active{transform:translateY(1px);box-shadow:0 2px 10px rgba(37,99,235,0.4);}
 .hub-item{display:flex;align-items:center;gap:10px;cursor:pointer;}
 .hub-item:hover .hub-label{opacity:1;transform:translateX(0);}
 .hub-item:hover .hub-btn{transform:scale(1.08);}
-.hub-label{background:#1A2035;color:white;padding:6px 12px;border-radius:20px;font-size:0.78rem;font-weight:700;white-space:nowrap;opacity:0;transform:translateX(8px);transition:all .18s;box-shadow:0 3px 12px rgba(0,0,0,.25);pointer-events:none;font-family:'Inter',sans-serif;}
+.hub-label{background:#1A2035;color:white;padding:6px 12px;border-radius:20px;font-size:0.78rem;font-weight:700;white-space:nowrap;opacity:0;transform:translateX(8px);transition:all .18s;box-shadow:0 3px 12px rgba(0,0,0,.25);pointer-events:none;font-family:var(--font-ui),sans-serif;}
 .hub-btn{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.25);transition:transform .15s;flex-shrink:0;}
 @media print{#hub-root{display:none!important;}}
 @keyframes fabPulse{0%,100%{box-shadow:0 4px 20px rgba(37,99,235,.55),0 0 0 0 rgba(37,99,235,.4);}70%{box-shadow:0 4px 20px rgba(37,99,235,.55),0 0 0 8px rgba(37,99,235,0);}}
 @media print{.fab{display:none!important;}}
 
 /* BUTTONS */
-.btn{padding:8px 16px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-family:'Inter',sans-serif;font-size:0.83rem;font-weight:600;transition:all 0.15s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
+.btn{padding:8px 16px;border-radius:var(--radius-sm);border:none;cursor:pointer;font-family:var(--font-ui),sans-serif;font-size:0.83rem;font-weight:600;transition:all 0.15s;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;}
 .btn-primary{background:#2563EB;color:white;box-shadow:0 2px 8px rgba(37,99,235,.25);}
 .btn-primary:hover{background:#1D4ED8;box-shadow:0 3px 12px rgba(37,99,235,.35);}
 .btn-outline{background:white;border:1.5px solid var(--border2);color:var(--text2);}
@@ -816,7 +817,7 @@ body.dark-mode .sci-azioni .simm-ico{background:var(--bg2)}
 .stat-card-icon{font-size:1.8rem;margin-bottom:10px;display:block;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.15));}
 .stat-card-accent{display:none;}
 .stat-label{font-size:0.68rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;opacity:.85;}
-.stat-val{font-family:'Inter',sans-serif;font-size:2.4rem;font-weight:900;line-height:1;color:white;letter-spacing:-1px;}
+.stat-val{font-family:var(--font-ui),sans-serif;font-size:2.4rem;font-weight:900;line-height:1;color:white;letter-spacing:-1px;}
 .stat-sub{font-size:0.72rem;margin-top:5px;opacity:.75;font-weight:500;}
 .stat-card::after{content:'';position:absolute;top:-18px;right:-18px;width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,.1);}
 /* Dashboard greeting header */
@@ -861,7 +862,7 @@ tfoot td{font-weight:700;background:var(--bg3);border-top:2px solid var(--border
 .filter-bar{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
 /* Pill toggle filtro stato */
 .stato-pills{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
-.stato-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg2);color:var(--text3);font-size:0.82rem;font-weight:600;cursor:pointer;transition:all .15s;user-select:none;font-family:'Inter',sans-serif;}
+.stato-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--bg2);color:var(--text3);font-size:0.82rem;font-weight:600;cursor:pointer;transition:all .15s;user-select:none;font-family:var(--font-ui),sans-serif;}
 .stato-pill:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-pale);}
 .stato-pill.active{border-color:currentColor;background:currentColor;color:white;}
 .stato-pill[data-stato="all"].active{background:var(--brand);border-color:var(--brand);color:white;}
@@ -903,7 +904,7 @@ tfoot td{font-weight:700;background:var(--bg3);border-top:2px solid var(--border
 .search-box{position:relative;}
 .search-box input{padding-left:34px;}
 .search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text4);font-size:0.9rem;}
-.f-input,.f-select{background:white;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:0.86rem;outline:none;transition:border-color 0.15s;}
+.f-input,.f-select{background:white;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;color:var(--text);font-family:var(--font-ui),sans-serif;font-size:0.86rem;outline:none;transition:border-color 0.15s;}
 .f-input:focus,.f-select:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(37,99,235,0.08);}
 .f-input{min-width:220px;}
 .f-select{cursor:pointer;}
@@ -927,7 +928,7 @@ tfoot td{font-weight:700;background:var(--bg3);border-top:2px solid var(--border
 .fcol{grid-column:1/-1;}
 .frow{display:flex;flex-direction:column;gap:5px;}
 .flabel{font-size:0.74rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;}
-.finput,.fselect,.ftextarea{background:white;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text);font-family:'Inter',sans-serif;font-size:0.88rem;outline:none;transition:all 0.15s;width:100%;}
+.finput,.fselect,.ftextarea{background:white;border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:9px 12px;color:var(--text);font-family:var(--font-ui),sans-serif;font-size:0.88rem;outline:none;transition:all 0.15s;width:100%;}
 .finput:focus,.fselect:focus,.ftextarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px rgba(37,99,235,0.08);}
 /* [3 set 2026] SUGGERIMENTO ≠ DATO VERO.
    Prima il testo di suggerimento usava il grigio predefinito del browser,
@@ -1094,7 +1095,7 @@ body.dark-mode .fselect:has(option[value=""]:checked){ background:var(--bg3); co
 .doc-ring-wrap svg{transform:rotate(-90deg);}
 .doc-ring-bg{fill:none;stroke:#E2E8F0;stroke-width:5;}
 .doc-ring-fill{fill:none;stroke:url(#docGrad);stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset .4s cubic-bezier(.4,0,.2,1);}
-.doc-ring-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Inter',sans-serif;}
+.doc-ring-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--font-ui),sans-serif;}
 .doc-ring-pct{font-size:0.82rem;font-weight:900;color:var(--text);line-height:1;}
 .doc-ring-sub{font-size:0.55rem;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;}
 .doc-progress-info{}
@@ -1140,7 +1141,7 @@ body.dark-mode .fselect:has(option[value=""]:checked){ background:var(--bg3); co
 .mnd-tl-item:last-child{padding-bottom:0;}
 .mnd-tl-item .dot{position:absolute;left:-26px;top:1px;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;}
 .mnd-tl-item .dot svg{width:9px;height:9px;}
-.mnd-tl-item .when{font-size:0.72rem;color:var(--text4);font-weight:600;font-family:'Inter',sans-serif;}
+.mnd-tl-item .when{font-size:0.72rem;color:var(--text4);font-weight:600;font-family:var(--font-ui),sans-serif;}
 .mnd-tl-item .what{font-size:0.85rem;font-weight:700;color:var(--text);margin-top:1px;}
 .mnd-tl-item .sub{font-size:0.77rem;color:var(--text3);margin-top:1px;}
 .mnd-actions{display:flex;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid #E2E8F0;flex-wrap:wrap;}
@@ -1177,9 +1178,9 @@ body.dark-mode .fselect:has(option[value=""]:checked){ background:var(--bg3); co
 .doc-check-progress{height:8px;border-radius:4px;background:var(--border);overflow:hidden;margin-bottom:10px;}
 .doc-check-progress-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--brand),var(--green-l));transition:width .3s;}
 .fatt-voce-row{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:8px 10px;}
-.fatt-voce-descr{width:100%;background:white;border:1.5px solid var(--border);border-radius:6px;padding:7px 10px;font-family:'Inter',sans-serif;font-size:0.85rem;color:var(--text);outline:none;}
+.fatt-voce-descr{width:100%;background:white;border:1.5px solid var(--border);border-radius:6px;padding:7px 10px;font-family:var(--font-ui),sans-serif;font-size:0.85rem;color:var(--text);outline:none;}
 .fatt-voce-descr:focus{border-color:var(--brand);}
-.fatt-voce-imp{width:130px;background:white;border:1.5px solid var(--border);border-radius:6px;padding:7px 10px;font-family:'Inter',sans-serif;font-size:0.85rem;font-weight:700;color:var(--brand);text-align:right;outline:none;}
+.fatt-voce-imp{width:130px;background:white;border:1.5px solid var(--border);border-radius:6px;padding:7px 10px;font-family:var(--font-ui),sans-serif;font-size:0.85rem;font-weight:700;color:var(--brand);text-align:right;outline:none;}
 .fatt-voce-imp:focus{border-color:var(--brand);}
 .fatt-voce-del{background:none;border:none;color:var(--text4);cursor:pointer;font-size:1.1rem;padding:3px 6px;border-radius:5px;}
 .fatt-voce-del:hover{background:var(--red-pale);color:var(--red-l);}
@@ -1249,7 +1250,7 @@ body.dark-mode .fselect:has(option[value=""]:checked){ background:var(--bg3); co
 /* PRINT STYLES */
 @media print{
   @page{margin:10mm 12mm;size:A4 portrait;}
-  body{background:white!important;color:#1a1a1a!important;font-size:9pt;font-family:'Inter',sans-serif;}
+  body{background:white!important;color:#1a1a1a!important;font-size:9pt;font-family:var(--font-ui),sans-serif;}
   .topbar,.filter-bar,.actions-col,.icon-btn,.btn,.nav-badge,.overlay{display:none!important;}
   .main{margin-left:0!important;}
   .content{padding:0!important;}
@@ -1363,15 +1364,15 @@ input[type=range].val-slider::-moz-range-thumb{width:20px;height:20px;border-rad
 /* ── CUSTOM DIALOG ── */
 #custom-dialog-overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:99999;display:none;align-items:center;justify-content:center;padding:20px;}
 #custom-dialog-overlay.show{display:flex;}
-#custom-dialog-box{background:#fff;border-radius:14px;padding:28px 30px 24px;max-width:420px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.18);text-align:center;font-family:'Inter',sans-serif;}
+#custom-dialog-box{background:#fff;border-radius:14px;padding:28px 30px 24px;max-width:420px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.18);text-align:center;font-family:var(--font-ui),sans-serif;}
 #custom-dialog-icon{font-size:2.2rem;margin-bottom:12px;display:block;}
 #custom-dialog-title{font-size:1rem;font-weight:800;color:#111827;margin-bottom:8px;}
 #custom-dialog-msg{font-size:0.875rem;color:#4B5563;line-height:1.65;margin-bottom:22px;}
 #custom-dialog-msg strong,#custom-dialog-msg b{color:#111827;}
 #custom-dialog-btns{display:flex;gap:10px;justify-content:center;}
-#dlg-ok{padding:9px 26px;border-radius:8px;font-size:0.875rem;font-weight:700;cursor:pointer;border:none;background:#2563EB;color:#fff;font-family:'Inter',sans-serif;transition:background .15s;}
+#dlg-ok{padding:9px 26px;border-radius:8px;font-size:0.875rem;font-weight:700;cursor:pointer;border:none;background:#2563EB;color:#fff;font-family:var(--font-ui),sans-serif;transition:background .15s;}
 #dlg-ok:hover{background:#1D4ED8;}
-#dlg-cancel{padding:9px 20px;border-radius:8px;font-size:0.875rem;font-weight:600;cursor:pointer;border:1.5px solid #D1D5DB;background:#fff;color:#374151;font-family:'Inter',sans-serif;transition:background .15s;}
+#dlg-cancel{padding:9px 20px;border-radius:8px;font-size:0.875rem;font-weight:600;cursor:pointer;border:1.5px solid #D1D5DB;background:#fff;color:#374151;font-family:var(--font-ui),sans-serif;transition:background .15s;}
 #dlg-cancel:hover{background:#F3F4F6;}
 .dlg-error-list{list-style:none;margin:10px 0 0;padding:0;text-align:left;}
 .dlg-error-list li{padding:5px 0;font-size:0.84rem;color:#374151;border-bottom:1px solid #F3F4F6;display:flex;align-items:center;gap:8px;}
@@ -1409,7 +1410,7 @@ input[type=range].val-slider::-moz-range-thumb{width:20px;height:20px;border-rad
 .map-filter-pill[data-stato="venduto"].active{background:#1D4ED8;border-color:#1D4ED8;}
 .map-filter-pill[data-stato="non-attivo"].active{background:#64748B;border-color:#64748B;}
 /* Leaflet overrides */
-.leaflet-container{border-radius:0;font-family:'Inter',sans-serif;}
+.leaflet-container{border-radius:0;font-family:var(--font-ui),sans-serif;}
 .leaflet-popup-content-wrapper{border-radius:12px!important;box-shadow:0 10px 28px rgba(0,0,0,.18)!important;padding:0!important;overflow:hidden;border:1px solid #E2E8F0;}
 .leaflet-popup-content{margin:0!important;width:222px!important;line-height:1.4;}
 .leaflet-popup-tip-container{margin-top:-1px;}
@@ -1425,13 +1426,13 @@ input[type=range].val-slider::-moz-range-thumb{width:20px;height:20px;border-rad
 #map-edit-btn.edit-on{background:linear-gradient(135deg,#FEF3C7,#FFFBEB)!important;border-color:#F59E0B!important;color:#92400E!important;}
 
 /* Toast di conferma posizione salvata */
-#map-save-toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#15803D;color:white;padding:10px 20px;border-radius:10px;font-size:0.84rem;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.22);z-index:9999;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap;font-family:'Inter',sans-serif;}
+#map-save-toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:#15803D;color:white;padding:10px 20px;border-radius:10px;font-size:0.84rem;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.22);z-index:9999;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;white-space:nowrap;font-family:var(--font-ui),sans-serif;}
 #map-save-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
 /* Indicatore "posizione manuale" sul marker (stellina verde) */
 .map-mk-pinned::after{content:'✓';position:absolute;top:-4px;right:-6px;background:#15803D;color:white;font-size:9px;font-weight:800;width:14px;height:14px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1.5px solid white;}
 /* Tooltip drag */
-.map-drag-tip{background:#1A2035!important;color:white!important;border:none!important;font-family:'Inter',sans-serif!important;font-size:.78rem!important;font-weight:700!important;padding:5px 10px!important;border-radius:7px!important;box-shadow:0 4px 14px rgba(0,0,0,.3)!important;}
+.map-drag-tip{background:#1A2035!important;color:white!important;border:none!important;font-family:var(--font-ui),sans-serif!important;font-size:.78rem!important;font-weight:700!important;padding:5px 10px!important;border-radius:7px!important;box-shadow:0 4px 14px rgba(0,0,0,.3)!important;}
 .map-drag-tip::before{border-bottom-color:#1A2035!important;}
 /* Marketing checklist labels */
 .mkt-check-lbl{display:flex;align-items:flex-start;gap:9px;padding:10px 12px;background:#F8FAFC;border:1.5px solid var(--border);border-radius:9px;cursor:pointer;transition:border-color .15s,background .15s;}
@@ -1480,8 +1481,10 @@ input[type=range].val-slider::-moz-range-thumb{width:20px;height:20px;border-rad
   /* Radius coerenti */
   --radius:8px; --radius-sm:6px; --radius-lg:12px;
 
-  /* Font stack Inter */
-  --font-sans:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
+  /* Font stack: segue --font-ui (il carattere scelto in Impostazioni → Grafica),
+     non più 'Inter' fisso, così il cambio si vede anche sulle ~20 regole
+     !important che usano questa variabile. [22 nov 2026] */
+  --font-sans:var(--font-ui),-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;
 }
 
 /* ── BASE ────────────────────────────────────────────────────────────── */
@@ -2919,7 +2922,7 @@ input[type=range].val-slider{
   width:calc(100% - 14px)!important;margin:1px 7px!important;
   padding:9px 12px!important;border-radius:8px!important;
   background:transparent!important;border:none!important;
-  color:#475569!important;font-family:'Inter',sans-serif!important;
+  color:#475569!important;font-family:var(--font-ui),sans-serif!important;
   font-size:0.85rem!important;font-weight:600!important;
   cursor:pointer!important;text-align:left!important;
   transition:background .12s!important;
@@ -2984,7 +2987,7 @@ input[type=range].val-slider{
 .topbar-search svg{color:#64748B;flex-shrink:0;}
 .topbar-search input{
   flex:1;background:transparent;border:none;outline:none;
-  font-family:'Inter',sans-serif;font-size:0.85rem;color:#0F172A;
+  font-family:var(--font-ui),sans-serif;font-size:0.85rem;color:#0F172A;
 }
 .topbar-search input::placeholder{color:#94A3B8;}
 .topbar-search kbd{
@@ -3125,7 +3128,7 @@ body.dark-mode #login-mode-badge{background:#273549 !important;color:#64748B !im
 .sc-search svg{color:#64748B;}
 .sc-search input{
   flex:1;background:transparent;border:none;outline:none;
-  font-family:'Inter',sans-serif;font-size:0.95rem;color:#0F172A;
+  font-family:var(--font-ui),sans-serif;font-size:0.95rem;color:#0F172A;
 }
 .sc-grid{
   display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
@@ -3144,7 +3147,7 @@ body.dark-mode #login-mode-badge{background:#273549 !important;color:#64748B !im
 .sc-kpi:hover{background:#fff;border-color:#2563EB;}
 .sc-kpi-val{
   font-size:1.5rem;font-weight:700;color:#0F172A;
-  line-height:1.1;font-family:'Inter',sans-serif;
+  line-height:1.1;font-family:var(--font-ui),sans-serif;
 }
 .sc-kpi-lbl{
   font-size:0.7rem;color:#64748B;text-transform:uppercase;
@@ -3215,7 +3218,7 @@ body.dark-mode #login-mode-badge{background:#273549 !important;color:#64748B !im
 .fab-action{
   display:flex;align-items:center;gap:10px;
   background:none;border:none;padding:0;cursor:pointer;
-  font-family:'Inter',sans-serif;
+  font-family:var(--font-ui),sans-serif;
 }
 .fab-action-label{
   background:#0F172A;color:#fff;font-size:0.78rem;font-weight:700;
@@ -3239,7 +3242,7 @@ body.dark-mode #login-mode-badge{background:#273549 !important;color:#64748B !im
   background:#2563EB;color:#fff;border:none;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
   box-shadow:0 6px 20px rgba(37,99,235,.4);
-  transition:all .18s;font-family:'Inter',sans-serif;
+  transition:all .18s;font-family:var(--font-ui),sans-serif;
 }
 .fab-main:hover{background:#1D4ED8;transform:translateY(-2px);box-shadow:0 8px 24px rgba(37,99,235,.5);}
 .fab-main svg{transition:transform .2s;}
@@ -3338,7 +3341,7 @@ body.dark-mode #login-mode-badge{background:#273549 !important;color:#64748B !im
 .sc-search input{
   flex:1;background:transparent;border:none;outline:none;
   padding:14px 0;
-  font-family:'Inter',sans-serif;font-size:0.95rem;color:#0F172A;
+  font-family:var(--font-ui),sans-serif;font-size:0.95rem;color:#0F172A;
   font-weight:500;
 }
 .sc-search input::placeholder{color:#94A3B8;font-weight:400}
@@ -3367,7 +3370,7 @@ body.dark-mode #login-mode-badge{background:#273549 !important;color:#64748B !im
   padding:14px 16px;text-align:left;cursor:pointer;
   transition:all .18s cubic-bezier(.4,0,.2,1);
   display:flex;align-items:flex-start;gap:12px;
-  font-family:'Inter',sans-serif;
+  font-family:var(--font-ui),sans-serif;
 }
 .sc-kpi:hover{
   border-color:#2563EB;
@@ -3389,7 +3392,7 @@ body.dark-mode #login-mode-badge{background:#273549 !important;color:#64748B !im
 .sc-kpi-val{
   font-size:1.6rem;font-weight:700;color:#0F172A;
   line-height:1;letter-spacing:-.02em;
-  font-family:'Inter',sans-serif;
+  font-family:var(--font-ui),sans-serif;
 }
 .sc-kpi-lbl{
   font-size:0.74rem;color:#64748B;
@@ -3411,7 +3414,7 @@ body.dark-mode #login-mode-badge{background:#273549 !important;color:#64748B !im
   cursor:pointer;text-decoration:none;color:inherit;
   border:1px solid transparent;
   transition:all .12s;
-  font-family:'Inter',sans-serif;
+  font-family:var(--font-ui),sans-serif;
 }
 .sc-list-item:hover{
   background:#F8FAFC;
@@ -3459,7 +3462,7 @@ body.dark-mode #login-mode-badge{background:#273549 !important;color:#64748B !im
 }
 .sc-empty-text{
   font-size:0.8rem;color:#94A3B8;line-height:1.4;
-  font-family:'Inter',sans-serif;
+  font-family:var(--font-ui),sans-serif;
 }
 
 /* Action button (es. Aggiungi ai preferiti) */
@@ -3468,7 +3471,7 @@ body.dark-mode #login-mode-badge{background:#273549 !important;color:#64748B !im
   font-size:0.75rem;color:#2563EB;cursor:pointer;
   padding:5px 10px;border-radius:7px;
   background:#EFF6FF;border:1px solid transparent;
-  font-family:'Inter',sans-serif;font-weight:600;
+  font-family:var(--font-ui),sans-serif;font-weight:600;
   transition:all .12s;
 }
 .sc-action-btn:hover{background:#DBEAFE;border-color:#BFDBFE}
@@ -3500,7 +3503,7 @@ body.dark-mode #login-mode-badge{background:#273549 !important;color:#64748B !im
   padding:11px 16px;cursor:pointer;
   border-bottom:1px solid #F1F5F9;
   transition:background .1s;
-  font-family:'Inter',sans-serif;
+  font-family:var(--font-ui),sans-serif;
 }
 .sc-result:last-child{border-bottom:none}
 .sc-result:hover,.sc-result.is-focus{background:#EFF6FF}
@@ -3560,7 +3563,7 @@ body.dark-mode #login-mode-badge{background:#273549 !important;color:#64748B !im
   display:flex;align-items:center;gap:8px;
   padding:8px 16px;border-radius:9px;
   background:#2563EB;color:#fff;
-  border:none;cursor:pointer;font-family:'Inter',sans-serif;
+  border:none;cursor:pointer;font-family:var(--font-ui),sans-serif;
   font-size:0.82rem;font-weight:700;letter-spacing:-.005em;
   transition:all .15s;
   box-shadow:0 2px 6px rgba(37,99,235,.25);
@@ -3585,7 +3588,7 @@ body.dark-mode #login-mode-badge{background:#273549 !important;color:#64748B !im
   display:flex;align-items:center;gap:8px;
   padding:8px 16px;
   background:transparent;border:none;border-radius:7px;
-  font-family:'Inter',sans-serif;font-size:0.84rem;font-weight:600;
+  font-family:var(--font-ui),sans-serif;font-size:0.84rem;font-weight:600;
   color:#64748B;cursor:pointer;
   transition:all .15s;letter-spacing:-.005em;
 }
@@ -3646,7 +3649,7 @@ body.dark-mode #login-mode-badge{background:#273549 !important;color:#64748B !im
 /* Switch toggle */
 .lw-switch{
   display:flex;align-items:center;gap:10px;cursor:pointer;
-  font-family:'Inter',sans-serif;
+  font-family:var(--font-ui),sans-serif;
 }
 .lw-switch input{display:none}
 .lw-switch-slider{
@@ -3690,7 +3693,7 @@ body.dark-mode #login-mode-badge{background:#273549 !important;color:#64748B !im
 .lw-event-count{
   font-size:1.4rem;font-weight:700;color:#0F172A;
   margin-top:6px;letter-spacing:-.02em;
-  font-family:'Inter',sans-serif;
+  font-family:var(--font-ui),sans-serif;
 }
 
 /* Sparkline (GA chart) */
@@ -3716,7 +3719,7 @@ body.dark-mode #login-mode-badge{background:#273549 !important;color:#64748B !im
   position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);
   background:#0F172A;color:#fff;
   padding:5px 10px;border-radius:6px;
-  font-size:0.72rem;font-weight:600;font-family:'Inter',sans-serif;
+  font-size:0.72rem;font-weight:600;font-family:var(--font-ui),sans-serif;
   white-space:nowrap;z-index:10;
   pointer-events:none;
 }
@@ -3747,7 +3750,7 @@ body.dark-mode #login-mode-badge{background:#273549 !important;color:#64748B !im
   padding:3px 9px;border-radius:12px;
   font-size:0.7rem;font-weight:700;
   letter-spacing:.2px;
-  font-family:'Inter',sans-serif;
+  font-family:var(--font-ui),sans-serif;
 }
 .lw-state-dot{
   width:6px;height:6px;border-radius:50%;flex-shrink:0;
@@ -3811,7 +3814,7 @@ body.dark-mode #login-mode-badge{background:#273549 !important;color:#64748B !im
   padding:7px 10px;border-radius:7px;
   background:transparent;border:1px solid transparent;
   font-size:0.78rem;font-weight:600;color:#64748B;
-  cursor:pointer;font-family:'Inter',sans-serif;
+  cursor:pointer;font-family:var(--font-ui),sans-serif;
   transition:all .12s;letter-spacing:-.005em;
   text-align:center;
 }
@@ -3951,7 +3954,7 @@ body.dark-mode #modal-lead .lwm-elimina:hover{background:rgba(220,38,38,.12)!imp
   display:flex;align-items:center;gap:10px;
   width:100%;padding:10px 14px;
   background:transparent;border:none;
-  font-family:'Inter',sans-serif;font-size:0.84rem;font-weight:600;
+  font-family:var(--font-ui),sans-serif;font-size:0.84rem;font-weight:600;
   color:#0F172A;cursor:pointer;
   transition:background .12s;
 }
@@ -7962,7 +7965,7 @@ body.force-mobile{ overflow:hidden; }
   position:fixed; inset:0; z-index:50;
   flex-direction:column;
   background:#F8FAFC;
-  font-family:'Inter',-apple-system,sans-serif;
+  font-family:var(--font-ui),-apple-system,sans-serif;
   overflow:hidden;
   color:#0F172A;
 }
@@ -12194,7 +12197,7 @@ body.dark-mode :is([style^="color: #64748B" i],[style*=";color: #64748B" i],[sty
           <input type="text" id="login-user" placeholder="es. immobiliare.agropoli@gmail.com"
             onkeydown="if(event.key==='Enter')document.getElementById('login-pwd').focus()"
             autocomplete="username"
-            style="width:100%;border:1.5px solid #E2E8F0;border-radius:11px;padding:12px 14px 12px 38px;font-size:0.88rem;font-family:'Inter',sans-serif;outline:none;transition:all 0.2s;box-sizing:border-box;background:#F8FAFF;color:#1E293B;"
+            style="width:100%;border:1.5px solid #E2E8F0;border-radius:11px;padding:12px 14px 12px 38px;font-size:0.88rem;font-family:var(--font-ui),sans-serif;outline:none;transition:all 0.2s;box-sizing:border-box;background:#F8FAFF;color:#1E293B;"
             onfocus="this.style.borderColor='#2563EB';this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.10)';this.style.background='#fff'"
             onblur="this.style.borderColor='#E2E8F0';this.style.boxShadow='none';this.style.background='#F8FAFF'">
         </div>
@@ -12213,7 +12216,7 @@ body.dark-mode :is([style^="color: #64748B" i],[style*=";color: #64748B" i],[sty
           <input type="password" id="login-pwd" placeholder="Inserisci la password"
             onkeydown="if(event.key==='Enter')doLogin()"
             autocomplete="current-password"
-            style="width:100%;border:1.5px solid #E2E8F0;border-radius:11px;padding:12px 44px 12px 38px;font-size:0.95rem;font-family:'Inter',sans-serif;outline:none;transition:all 0.2s;box-sizing:border-box;background:#F8FAFF;color:#1E293B;"
+            style="width:100%;border:1.5px solid #E2E8F0;border-radius:11px;padding:12px 44px 12px 38px;font-size:0.95rem;font-family:var(--font-ui),sans-serif;outline:none;transition:all 0.2s;box-sizing:border-box;background:#F8FAFF;color:#1E293B;"
             onfocus="this.style.borderColor='#2563EB';this.style.boxShadow='0 0 0 3px rgba(37,99,235,0.10)';this.style.background='#fff'"
             onblur="this.style.borderColor='#E2E8F0';this.style.boxShadow='none';this.style.background='#F8FAFF'">
           <!-- Toggle show/hide password -->
@@ -12228,7 +12231,7 @@ body.dark-mode :is([style^="color: #64748B" i],[style*=";color: #64748B" i],[sty
 
       <!-- Pulsante Accedi -->
       <button id="login-btn" onclick="doLogin()"
-        style="width:100%;background:linear-gradient(135deg,#1D4ED8 0%,#2563EB 100%);color:white;border:none;border-radius:11px;padding:14px 20px;font-family:'Inter',sans-serif;font-size:0.93rem;font-weight:800;cursor:pointer;transition:all 0.22s;letter-spacing:0.2px;box-shadow:0 6px 22px rgba(37,99,235,0.32);display:flex;align-items:center;justify-content:center;gap:9px;"
+        style="width:100%;background:linear-gradient(135deg,#1D4ED8 0%,#2563EB 100%);color:white;border:none;border-radius:11px;padding:14px 20px;font-family:var(--font-ui),sans-serif;font-size:0.93rem;font-weight:800;cursor:pointer;transition:all 0.22s;letter-spacing:0.2px;box-shadow:0 6px 22px rgba(37,99,235,0.32);display:flex;align-items:center;justify-content:center;gap:9px;"
         onmouseover="this.style.background='linear-gradient(135deg,#1E40AF 0%,#1D4ED8 100%)';this.style.transform='translateY(-1px)';this.style.boxShadow='0 10px 28px rgba(37,99,235,0.42)'"
         onmouseout="this.style.background='linear-gradient(135deg,#1D4ED8 0%,#2563EB 100%)';this.style.transform='translateY(0)';this.style.boxShadow='0 6px 22px rgba(37,99,235,0.32)'">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/><circle cx="12" cy="16" r="1.2" fill="white"/></svg>
@@ -12273,7 +12276,7 @@ body.dark-mode :is([style^="color: #64748B" i],[style*=";color: #64748B" i],[sty
   </div>
 
   <!-- [18 ott 2026] tolta la scritta con il luogo in basso a sinistra (richiesta di Enzo) -->
-  <div id="brand-login-watermark" style="position:absolute;bottom:18px;right:18px;font-size:0.65rem;color:rgba(255,255,255,0.3);font-family:'Inter',sans-serif;letter-spacing:.5px;user-select:none;z-index:3;">v2.0 · Le case dalla A allo Z.io</div>
+  <div id="brand-login-watermark" style="position:absolute;bottom:18px;right:18px;font-size:0.65rem;color:rgba(255,255,255,0.3);font-family:var(--font-ui),sans-serif;letter-spacing:.5px;user-select:none;z-index:3;">v2.0 · Le case dalla A allo Z.io</div>
 </div>
 
 </div>
@@ -12353,7 +12356,7 @@ body.dark-mode :is([style^="color: #64748B" i],[style*=";color: #64748B" i],[sty
       <!-- ANTEPRIMA -->
       <div class="card">
         <div class="card-header"><span class="card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> Anteprima Documento</span></div>
-        <div class="card-body" id="si-proposta-preview" style="font-family:'Inter',sans-serif;font-size:0.82rem;line-height:1.6;min-height:400px"></div>
+        <div class="card-body" id="si-proposta-preview" style="font-family:var(--font-ui),sans-serif;font-size:0.82rem;line-height:1.6;min-height:400px"></div>
       </div>
     </div>
   </div>
@@ -12645,7 +12648,7 @@ body.dark-mode :is([style^="color: #64748B" i],[style*=";color: #64748B" i],[sty
   <div class="topbar" style="display:flex;align-items:center;justify-content:space-between">
     <div style="display:flex;align-items:center;gap:10px">
       <button id="back-btn" onclick="goBack()" title="Torna alla pagina precedente"
-        style="display:none;align-items:center;justify-content:center;gap:5px;padding:6px 12px;background:#F1F5F9;border:1.5px solid #CBD5E1;border-radius:8px;cursor:pointer;font-size:0.82rem;font-weight:700;color:#334155;font-family:'Inter',sans-serif;transition:all .15s;flex-shrink:0"
+        style="display:none;align-items:center;justify-content:center;gap:5px;padding:6px 12px;background:#F1F5F9;border:1.5px solid #CBD5E1;border-radius:8px;cursor:pointer;font-size:0.82rem;font-weight:700;color:#334155;font-family:var(--font-ui),sans-serif;transition:all .15s;flex-shrink:0"
         onmouseover="this.style.background='#EEF4FF';this.style.borderColor='#93C5FD';this.style.color='#1D4ED8'"
         onmouseout="this.style.background='#F1F5F9';this.style.borderColor='#CBD5E1';this.style.color='#334155'">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -13402,7 +13405,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
       <div id="map-edit-banner" style="display:none;background:linear-gradient(90deg,#FEF3C7,#FFFBEB);border-bottom:2px solid #F59E0B;padding:8px 14px;align-items:center;gap:10px;font-size:0.82rem;font-weight:600;color:#92400E;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <span><strong>Modalità modifica</strong> — Trascina i marker nella posizione esatta.</span>
-        <button onclick="mapToggleEdit()" style="margin-left:auto;background:#F59E0B;color:white;border:none;border-radius:6px;padding:4px 11px;font-size:0.76rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif">✓ Fine</button>
+        <button onclick="mapToggleEdit()" style="margin-left:auto;background:#F59E0B;color:white;border:none;border-radius:6px;padding:4px 11px;font-size:0.76rem;font-weight:700;cursor:pointer;font-family:var(--font-ui),sans-serif">✓ Fine</button>
       </div>
       <div id="map" style="flex:1;min-height:600px;width:100%;background:#e8f0e8;border-radius:0"></div>
     </div>
@@ -13412,11 +13415,11 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 
       <!-- Strumenti — IN CIMA per visibilità -->
       <div style="background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border:1.5px solid #BFDBFE;border-radius:var(--radius-lg);padding:14px 16px">
-        <button id="map-edit-btn" onclick="mapToggleEdit()" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border-radius:9px;border:1.5px solid #93C5FD;background:white;color:#1D4ED8;font-size:0.85rem;font-weight:800;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;box-shadow:0 1px 4px rgba(37,99,235,.12);">
+        <button id="map-edit-btn" onclick="mapToggleEdit()" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 14px;border-radius:9px;border:1.5px solid #93C5FD;background:white;color:#1D4ED8;font-size:0.85rem;font-weight:800;cursor:pointer;transition:all .15s;font-family:var(--font-ui),sans-serif;box-shadow:0 1px 4px rgba(37,99,235,.12);">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           Modifica Posizioni
         </button>
-        <button id="map-geocode-btn" onclick="mapGeocodeAll()" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 14px;border-radius:9px;border:1.5px solid #86EFAC;background:white;color:#15803D;font-size:0.82rem;font-weight:700;cursor:pointer;transition:all .15s;font-family:'Inter',sans-serif;margin-top:8px">
+        <button id="map-geocode-btn" onclick="mapGeocodeAll()" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:9px 14px;border-radius:9px;border:1.5px solid #86EFAC;background:white;color:#15803D;font-size:0.82rem;font-weight:700;cursor:pointer;transition:all .15s;font-family:var(--font-ui),sans-serif;margin-top:8px">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
           Geocodifica indirizzi
         </button>
@@ -13452,7 +13455,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
         <div style="font-size:0.7rem;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:flex;align-items:center;gap:5px">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Agente
         </div>
-        <select id="map-filter-agente" onchange="mapFilterAgenteChange()" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);font-size:0.82rem;font-weight:600;cursor:pointer;color:var(--text2);font-family:'Inter',sans-serif;outline:none">
+        <select id="map-filter-agente" onchange="mapFilterAgenteChange()" style="width:100%;padding:7px 10px;border-radius:8px;border:1.5px solid var(--border);background:var(--bg);font-size:0.82rem;font-weight:600;cursor:pointer;color:var(--text2);font-family:var(--font-ui),sans-serif;outline:none">
           <option value="">Tutti gli agenti</option>
         </select>
       </div>
@@ -14680,10 +14683,10 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 <div class="section" id="sec-statistiche">
   <div style="margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
     <div>
-      <h2 style="font-family:'Inter',sans-serif;font-size:1.15rem;font-weight:700;margin-bottom:4px;letter-spacing:-.2px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> Statistiche Generali</h2>
+      <h2 style="font-family:var(--font-ui),sans-serif;font-size:1.15rem;font-weight:700;margin-bottom:4px;letter-spacing:-.2px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg> Statistiche Generali</h2>
       <p style="font-size:0.83rem;color:var(--text3)">Panoramica completa dell'attività dell'agenzia</p>
     </div>
-    <div style="display:flex;gap:10px;flex-wrap:wrap"><button onclick="sbGo('analytics')" style="display:flex;align-items:center;gap:8px;padding:11px 20px;background:linear-gradient(135deg,#1D4ED8,#2563EB);color:white;border:none;border-radius:11px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:700;font-size:0.88rem;box-shadow:0 4px 14px rgba(37,99,235,.3)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><polyline points="22 4 12 14 7.5 9.5 2 15"/></svg> Apri Statistiche &amp; Analytics</button><button onclick="go('immobiliare')" style="display:flex;align-items:center;gap:8px;padding:11px 20px;background:linear-gradient(135deg,#15803D,#16A34A);color:white;border:none;border-radius:11px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:700;font-size:0.88rem;box-shadow:0 4px 14px rgba(22,163,74,.3)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Statistiche Immobiliare.it</button><button onclick="anteprimaStatGenerali()" style="display:flex;align-items:center;gap:8px;padding:11px 20px;background:linear-gradient(135deg,#6D28D9,#7C3AED);color:white;border:none;border-radius:11px;cursor:pointer;font-family:'Inter',sans-serif;font-weight:700;font-size:0.88rem;box-shadow:0 4px 14px rgba(109,40,217,.3)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Genera Report Mensile PDF</button></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap"><button onclick="sbGo('analytics')" style="display:flex;align-items:center;gap:8px;padding:11px 20px;background:linear-gradient(135deg,#1D4ED8,#2563EB);color:white;border:none;border-radius:11px;cursor:pointer;font-family:var(--font-ui),sans-serif;font-weight:700;font-size:0.88rem;box-shadow:0 4px 14px rgba(37,99,235,.3)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><polyline points="22 4 12 14 7.5 9.5 2 15"/></svg> Apri Statistiche &amp; Analytics</button><button onclick="go('immobiliare')" style="display:flex;align-items:center;gap:8px;padding:11px 20px;background:linear-gradient(135deg,#15803D,#16A34A);color:white;border:none;border-radius:11px;cursor:pointer;font-family:var(--font-ui),sans-serif;font-weight:700;font-size:0.88rem;box-shadow:0 4px 14px rgba(22,163,74,.3)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg> Statistiche Immobiliare.it</button><button onclick="anteprimaStatGenerali()" style="display:flex;align-items:center;gap:8px;padding:11px 20px;background:linear-gradient(135deg,#6D28D9,#7C3AED);color:white;border:none;border-radius:11px;cursor:pointer;font-family:var(--font-ui),sans-serif;font-weight:700;font-size:0.88rem;box-shadow:0 4px 14px rgba(109,40,217,.3)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> Genera Report Mensile PDF</button></div>
   </div>
   <div id="stats-container"></div>
 
@@ -16001,11 +16004,11 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
         <div style="font-size:0.8rem;color:rgba(255,255,255,.6);margin-top:4px">Scheda completa per il Capo Agenzia con dati proprietario, caratteristiche e timeline attività</div>
       </div>
       <div style="display:flex;gap:9px;flex-wrap:wrap">
-        <button onclick="rcaGenera()" style="background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);color:white;border-radius:9px;padding:9px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='rgba(255,255,255,.25)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">
+        <button onclick="rcaGenera()" style="background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);color:white;border-radius:9px;padding:9px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:var(--font-ui),sans-serif;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='rgba(255,255,255,.25)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           Genera Report
         </button>
-        <button onclick="rcaStampa()" style="background:linear-gradient(135deg,rgba(255,255,255,.22),rgba(255,255,255,.12));border:1.5px solid rgba(255,255,255,.3);color:white;border-radius:9px;padding:9px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='linear-gradient(135deg,rgba(255,255,255,.22),rgba(255,255,255,.12))'">
+        <button onclick="rcaStampa()" style="background:linear-gradient(135deg,rgba(255,255,255,.22),rgba(255,255,255,.12));border:1.5px solid rgba(255,255,255,.3);color:white;border-radius:9px;padding:9px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:var(--font-ui),sans-serif;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='linear-gradient(135deg,rgba(255,255,255,.22),rgba(255,255,255,.12))'">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
           Stampa / PDF
         </button>
@@ -16073,15 +16076,15 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
         <div style="font-size:1.3rem;font-weight:800;color:white;letter-spacing:-.3px">📋 Report Clienti</div>
         <div style="font-size:0.8rem;color:rgba(255,255,255,.65);margin-top:4px">Elenco completo dei clienti con dati di contatto e stato</div>
       </div>
-      <button onclick="reportClientiStampa()" style="background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.35);color:white;border-radius:9px;padding:9px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.18)'">
+      <button onclick="reportClientiStampa()" style="background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.35);color:white;border-radius:9px;padding:9px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:var(--font-ui),sans-serif;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.18)'">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
         Stampa / PDF
       </button>
     </div>
   </div>
   <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center">
-    <input id="rpt-cli-search" type="text" placeholder="🔍 Cerca cliente…" oninput="reportClientiRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:'Inter',sans-serif;background:var(--bg2);color:var(--text);width:240px">
-    <select id="rpt-cli-tipo" onchange="reportClientiRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:'Inter',sans-serif;background:var(--bg2);color:var(--text)">
+    <input id="rpt-cli-search" type="text" placeholder="🔍 Cerca cliente…" oninput="reportClientiRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:var(--font-ui),sans-serif;background:var(--bg2);color:var(--text);width:240px">
+    <select id="rpt-cli-tipo" onchange="reportClientiRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:var(--font-ui),sans-serif;background:var(--bg2);color:var(--text)">
       <option value="">Tutti i tipi</option>
       <option value="acquirente">Acquirente</option>
       <option value="venditore">Venditore</option>
@@ -16104,20 +16107,20 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
         <div style="font-size:1.3rem;font-weight:800;color:white;letter-spacing:-.3px">🏠 Report Immobili in Gestione</div>
         <div style="font-size:0.8rem;color:rgba(255,255,255,.65);margin-top:4px">Portafoglio immobili attivi con stato e caratteristiche principali</div>
       </div>
-      <button onclick="reportImmobiliGestioneStampa()" style="background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.35);color:white;border-radius:9px;padding:9px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.18)'">
+      <button onclick="reportImmobiliGestioneStampa()" style="background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.35);color:white;border-radius:9px;padding:9px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:var(--font-ui),sans-serif;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.18)'">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
         Stampa / PDF
       </button>
     </div>
   </div>
   <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center">
-    <input id="rpt-imm-search" type="text" placeholder="🔍 Cerca immobile…" oninput="reportImmobiliGestioneRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:'Inter',sans-serif;background:var(--bg2);color:var(--text);width:240px">
-    <select id="rpt-imm-tipo" onchange="reportImmobiliGestioneRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:'Inter',sans-serif;background:var(--bg2);color:var(--text)">
+    <input id="rpt-imm-search" type="text" placeholder="🔍 Cerca immobile…" oninput="reportImmobiliGestioneRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:var(--font-ui),sans-serif;background:var(--bg2);color:var(--text);width:240px">
+    <select id="rpt-imm-tipo" onchange="reportImmobiliGestioneRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:var(--font-ui),sans-serif;background:var(--bg2);color:var(--text)">
       <option value="">Tutti i tipi</option>
       <option value="vendita">Vendita</option>
       <option value="affitto">Affitto</option>
     </select>
-    <select id="rpt-imm-stato" onchange="reportImmobiliGestioneRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:'Inter',sans-serif;background:var(--bg2);color:var(--text)">
+    <select id="rpt-imm-stato" onchange="reportImmobiliGestioneRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:var(--font-ui),sans-serif;background:var(--bg2);color:var(--text)">
       <option value="">Tutti gli stati</option>
       <option value="disponibile">Disponibile</option>
       <option value="proposta">Proposta</option>
@@ -16139,7 +16142,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
         <div style="font-size:1.3rem;font-weight:800;color:white;letter-spacing:-.3px">👤 Report Agenti</div>
         <div style="font-size:0.8rem;color:rgba(255,255,255,.65);margin-top:4px">Performance e dati degli agenti dell'agenzia</div>
       </div>
-      <button onclick="reportAgentiStampa()" style="background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.35);color:white;border-radius:9px;padding:9px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.18)'">
+      <button onclick="reportAgentiStampa()" style="background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.35);color:white;border-radius:9px;padding:9px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:var(--font-ui),sans-serif;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.18)'">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
         Stampa / PDF
       </button>
@@ -16159,14 +16162,14 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
         <div style="font-size:1.3rem;font-weight:800;color:white;letter-spacing:-.3px">🔔 Report Informatori</div>
         <div style="font-size:0.8rem;color:rgba(255,255,255,.65);margin-top:4px">Elenco informatori e segnalazioni ricevute</div>
       </div>
-      <button onclick="reportInformatoriStampa()" style="background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.35);color:white;border-radius:9px;padding:9px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.18)'">
+      <button onclick="reportInformatoriStampa()" style="background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.35);color:white;border-radius:9px;padding:9px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:var(--font-ui),sans-serif;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.18)'">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
         Stampa / PDF
       </button>
     </div>
   </div>
   <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center">
-    <input id="rpt-inf-search" type="text" placeholder="🔍 Cerca informatore…" oninput="reportInformatoriRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:'Inter',sans-serif;background:var(--bg2);color:var(--text);width:240px">
+    <input id="rpt-inf-search" type="text" placeholder="🔍 Cerca informatore…" oninput="reportInformatoriRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:var(--font-ui),sans-serif;background:var(--bg2);color:var(--text);width:240px">
     <span id="rpt-inf-count" style="font-size:0.8rem;color:var(--text3);font-weight:600;margin-left:auto"></span>
   </div>
   <div id="rpt-inf-table"></div>
@@ -16183,15 +16186,15 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
         <div style="font-size:1.3rem;font-weight:800;color:white;letter-spacing:-.3px">📨 Report Richieste</div>
         <div style="font-size:0.8rem;color:rgba(255,255,255,.65);margin-top:4px">Riepilogo di tutte le richieste clienti con stato e preferenze</div>
       </div>
-      <button onclick="reportRichiesteStampa()" style="background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.35);color:white;border-radius:9px;padding:9px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.18)'">
+      <button onclick="reportRichiesteStampa()" style="background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.35);color:white;border-radius:9px;padding:9px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:var(--font-ui),sans-serif;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.18)'">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
         Stampa / PDF
       </button>
     </div>
   </div>
   <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center">
-    <input id="rpt-rich-search" type="text" placeholder="🔍 Cerca richiesta…" oninput="reportRichiesteRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:'Inter',sans-serif;background:var(--bg2);color:var(--text);width:240px">
-    <select id="rpt-rich-stato" onchange="reportRichiesteRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:'Inter',sans-serif;background:var(--bg2);color:var(--text)">
+    <input id="rpt-rich-search" type="text" placeholder="🔍 Cerca richiesta…" oninput="reportRichiesteRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:var(--font-ui),sans-serif;background:var(--bg2);color:var(--text);width:240px">
+    <select id="rpt-rich-stato" onchange="reportRichiesteRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:var(--font-ui),sans-serif;background:var(--bg2);color:var(--text)">
       <option value="">Tutti gli stati</option>
       <option value="aperta">Aperta</option>
       <option value="abbinata">Abbinata</option>
@@ -16213,15 +16216,15 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
         <div style="font-size:1.3rem;font-weight:800;color:white;letter-spacing:-.3px">📁 Report Pratiche</div>
         <div style="font-size:0.8rem;color:rgba(255,255,255,.65);margin-top:4px">Riepilogo pratiche in corso e concluse con dati finanziari</div>
       </div>
-      <button onclick="reportPraticheStampa()" style="background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.35);color:white;border-radius:9px;padding:9px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.18)'">
+      <button onclick="reportPraticheStampa()" style="background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.35);color:white;border-radius:9px;padding:9px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:var(--font-ui),sans-serif;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.18)'">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
         Stampa / PDF
       </button>
     </div>
   </div>
   <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center">
-    <input id="rpt-prat-search" type="text" placeholder="🔍 Cerca pratica…" oninput="reportPraticheRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:'Inter',sans-serif;background:var(--bg2);color:var(--text);width:240px">
-    <select id="rpt-prat-stato" onchange="reportPraticheRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:'Inter',sans-serif;background:var(--bg2);color:var(--text)">
+    <input id="rpt-prat-search" type="text" placeholder="🔍 Cerca pratica…" oninput="reportPraticheRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:var(--font-ui),sans-serif;background:var(--bg2);color:var(--text);width:240px">
+    <select id="rpt-prat-stato" onchange="reportPraticheRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:var(--font-ui),sans-serif;background:var(--bg2);color:var(--text)">
       <option value="">Tutti gli stati</option>
       <option value="incarico">Incarico</option>
       <option value="proposta">Proposta</option>
@@ -16245,20 +16248,20 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
         <div style="font-size:1.3rem;font-weight:800;color:white;letter-spacing:-.3px">📝 Report Incarichi</div>
         <div style="font-size:0.8rem;color:rgba(255,255,255,.65);margin-top:4px">Incarichi di vendita e affitto con date di scadenza e stato</div>
       </div>
-      <button onclick="reportIncarichiStampa()" style="background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.35);color:white;border-radius:9px;padding:9px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.18)'">
+      <button onclick="reportIncarichiStampa()" style="background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.35);color:white;border-radius:9px;padding:9px 18px;font-size:0.82rem;font-weight:700;cursor:pointer;font-family:var(--font-ui),sans-serif;display:flex;align-items:center;gap:6px" onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.18)'">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
         Stampa / PDF
       </button>
     </div>
   </div>
   <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center">
-    <input id="rpt-inc-search" type="text" placeholder="🔍 Cerca incarico…" oninput="reportIncarichiRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:'Inter',sans-serif;background:var(--bg2);color:var(--text);width:240px">
-    <select id="rpt-inc-tipo" onchange="reportIncarichiRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:'Inter',sans-serif;background:var(--bg2);color:var(--text)">
+    <input id="rpt-inc-search" type="text" placeholder="🔍 Cerca incarico…" oninput="reportIncarichiRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:var(--font-ui),sans-serif;background:var(--bg2);color:var(--text);width:240px">
+    <select id="rpt-inc-tipo" onchange="reportIncarichiRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:var(--font-ui),sans-serif;background:var(--bg2);color:var(--text)">
       <option value="">Tutti i tipi</option>
       <option value="vendita">Vendita</option>
       <option value="affitto">Affitto</option>
     </select>
-    <select id="rpt-inc-stato" onchange="reportIncarichiRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:'Inter',sans-serif;background:var(--bg2);color:var(--text)">
+    <select id="rpt-inc-stato" onchange="reportIncarichiRender()" style="padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:0.84rem;font-family:var(--font-ui),sans-serif;background:var(--bg2);color:var(--text)">
       <option value="">Tutti gli stati</option>
       <option value="attivo">Attivo</option>
       <option value="scaduto">Scaduto</option>
@@ -17744,7 +17747,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
     </div>
     <div class="fcol" style="grid-column:1/-1">
       <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
-        <button type="button" onclick="verificaVincoli()" id="btn-vincoli" style="display:inline-flex;align-items:center;gap:7px;padding:9px 18px;background:linear-gradient(135deg,#0F766E,#0891B2);color:white;border:none;border-radius:8px;cursor:pointer;font-family:'Inter',sans-serif;font-size:0.84rem;font-weight:700;transition:opacity .15s">
+        <button type="button" onclick="verificaVincoli()" id="btn-vincoli" style="display:inline-flex;align-items:center;gap:7px;padding:9px 18px;background:linear-gradient(135deg,#0F766E,#0891B2);color:white;border:none;border-radius:8px;cursor:pointer;font-family:var(--font-ui),sans-serif;font-size:0.84rem;font-weight:700;transition:opacity .15s">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
           Verifica Vincoli Territoriali
         </button>
@@ -18042,7 +18045,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
       <div style="display:flex;align-items:center;gap:14px">
         <div style="width:46px;height:46px;background:linear-gradient(135deg,#EEF2FF,#E0E7FF);border:2px solid #C7D2FE;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:1.35rem;flex-shrink:0;box-shadow:0 2px 8px rgba(99,102,241,.15)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/><line x1="2" y1="14" x2="22" y2="14"/></svg></div>
         <div>
-          <h2 id="mt-prov" style="font-family:'Inter',sans-serif;font-size:1.15rem;font-weight:800;color:#1E293B;letter-spacing:-.25px;margin:0">Nuova Provvigione</h2>
+          <h2 id="mt-prov" style="font-family:var(--font-ui),sans-serif;font-size:1.15rem;font-weight:800;color:#1E293B;letter-spacing:-.25px;margin:0">Nuova Provvigione</h2>
           <div style="display:flex;align-items:center;gap:8px;margin-top:4px">
             <span style="font-size:0.62rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6366F1;background:#EEF2FF;padding:2px 8px;border-radius:6px;border:1px solid #C7D2FE">Gestione Provvigioni</span>
             <span style="font-size:0.62rem;color:#94A3B8;font-weight:600">Le case dalla A allo Z.io</span>
@@ -18424,7 +18427,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
     <div style="display:flex;align-items:center;gap:12px">
       <svg width="36" height="36" viewBox="0 0 24 24" fill="white"><path d="M19.5 3h-2V1.5h-1.5V3h-8V1.5H6.5V3h-2C3.67 3 3 3.67 3 4.5v15c0 .83.67 1.5 1.5 1.5h15c.83 0 1.5-.67 1.5-1.5v-15C21 3.67 20.33 3 19.5 3zm0 16.5h-15V9h15v10.5zM9 12H6.75v-1.5H9V12zm4.5 0h-2.25v-1.5h2.25V12zm4.5 0H15.75v-1.5H18V12zm-9 3H6.75v-1.5H9V15zm4.5 0h-2.25v-1.5h2.25V15zm4.5 0H15.75v-1.5H18V15z"/></svg>
       <div>
-        <h2 style="font-family:'Inter',sans-serif;font-size:1.05rem;font-weight:800;color:white;margin:0">Google Calendar</h2>
+        <h2 style="font-family:var(--font-ui),sans-serif;font-size:1.05rem;font-weight:800;color:white;margin:0">Google Calendar</h2>
         <div style="font-size:0.68rem;color:rgba(255,255,255,.65);margin-top:2px">Importa eventi tramite link ICS</div>
       </div>
     </div>
@@ -18489,7 +18492,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
     <div style="display:flex;align-items:center;gap:12px">
       <div style="width:40px;height:40px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
       <div>
-        <h2 style="font-family:'Inter',sans-serif;font-size:1.05rem;font-weight:800;color:white;margin:0">Storico Variazioni Prezzo</h2>
+        <h2 style="font-family:var(--font-ui),sans-serif;font-size:1.05rem;font-weight:800;color:white;margin:0">Storico Variazioni Prezzo</h2>
         <div id="sp-imm-info" style="font-size:0.68rem;color:rgba(255,255,255,.6);margin-top:2px"></div>
       </div>
     </div>
@@ -18513,7 +18516,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
     <div style="display:flex;align-items:center;gap:12px">
       <div style="width:40px;height:40px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></div>
       <div>
-        <h2 style="font-family:'Inter',sans-serif;font-size:1.1rem;font-weight:800;color:white;margin:0">Archivia Immobile</h2>
+        <h2 style="font-family:var(--font-ui),sans-serif;font-size:1.1rem;font-weight:800;color:white;margin:0">Archivia Immobile</h2>
         <div style="font-size:0.67rem;color:rgba(255,255,255,.6);margin-top:2px;text-transform:uppercase;letter-spacing:.8px;font-weight:700">Incarico chiuso · Non più attivo</div>
       </div>
     </div>
@@ -18601,7 +18604,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
     <!-- DESTINATARIO -->
     <div class="fsection" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
       <span style="display:flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Destinatario</span>
-      <button type="button" onclick="apriArchivioCliFatt()" style="background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border:1.5px solid #93C5FD;border-radius:7px;padding:5px 12px;font-size:0.78rem;font-weight:700;color:#1D4ED8;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:'Inter',sans-serif">
+      <button type="button" onclick="apriArchivioCliFatt()" style="background:linear-gradient(135deg,#EFF6FF,#DBEAFE);border:1.5px solid #93C5FD;border-radius:7px;padding:5px 12px;font-size:0.78rem;font-weight:700;color:#1D4ED8;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:var(--font-ui),sans-serif">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Scegli da Archivio
       </button>
@@ -18616,10 +18619,10 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
         </div>
         <button type="button" onclick="chiudiArchivioCliFatt()" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:1.1rem;line-height:1;padding:0 4px">&#10005;</button>
       </div>
-      <input id="fatt-archivio-search" type="text" placeholder="Cerca cliente..." oninput="renderArchivioCliFatt()" style="width:100%;padding:7px 10px;border:1.5px solid #CBD5E1;border-radius:7px;font-size:0.83rem;font-family:'Inter',sans-serif;margin-bottom:10px;box-sizing:border-box;outline:none">
+      <input id="fatt-archivio-search" type="text" placeholder="Cerca cliente..." oninput="renderArchivioCliFatt()" style="width:100%;padding:7px 10px;border:1.5px solid #CBD5E1;border-radius:7px;font-size:0.83rem;font-family:var(--font-ui),sans-serif;margin-bottom:10px;box-sizing:border-box;outline:none">
       <div id="fatt-archivio-list" style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:5px"></div>
       <div style="margin-top:10px;padding-top:10px;border-top:1px dashed #CBD5E1;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-        <button type="button" onclick="salvaClienteInArchivioFatt()" style="background:linear-gradient(135deg,#F0FDF4,#DCFCE7);border:1.5px solid #86EFAC;border-radius:7px;padding:5px 12px;font-size:0.78rem;font-weight:700;color:#15803D;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:5px">
+        <button type="button" onclick="salvaClienteInArchivioFatt()" style="background:linear-gradient(135deg,#F0FDF4,#DCFCE7);border:1.5px solid #86EFAC;border-radius:7px;padding:5px 12px;font-size:0.78rem;font-weight:700;color:#15803D;cursor:pointer;font-family:var(--font-ui),sans-serif;display:flex;align-items:center;gap:5px">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
           Salva cliente corrente in archivio
         </button>
@@ -18746,7 +18749,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
         </div>
         <div id="fatt-pagamenti-list"></div>
         <div style="padding:6px 10px;border-top:1px dashed var(--border)">
-          <button type="button" onclick="addFattPagamento()" style="background:none;border:none;color:var(--brand);font-size:0.78rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:5px;padding:2px 0">
+          <button type="button" onclick="addFattPagamento()" style="background:none;border:none;color:var(--brand);font-size:0.78rem;font-weight:700;cursor:pointer;font-family:var(--font-ui),sans-serif;display:flex;align-items:center;gap:5px;padding:2px 0">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             Aggiungi pagamento
           </button>
@@ -19356,7 +19359,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
     <div style="display:flex;align-items:center;gap:12px">
       <div style="width:40px;height:40px;background:rgba(255,255,255,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect x="9" y="2" width="6" height="4" rx="1"/><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/></svg></div>
       <div>
-        <h2 id="rn-titolo" style="font-family:'Inter',sans-serif;font-size:1.05rem;font-weight:800;color:white;margin:0">Registro Notizie</h2>
+        <h2 id="rn-titolo" style="font-family:var(--font-ui),sans-serif;font-size:1.05rem;font-weight:800;color:white;margin:0">Registro Notizie</h2>
         <div id="rn-sottotitolo" style="font-size:0.68rem;color:rgba(255,255,255,.6);margin-top:2px"></div>
       </div>
     </div>
@@ -19503,7 +19506,7 @@ html body #sc-panel .sc-dash-btn{padding:7px 14px!important;font-size:0.8rem!imp
 // ===== STATE =====
 /* ── Versione applicazione: mostrata nel badge in sidebar per verificare
    al volo se il deploy è l'ultimo. Aggiornare ad ogni rilascio. ── */
-var APP_VERSION = 'v.18nov-FIXNUMPAGINA';
+var APP_VERSION = 'v.23nov-REPORT+ALLEGATI';
 try{ window.APP_VERSION = APP_VERSION; }catch(e){}
 /* [FIX fmtEuro] Definita SUBITO su window (prima del caricamento dei moduli ES
    come partitario.view.js / richieste.view.js che la chiamano): un modulo ES
@@ -34062,7 +34065,7 @@ function printCalcReport(){
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   @page{size:A4;margin:14mm 16mm}
-  body{font-family:'Inter','Segoe UI',Arial,sans-serif;font-size:10pt;color:#1e293b;background:#fff;line-height:1.5}
+  body{font-family:var(--font-ui),'Segoe UI',Arial,sans-serif;font-size:10pt;color:#1e293b;background:#fff;line-height:1.5}
   .doc{max-width:100%}
   .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
   .brand{display:flex;align-items:center;gap:12px}
@@ -48806,7 +48809,7 @@ function copiaMessaggioAnniversarioRogito(){
     <div class="mhead" style="background:linear-gradient(135deg,#4C1D95,#7C3AED);border-radius:14px 14px 0 0;padding:15px 20px">
       <div>
         <div style="font-size:0.61rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.55);margin-bottom:3px">Pipeline · Contattato</div>
-        <h2 id="ap-ch-titolo" style="font-family:'Inter',sans-serif;font-size:1rem;font-weight:800;color:white;margin:0">Registra chiamata</h2>
+        <h2 id="ap-ch-titolo" style="font-family:var(--font-ui),sans-serif;font-size:1rem;font-weight:800;color:white;margin:0">Registra chiamata</h2>
       </div>
       <button class="mclose" onclick="closeModal('modal-ap-chiamata')" style="color:rgba(255,255,255,.8);background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
@@ -48848,7 +48851,7 @@ function copiaMessaggioAnniversarioRogito(){
     <div id="ap-deal-mhead" class="mhead" style="background:linear-gradient(135deg,#1E1B4B,#7C3AED);border-radius:14px 14px 0 0;padding:16px 22px">
       <div>
         <div style="font-size:0.61rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.5);margin-bottom:3px" id="ap-deal-stage-label">Pipeline</div>
-        <h2 id="ap-deal-mhead-title" style="font-family:'Inter',sans-serif;font-size:1.05rem;font-weight:800;color:white;margin:0;letter-spacing:-.2px">Scheda Contatto</h2>
+        <h2 id="ap-deal-mhead-title" style="font-family:var(--font-ui),sans-serif;font-size:1.05rem;font-weight:800;color:white;margin:0;letter-spacing:-.2px">Scheda Contatto</h2>
       </div>
       <button class="mclose" onclick="closeModal('modal-ap-deal')" style="color:rgba(255,255,255,.8);background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:8px;width:32px;height:32px;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
     </div>
@@ -49185,6 +49188,7 @@ function copiaMessaggioAnniversarioRogito(){
           <div class="adm2-font" id="adm_font_inter" onclick="adm_setFont('Inter')"><span class="aa" style="font-family:'Inter',sans-serif">Aa</span><div><b>Inter</b><small>moderno, il più leggibile</small></div></div>
           <div class="adm2-font" id="adm_font_jakarta" onclick="adm_setFont('Plus Jakarta Sans')"><span class="aa" style="font-family:'Plus Jakarta Sans',sans-serif">Aa</span><div><b>Plus Jakarta Sans</b><small>geometrico</small></div></div>
           <div class="adm2-font" id="adm_font_lora" onclick="adm_setFont('Lora')"><span class="aa" style="font-family:'Lora',serif">Aa</span><div><b>Lora</b><small>classico con grazie</small></div></div>
+          <div class="adm2-font" id="adm_font_manrope" onclick="adm_setFont('Manrope')"><span class="aa" style="font-family:'Manrope',sans-serif">Aa</span><div><b>Manrope</b><small>pulito, stile portale</small></div></div>
         </div>
       </div>
       <div class="gx-col">
@@ -50848,8 +50852,12 @@ function adm_syncThemeCheckmarks(active){
 }
 
 // Imposta font dell'interfaccia
+// [22 nov 2026] la variabile --font-ui, non più lo stile inline del body: le
+// centinaia di elementi con un font-family scritto a mano (classi e stili
+// inline) leggono tutti da qui, quindi il cambio si vede davvero ovunque e
+// non solo sugli elementi senza un font proprio.
 function adm_setFont(font){
-  document.body.style.fontFamily = "'"+font+"', sans-serif";
+  document.documentElement.style.setProperty('--font-ui', "'"+font+"'");
   setUserConfig('fontFamily', font);
   adm_syncFontUI(font);
   var msg = document.getElementById('adm_grafica_msg');
@@ -50857,7 +50865,7 @@ function adm_setFont(font){
 }
 
 function adm_syncFontUI(active){
-  var fonts = { 'Inter':'adm_font_inter', 'Plus Jakarta Sans':'adm_font_jakarta', 'Lora':'adm_font_lora' };
+  var fonts = { 'Inter':'adm_font_inter', 'Plus Jakarta Sans':'adm_font_jakarta', 'Lora':'adm_font_lora', 'Manrope':'adm_font_manrope' };
   Object.keys(fonts).forEach(function(f){
     var el = document.getElementById(fonts[f]); if(!el) return;
     el.style.borderColor = (f===active) ? 'var(--brand)' : '';
@@ -51528,8 +51536,8 @@ function applyUserConfig(){
     r.style.setProperty('--brand-dark', t.brandDark);
     r.style.setProperty('--brand-pale', t.brandPale);
   }
-  // ── Font ──
-  if(admCfg.fontFamily) document.body.style.fontFamily = "'"+admCfg.fontFamily+"', sans-serif";
+  // ── Font ── [22 nov 2026] variabile --font-ui: vedi nota su adm_setFont
+  if(admCfg.fontFamily) document.documentElement.style.setProperty('--font-ui', "'"+admCfg.fontFamily+"'");
 
   // ── Sezioni: usa la nuova funzione centralizzata ──
   applyUserSections(u);
@@ -69681,7 +69689,7 @@ try{
   // a riscaricarlo. Usa la stessa data del badge versione, es. '20260702'.
   // [25 set 2026] Ogni index.js passa il suo ?v= ai file che carica
   // (.view/.mobile/.report): alzare _MOD_V basta per TUTTI i moduli.
-  const _MOD_V = '20261111a';
+  const _MOD_V = '20261123a';
   const moduli = [
     ['Richieste', './src/modules/richieste/index.js?v=' + _MOD_V],
     ['Clienti',   './src/modules/clienti/index.js?v=' + _MOD_V],
@@ -72863,6 +72871,183 @@ try{
     });
   };
 
+  /* ═══ [22 nov 2026] IMPORTA DA DOCUMENTI — AI legge visura, planimetria /
+     elaborato planimetrico, APE o un atto di compravendita (es. da Youdomus)
+     e PRECOMPILA solo i campi della scheda che sono vuoti: niente viene mai
+     sovrascritto, i dati catastali e un eventuale comparabile letto da un
+     atto finiscono nelle Note interne (mai nel report al proprietario), come
+     testo da rileggere. Stessa prudenza di "Genera con AI" qui sopra
+     (vlGeneraServizi/vlGeneraPopolazione): se un dato non si legge con
+     certezza resta vuoto, mai inventato. I documenti restano solo in memoria
+     per la sessione: non si salvano da soli. ═══ */
+  var MAX_FILE_MB_VI = 15;
+  var VI_TIPI = [
+    { v:'visura',      l:'Visura catastale' },
+    { v:'planimetria', l:'Planimetria o elaborato planimetrico' },
+    { v:'ape',         l:'APE — Attestato di Prestazione Energetica' },
+    { v:'comprav',     l:'Atto di compravendita (immobile simile, come riferimento)' },
+    { v:'altro',       l:'Altro documento' }
+  ];
+  var VI_ALLEG_VOCE = { visura:'Visura catastale', planimetria:'Planimetria catastale', ape:'APE' };
+  var _viDocs = [];  /* { nome, tipo, mime, b64, size } */
+
+  function renderImportaDocumenti(v){
+    var corpo = '<div style="border:2px dashed var(--border);border-radius:12px;padding:16px;text-align:center;margin-bottom:12px">'
+      + '<input type="file" id="vi-file-input" accept="application/pdf,image/*" multiple style="display:none" onchange="viAggiungiFile(this.files)">'
+      + '<input type="file" id="vi-foto-input" accept="image/*" capture="environment" multiple style="display:none" onchange="viAggiungiFile(this.files)">'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">'
+      + '<button type="button" class="btn btn-primary btn-sm" onclick="document.getElementById(\'vi-foto-input\').click()">'
+      +   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>'
+      +   'Fotografa il documento</button>'
+      + '<button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById(\'vi-file-input\').click()">'
+      +   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>'
+      +   'Carica documenti (PDF o foto)</button>'
+      + '</div>'
+      + '<div style="font-size:0.76rem;color:var(--text4);margin-top:6px">Puoi caricarne più d\'uno. Max ' + MAX_FILE_MB_VI + ' MB per file.</div>'
+      + '</div>'
+      + '<div id="vi-lista-docs"></div>'
+      + '<div id="vi-azioni" style="display:none">'
+      +   '<button class="btn btn-primary" style="width:100%" id="vi-btn-leggi" onclick="viLeggi()">'
+      +     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>'
+      +     'Leggi e precompila i campi vuoti</button>'
+      + '</div>'
+      + '<div id="vi-stato" style="margin-top:10px;text-align:center;font-size:0.84rem"></div>';
+    return gxCol('Importa da documenti', 'Carica visura, planimetria o elaborato planimetrico, APE, o un atto di compravendita (es. da Youdomus): l\'AI legge e precompila solo i campi vuoti qui sotto — niente viene mai sovrascritto', C.viola, corpo);
+  }
+
+  window.viAggiungiFile = function(files){
+    Array.prototype.forEach.call(files, function(f){
+      if(f.size > MAX_FILE_MB_VI * 1024 * 1024){
+        if(typeof showToast === 'function') showToast('"' + f.name + '" troppo grande (max ' + MAX_FILE_MB_VI + ' MB)', '', '#DC2626');
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function(e){
+        var b64 = String(e.target.result).split(',')[1];
+        var mime = (f.type || '').indexOf('pdf') >= 0 ? 'application/pdf' : (f.type || 'image/jpeg');
+        var nomeLow = (f.name || '').toLowerCase();
+        var tipoGuess = 'altro';
+        if(nomeLow.indexOf('visura') >= 0) tipoGuess = 'visura';
+        else if(nomeLow.indexOf('planimetr') >= 0 || nomeLow.indexOf('elaborato') >= 0) tipoGuess = 'planimetria';
+        else if(nomeLow.indexOf('ape') >= 0 || nomeLow.indexOf('energet') >= 0) tipoGuess = 'ape';
+        else if(nomeLow.indexOf('comprav') >= 0 || nomeLow.indexOf('rogito') >= 0 || nomeLow.indexOf('atto') >= 0) tipoGuess = 'comprav';
+        _viDocs.push({ nome:f.name, tipo:tipoGuess, mime:mime, b64:b64, size:f.size });
+        viRidisegnaLista();
+      };
+      reader.readAsDataURL(f);
+    });
+  };
+  window.viRimuoviDoc = function(i){ _viDocs.splice(i, 1); viRidisegnaLista(); };
+  window.viCambiaTipo = function(i, val){ if(_viDocs[i]) _viDocs[i].tipo = val; };
+
+  function viRidisegnaLista(){
+    var cont = document.getElementById('vi-lista-docs');
+    var azioni = document.getElementById('vi-azioni');
+    if(!cont) return;
+    if(!_viDocs.length){
+      cont.innerHTML = '<div style="text-align:center;color:var(--text4);font-size:0.82rem;padding:8px">Nessun documento caricato.</div>';
+      if(azioni) azioni.style.display = 'none';
+      return;
+    }
+    var opts = function(sel){ return VI_TIPI.map(function(t){ return '<option value="' + t.v + '"' + (t.v === sel ? ' selected' : '') + '>' + t.l + '</option>'; }).join(''); };
+    cont.innerHTML = _viDocs.map(function(d, i){
+      var isPdf = d.mime === 'application/pdf';
+      var kb = Math.round(d.size / 1024);
+      return '<div style="display:flex;align-items:center;gap:10px;background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px">'
+        + '<span style="color:var(--brand)">' + (isPdf
+            ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+            : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>') + '</span>'
+        + '<div style="flex:1;min-width:0">'
+        +   '<div style="font-weight:600;font-size:0.84rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + d.nome + '</div>'
+        +   '<div style="font-size:0.72rem;color:var(--text4)">' + (isPdf ? 'PDF' : 'Immagine') + ' · ' + kb + ' KB</div>'
+        + '</div>'
+        + '<select class="fselect" style="max-width:230px;font-size:0.8rem" onchange="viCambiaTipo(' + i + ',this.value)">' + opts(d.tipo) + '</select>'
+        + '<button type="button" onclick="viRimuoviDoc(' + i + ')" title="Rimuovi" style="background:none;border:none;color:#DC2626;cursor:pointer;padding:4px">'
+        +   '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>'
+        + '</div>';
+    }).join('');
+    if(azioni) azioni.style.display = 'block';
+  }
+
+  function viPromptEstrazione(){
+    return 'Leggi i documenti immobiliari allegati (visura catastale, planimetria o elaborato planimetrico, APE, eventualmente un atto di compravendita di un immobile diverso da quello in valutazione, usato come riferimento). '
+      + 'Rispondi ESCLUSIVAMENTE con un oggetto JSON valido: nessun testo prima o dopo, nessun blocco di codice con i backtick. '
+      + 'Usa ESATTAMENTE questa struttura, con stringa vuota "" per ogni dato che NON trovi o che non riesci a leggere con certezza — non inventare mai un numero o un indirizzo:\n'
+      + '{"indirizzo":"","comune":"","superficie":"","catastali":"","ape_classe":"","ape_epgl":"","ape_validita":"","comparabile":""}\n'
+      + 'Regole: "superficie" è la superficie commerciale o calpestabile in m², solo il numero (es. "85"), presa dalla planimetria o dall\'elaborato planimetrico se c\'è, altrimenti dalla visura. '
+      + '"catastali" è una sintesi su una riga sola di comune catastale, sezione, foglio, particella, subalterno, categoria, classe, consistenza e rendita, così come compaiono nella visura. '
+      + '"ape_classe" è SOLO una di queste sigle se la trovi con certezza: A4, A3, A2, A1, B, C, D, E, F, G. '
+      + '"comparabile" si compila SOLO se tra i documenti c\'è un atto di compravendita di un immobile diverso da quello in valutazione: scrivi in una riga indirizzo, data, prezzo e superficie di quella compravendita, come riferimento. '
+      + 'Se un documento non è leggibile o non è uno di questi tipi, ignoralo.';
+  }
+
+  window.viLeggi = function(){
+    if(!_viDocs.length) return;
+    var v = VL.cur; if(!v) return;
+    var stato = document.getElementById('vi-stato');
+    var btn = document.getElementById('vi-btn-leggi');
+    if(typeof callClaude !== 'function'){
+      if(stato){ stato.style.color = '#DC2626'; stato.textContent = 'Funzione AI non disponibile: verifica l\'indirizzo del Worker nelle Impostazioni AI.'; }
+      return;
+    }
+    if(stato){ stato.style.color = '#7C3AED'; stato.textContent = 'Lettura dei documenti in corso… (può richiedere fino a un minuto)'; }
+    if(btn){ btn.disabled = true; btn.style.opacity = '.6'; }
+    var content = [];
+    content.push({ type:'text', text:viPromptEstrazione() });
+    _viDocs.forEach(function(d, i){
+      var etichetta = (VI_TIPI.find(function(t){ return t.v === d.tipo; }) || {}).l || 'Documento';
+      content.push({ type:'text', text:'--- Documento ' + (i + 1) + ' — tipo dichiarato: ' + etichetta + ' (' + d.nome + ') ---' });
+      if(d.mime === 'application/pdf') content.push({ type:'document', source:{ type:'base64', media_type:'application/pdf', data:d.b64 } });
+      else content.push({ type:'image', source:{ type:'base64', media_type:d.mime, data:d.b64 } });
+    });
+    content.push({ type:'text', text:'Rispondi ORA solo con il JSON richiesto.' });
+    callClaude({ model:'claude-sonnet-4-6', max_tokens:800, messages:[{ role:'user', content:content }] })
+      .then(function(data){
+        var txt = ''; try{ txt = (data.content || []).map(function(b){ return b.text || ''; }).join('').trim(); }catch(e){}
+        var j = _aiEstraiJson(txt);
+        if(!j){
+          if(stato){ stato.style.color = '#DC2626'; stato.textContent = 'Non ho ricevuto dati leggibili. Riprova o leggi i documenti a mano.'; }
+          if(btn){ btn.disabled = false; btn.style.opacity = '1'; }
+          return;
+        }
+        var scritto = 0, note = [];
+        if(!v.indirizzo && j.indirizzo && String(j.indirizzo).trim()){ v.indirizzo = String(j.indirizzo).trim(); scritto++; }
+        if(!v.comune && j.comune && String(j.comune).trim()){ window.vlComune(String(j.comune).trim()); scritto++; }
+        if(!v.sup.principale && j.superficie){ var smq = num(j.superficie); if(smq > 0){ v.sup.principale = smq; scritto++; } }
+        if(!v.ape.classe && j.ape_classe){
+          var cl = String(j.ape_classe).trim().toUpperCase();
+          if(['A4', 'A3', 'A2', 'A1', 'B', 'C', 'D', 'E', 'F', 'G'].indexOf(cl) >= 0){ v.ape.classe = cl; scritto++; }
+        }
+        if(!v.ape.epgl && j.ape_epgl && String(j.ape_epgl).trim()){ v.ape.epgl = String(j.ape_epgl).trim(); scritto++; }
+        if(!v.ape.validita && j.ape_validita && String(j.ape_validita).trim()){ v.ape.validita = String(j.ape_validita).trim(); scritto++; }
+        var oggi = new Date().toLocaleDateString('it-IT');
+        if(j.catastali && String(j.catastali).trim()){
+          v.note = (v.note ? v.note + '\n\n' : '') + '[Dati catastali da documenti importati, ' + oggi + ']: ' + String(j.catastali).trim();
+          scritto++; note.push('dati catastali');
+        }
+        if(j.comparabile && String(j.comparabile).trim()){
+          v.note = (v.note ? v.note + '\n\n' : '') + '[Riferimento comparabile da atto importato, ' + oggi + ']: ' + String(j.comparabile).trim();
+          scritto++; note.push('un comparabile');
+        }
+        /* checklist Allegati (sezione 13): segna "disponibile" solo se era ancora vuota */
+        var tipiCaricati = {};
+        _viDocs.forEach(function(d){ if(VI_ALLEG_VOCE[d.tipo]) (tipiCaricati[d.tipo] = tipiCaricati[d.tipo] || []).push(d.nome); });
+        Object.keys(tipiCaricati).forEach(function(tipo){
+          var voce = VI_ALLEG_VOCE[tipo];
+          var a = (v.allegati || []).find(function(x){ return x.voce === voce; });
+          if(a && !a.stato){ a.stato = 'disponibile'; if(!a.rif) a.rif = tipiCaricati[tipo].join(', '); scritto++; }
+        });
+        if(stato){ stato.style.color = '#15803D'; stato.textContent = scritto ? '✓ Precompilati ' + scritto + ' dati' + (note.length ? ' (incluso ' + note.join(' e ') + ' nelle Note interne)' : '') + ': rileggili prima di salvare.' : 'Non ho trovato dati nuovi da aggiungere (i campi erano già compilati, o l\'AI non li ha letti con certezza).'; }
+        if(btn){ btn.disabled = false; btn.style.opacity = '1'; }
+        disegna();
+        avvisa(scritto ? 'Documenti letti: ' + scritto + ' dati precompilati, rileggili prima di salvare' : 'Nessun dato nuovo da questi documenti', scritto ? 'success' : 'warning');
+      })
+      .catch(function(err){
+        if(stato){ stato.style.color = '#DC2626'; stato.textContent = 'Errore AI: ' + ((err && err.message) || 'riprova') + '.'; }
+        if(btn){ btn.disabled = false; btn.style.opacity = '1'; }
+      });
+  };
+
   /* ───────────── SCHEDA DI VALUTAZIONE ───────────── */
   function opt(val, label, sel){ return '<option value="' + E(val) + '"' + (String(val) === String(sel) ? ' selected' : '') + '>' + E(label) + '</option>'; }
   function campo(et, html, cls){ return '<div class="vl-c' + (cls ? ' ' + cls : '') + '"><label>' + et + '</label>' + html + '</div>'; }
@@ -72876,6 +73061,7 @@ try{
     var h = '';
     if(v.id) h += '<div class="gx-info">Stai modificando la valutazione del <b>' + E(dataIt(v.data)) + '</b>. "Salva" la aggiorna; per farne una nuova premi "Nuova valutazione".</div>';
     h += avvisoSito(v);
+    h += renderImportaDocumenti(v);
 
     /* 1. immobile */
     var imms = (D.immobili || []).filter(function(i){ return i && i.uuid; }).slice()
@@ -73013,13 +73199,25 @@ try{
     h += gxCol('12 · Efficienza energetica', (apeClasseDaImm ? 'classe ' + apeClasseDaImm + ' sulla scheda immobile: lascia vuoto per usarla, o correggila se hai un APE più recente' : 'facoltativo: classe APE, se la conosci'), C.verde, g12);
 
     var ALLEG_STATI = [['', '— stato —'], ['disponibile', 'Disponibile'], ['da_acquisire', 'Da acquisire']];
+    /* [23 nov 2026] un pulsante "Carica file" per riga: Enzo può allegare la
+       visura, la planimetria, l'APE ecc. scaricati da Youdomus/immobiliare.it
+       (PDF o screenshot). Il file va su Firebase Storage come i loghi extra
+       (vlLogoCarica più sopra); al caricamento lo stato passa da solo a
+       "Disponibile" e il riferimento, se vuoto, prende il nome del file. */
     var g13 = (Array.isArray(v.allegati) ? v.allegati : []).map(function(a, i){
+      var carico = VL.allegCarico === i;
       return '<div class="vl-g">'
         + campo(a.voce, '<select onchange="vlAllegato(' + i + ',\'stato\',this.value)">' + ALLEG_STATI.map(function(s){ return opt(s[0], s[1], a.stato); }).join('') + '</select>', 'st')
         + campo('Riferimento', '<input value="' + E(a.rif || '') + '" placeholder="nome file, data o pagina" oninput="vlAllegato(' + i + ',\'rif\',this.value)">', 'l2')
+        + '<div class="vl-c" style="flex:0 1 auto;justify-content:flex-end"><label>&nbsp;</label><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">'
+        + (a.url ? '<a href="' + E(a.url) + '" target="_blank" rel="noopener" class="gx-btn" style="padding:6px 10px;font-size:.72rem;text-decoration:none">' + ICO.link + ' Apri</a>' : '')
+        + '<button type="button" class="gx-btn"' + (carico ? ' disabled' : '') + ' style="padding:6px 10px;font-size:.72rem" onclick="vlAllegatoCarica(' + i + ')">' + (carico ? 'Carico…' : (a.url ? 'Sostituisci file' : 'Carica file')) + '</button>'
+        + (a.url ? '<button type="button" class="gx-btn" style="padding:6px 8px" title="Rimuovi il file caricato" onclick="vlAllegatoVia(' + i + ')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>' : '')
+        + '</div></div>'
+        + (a.url && a.fileNome ? '<div class="vl-k" style="flex:1 1 100%;padding:0 16px">File caricato: ' + E(a.fileNome) + '</div>' : '')
         + '</div>';
     }).join('');
-    h += gxCol('13 · Allegati', 'i documenti a supporto della valutazione: segna cosa c\'è già', C.blu, g13 + '<div class="gx-nota" style="margin:0 16px 10px">La lista è fissa (gli stessi 6 documenti del modello CapitalCasa Frimm). Se un documento non serve per questo immobile, lascialo semplicemente "— stato —": non compare come mancante nel report.</div>');
+    h += gxCol('13 · Allegati', 'i documenti a supporto della valutazione: segna cosa c\'è già, o caricali direttamente', C.blu, g13 + '<div class="gx-nota" style="margin:0 16px 10px">La lista è fissa (gli stessi 6 documenti del modello CapitalCasa Frimm). Se un documento non serve per questo immobile, lascialo semplicemente "— stato —": non compare come mancante nel report. "Carica file" accetta PDF o immagini (es. visura, planimetria, APE scaricati da Youdomus/immobiliare.it, o uno screenshot), fino a 15 MB: lo stato passa da solo a "Disponibile".</div>');
 
     var g14 = '<div class="vl-g">'
       + campo('Note per il report (ultima pagina, facoltativo)', '<textarea oninput="vlCampo(\'noteReport\',this.value)" placeholder="facoltativo: qualunque cosa vuoi scrivere sull\'ultima pagina del report">' + E(v.noteReport) + '</textarea>', 'l2')
@@ -73079,6 +73277,49 @@ try{
   window.vlAllegato = function(i, campo, val){
     var v = VL.cur; if(!v || !Array.isArray(v.allegati) || !v.allegati[i]) return;
     v.allegati[i][campo] = val;
+  };
+  /* [23 nov 2026] carica il file di un allegato (visura, planimetria, APE…)
+     su Firebase Storage, come vlLogoCarica più sopra. Al termine: url + nome
+     file salvati sulla riga, stato impostato su "disponibile" (è un'azione
+     diretta di Enzo, non una lettura AI, quindi niente regola "mai
+     sovrascrivere"), e se il riferimento era vuoto prende il nome del file. */
+  window.vlAllegatoCarica = function(i){
+    var v = VL.cur; if(!v || !Array.isArray(v.allegati) || !v.allegati[i]) return;
+    var inp = document.createElement('input'); inp.type = 'file'; inp.accept = 'application/pdf,image/jpeg,image/png,image/webp';
+    inp.onchange = function(){
+      var f = inp.files && inp.files[0]; if(!f) return;
+      if(f.size > 15 * 1024 * 1024){ avvisa('File troppo grande (massimo 15 MB)', 'warning'); return; }
+      if(!window._storageReady || !window._storage){ avvisa('L\'archivio online non è disponibile in questo momento: riprova tra poco', 'error'); return; }
+      var uid = ''; try{ uid = (typeof window._currentUserId === 'function') ? window._currentUserId() : ''; }catch(e){}
+      if(!uid){ avvisa('Utente non riconosciuto: accedi di nuovo', 'error'); return; }
+      if(!v.id) v.id = nuovoId('val');   /* serve una cartella stabile anche prima del primo salvataggio */
+      var vecchioUrl = v.allegati[i].url;
+      var est = (/\.([a-z0-9]{2,4})$/i.exec(f.name) || [0, f.type === 'application/pdf' ? 'pdf' : 'jpg'])[1].toLowerCase();
+      var percorso = 'users/' + uid + '/valutazioni/' + v.id + '/allegati/' + i + '_' + Date.now() + '.' + est;
+      VL.allegCarico = i; disegna();
+      window._storage.ref().child(percorso).put(f, {contentType:f.type || 'application/octet-stream'})
+        .then(function(s){ return s.ref.getDownloadURL(); })
+        .then(function(url){
+          var a = v.allegati[i]; if(!a) return;
+          a.url = url; a.percorso = percorso; a.fileNome = f.name;
+          if(!a.rif) a.rif = f.name;
+          a.stato = 'disponibile';
+          if(vecchioUrl){ try{ window._storage.refFromURL(vecchioUrl).delete().catch(function(){}); }catch(e){} }
+          VL.allegCarico = null; avvisa('File caricato: ' + f.name + '. Ricorda di salvare la valutazione.'); disegna();
+        })
+        .catch(function(e){ VL.allegCarico = null; avvisa('Caricamento non riuscito: ' + ((e && e.message) || 'errore'), 'error'); disegna(); });
+    };
+    inp.click();
+  };
+  window.vlAllegatoVia = function(i){
+    var v = VL.cur; if(!v || !Array.isArray(v.allegati) || !v.allegati[i]) return;
+    var a = v.allegati[i]; if(!a.url) return;
+    conferma('Rimuovere il file caricato per "' + a.voce + '"?', 'Allegati').then(function(ok){
+      if(!ok) return;
+      try{ if(window._storage) window._storage.refFromURL(a.url).delete().catch(function(){}); }catch(e){}
+      delete a.url; delete a.percorso; delete a.fileNome;
+      disegna();
+    });
   };
 
   function vicTotTxt(r){
@@ -74118,8 +74359,11 @@ try{
   /* [17 ott 2026] Enzo: pagine tutte bianche, niente giallo opaco. Il crema
      (carta) diventa bianco, i bordi beige grigio neutro, l'oro diventa
      l'arancio del gestionale (titoletti, punto sulla mappa, annunci). */
-  var RP = {navy:'#13233A', oro:'#EA580C', verde:'#0F5132', rosso:'#7F1D1D', ardesia:'#334155',
-            grigio:'#8A93A0', chiaro:'#E5E7EB', carta:'#FFFFFF', blu:'#1E3A8A', viola:'#5B21B6'};
+  /* [23 nov 2026] palette del report allineata allo stile "portale" (pulito,
+     chiaro, accento blu) chiesto da Enzo al posto del blu notte/oro da
+     brochure di lusso: stesso blu del gestionale (--brand), non più oro. */
+  var RP = {navy:'#13233A', oro:'#2563EB', verde:'#15803D', rosso:'#DC2626', ardesia:'#334155',
+            grigio:'#8A93A0', chiaro:'#E5E7EB', carta:'#FFFFFF', blu:'#2563EB', viola:'#5B21B6'};
   /* copertina "casette" (scelta B, azzurra): disegno fisso, uguale per tutte */
   var COP_CASE = '<svg viewBox="90 140 620 320" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet"><defs><filter id="ckOmbra" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="4" dy="5" stdDeviation="5" flood-color="#13233A" flood-opacity=".18"/></filter></defs><g opacity="0.6"><polygon points="60,360 60,304 97,266 134,304 134,360" fill="#DCEAF6"/><rect x="78" y="308" width="13" height="13" rx="1" fill="#BFD8EE"/><rect x="103" y="308" width="13" height="13" rx="1" fill="#BFD8EE"/></g><g opacity="0.6"><polygon points="144,360 144,308 181,274 218,308 218,360" fill="#DCEAF6"/><rect x="162" y="313" width="13" height="13" rx="1" fill="#BFD8EE"/><rect x="187" y="313" width="13" height="13" rx="1" fill="#BFD8EE"/></g><g opacity="0.6"><polygon points="228,360 228,309 267,274 306,309 306,360" fill="#DCEAF6"/><rect x="248" y="313" width="13" height="13" rx="1" fill="#BFD8EE"/><rect x="273" y="313" width="13" height="13" rx="1" fill="#BFD8EE"/></g><g opacity="0.6"><polygon points="316,360 316,307 354,271 392,307 392,360" fill="#DCEAF6"/><rect x="335" y="311" width="13" height="13" rx="1" fill="#BFD8EE"/><rect x="360" y="311" width="13" height="13" rx="1" fill="#BFD8EE"/></g><g opacity="0.6"><polygon points="400,360 400,318 432,290 465,318 465,360" fill="#DCEAF6"/><rect x="416" y="322" width="11" height="11" rx="1" fill="#BFD8EE"/><rect x="438" y="322" width="11" height="11" rx="1" fill="#BFD8EE"/></g><g opacity="0.6"><polygon points="471,360 471,319 503,291 535,319 535,360" fill="#DCEAF6"/><rect x="487" y="322" width="11" height="11" rx="1" fill="#BFD8EE"/><rect x="508" y="322" width="11" height="11" rx="1" fill="#BFD8EE"/></g><g opacity="0.6"><polygon points="545,360 545,309 585,275 625,309 625,360" fill="#DCEAF6"/><rect x="565" y="313" width="14" height="14" rx="1" fill="#BFD8EE"/><rect x="591" y="313" width="14" height="14" rx="1" fill="#BFD8EE"/></g><g opacity="0.6"><polygon points="632,360 632,306 669,270 706,306 706,360" fill="#DCEAF6"/><rect x="650" y="311" width="13" height="13" rx="1" fill="#BFD8EE"/><rect x="675" y="311" width="13" height="13" rx="1" fill="#BFD8EE"/></g><g opacity="0.6"><polygon points="714,360 714,308 754,273 794,308 794,360" fill="#DCEAF6"/><rect x="734" y="312" width="14" height="14" rx="1" fill="#BFD8EE"/><rect x="760" y="312" width="14" height="14" rx="1" fill="#BFD8EE"/></g><g><polygon points="60,425 60,358 116,313 171,358 171,425" fill="#FFFFFF" filter="url(#ckOmbra)"/><rect x="84" y="358" width="19" height="19" rx="1" fill="#BFD8EE"/><rect x="128" y="358" width="19" height="19" rx="1" fill="#BFD8EE"/><rect x="106" y="389" width="20" height="36" fill="#BFD8EE"/></g><g><polygon points="179,425 179,366 227,326 275,366 275,425" fill="#FFFFFF" filter="url(#ckOmbra)"/><rect x="200" y="366" width="16" height="16" rx="1" fill="#BFD8EE"/><rect x="238" y="366" width="16" height="16" rx="1" fill="#BFD8EE"/></g><g><polygon points="283,425 283,358 334,314 385,358 385,425" fill="#FFFFFF" filter="url(#ckOmbra)"/><rect x="305" y="358" width="17" height="17" rx="1" fill="#BFD8EE"/><rect x="345" y="358" width="17" height="17" rx="1" fill="#BFD8EE"/><rect x="325" y="389" width="18" height="36" fill="#BFD8EE"/></g><g><polygon points="393,425 393,380 428,350 463,380 463,425" fill="#FFFFFF" filter="url(#ckOmbra)"/><rect x="408" y="380" width="12" height="12" rx="1" fill="#BFD8EE"/><rect x="436" y="380" width="12" height="12" rx="1" fill="#BFD8EE"/></g><g><polygon points="638,425 638,358 690,314 742,358 742,425" fill="#FFFFFF" filter="url(#ckOmbra)"/><rect x="661" y="358" width="18" height="18" rx="1" fill="#BFD8EE"/><rect x="701" y="358" width="18" height="18" rx="1" fill="#BFD8EE"/><rect x="681" y="389" width="19" height="36" fill="#BFD8EE"/></g><g><polygon points="430,425 430,281 530,185 630,281 630,425" fill="#EA580C" filter="url(#ckOmbra)"/><rect x="466" y="271" width="34" height="34" rx="1" fill="#FFF7ED"/><rect x="560" y="271" width="34" height="34" rx="1" fill="#FFF7ED"/><rect x="466" y="319" width="34" height="34" rx="1" fill="#FFF7ED"/><rect x="560" y="319" width="34" height="34" rx="1" fill="#FFF7ED"/><rect x="512" y="348" width="36" height="77" fill="#FFF7ED"/></g><rect x="0" y="423" width="800" height="40" fill="#A9C8E3"/></svg>';
   function eurK(n){ n = Number(n) || 0; return n >= 1000000 ? '€ ' + nf(n / 1000000, 2) + ' mln' : '€ ' + nf(Math.round(n / 1000)) + ' mila'; }
@@ -74471,120 +74715,126 @@ try{
   }
 
   /* ── le pagine ── */
+  /* [23 nov 2026] report rifatto: meno pagine, meno spazi bianchi, grafica
+     pulita in stile portale (come immobiliare.it) al posto della brochure di
+     lusso blu notte/oro. Punti chiave:
+     - .pag non ha più un'altezza fissa con overflow nascosto (prima un
+       contenuto troppo lungo veniva TAGLIATO in silenzio): ora min-height,
+       così una pagina più piena semplicemente continua sul foglio dopo,
+       invece di perdere testo.
+     - un solo carattere pulito (Manrope) al posto di Inter + Playfair
+       Display + Plus Jakarta Sans mescolati.
+     - niente più riquadri pieni blu notte: card bianche con bordo sottile e
+       accento blu (RP.oro, rinominato solo nei commenti, resta la stessa
+       chiave ovunque nel codice per non riscrivere i grafici SVG). */
   function cssReport(){
     return ''
       + '@page{size:A4;margin:0}*{box-sizing:border-box}'
       + 'html,body{margin:0;padding:0;background:#E5E7EB;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
-      + 'body{font-family:Inter,Arial,sans-serif;color:' + RP.navy + ';font-size:10.5pt;line-height:1.5}'
-      + '.pag{width:210mm;height:297mm;margin:10mm auto;background:' + RP.carta + ';position:relative;overflow:hidden;padding:16mm 17mm 20mm;page-break-after:always;box-shadow:0 4px 24px rgba(0,0,0,.18)}'
+      + 'body{font-family:Manrope,Arial,sans-serif;color:' + RP.navy + ';font-size:10pt;line-height:1.48}'
+      + '.pag{width:210mm;min-height:297mm;margin:10mm auto;background:' + RP.carta + ';position:relative;padding:14mm 16mm 16mm;page-break-after:always;box-shadow:0 4px 24px rgba(0,0,0,.18)}'
       + '.pag:last-child{page-break-after:auto}'
-      + '@media print{html,body{background:#fff}.pag{margin:0;box-shadow:none}.barra{display:none!important}}'
-      + '.serif{font-family:"Playfair Display",Georgia,serif}'
-      + '.occhiello{font-size:8pt;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:' + RP.oro + '}'
-      + 'h1{font-family:"Playfair Display",Georgia,serif;font-weight:700;font-size:26pt;line-height:1.1;margin:4px 0 6px}'
-      + 'h2{font-weight:800;font-size:12pt;margin:14px 0 6px;color:' + RP.navy + '}'
-      + 'h3{font-size:9pt;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:' + RP.ardesia + ';margin:16px 0 6px}'
-      + 'p{margin:0 0 8px}.piccolo{font-size:8.5pt;color:' + RP.grigio + '}'
-      + '.vmuto{font-size:9.5pt;color:' + RP.grigio + ';font-style:italic}'
-      /* [17 nov 2026] intestazione comune a tutte le pagine interne: loghi a
-         sinistra, piccolo riquadro navy con comune/indirizzo a destra —
-         lo stesso su ogni pagina, come nel PDF di riferimento */
-      + '.vhead{display:flex;justify-content:space-between;align-items:flex-start;gap:10mm;margin-bottom:6mm}'
+      + '@media print{html,body{background:#fff}.pag{margin:0;box-shadow:none;min-height:297mm}.barra{display:none!important}}'
+      + '.occhiello{font-size:8pt;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:' + RP.oro + '}'
+      + 'h1{font-weight:800;font-size:25pt;line-height:1.12;margin:4px 0 6px;letter-spacing:-.01em}'
+      + 'h2{font-weight:800;font-size:12pt;margin:10px 0 5px;color:' + RP.navy + '}'
+      + 'h3{font-size:8.5pt;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:' + RP.ardesia + ';margin:3mm 0 2mm}'
+      + 'p{margin:0 0 6px}.piccolo{font-size:8.3pt;color:' + RP.grigio + '}'
+      + '.vmuto{font-size:8.8pt;color:' + RP.grigio + ';font-style:italic;margin:0 0 3mm}'
+      /* sottosezione: più argomenti nella stessa pagina, separati da un filo sottile */
+      + '.sez{margin:0 0 5mm;padding-bottom:5mm;border-bottom:1px solid ' + RP.chiaro + '}'
+      + '.sez:last-child{border-bottom:none;padding-bottom:0;margin-bottom:0}'
+      /* intestazione comune alle pagine interne: loghi + riquadro chiaro con comune/indirizzo */
+      + '.vhead{display:flex;justify-content:space-between;align-items:flex-start;gap:8mm;margin-bottom:5mm;padding-bottom:4mm;border-bottom:2px solid ' + RP.navy + '}'
       + '.vhead .logos{display:flex;align-items:center;gap:6mm;flex-wrap:wrap}'
       + '.vhead .logos img{height:8mm;max-width:34mm;object-fit:contain}'
-      + '.vhead .logos b{font-size:9pt;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:' + RP.navy + '}'
-      + '.vhead .info{background:' + RP.navy + ';color:#fff;border-radius:3mm;padding:3mm 5mm;min-width:46mm;text-align:right;flex-shrink:0}'
-      + '.vhead .info b{display:block;font-size:9.5pt;font-weight:800}'
-      + '.vhead .info span{display:block;font-size:8pt;opacity:.85;margin-top:1mm}'
-      + '.vtitle{font-weight:800;font-size:22pt;color:' + RP.navy + ';line-height:1.1;margin:0 0 1mm}'
-      + '.vnum{font-size:8pt;color:' + RP.grigio + ';font-weight:700;letter-spacing:.06em;margin-bottom:5mm}'
-      + '.vfoot{position:absolute;left:17mm;right:17mm;bottom:9mm;display:flex;justify-content:space-between;font-size:7.5pt;color:' + RP.grigio + ';border-top:1px solid ' + RP.chiaro + ';padding-top:6px;letter-spacing:.04em}'
+      + '.vhead .logos b{font-size:9pt;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:' + RP.navy + '}'
+      + '.vhead .info{text-align:right;flex-shrink:0}'
+      + '.vhead .info b{display:block;font-size:10pt;font-weight:800;color:' + RP.navy + '}'
+      + '.vhead .info span{display:block;font-size:8pt;color:' + RP.grigio + ';margin-top:.5mm}'
+      + '.vtitle{font-weight:800;font-size:17pt;color:' + RP.navy + ';line-height:1.1;margin:0 0 4mm}'
+      + '.vnum{font-size:7.5pt;color:' + RP.grigio + ';font-weight:700;letter-spacing:.06em;margin-bottom:1mm}'
+      + '.vfoot{margin-top:8mm;padding-top:3mm;display:flex;justify-content:space-between;font-size:7.3pt;color:' + RP.grigio + ';border-top:1px solid ' + RP.chiaro + ';letter-spacing:.03em}'
       + '.vfoot b{color:' + RP.navy + '}'
-      /* riga di 3-4 statistiche grandi su fondo navy (Quotazioni OMI, Popolazione, Valutazione) */
-      + '.vstat3{display:grid;gap:1px;background:' + RP.chiaro + ';border-radius:3mm;overflow:hidden;margin:4mm 0 6mm}'
-      + '.vstat3>div{background:' + RP.navy + ';color:#fff;padding:5mm 6mm}'
-      + '.vstat3 .e{font-size:7.5pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;opacity:.75}'
-      + '.vstat3 .v{font-size:17pt;font-weight:800;margin-top:2mm;font-family:"Plus Jakarta Sans",Inter,sans-serif}'
-      /* riga di statistiche chiare, su sfondo bianco (Efficienza energetica) */
-      + '.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 0}'
-      + '.kpi>div{background:#fff;border:1px solid ' + RP.chiaro + ';border-radius:10px;padding:9px 11px}'
-      + '.kpi .e{font-size:7pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:' + RP.grigio + '}'
-      + '.kpi .v{font-size:14pt;font-weight:800;margin-top:2px}'
-      + '.kpi .s{font-size:7.5pt;color:' + RP.grigio + '}'
-      /* due colonne: contenuto a sinistra, riquadro navy di dati a destra (Caratteristiche, Quotazioni OMI) */
-      + '.vside-wrap{display:grid;grid-template-columns:1fr 62mm;gap:8mm;align-items:start}'
-      + '.vside{background:' + RP.navy + ';color:#fff;border-radius:3mm;padding:5mm 6mm}'
-      + '.vside .r{padding:2.5mm 0;border-bottom:1px solid rgba(255,255,255,.18)}.vside .r:last-child{border-bottom:none}'
-      + '.vside .r .e{font-size:7.3pt;font-weight:700;letter-spacing:.07em;text-transform:uppercase;opacity:.7}'
-      + '.vside .r .v{font-size:10.5pt;font-weight:700;margin-top:1mm}'
-      + '.vmap{border:1px solid ' + RP.chiaro + ';border-radius:3mm;padding:8px;margin:0 0 6mm}.vmap svg{width:100%;display:block}'
-      + '.vcomune-foto{height:52mm;border-radius:3mm;background-size:cover;background-position:center;background-color:' + RP.chiaro + ';margin:0 0 6mm}'
+      /* riga di statistiche: card chiare con bordo, numero blu — usata ovunque (OMI, popolazione, valutazione, APE) */
+      + '.vstat3{display:grid;gap:3mm;margin:3mm 0 4mm}'
+      + '.vstat3>div{background:#F8FAFC;border:1px solid ' + RP.chiaro + ';border-left:3px solid ' + RP.oro + ';border-radius:8px;padding:3.5mm 4.5mm}'
+      + '.vstat3 .e{font-size:7.3pt;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:' + RP.grigio + '}'
+      + '.vstat3 .v{font-size:14.5pt;font-weight:800;margin-top:1.5mm;color:' + RP.navy + '}'
+      + '.kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin:3mm 0}'
+      + '.kpi>div{background:#F8FAFC;border:1px solid ' + RP.chiaro + ';border-radius:8px;padding:3mm 3.5mm}'
+      + '.kpi .e{font-size:6.8pt;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:' + RP.grigio + '}'
+      + '.kpi .v{font-size:12.5pt;font-weight:800;margin-top:1mm;color:' + RP.navy + '}'
+      + '.kpi .s{font-size:7.3pt;color:' + RP.grigio + '}'
+      /* due colonne: contenuto a sinistra, dati chiave a destra, card chiara invece del riquadro blu notte */
+      + '.vside-wrap{display:grid;grid-template-columns:1fr 58mm;gap:7mm;align-items:start}'
+      + '.vside{background:#F8FAFC;border:1px solid ' + RP.chiaro + ';border-radius:8px;padding:4mm 4.5mm}'
+      + '.vside .r{padding:2mm 0;border-bottom:1px solid ' + RP.chiaro + '}.vside .r:last-child{border-bottom:none}'
+      + '.vside .r .e{font-size:7pt;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:' + RP.grigio + '}'
+      + '.vside .r .v{font-size:10pt;font-weight:700;margin-top:.8mm;color:' + RP.navy + '}'
+      + '.vmap{border:1px solid ' + RP.chiaro + ';border-radius:8px;padding:6px;margin:0 0 4mm}.vmap svg{width:100%;display:block}'
+      + '.vcomune-foto{height:38mm;border-radius:8px;background-size:cover;background-position:center;background-color:' + RP.chiaro + ';margin:0 0 4mm}'
       /* griglia a card con icona (Servizi di zona) */
-      + '.sv-griglia{display:grid;grid-template-columns:1fr 1fr;gap:3.5mm 6mm}'
-      + '.sv-c{display:flex;gap:3.5mm;align-items:flex-start;border:1px solid ' + RP.chiaro + ';border-radius:3mm;padding:3mm 3.5mm;break-inside:avoid}'
-      + '.sv-c .ic{width:9mm;height:9mm;border-radius:50%;background:' + RP.oro + ';display:flex;align-items:center;justify-content:center;flex-shrink:0}'
-      + '.sv-c b{font-size:9.5pt;display:block;line-height:1.25}.sv-c p{margin:1mm 0 0;font-size:8.3pt;line-height:1.35;color:' + RP.ardesia + '}'
-      + 'table{width:100%;border-collapse:collapse;font-size:9pt}'
-      + 'th{font-size:7pt;text-transform:uppercase;letter-spacing:.07em;color:' + RP.grigio + ';text-align:left;padding:5px 6px;border-bottom:1.5px solid ' + RP.navy + '}'
-      + 'td{padding:5px 6px;border-bottom:1px solid ' + RP.chiaro + '}'
+      + '.sv-griglia{display:grid;grid-template-columns:1fr 1fr;gap:3mm 5mm}'
+      + '.sv-c{display:flex;gap:3mm;align-items:flex-start;border:1px solid ' + RP.chiaro + ';border-radius:8px;padding:2.5mm 3mm;break-inside:avoid}'
+      + '.sv-c .ic{width:8mm;height:8mm;border-radius:50%;background:' + RP.oro + ';display:flex;align-items:center;justify-content:center;flex-shrink:0}'
+      + '.sv-c b{font-size:9pt;display:block;line-height:1.2}.sv-c p{margin:.8mm 0 0;font-size:8pt;line-height:1.3;color:' + RP.ardesia + '}'
+      + 'table{width:100%;border-collapse:collapse;font-size:8.6pt}'
+      + 'th{font-size:6.8pt;text-transform:uppercase;letter-spacing:.06em;color:' + RP.grigio + ';text-align:left;padding:4px 5px;border-bottom:1.5px solid ' + RP.navy + '}'
+      + 'td{padding:4px 5px;border-bottom:1px solid ' + RP.chiaro + '}'
       + 'td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}'
       + 'tr.tot td{border-top:1.5px solid ' + RP.navy + ';border-bottom:none;font-weight:800}'
-      + '.riq{background:#fff;border:1px solid ' + RP.chiaro + ';border-radius:12px;padding:12px 14px;margin:8px 0}'
-      + '.riq.dom{display:flex;gap:14px;align-items:center;border-left:4px solid ' + RP.oro + '}'
-      + '.riq.dom .n{font-family:"Playfair Display",Georgia,serif;font-size:30pt;font-weight:700;line-height:1;color:' + RP.oro + ';min-width:14mm;text-align:center}'
-      + '.due{display:grid;grid-template-columns:1fr 1fr;gap:12px}'
+      + '.riq{background:#F8FAFC;border:1px solid ' + RP.chiaro + ';border-radius:10px;padding:3mm 3.5mm;margin:2mm 0}'
+      + '.riq.dom{display:flex;gap:10px;align-items:center;border-left:3px solid ' + RP.oro + ';background:#fff}'
+      + '.riq.dom .n{font-size:26pt;font-weight:800;line-height:1;color:' + RP.oro + ';min-width:14mm;text-align:center}'
+      + '.due{display:grid;grid-template-columns:1fr 1fr;gap:8px}'
       + '.pos{color:' + RP.verde + '}.neg{color:' + RP.rosso + '}'
       + '.barra{position:fixed;top:0;left:0;right:0;z-index:5;background:' + RP.navy + ';color:#fff;padding:10px 16px;display:flex;gap:12px;align-items:center;font-size:13px}'
       + '.barra button{background:' + RP.oro + ';color:#fff;border:none;border-radius:8px;padding:8px 18px;font-weight:700;font-size:13px;cursor:pointer}'
       + '.barra .sp{flex:1}'
-      /* copertina, stile PDF: bianca, titolo navy, foto reale se c'è */
+      /* copertina: bianca, accento blu, foto reale se c'è */
       + '.vcop{padding:0}'
-      + '.vcop .intesta{display:flex;justify-content:space-between;align-items:center;padding:16mm 18mm 0}'
-      + '.vcop .intesta img{height:12mm;max-width:50mm;object-fit:contain}'
-      + '.vcop .occhiello{padding:0 18mm;margin-top:10mm}'
-      + '.vcop h1{padding:0 18mm;color:' + RP.navy + ';font-size:34pt;margin:3mm 0 5mm}'
-      + '.vcop .riga-ind{margin:0 18mm 8mm;background:' + RP.chiaro + ';border-radius:2mm;padding:3mm 5mm;font-size:12pt;color:' + RP.ardesia + '}'
-      + '.vcop .foto{margin:0 18mm;height:85mm;border-radius:3mm;background-size:cover;background-position:center;background-color:' + RP.chiaro + '}'
-      + '.vcop .tip{padding:7mm 18mm 0}.vcop .tip .occhiello{padding:0;margin:0}.vcop .tip .v{font-size:19pt;font-weight:800;color:' + RP.navy + ';margin-top:1mm}'
-      + '.vcop .meta{display:grid;grid-template-columns:1fr 1fr;gap:8mm;padding:7mm 18mm 0}'
-      + '.vcop .meta b{display:block;font-size:7.5pt;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:' + RP.grigio + ';margin-bottom:1mm}'
-      + '.vcop .meta div>span{font-size:11pt;color:' + RP.navy + '}'
-      + '.vcop .tag{position:absolute;left:18mm;bottom:16mm;font-size:9pt;color:' + RP.grigio + ';font-style:italic}'
-      /* retrocopertina, navy pieno */
-      + '.vback{padding:0;background:' + RP.navy + ';color:#fff}'
-      + '.vback .box{position:absolute;left:18mm;right:18mm;top:22mm;bottom:22mm;display:flex;flex-direction:column}'
-      + '.vback h1{color:#fff;font-size:26pt;line-height:1.25;margin:0 0 8mm;max-width:130mm}'
-      + '.vback .sep{width:24mm;height:1.4mm;border-radius:1mm;background:' + RP.oro + ';margin-bottom:8mm}'
-      + '.vback .passi{display:flex;flex-direction:column;gap:5mm}'
-      + '.vback .passi div{display:flex;gap:5mm;align-items:baseline}'
-      + '.vback .passi b.n{font-size:17pt;color:' + RP.oro + ';font-family:"Plus Jakarta Sans",Inter,sans-serif;min-width:11mm}'
-      + '.vback .passi b.t{font-size:11.5pt;font-weight:700}'
-      + '.vback .contatti{margin-top:auto;font-size:9.5pt;opacity:.9;line-height:1.7}'
+      + '.vcop .intesta{display:flex;justify-content:space-between;align-items:center;padding:14mm 16mm 0}'
+      + '.vcop .intesta img{height:11mm;max-width:48mm;object-fit:contain}'
+      + '.vcop .occhiello{padding:0 16mm;margin-top:8mm}'
+      + '.vcop h1{padding:0 16mm;color:' + RP.navy + ';font-size:30pt;margin:2.5mm 0 4mm}'
+      + '.vcop .riga-ind{margin:0 16mm 6mm;background:#F8FAFC;border:1px solid ' + RP.chiaro + ';border-radius:8px;padding:2.5mm 4mm;font-size:11.5pt;color:' + RP.ardesia + '}'
+      + '.vcop .foto{margin:0 16mm;height:78mm;border-radius:8px;background-size:cover;background-position:center;background-color:' + RP.chiaro + '}'
+      + '.vcop .tip{padding:5mm 16mm 0}.vcop .tip .occhiello{padding:0;margin:0}.vcop .tip .v{font-size:16pt;font-weight:800;color:' + RP.navy + ';margin-top:1mm}'
+      + '.vcop .meta{display:grid;grid-template-columns:1fr 1fr;gap:6mm;padding:5mm 16mm 0}'
+      + '.vcop .meta b{display:block;font-size:7.3pt;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:' + RP.grigio + ';margin-bottom:1mm}'
+      + '.vcop .meta div>span{font-size:10.5pt;color:' + RP.navy + '}'
+      + '.vcop .tag{position:absolute;left:16mm;bottom:12mm;font-size:8.5pt;color:' + RP.grigio + '}'
+      /* chiusura: chiara, con una fascia blu sottile invece della pagina intera a fondo blu notte */
+      + '.vclose-cta{background:' + RP.navy + ';color:#fff;border-radius:10px;padding:6mm 7mm;margin:0 0 5mm}'
+      + '.vclose-cta h2{color:#fff;margin:0 0 2mm;font-size:13pt}'
+      + '.vclose-cta .sep{width:18mm;height:1mm;border-radius:1mm;background:' + RP.oro + ';margin:0 0 3mm}'
+      + '.vclose-cta .passi{display:flex;gap:8mm;flex-wrap:wrap}'
+      + '.vclose-cta .passi div{display:flex;gap:2.5mm;align-items:baseline;min-width:40mm}'
+      + '.vclose-cta .passi b.n{font-size:13pt;color:' + RP.oro + ';min-width:7mm}'
+      + '.vclose-cta .passi b.t{font-size:9.5pt;font-weight:700}'
       /* valore grande (pagina Valutazione) */
-      + '.valore{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;margin:6mm 0 2mm}'
-      + '.valore .n{font-family:"Playfair Display",Georgia,serif;font-size:40pt;font-weight:700;line-height:1}'
-      + '.valore .f{font-size:10pt;color:' + RP.ardesia + ';padding-bottom:6px}'
-      /* [20 ott 2026] Scelta di Enzo "C · Moderno rotondo": i prezzi grandi in Plus
-         Jakarta Sans. Il Playfair scrive le cifre "all'antica" e saltellavano. */
-      + ".valore .n,.pag .serif,.riq.dom .n{font-family:'Plus Jakarta Sans',Inter,sans-serif!important;font-weight:800!important;letter-spacing:-.015em;font-variant-numeric:lining-nums proportional-nums}.valore .n{font-size:38pt!important}"
-      + '.metodi{display:grid;gap:8px;margin:0 0 8px}'
-      + '.metodi>div{background:#fff;border:1px solid ' + RP.chiaro + ';border-top:3px solid;border-radius:10px;padding:8px 11px}'
-      + '.metodi .e{font-size:7pt;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:' + RP.grigio + '}'
-      + '.metodi .v{font-size:14pt;font-weight:800;margin-top:2px}'
-      + '.metodi .s{font-size:7.5pt;color:' + RP.grigio + ';line-height:1.35}'
-      /* scala classi APE (pagina Efficienza energetica) */
-      + '.vscala{display:flex;gap:3px;margin:4mm 0 3mm}'
-      + '.vscala div{flex:1;text-align:center;padding:4mm 0;border-radius:2mm;color:#fff;font-weight:800;font-size:10.5pt;opacity:.3}'
+      + '.valore{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin:4mm 0 2mm}'
+      + '.valore .n{font-size:30pt;font-weight:800;line-height:1;color:' + RP.navy + ';letter-spacing:-.015em;font-variant-numeric:lining-nums proportional-nums}'
+      + '.valore .f{font-size:9.5pt;color:' + RP.ardesia + ';padding-bottom:5px}'
+      + '.metodi{display:grid;gap:6px;margin:0 0 6px}'
+      + '.metodi>div{background:#fff;border:1px solid ' + RP.chiaro + ';border-top:3px solid;border-radius:8px;padding:6px 9px}'
+      + '.metodi .e{font-size:6.8pt;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:' + RP.grigio + '}'
+      + '.metodi .v{font-size:12.5pt;font-weight:800;margin-top:1px;color:' + RP.navy + '}'
+      + '.metodi .s{font-size:7.2pt;color:' + RP.grigio + ';line-height:1.3}'
+      /* scala classi APE, compatta su una riga sola */
+      + '.vscala{display:flex;gap:3px;margin:2.5mm 0 2mm}'
+      + '.vscala div{flex:1;text-align:center;padding:2.5mm 0;border-radius:2mm;color:#fff;font-weight:800;font-size:9pt;opacity:.3}'
       + '.vscala div.on{opacity:1;box-shadow:0 2px 8px rgba(0,0,0,.25)}'
       /* allegati */
-      + '.valleg td:first-child{width:8mm;color:' + RP.grigio + ';font-weight:700}'
+      + '.valleg td:first-child{width:7mm;color:' + RP.grigio + ';font-weight:700}'
       + '.vok{color:' + RP.verde + ';font-weight:700}.vda{color:' + RP.oro + ';font-weight:700}'
       /* foto */
-      + '.vfoto2{display:grid;grid-template-columns:1fr 1fr;gap:6mm}'
-      + '.vfoto2 figure{margin:0}.vfoto2 img{width:100%;height:62mm;object-fit:cover;border-radius:3mm;display:block}'
-      + '.vfoto2 figcaption{font-size:8.5pt;color:' + RP.grigio + ';margin-top:2mm}'
-      /* nota: riquadro vuoto o con testo */
-      + '.vnota{min-height:70mm;border:1px solid ' + RP.chiaro + ';border-radius:3mm;background:#FAFBFC;padding:6mm;white-space:pre-wrap;font-size:10pt}';
+      + '.vfoto2{display:grid;grid-template-columns:1fr 1fr;gap:5mm}'
+      + '.vfoto2 figure{margin:0}.vfoto2 img{width:100%;height:50mm;object-fit:cover;border-radius:8px;display:block}'
+      + '.vfoto2 figcaption{font-size:8pt;color:' + RP.grigio + ';margin-top:1.5mm}'
+      /* nota: niente riquadro vuoto quando non c'è nulla da scrivere */
+      + '.vnota{border:1px solid ' + RP.chiaro + ';border-radius:8px;background:#FAFBFC;padding:4mm 5mm;white-space:pre-wrap;font-size:9.5pt}';
   }
   /* [20 ott 2026] scelta di Enzo: in Sintesi gli stessi riquadri della scheda
      (Valore OMI, Valore comparabili, Valori a corpo, Valore calcolato), con i
@@ -74616,11 +74866,6 @@ try{
       + (secondo ? '<img src="' + E(secondo) + '" alt="">' : '') + '</div>'
       + '<div class="info"><b>' + sx(m.rec.comune || '—') + '</b><span>' + sx(m.rec.indirizzo || '') + '</span></div></div>';
   }
-  /* [18 nov 2026] il numero qui NON è quello passato dal chiamante (fisso,
-     pensato per un report con tutte le pagine): alcune pagine sono facoltative
-     (Comparabili, Prima di vendere, I nostri servizi) e il numero vero dipende
-     da quali ci sono DAVVERO in questo report — lo stesso problema già
-     risolto per il piè di pagina. Stesso segnaposto, stessa sostituzione finale. */
   function vTitle(m, titolo){
     return '<div class="vnum">__PAGENUM__ / Report di valutazione</div><div class="vtitle">' + sx(titolo) + '</div>';
   }
@@ -74628,13 +74873,24 @@ try{
     return '<div class="vfoot"><span><b>' + sx((m.agenzia || 'CAPITALCASA').toUpperCase()) + '</b> · Report di valutazione</span><span>' + n + ' / ' + tot + '</span></div>';
   }
 
+  /* [23 nov 2026] report accorpato: da ~15 pagine un argomento per pagina
+     (molte quasi vuote: "non ancora compilato") a 6-8 pagine, più argomenti
+     per pagina divisi da un filo sottile (.sez). Una pagina compare solo se
+     ha davvero qualcosa da mostrare (Comparabili+Compravendite, Foto); le
+     altre restano sempre presenti perché contengono almeno un dato certo
+     (OMI, scheda immobile, valutazione, contatti). Nessun dato è stato
+     inventato: dove manca ancora un'informazione resta il placeholder
+     muto() di prima, solo meno pagine dedicate a ospitarlo da solo. */
   function htmlReport(m){
     var r = m.rec, R = m.R, pagine = [], z = m.zona, c = m.comune;
     var dataTxt = new Date(r.data + 'T12:00:00').toLocaleDateString('it-IT', {day:'numeric', month:'long', year:'numeric'});
     var comuneCap = c ? c.n.charAt(0) + c.n.slice(1).toLowerCase() : (r.comune || '');
     var FOOT = function(n){ return piedePag(m, n, 0); };   /* il totale si sistema alla fine */
+    var indirAg = (typeof getIndirizzoAgenzia === 'function' ? getIndirizzoAgenzia() : '') || '';
+    var telAg = (typeof getTelefonoAgenzia === 'function' ? getTelefonoAgenzia() : '') || '';
+    var emailAg = (typeof getEmailAgenzia === 'function' ? getEmailAgenzia() : '') || '';
 
-    /* 1 · COPERTINA — stile del modello CapitalCasa Frimm: bianca, foto reale se c'è */
+    /* 1 · COPERTINA — bianca, foto reale se c'è */
     var secondoLogo = m.loghi && m.loghi[0] ? m.loghi[0].url : '';
     pagine.push('<section class="pag vcop">'
       + '<div class="intesta">' + (m.logo ? '<img src="' + E(m.logo) + '" alt="">' : (m.soloImg ? '' : '<b style="font-size:10pt;font-weight:800;letter-spacing:.1em;color:' + RP.navy + '">' + sx(m.agenzia) + '</b>'))
@@ -74651,7 +74907,7 @@ try{
       + '<div class="tag">Analisi commerciale preliminare · a cura di ' + sx(m.agente) + '</div>'
       + FOOT(1) + '</section>');
 
-    /* 2 · CARATTERISTICHE DELL'IMMOBILE */
+    /* 2 · L'IMMOBILE — Caratteristiche + Servizi di zona, prima due pagine separate */
     var stato = fattoreVoce(m, /stato di manutenzione/i);
     var righeCar = [
       ['Tipologia', r.tipo], ['Stato', stato], ['Locali / camere', m.locali], ['Bagni', m.bagni],
@@ -74659,34 +74915,45 @@ try{
       ['Superficie commerciale', r.supComm ? nf(r.supComm, 1) + ' m²' : '']
     ].filter(function(x){ return x[1]; });
     var descr = ((m.vic.voci.length ? 'Intorno all\'immobile: ' + m.vic.voci.map(function(x){ return x.nome.charAt(0).toLowerCase() + x.nome.slice(1); }).join('; ') + '. ' : '') + (m.vicNota || '')).trim();
-    var p2 = '<section class="pag">' + vHead(m) + vTitle(m, 'Caratteristiche dell\'immobile', 2)
+    var ctx = r.contestoZona || {};
+    var ctxCards = [['Scuole', ctx.scuole], ['Trasporti', ctx.trasporti], ['Negozi e spesa', ctx.negozi], ['Sanità e farmacia', ctx.sanita], ['Mare e tempo libero', ctx.mare], ['Accessi e parcheggi', ctx.accessi]];
+    var ctxCompilate = ctxCards.filter(function(x){ return x[1]; });
+    var p2 = '<section class="pag">' + vHead(m) + vTitle(m, 'L\'immobile')
+      + '<div class="sez"><h3 style="margin-top:0">Caratteristiche</h3>'
       + '<div class="vside-wrap"><div>'
       + (c && c.bb ? '<div class="vmap">' + svgMappa(m) + '</div>' : '')
       + '<h3>Dati catastali</h3>' + (r.supComm ? '<p>Superficie commerciale ' + nf(r.supComm, 1) + ' m², calcolata su ' + nf(num(r.sup && r.sup.principale), num(r.sup && r.sup.principale) % 1 ? 1 : 0) + ' m² principali' + (m.corpoTot ? ' più i valori a corpo' : '') + '.</p>' : muto())
       + '<h3>Descrizione sintetica</h3>' + (descr ? '<p>' + sx(descr) + '</p>' : muto('Nessuna nota di contesto o vicinato per questa valutazione.'))
       + '</div>'
       + (righeCar.length ? '<div class="vside">' + righeCar.map(function(x){ return '<div class="r"><div class="e">' + sx(x[0]) + '</div><div class="v">' + sx(x[1]) + '</div></div>'; }).join('') + '</div>' : '')
-      + '</div>'
-      + FOOT(2) + '</section>';
-    pagine.push(p2);
-
-    /* 3 · SERVIZI (contesto e collegamenti di zona) */
-    var ctx = r.contestoZona || {};
-    var ctxCards = [['Scuole', ctx.scuole], ['Trasporti', ctx.trasporti], ['Negozi e spesa', ctx.negozi], ['Sanità e farmacia', ctx.sanita], ['Mare e tempo libero', ctx.mare], ['Accessi e parcheggi', ctx.accessi]];
-    var ctxCompilate = ctxCards.filter(function(x){ return x[1]; });
-    var p3 = '<section class="pag">' + vHead(m) + vTitle(m, 'Servizi', 3)
-      + '<p class="piccolo" style="margin-top:-2mm">Il contesto e i collegamenti dell\'immobile.</p>'
+      + '</div></div>'
+      + '<div class="sez"><h3 style="margin-top:0">Servizi e collegamenti</h3>'
       + (ctx.fotoComune ? '<div class="vcomune-foto" style="background-image:url(\'' + E(ctx.fotoComune) + '\')"></div>' : '')
       + (ctxCompilate.length
           ? '<div class="sv-griglia">' + ctxCards.map(function(x){ return x[1] ? '<div class="sv-c"><div class="ic">' + icoServ('stella') + '</div><div><b>' + sx(x[0]) + '</b><p>' + sx(x[1]) + '</p></div></div>' : ''; }).join('') + '</div>'
           : muto('Servizi e collegamenti di zona non ancora compilati per questa valutazione.'))
-      + (ctx.fonte ? '<h3>Fonte e data di verifica</h3><p class="piccolo">' + sx(ctx.fonte) + '</p>' : '')
-      + FOOT(3) + '</section>';
-    pagine.push(p3);
+      + (ctx.fonte ? '<p class="piccolo" style="margin-top:3mm">Fonte e data di verifica: ' + sx(ctx.fonte) + '</p>' : '')
+      + '</div>'
+      + FOOT(2) + '</section>';
+    pagine.push(p2);
 
-    /* 4 · QUOTAZIONI OMI */
+    /* 3 · IL MERCATO — Quotazioni OMI + Popolazione e famiglie + Analisi di mercato, prima tre pagine separate */
     var qRiga = z && r.omi && z.q[r.omi.tip + '|' + r.omi.stato] && z.q[r.omi.tip + '|' + r.omi.stato][m.sem];
-    var p4 = '<section class="pag">' + vHead(m) + vTitle(m, 'Quotazioni OMI', 4)
+    var pop = r.popolazione || {};
+    var popCompilata = pop.residenti || pop.famiglie || pop.componenti;
+    var ntTxt3 = '';
+    if(m.ntn && m.ntn['2025']){
+      var t24_3 = m.ntn['2024'] ? m.ntn['2024'].tot : 0, t25_3 = m.ntn['2025'].tot, vN3 = t24_3 ? (t25_3 / t24_3 - 1) * 100 : null;
+      ntTxt3 = 'Nel 2025 a ' + sx(comuneCap) + ' si sono registrate ' + nf(t25_3) + ' compravendite di abitazioni' + (vN3 != null ? ' (' + (vN3 >= 0 ? '+' : '−') + nf(Math.abs(vN3)) + '% sul 2024)' : '') + '.';
+    }
+    var domHtml3 = (r.domanda && r.domanda.n > 0)
+      ? '<div class="riq dom"><div class="n">' + r.domanda.n + '</div><p style="margin:0"><b>'
+        + (r.domanda.n === 1 ? 'acquirente nel nostro archivio cerca' : 'acquirenti nel nostro archivio cercano') + '</b> oggi un immobile come il suo ('
+        + sx((r.tipo || 'immobile').toLowerCase()) + (r.comune ? ' a ' + sx(r.comune) : '') + ') con un budget che arriva al prezzo di partenza.'
+        + '<span class="piccolo" style="display:block;margin-top:3px">Richieste registrate in agenzia al ' + sx(dataIt(r.domanda.data)) + '.</span></p></div>'
+      : muto('Nessuna richiesta compatibile registrata in archivio al momento della valutazione.');
+    var p3 = '<section class="pag">' + vHead(m) + vTitle(m, 'Il mercato')
+      + '<div class="sez"><h3 style="margin-top:0">Quotazioni OMI</h3>'
       + '<div class="vside-wrap"><div>'
       + (c ? '<h3>Le zone di ' + sx(comuneCap) + ' a confronto</h3><div class="riq">' + svgZone(m) + '</div>' : '')
       + '<h3>Lettura del dato OMI</h3><p>' + (z
@@ -74702,155 +74969,124 @@ try{
       + '<div><div class="e">Vendita minima</div><div class="v">' + (z && r.omi.min ? '€ ' + nf(r.omi.min) + '/m²' : '—') + '</div></div>'
       + '<div><div class="e">Vendita massima</div><div class="v">' + (z && r.omi.max ? '€ ' + nf(r.omi.max) + '/m²' : '—') + '</div></div>'
       + '<div><div class="e">Locazione</div><div class="v">' + (qRiga && qRiga[2] ? '€ ' + nf(qRiga[2], 1) + '–' + nf(qRiga[3], 1) + '/m²' : '—') + '</div></div>'
-      + '</div>'
-      + FOOT(4) + '</section>';
-    pagine.push(p4);
-
-    /* 5 · POPOLAZIONE E FAMIGLIE */
-    var pop = r.popolazione || {};
-    var popCompilata = pop.residenti || pop.famiglie || pop.componenti;
-    var p5 = '<section class="pag">' + vHead(m) + vTitle(m, 'Popolazione e famiglie', 5)
-      + (ctx.fotoComune ? '<div class="vcomune-foto" style="background-image:url(\'' + E(ctx.fotoComune) + '\')"></div>' : '')
+      + '</div></div>'
+      + '<div class="sez"><h3 style="margin-top:0">Popolazione e famiglie</h3>'
       + (popCompilata ? '<div class="vstat3" style="grid-template-columns:repeat(3,1fr)">'
           + '<div><div class="e">Residenti</div><div class="v">' + sx(pop.residenti ? nf(num(pop.residenti)) : '—') + '</div></div>'
           + '<div><div class="e">Famiglie</div><div class="v">' + sx(pop.famiglie ? nf(num(pop.famiglie)) : '—') + '</div></div>'
           + '<div><div class="e">Componenti medi</div><div class="v">' + sx(pop.componenti || '—') + '</div></div>'
           + '</div>' : muto('Dati di popolazione e famiglie non ancora compilati per questa valutazione.'))
-      + (m.popSerie ? '<h3>Evoluzione demografica</h3><div class="riq">' + svgPopolazione(m) + '</div>' : '')
-      + (pop.periodo || pop.evoluzione ? '<div class="due">'
-          + '<div class="riq"><div class="occhiello">Periodo / territorio</div><p style="margin:4px 0 0">' + sx(pop.periodo || '—') + '</p></div>'
-          + '<div class="riq"><div class="occhiello">' + (m.popSerie ? 'Nota dell\'agente' : 'Evoluzione demografica') + '</div><p style="margin:4px 0 0">' + sx(pop.evoluzione || '—') + '</p></div>'
-          + '</div>' : '')
-      + (pop.implicazioni ? '<h3>Implicazioni per l\'immobile</h3><p>' + sx(pop.implicazioni) + '</p>' : '')
-      + (pop.fonte ? '<h3>Fonte e data</h3><p class="piccolo">' + sx(pop.fonte) + '</p>' : '')
-      + FOOT(5) + '</section>';
-    pagine.push(p5);
-
-    /* 6 · MERCATO DI ZONA (stock, prezzi, domanda) */
-    var ntTxt6 = '';
-    if(m.ntn && m.ntn['2025']){
-      var t24_6 = m.ntn['2024'] ? m.ntn['2024'].tot : 0, t25_6 = m.ntn['2025'].tot, vN6 = t24_6 ? (t25_6 / t24_6 - 1) * 100 : null;
-      ntTxt6 = 'Nel 2025 a ' + sx(comuneCap) + ' si sono registrate ' + nf(t25_6) + ' compravendite di abitazioni' + (vN6 != null ? ' (' + (vN6 >= 0 ? '+' : '−') + nf(Math.abs(vN6)) + '% sul 2024)' : '') + '.';
-    }
-    var domHtml6 = (r.domanda && r.domanda.n > 0)
-      ? '<div class="riq dom"><div class="n">' + r.domanda.n + '</div><p style="margin:0"><b>'
-        + (r.domanda.n === 1 ? 'acquirente nel nostro archivio cerca' : 'acquirenti nel nostro archivio cercano') + '</b> oggi un immobile come il suo ('
-        + sx((r.tipo || 'immobile').toLowerCase()) + (r.comune ? ' a ' + sx(r.comune) : '') + ') con un budget che arriva al prezzo di partenza.'
-        + '<span class="piccolo" style="display:block;margin-top:3px">Richieste registrate in agenzia al ' + sx(dataIt(r.domanda.data)) + '.</span></p></div>'
-      : muto('Nessuna richiesta compatibile registrata in archivio al momento della valutazione.');
-    var p6 = '<section class="pag">' + vHead(m) + vTitle(m, 'Mercato di zona', 6)
-      + '<div class="vnum" style="margin-top:-3mm">01</div><h3 style="margin-top:0">Analisi dello stock</h3>'
-      + (r.stockZona ? '<p>' + sx(r.stockZona) + '</p>' : muto())
-      + '<div class="vnum">02</div><h3 style="margin-top:0">Analisi dei prezzi</h3>'
-      + (c ? '<div class="riq">' + svgZone(m) + '</div>' : muto('Comune non presente nell\'archivio OMI.'))
-      + '<div class="vnum">03</div><h3 style="margin-top:0">Analisi della domanda</h3>'
-      + domHtml6 + (ntTxt6 ? '<p class="piccolo" style="margin-top:4px">' + ntTxt6 + '</p>' : '')
-      + FOOT(6) + '</section>';
-    pagine.push(p6);
-
-    /* 7 · COMPARABILI (solo se ce ne sono: niente pagina vuota) */
-    if(m.comps.length){
-      var conAtti = m.comps.some(function(x){ return x.fonte === 'atto'; });
-      var compRighe = m.comps.map(function(x){
-        var at = x.fonte === 'atto';
-        return '<tr><td>' + (x.fonte === 'venduto' ? '<b style="color:' + RP.verde + '">Venduto</b>' : at ? '<b style="color:' + RP.ardesia + '">Atto AdE</b>' : '<b style="color:' + RP.oro + '">Annuncio</b>') + '</td>'
-          + '<td>' + sx(x.descr) + '<div class="piccolo">' + sx(at
-              ? [x.comune, x.zona ? 'zona ' + x.zona : '', x.mese ? 'atto ' + x.mese : '', 'prezzo dichiarato'].filter(Boolean).join(' · ')
-              : [x.comune, x.data ? (x.fonte === 'venduto' ? 'rogito ' : '') + dataIt(x.data) : ''].filter(Boolean).join(' · ')) + '</div></td>'
-          + '<td class="n">' + nf(x.mq) + '</td><td class="n">' + eur(x.prezzo)
-          + (at && num(x.pert) ? '<div class="piccolo">atto ' + eur(x.prezzoAtto) + ' meno box e cantine</div>' : '') + '</td>'
-          + '<td class="n">' + (num(x.sconto) ? '−' + nf(x.sconto) + '%' : '—') + '</td>'
-          + '<td class="n">' + (num(x.adj) ? pct(x.adj) : '—') + '</td><td class="n"><b>€ ' + nf(x.eurMqCorr) + '</b></td></tr>';
-      }).join('');
-      var p7 = '<section class="pag">' + vHead(m) + vTitle(m, 'Comparabili', 7)
-        + '<div class="riq">' + svgComparabili(m) + '</div>'
-        + '<table><thead><tr><th>Fonte</th><th>Immobile</th><th class="n">m²</th><th class="n">Prezzo</th><th class="n">Trattativa</th><th class="n">Correz.</th><th class="n">€/m²</th></tr></thead><tbody>' + compRighe
-        + '<tr class="tot"><td colspan="6">Media dei comparabili</td><td class="n">€ ' + nf(r.eurMqComp) + '</td></tr></tbody></table>'
-        + '<p class="piccolo">Venduti: prezzo di rogito. Annunci: prezzo richiesto meno lo sconto trattativa. '
-        + (conAtti ? 'Atti AdE: prezzi dichiarati, fonte Agenzia delle Entrate, al netto del valore stimato di box e cantine. ' : '') + 'La correzione tiene conto delle differenze con il suo immobile.</p>'
-        + FOOT(7) + '</section>';
-      pagine.push(p7);
-    }
-
-    /* 8 · COMPRAVENDITE */
-    var nt8 = m.ntn;
-    var clRighe8 = '';
-    if(nt8 && nt8['2025']){
-      var cl8 = ['fino a 50 m²', '50–85', '85–115', '115–145', 'oltre 145'];
-      var a8 = nt8['2024'] ? nt8['2024'].cl : [0, 0, 0, 0, 0], b8 = nt8['2025'].cl;
-      clRighe8 = cl8.map(function(lab, i){
-        var va = a8[i], vb = b8[i], vr = va ? (vb / va - 1) * 100 : null;
-        return '<tr><td>' + sx(lab) + '</td><td class="n">' + nf(va) + '</td><td class="n">' + nf(vb) + '</td><td class="n ' + (vr > 0 ? 'pos' : vr < 0 ? 'neg' : '') + '">' + (vr == null ? '—' : pct(Math.round(vr * 10) / 10)) + '</td></tr>';
-      }).join('');
-    }
-    var p8 = '<section class="pag">' + vHead(m) + vTitle(m, 'Compravendite', 8)
-      + '<h3>Riscontri delle operazioni di zona</h3>'
-      + (nt8 && nt8['2025'] ? '<div class="riq">' + svgNtn(m) + '</div>'
-          + '<table><thead><tr><th>Cat. / m²</th><th class="n">2024</th><th class="n">2025</th><th class="n">Variazione</th></tr></thead><tbody>' + clRighe8 + '</tbody></table>'
-          + '<p class="piccolo" style="margin-top:6px">Numero di transazioni normalizzate, Osservatorio del Mercato Immobiliare — Agenzia delle Entrate. Le quote di immobile vendute in parte contano in proporzione, per questo non sono interi.</p>'
-          : muto('Nessun dato di compravendite disponibile per questo comune.'))
-      + FOOT(8) + '</section>';
-    pagine.push(p8);
-
-    /* 9 · EFFICIENZA ENERGETICA */
-    var ape = r.ape || {};
-    var apeClasse = (ape.classe || m.apeClasseDaImm || '').toUpperCase();
-    var SCALA9 = ['A4', 'A3', 'A2', 'A1', 'B', 'C', 'D', 'E', 'F', 'G'];
-    var COL9 = ['#15803D', '#16A34A', '#22C55E', '#4ADE80', '#A3D95B', '#EAB308', '#F59E0B', '#F97316', '#EF4444', '#B91C1C'];
-    var p9 = '<section class="pag">' + vHead(m) + vTitle(m, 'Efficienza energetica', 9)
-      + '<h3 style="margin-top:0">Prestazione e impianti</h3>'
-      + '<div class="vscala">' + SCALA9.map(function(k, i){ return '<div class="' + (k === apeClasse ? 'on' : '') + '" style="background:' + COL9[i] + '">' + k + '</div>'; }).join('') + '</div>'
-      + '<p class="piccolo">Scala illustrativa delle classi' + (apeClasse ? ': evidenziata la ' + sx(apeClasse) + (ape.classe ? '' : ' (dalla scheda immobile)') + '.' : ': nessuna classe nota per questa valutazione.') + '</p>'
-      + '<div class="kpi" style="grid-template-columns:repeat(3,1fr)">'
-      + '<div><div class="e">Classe APE</div><div class="v">' + sx(apeClasse || '—') + '</div></div>'
-      + '<div><div class="e">EPgl,nren</div><div class="v">' + sx(ape.epgl || '—') + '</div></div>'
-      + '<div><div class="e">Validità APE</div><div class="v">' + sx(ape.validita || '—') + '</div></div>'
+      + (m.popSerie ? '<div class="riq">' + svgPopolazione(m) + '</div>' : '')
+      + (pop.implicazioni ? '<p style="margin-top:3mm">' + sx(pop.implicazioni) + '</p>' : '')
       + '</div>'
-      + (ape.impianti ? '<h3>Impianti e dotazioni</h3><p>' + sx(ape.impianti) + '</p>' : '')
-      + (ape.incidenza ? '<h3>Incidenza sulla valutazione</h3><p>' + sx(ape.incidenza) + '</p>' : '')
-      + (ape.fonte ? '<h3>Fonte / documento / data</h3><p class="piccolo">' + sx(ape.fonte) + '</p>' : '')
-      + (!ape.impianti && !ape.incidenza && !ape.fonte ? muto('Impianti, incidenza e fonte dell\'APE non ancora compilati.') : '')
-      + FOOT(9) + '</section>';
-    pagine.push(p9);
+      + '<div class="sez"><h3 style="margin-top:0">Analisi di mercato</h3>'
+      + (r.stockZona ? '<p>' + sx(r.stockZona) + '</p>' : '')
+      + domHtml3 + (ntTxt3 ? '<p class="piccolo" style="margin-top:4px">' + ntTxt3 + '</p>' : '')
+      + '</div>'
+      + FOOT(3) + '</section>';
+    pagine.push(p3);
 
-    /* 10 · VALUTAZIONE */
-    var eurMqBase10 = r.supComm ? m.base / r.supComm : num(r.eurMqOmi);
-    var parCalc10 = 'Partiamo da ' + nf(r.supComm, 1) + ' m² commerciali × € ' + nf(eurMqBase10, Math.abs(eurMqBase10 - Math.round(eurMqBase10)) >= 0.005 ? 2 : 0) + ' al m²' + (m.mano ? ' (' + sx(m.mano.breve) + ')' : '')
+    /* 4 · COMPARABILI E COMPRAVENDITE — solo se c'è davvero qualcosa da confrontare */
+    var nt4 = m.ntn, haComps = m.comps.length > 0, haNt = !!(nt4 && nt4['2025']);
+    if(haComps || haNt){
+      var secComp = '', secNt = '';
+      if(haComps){
+        var conAtti = m.comps.some(function(x){ return x.fonte === 'atto'; });
+        var compRighe = m.comps.map(function(x){
+          var at = x.fonte === 'atto';
+          return '<tr><td>' + (x.fonte === 'venduto' ? '<b style="color:' + RP.verde + '">Venduto</b>' : at ? '<b style="color:' + RP.ardesia + '">Atto AdE</b>' : '<b style="color:' + RP.oro + '">Annuncio</b>') + '</td>'
+            + '<td>' + sx(x.descr) + '<div class="piccolo">' + sx(at
+                ? [x.comune, x.zona ? 'zona ' + x.zona : '', x.mese ? 'atto ' + x.mese : '', 'prezzo dichiarato'].filter(Boolean).join(' · ')
+                : [x.comune, x.data ? (x.fonte === 'venduto' ? 'rogito ' : '') + dataIt(x.data) : ''].filter(Boolean).join(' · ')) + '</div></td>'
+            + '<td class="n">' + nf(x.mq) + '</td><td class="n">' + eur(x.prezzo)
+            + (at && num(x.pert) ? '<div class="piccolo">atto ' + eur(x.prezzoAtto) + ' meno box e cantine</div>' : '') + '</td>'
+            + '<td class="n">' + (num(x.sconto) ? '−' + nf(x.sconto) + '%' : '—') + '</td>'
+            + '<td class="n">' + (num(x.adj) ? pct(x.adj) : '—') + '</td><td class="n"><b>€ ' + nf(x.eurMqCorr) + '</b></td></tr>';
+        }).join('');
+        secComp = '<div class="sez"><h3 style="margin-top:0">Comparabili</h3>'
+          + '<div class="riq">' + svgComparabili(m) + '</div>'
+          + '<table><thead><tr><th>Fonte</th><th>Immobile</th><th class="n">m²</th><th class="n">Prezzo</th><th class="n">Trattativa</th><th class="n">Correz.</th><th class="n">€/m²</th></tr></thead><tbody>' + compRighe
+          + '<tr class="tot"><td colspan="6">Media dei comparabili</td><td class="n">€ ' + nf(r.eurMqComp) + '</td></tr></tbody></table>'
+          + '<p class="piccolo">Venduti: prezzo di rogito. Annunci: prezzo richiesto meno lo sconto trattativa. '
+          + (conAtti ? 'Atti AdE: prezzi dichiarati, fonte Agenzia delle Entrate, al netto del valore stimato di box e cantine. ' : '') + 'La correzione tiene conto delle differenze con il suo immobile.</p></div>';
+      }
+      if(haNt){
+        var cl4 = ['fino a 50 m²', '50–85', '85–115', '115–145', 'oltre 145'];
+        var a4 = nt4['2024'] ? nt4['2024'].cl : [0, 0, 0, 0, 0], b4 = nt4['2025'].cl;
+        var clRighe4 = cl4.map(function(lab, i){
+          var va = a4[i], vb = b4[i], vr = va ? (vb / va - 1) * 100 : null;
+          return '<tr><td>' + sx(lab) + '</td><td class="n">' + nf(va) + '</td><td class="n">' + nf(vb) + '</td><td class="n ' + (vr > 0 ? 'pos' : vr < 0 ? 'neg' : '') + '">' + (vr == null ? '—' : pct(Math.round(vr * 10) / 10)) + '</td></tr>';
+        }).join('');
+        secNt = '<div class="sez"><h3 style="margin-top:0">Compravendite</h3>'
+          + '<div class="riq">' + svgNtn(m) + '</div>'
+          + '<table><thead><tr><th>Cat. / m²</th><th class="n">2024</th><th class="n">2025</th><th class="n">Variazione</th></tr></thead><tbody>' + clRighe4 + '</tbody></table>'
+          + '<p class="piccolo" style="margin-top:6px">Numero di transazioni normalizzate, Osservatorio del Mercato Immobiliare — Agenzia delle Entrate. Le quote di immobile vendute in parte contano in proporzione, per questo non sono interi.</p></div>';
+      }
+      pagine.push('<section class="pag">' + vHead(m) + vTitle(m, 'Comparabili e compravendite') + secComp + secNt + FOOT(4) + '</section>');
+    }
+
+    /* 5 · VALUTAZIONE — la pagina centrale, resta da sola */
+    var eurMqBase5 = r.supComm ? m.base / r.supComm : num(r.eurMqOmi);
+    var parCalc5 = 'Partiamo da ' + nf(r.supComm, 1) + ' m² commerciali × € ' + nf(eurMqBase5, Math.abs(eurMqBase5 - Math.round(eurMqBase5)) >= 0.005 ? 2 : 0) + ' al m²' + (m.mano ? ' (' + sx(m.mano.breve) + ')' : '')
       + ' = ' + eur(m.base) + ', poi correggiamo per le caratteristiche dell\'immobile (coefficiente × ' + nf(r.coeff, 3) + ')' + (m.corpoTot ? ', e sommiamo i valori a corpo' : '') + '.';
-    var p10 = '<section class="pag">' + vHead(m) + vTitle(m, 'Valutazione', 10)
+    var p5 = '<section class="pag">' + vHead(m) + vTitle(m, 'Valutazione')
       + '<div class="vstat3" style="grid-template-columns:repeat(3,1fr)">'
       + '<div><div class="e">Fascia di valore</div><div class="v" style="font-size:13pt">' + eur(r.forchetta[0]) + ' – ' + eur(r.forchetta[1]) + '</div></div>'
       + '<div><div class="e">Valore centrale</div><div class="v">' + eur(r.valFinale) + '</div></div>'
       + '<div><div class="e">Prezzo di proposta</div><div class="v">' + eur(r.partenza) + '</div></div>'
       + '</div>'
       + '<h2 style="margin-top:0">Come si arriva al valore</h2>'
-      + '<h3 style="margin-top:0">Criterio e superficie di riferimento</h3><p>' + sx(parCalc10) + '</p>'
+      + '<h3 style="margin-top:0">Criterio e superficie di riferimento</h3><p>' + sx(parCalc5) + '</p>'
       + '<div class="riq">' + svgCascata(m, true) + '</div>'
       + riqMetodi(m)
       + '<h3>Motivazione del prezzo proposto</h3><p>' + (r.commento ? sx(r.commento) : 'Il prezzo di proposta aggiunge un margine di trattativa al valore centrale; il minimo di trattativa (' + eur(r.minimo) + ') è la soglia sotto la quale è consigliabile non scendere.') + '</p>'
       + '<h3>Presupposti e limiti</h3><p class="piccolo">Questa valutazione è una stima professionale del valore di mercato, basata sui dati indicati e sulle caratteristiche dichiarate dell\'immobile. Non è una perizia giurata né una stima ai fini fiscali o bancari. Dati al ' + sx(dataTxt) + '.</p>'
-      + FOOT(10) + '</section>';
-    pagine.push(p10);
+      + FOOT(5) + '</section>';
+    pagine.push(p5);
 
-    /* 11 · FOTO */
-    var p11 = '<section class="pag">' + vHead(m) + vTitle(m, 'Foto', 11)
-      + (m.fotoList.length ? '<div class="vfoto2">' + m.fotoList.map(function(u, i){ return '<figure><img src="' + E(u) + '" alt=""><figcaption>Foto ' + (i + 1) + '</figcaption></figure>'; }).join('') + '</div>'
-          : muto('Nessuna foto disponibile sulla scheda immobile collegata.'))
-      + FOOT(11) + '</section>';
-    pagine.push(p11);
-
-    /* 12 · ALLEGATI */
-    var allRighe = (Array.isArray(r.allegati) ? r.allegati : []).map(function(a, i){
+    /* 6 · EFFICIENZA ENERGETICA E ALLEGATI */
+    var ape = r.ape || {};
+    var apeClasse = (ape.classe || m.apeClasseDaImm || '').toUpperCase();
+    var SCALA6 = ['A4', 'A3', 'A2', 'A1', 'B', 'C', 'D', 'E', 'F', 'G'];
+    var COL6 = ['#15803D', '#16A34A', '#22C55E', '#4ADE80', '#A3D95B', '#EAB308', '#F59E0B', '#F97316', '#EF4444', '#B91C1C'];
+    var allegati6 = Array.isArray(r.allegati) ? r.allegati : [];
+    var allRighe6 = allegati6.map(function(a, i){
       var statoHtml = a.stato === 'disponibile' ? '<span class="vok">Disponibile</span>' : a.stato === 'da_acquisire' ? '<span class="vda">Da acquisire</span>' : '<span class="piccolo">—</span>';
       return '<tr><td>' + (i + 1) + '</td><td><b>' + sx(a.voce) + '</b></td><td>' + statoHtml + '</td><td>' + sx(a.rif || '—') + '</td></tr>';
     }).join('');
-    var p12 = '<section class="pag">' + vHead(m) + vTitle(m, 'Allegati', 12)
-      + '<h3 style="margin-top:0">Documenti a supporto della valutazione</h3>'
-      + '<table class="valleg"><thead><tr><th></th><th>Documento</th><th>Stato</th><th>Riferimento</th></tr></thead><tbody>' + allRighe + '</tbody></table>'
-      + FOOT(12) + '</section>';
-    pagine.push(p12);
+    var p6 = '<section class="pag">' + vHead(m) + vTitle(m, 'Efficienza energetica e allegati')
+      + '<div class="sez"><h3 style="margin-top:0">Prestazione e impianti</h3>'
+      + '<div class="vscala">' + SCALA6.map(function(k, i){ return '<div class="' + (k === apeClasse ? 'on' : '') + '" style="background:' + COL6[i] + '">' + k + '</div>'; }).join('') + '</div>'
+      + '<p class="piccolo">Scala illustrativa delle classi' + (apeClasse ? ': evidenziata la ' + sx(apeClasse) + (ape.classe ? '' : ' (dalla scheda immobile)') + '.' : ': nessuna classe nota per questa valutazione.') + '</p>'
+      + '<div class="kpi" style="grid-template-columns:repeat(3,1fr)">'
+      + '<div><div class="e">Classe APE</div><div class="v">' + sx(apeClasse || '—') + '</div></div>'
+      + '<div><div class="e">EPgl,nren</div><div class="v">' + sx(ape.epgl || '—') + '</div></div>'
+      + '<div><div class="e">Validità APE</div><div class="v">' + sx(ape.validita || '—') + '</div></div>'
+      + '</div>'
+      + (ape.impianti ? '<p style="margin-top:3mm">' + sx(ape.impianti) + '</p>' : '')
+      + (ape.incidenza ? '<p style="margin-top:2mm">' + sx(ape.incidenza) + '</p>' : '')
+      + (ape.fonte ? '<p class="piccolo" style="margin-top:2mm">' + sx(ape.fonte) + '</p>' : '')
+      + '</div>'
+      + '<div class="sez"><h3 style="margin-top:0">Allegati</h3>'
+      + (allegati6.length
+          ? '<table class="valleg"><thead><tr><th></th><th>Documento</th><th>Stato</th><th>Riferimento</th></tr></thead><tbody>' + allRighe6 + '</tbody></table>'
+          : muto('Elenco allegati non ancora compilato per questa valutazione.'))
+      + '</div>'
+      + FOOT(6) + '</section>';
+    pagine.push(p6);
 
-    /* 12b · solo per chi arriva dal test del sito: i documenti da preparare */
+    /* 7 · FOTO — solo se ce ne sono: niente pagina vuota */
+    if(m.fotoList.length){
+      pagine.push('<section class="pag">' + vHead(m) + vTitle(m, 'Foto')
+        + '<div class="vfoto2">' + m.fotoList.map(function(u, i){ return '<figure><img src="' + E(u) + '" alt=""><figcaption>Foto ' + (i + 1) + '</figcaption></figure>'; }).join('') + '</div>'
+        + FOOT(7) + '</section>');
+    }
+
+    /* 8 · CHIUSURA — invito a procedere + (se da sito) prima di vendere + contatti + (se scelti) servizi */
+    var passiCta = '<div class="vclose-cta"><h2>Il valore della casa. Un percorso chiaro per venderla.</h2><div class="sep"></div>'
+      + '<div class="passi"><div><b class="n">01</b><b class="t">Dati e documenti</b></div><div><b class="n">02</b><b class="t">Confronto con il mercato</b></div><div><b class="n">03</b><b class="t">Prezzo e strategia</b></div></div></div>';
+
+    var secVendere = '';
     if(r.origine === 'sito'){
       var DOC = [
         ['Atto di provenienza', 'Il rogito con cui è stato comprato l\'immobile, oppure la dichiarazione di successione o l\'atto di donazione.'],
@@ -74863,73 +75099,55 @@ try{
         ['Mutuo', 'Se c\'è ancora un mutuo: il conteggio di estinzione della banca.'],
         ['Proprietari', 'Documento d\'identità e codice fiscale di tutti i proprietari; regime patrimoniale se sposati.']
       ];
-      pagine.push('<section class="pag">' + vHead(m) + vTitle(m, 'Prima di vendere', '12b')
+      secVendere = '<div class="sez"><h3 style="margin-top:0">Prima di vendere: i documenti da preparare</h3>'
         + '<p>Avere i documenti in ordine prima di mettere in vendita evita sorprese al momento della proposta e del rogito, e permette di vendere più in fretta.</p>'
         + '<table><thead><tr><th style="width:8mm"></th><th style="width:58mm">Documento</th><th>A cosa serve</th></tr></thead><tbody>'
         + DOC.map(function(d){ return '<tr><td><span style="display:inline-block;width:11px;height:11px;border:1.5px solid ' + RP.navy + ';border-radius:3px"></span></td><td><b>' + sx(d[0]) + '</b></td><td>' + sx(d[1]) + '</td></tr>'; }).join('')
-        + '</tbody></table>'
-        + FOOT(0) + '</section>');
+        + '</tbody></table></div>';
     }
 
-    /* 13 · NOTE */
-    var p13 = '<section class="pag">' + vHead(m) + vTitle(m, 'Note', 13)
-      + (r.noteReport ? '<div class="vnota">' + sx(r.noteReport) + '</div>' : '<div class="vnota"></div>')
-      + '<p class="piccolo" style="margin-top:10mm">Valutazione commerciale: non costituisce perizia asseverata né verifica di conformità. La conclusione dipende dai dati disponibili e dai presupposti dichiarati.</p>'
-      + FOOT(13) + '</section>';
-    pagine.push(p13);
+    var secNote = r.noteReport ? '<div class="sez"><h3 style="margin-top:0">Note</h3><div class="vnota">' + sx(r.noteReport) + '</div></div>' : '';
 
-    /* 14 · CONTATTI */
-    var indirAg = (typeof getIndirizzoAgenzia === 'function' ? getIndirizzoAgenzia() : '') || '';
-    var telAg = (typeof getTelefonoAgenzia === 'function' ? getTelefonoAgenzia() : '') || '';
-    var emailAg = (typeof getEmailAgenzia === 'function' ? getEmailAgenzia() : '') || '';
-    var p14 = '<section class="pag">' + vHead(m) + vTitle(m, 'Contatti', 14)
+    var secContatti = '<div class="sez"><h3 style="margin-top:0">Contatti</h3><div class="due">'
       + '<div class="riq">' + (m.logo ? '<img src="' + E(m.logo) + '" alt="" style="height:12mm;max-width:50mm;object-fit:contain;margin-bottom:4mm">' : '')
-      + '<h2 style="margin:0 0 4mm">' + sx(m.agenzia) + '</h2>'
+      + '<b style="font-size:11pt;display:block;margin-bottom:2mm">' + sx(m.agenzia) + '</b>'
       + (indirAg ? '<p style="margin:0">' + sx(indirAg) + '</p>' : '')
       + (telAg ? '<p style="margin:2mm 0 0">Tel. ' + sx(telAg) + '</p>' : '')
       + (emailAg ? '<p style="margin:0">' + sx(emailAg) + '</p>' : '') + '</div>'
       + '<div class="riq"><div class="occhiello">Il tuo referente</div>'
-      + '<h2 style="margin:2mm 0 0">' + sx(m.agente || '—') + '</h2>'
+      + '<b style="font-size:11pt;display:block;margin:2mm 0 0">' + sx(m.agente || '—') + '</b>'
       + '<p style="margin:2mm 0 0">Agente immobiliare' + (telAg ? ' · ' + sx(telAg) : '') + (emailAg ? ' · ' + sx(emailAg) : '') + '</p></div>'
-      + '<p style="margin-top:10mm;font-weight:700">Una valutazione chiara è il primo passo per scegliere prezzo, tempi e percorso di vendita.</p>'
-      + FOOT(14) + '</section>';
-    pagine.push(p14);
+      + '</div></div>';
 
-    /* 14b · ULTIMA PAGINA FACOLTATIVA: i servizi scelti per questa valutazione */
+    var secServizi = '';
     if(m.serv.length){
       var P = m.pres || {}, H = m.hub || {};
       var chi = H.agente || m.agente || '';
-      var icoC = function(d){ return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#FDBA74" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>'; };
-      var contatti14 = [P.tel ? '<span>' + icoC('<path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 1.9.7 2.8a2 2 0 01-.5 2.1L8 9.9a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.8.6 2.8.7a2 2 0 011.7 2z"/>') + ' ' + sx(P.tel) + '</span>' : '',
-                        (!P.tel && H.wa) ? '<span>' + icoC('<path d="M21 11.5a8.4 8.4 0 01-12.2 7.5L3 21l2-5.6A8.4 8.4 0 1121 11.5z"/>') + ' WhatsApp ' + sx(H.wa) + '</span>' : '',
-                        P.email ? '<span>' + icoC('<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>') + ' ' + sx(P.email) + '</span>' : ''].filter(Boolean).join('');
-      pagine.push('<section class="pag">' + vHead(m) + vTitle(m, 'I nostri servizi', '14c')
-        + '<p class="sv-chi" style="margin:0 0 4mm"><b>' + sx(chi) + '</b>' + (m.agenzia ? ' · ' + sx(m.agenzia) : '') + '</p>'
-        + (P.sot ? '<p class="piccolo" style="margin:0 0 4mm">' + sx(P.sot) + '</p>' : '')
+      var icoC = function(d){ return '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="' + RP.oro + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + d + '</svg>'; };
+      var contattiS = [P.tel ? '<span>' + icoC('<path d="M22 16.9v3a2 2 0 01-2.2 2 19.8 19.8 0 01-8.6-3.1 19.5 19.5 0 01-6-6A19.8 19.8 0 012.1 4.2 2 2 0 014.1 2h3a2 2 0 012 1.7c.1 1 .4 1.9.7 2.8a2 2 0 01-.5 2.1L8 9.9a16 16 0 006 6l1.3-1.3a2 2 0 012.1-.4c.9.3 1.8.6 2.8.7a2 2 0 011.7 2z"/>') + ' ' + sx(P.tel) + '</span>' : '',
+                       (!P.tel && H.wa) ? '<span>' + icoC('<path d="M21 11.5a8.4 8.4 0 01-12.2 7.5L3 21l2-5.6A8.4 8.4 0 1121 11.5z"/>') + ' WhatsApp ' + sx(H.wa) + '</span>' : '',
+                       P.email ? '<span>' + icoC('<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>') + ' ' + sx(P.email) + '</span>' : ''].filter(Boolean).join('');
+      secServizi = '<div class="sez"><h3 style="margin-top:0">I nostri servizi</h3>'
+        + '<p class="sv-chi" style="margin:0 0 3mm"><b>' + sx(chi) + '</b>' + (m.agenzia ? ' · ' + sx(m.agenzia) : '') + '</p>'
+        + (P.sot ? '<p class="piccolo" style="margin:0 0 3mm">' + sx(P.sot) + '</p>' : '')
         + '<div class="sv-griglia">' + m.serv.map(function(x){ return '<div class="sv-c"><div class="ic">' + icoServ(x.k) + '</div><div><b>' + sx(x.t) + '</b>' + (x.s ? '<p>' + sx(x.s) + '</p>' : '') + '</div></div>'; }).join('') + '</div>'
-        + (contatti14 ? '<div class="riq" style="margin-top:6mm;display:flex;gap:8mm;flex-wrap:wrap">' + contatti14 + '</div>' : '')
-        + (m.loghi.length ? '<div style="display:flex;gap:9mm;align-items:center;margin-top:5mm">' + m.loghi.map(function(l){ return '<img src="' + E(l.url) + '" alt="" style="max-height:13mm;max-width:42mm;object-fit:contain">'; }).join('') + '</div>' : '')
-        + FOOT(0) + '</section>');
+        + (contattiS ? '<div class="riq" style="margin-top:4mm;display:flex;gap:8mm;flex-wrap:wrap">' + contattiS + '</div>' : '')
+        + (m.loghi.length ? '<div style="display:flex;gap:9mm;align-items:center;margin-top:4mm">' + m.loghi.map(function(l){ return '<img src="' + E(l.url) + '" alt="" style="max-height:13mm;max-width:42mm;object-fit:contain">'; }).join('') + '</div>' : '')
+        + '</div>';
     }
 
-    /* 15 · RETROCOPERTINA */
-    pagine.push('<section class="pag vback"><div class="box">'
-      + '<h1>Il valore della casa.<br>Un percorso chiaro<br>per venderla.</h1><div class="sep"></div>'
-      + '<div class="passi">'
-      + '<div><b class="n">01</b><b class="t">Dati e documenti</b></div>'
-      + '<div><b class="n">02</b><b class="t">Confronto con il mercato</b></div>'
-      + '<div><b class="n">03</b><b class="t">Prezzo e strategia</b></div>'
-      + '</div>'
-      + '<div class="contatti">' + sx(m.agenzia) + (indirAg ? '<br>' + sx(indirAg) : '') + (telAg || emailAg ? '<br>' + sx([telAg, emailAg].filter(Boolean).join(' · ')) : '') + '</div>'
-      + '</div></section>');
+    var disclaimer = '<p class="piccolo" style="margin-top:4mm">Valutazione commerciale: non costituisce perizia asseverata né verifica di conformità. La conclusione dipende dai dati disponibili e dai presupposti dichiarati.</p>';
+
+    pagine.push('<section class="pag">' + vHead(m) + vTitle(m, 'Contatti e passi successivi')
+      + passiCta + secVendere + secNote + secContatti + secServizi + disclaimer
+      + FOOT(8) + '</section>');
 
     return '<!DOCTYPE html><html lang="it"><head><meta charset="utf-8"><title>Valutazione · ' + sx(m.titolo) + '</title>'
-      + '<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Plus+Jakarta+Sans:wght@800&display=swap" rel="stylesheet">'
+      + '<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">'
       + '<style>' + cssReport() + '</style></head><body>'
       + '<div class="barra"><span>Valutazione · ' + sx(m.titolo) + '</span><span class="sp"></span><span style="opacity:.75;font-size:12px">Nella finestra di stampa scegli "Salva come PDF", formato A4, margini Nessuno</span>'
       + '<button onclick="window.print()">Stampa / Salva PDF</button></div><div class="barra" style="position:static;height:46px;background:none"></div>'
-      /* il numero totale di pagine dipende da cosa c'è (comparabili, "prima di
-         vendere", servizi): si sistema qui, una volta sola, alla fine */
+      /* il numero totale di pagine dipende da cosa c'è (comparabili+compravendite, foto): si sistema qui, una volta sola, alla fine */
       + pagine.map(function(p, i){
           return p
             .replace(/__PAGENUM__/, String(i + 1))
